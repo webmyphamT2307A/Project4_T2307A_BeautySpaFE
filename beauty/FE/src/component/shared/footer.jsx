@@ -34,7 +34,7 @@ const Footer = () => {
                             <p className="text-muted mb-0">Saturday: <span className="text-white"> 09:00 am – 08:00 pm</span></p>
                             <p className="text-muted mb-0">Sunday: <span className="text-white"> 09:00 am – 05:00 pm</span></p>
                             <h4 className="my-4 text-white">Address</h4>
-                            <p className="mb-0"><i className="fas fa-map-marker-alt text-secondary me-2" /> 123 ranking street North tower New York, USA</p>
+                            <p className="mb-0"><i className="fas fa-map-marker-alt  me-2" /> 123 ranking street North tower New York, USA</p>
                         </div>
                     </div>
                     <div className="col-md-6 col-lg-6 col-xl-3">
@@ -44,8 +44,8 @@ const Footer = () => {
                             <a href><i className="fas fa-angle-right me-2" /> Instagram</a>
                             <a href><i className="fas fa-angle-right me-2" /> Twitter</a>
                             <h4 className="my-4 text-white">Contact Us</h4>
-                            <p className="mb-0"><i className="fas fa-envelope text-secondary me-2" /> info@example.com</p>
-                            <p className="mb-0"><i className="fas fa-phone text-secondary me-2" /> (+012) 3456 7890 123</p>
+                            <p className="mb-0"><i className="fas fa-envelope  me-2" /> info@example.com</p>
+                            <p className="mb-0"><i className="fas fa-phone  me-2" /> (+012) 3456 7890 123</p>
                         </div>
                     </div>
                 </div>

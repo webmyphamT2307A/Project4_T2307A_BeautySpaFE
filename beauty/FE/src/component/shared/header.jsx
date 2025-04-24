@@ -9,9 +9,9 @@ const Header = () => {
                         <div className="row align-items-center">
                             <div className="col-lg-8">
                                 <div className="d-flex flex-wrap">
-                                    <a href="#" className="me-4 text-light"><i className="fas fa-map-marker-alt text-primary me-2" />Find A Location</a>
-                                    <a href="#" className="me-4 text-light"><i className="fas fa-phone-alt text-primary me-2" />+01234567890</a>
-                                    <a href="#" className="text-light"><i className="fas fa-envelope text-primary me-2" />Example@gmail.com</a>
+                                    <a href="#" className="me-4 "><i className="fas fa-map-marker-alt  me-2" />Find A Location</a>
+                                    <a href="#" className="me-4 "><i className="fas fa-phone-alt  me-2" />+01234567890</a>
+                                    <a href="#" className=""><i className="fas fa-envelope me-2" />Example@gmail.com</a>
                                 </div>
                             </div>
                             <div className="col-lg-4">

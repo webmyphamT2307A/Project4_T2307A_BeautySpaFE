@@ -1,3 +1,10 @@
+/* Global styles */
+/*var*/
+:root{
+  --color-primary: #FDB5B9;
+  --color-primary-nav: #cedaea;
+}
+
 * {
   margin: 0;
   padding: 0;

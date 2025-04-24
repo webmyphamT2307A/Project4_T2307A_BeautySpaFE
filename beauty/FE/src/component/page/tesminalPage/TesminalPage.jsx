@@ -59,14 +59,14 @@ const TerminalPage = () => {
                   </div>
                   <div className="col-8">
                     <div className="position-absolute" style={{ top: 20, right: 25 }}>
-                      <i className="fa fa-quote-right fa-2x text-secondary" />
+                      <i className="fa fa-quote-right fa-2x" />
                     </div>
                     <div className="testimonial-content">
                       <div className="d-flex mb-4">
-                        <i className="fas fa-star text-primary" />
-                        <i className="fas fa-star text-primary" />
-                        <i className="fas fa-star text-primary" />
-                        <i className="fas fa-star text-primary" />
+                        <i className="fas fa-star" style={{ color: "yellow"}} />
+                        <i className="fas fa-star" style={{color: "yellow"}} />
+                        <i className="fas fa-star" style={{color: "yellow"}} />
+                        <i className="fas fa-star" style={{color: "yellow"}} />
                         <i className="fas fa-star" />
                       </div>
                       <p className="fs-5 mb-0 text-white">
