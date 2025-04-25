@@ -28,7 +28,7 @@ const Header = () => {
                 <div className="container-fluid bg-light">
                     <div className="container px-0">
                         <nav className="navbar navbar-light navbar-expand-xl">
-                            <a href="index.html" className="navbar-brand">
+                            <a href="/" className="navbar-brand">
                                 <h1 className="text-primary display-4">Sparlex</h1>
                             </a>
                             <button className="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -39,7 +39,6 @@ const Header = () => {
                                     <a href="/" className="nav-item nav-link active">Home</a>
                                     <a href="AboutPage" className="nav-item nav-link">About</a>
                                     <a href="ServicePage" className="nav-item nav-link">Services</a>
-                                    <a href="PricePage" className="nav-item nav-link">Price</a>
                                     <div className="nav-item dropdown">
                                         <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
                                         <div className="dropdown-menu m-0 bg-secondary rounded-0">
