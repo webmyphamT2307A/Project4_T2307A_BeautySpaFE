@@ -4,7 +4,6 @@ import './App.css';
 import Homepage from './component/page/Homepage';
 import AboutPage from './component/page/aboutPage/AboutPage';
 import ServicePage from './component/page/servicePage/ServicePage';
-import PricePage from './component/page/pricePage/PricePage';
 import ContactPage from './component/page/contactPage/ContactPage';
 import TeamPage from './component/page/teamPage/TeamPage';
 import TerminalPage from './component/page/tesminalPage/TesminalPage';
@@ -39,7 +38,6 @@ function App() {
             <Route path="/" element={<Homepage />} />
             <Route path="/AboutPage" element={<AboutPage />} />
             <Route path="/ServicePage" element={<ServicePage />} />
-            <Route path="/PricePage" element={<PricePage />} />
             <Route path="/ContactPage" element={<ContactPage />} />
             <Route path="/TeamPage" element={<TeamPage />} />
             <Route path="/TerminalPage" element={<TerminalPage />} />
