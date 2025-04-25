@@ -4,13 +4,14 @@ import './App.css';
 import Homepage from './component/page/Homepage';
 import AboutPage from './component/page/aboutPage/AboutPage';
 import ServicePage from './component/page/servicePage/ServicePage';
-import PricePage from './component/page/pricePage/PricePage';
 import ContactPage from './component/page/contactPage/ContactPage';
 import TeamPage from './component/page/teamPage/TeamPage';
 import TerminalPage from './component/page/tesminalPage/TesminalPage';
 import GaleryPage from './component/page/galeryPage/GaleryPage';
 import AppointmentPage from './component/page/appointmentPage/AppointmentPage';
 import ErrorPage from './component/page/404';
+import CustomerDetail from './component/page/authPage/CustomerDetail'
+
 function App() {
   const [loading, setLoading] = useState(true);
 
@@ -39,13 +40,14 @@ function App() {
             <Route path="/" element={<Homepage />} />
             <Route path="/AboutPage" element={<AboutPage />} />
             <Route path="/ServicePage" element={<ServicePage />} />
-            <Route path="/PricePage" element={<PricePage />} />
             <Route path="/ContactPage" element={<ContactPage />} />
             <Route path="/TeamPage" element={<TeamPage />} />
             <Route path="/TerminalPage" element={<TerminalPage />} />
             <Route path="/GaleryPage" element={<GaleryPage />} />
             <Route path="/AppointmentPage" element={<AppointmentPage />} />
             <Route path="/ErrorPage" element={<ErrorPage />} />
+            <Route path="/CustomerDetail" element={<CustomerDetail />} />
+
           </Routes>
         )}
       </div>

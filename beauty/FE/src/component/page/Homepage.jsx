@@ -15,7 +15,7 @@ const Homepage = () => {
     <div>
       <Header />
       <div className="container-fluid carousel-header px-0">
-        <div id="carouselId" className="carousel slide" data-bs-ride="carousel">
+      <div id="carouselId" className="carousel slide" data-bs-ride="carousel" data-bs-interval="2000">
           <ol className="carousel-indicators">
             <li data-bs-target="#carouselId" data-bs-slide-to={0} className="active" />
             <li data-bs-target="#carouselId" data-bs-slide-to={1} />
