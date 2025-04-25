@@ -28,7 +28,7 @@ const Header = () => {
                 <div className="container-fluid bg-light">
                     <div className="container px-0">
                         <nav className="navbar navbar-light navbar-expand-xl">
-                            <a href="index.html" className="navbar-brand">
+                            <a href="/" className="navbar-brand">
                                 <h1 className="text-primary display-4">Sparlex</h1>
                             </a>
                             <button className="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
