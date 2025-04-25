@@ -39,7 +39,7 @@ const Header = () => {
                                     <a href="/" className="nav-item nav-link active">Home</a>
                                     <a href="AboutPage" className="nav-item nav-link">About</a>
                                     <a href="ServicePage" className="nav-item nav-link">Services</a>
-                                    <a href="PricePage" className="nav-item nav-link">Price</a>
+                                    
                                     <div className="nav-item dropdown">
                                         <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
                                         <div className="dropdown-menu m-0 bg-secondary rounded-0">
