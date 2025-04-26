@@ -24,80 +24,80 @@ const Header = () => {
         window.location.href = "/CustomerDetail";
     };
 
-  // Thêm vào hàm handleLogin trong header.jsx
-  const handleLogin = async (e) => {
-    e.preventDefault();
+    // Thêm vào hàm handleLogin trong header.jsx
+    const handleLogin = async (e) => {
+        e.preventDefault();
 
-    try {
-        const response = await axios.post('http://localhost:8080/api/v1/customer/login', {
-            email,
-            password
-        });
-        
-        // Debug thông tin phản hồi
-        console.log("Response from login:", response.data);
-        const responseData = response.data;
-        if (responseData.status === 'SUCCESS') {
-            console.log("Customer data:", responseData.data.customer);
-            console.log("Token:", responseData.data.token);
-        
-            const customerData = responseData.data.customer;
-            let token = responseData.data.token;
-        
-            // Kiểm tra token hợp lệ (JWT phải có 3 phần)
-            if (!token || token.split('.').length !== 3) {
-                alert('Token không hợp lệ từ server!');
-                return;
-            }
-            token = token.trim();
-        
-            // Lưu thông tin vào localStorage với cấu trúc phù hợp
-            localStorage.setItem('userInfo', JSON.stringify({
-                ...customerData,
-                token: token
-            }));
-        
-            window.location.href = "/CustomerDetail";
-        }
-    } catch (error) {
-        console.error('Error logging in:', error);
-        alert('Email hoặc mật khẩu không chính xác!');
-    }
-   
-};
-const handleRegisterChange = (e) => {
-    setRegisterInfo({
-        ...registerInfo,
-        [e.target.name]: e.target.value
-    });
-};
-
-const handleRegister = async (e) => {
-    e.preventDefault();
-    setRegisterMessage('');
-    try {
-        const response = await axios.post('http://localhost:8080/api/v1/customer/register', registerInfo);
-        if (response.data.status === 'SUCCESS') {
-            setRegisterMessage('Đăng ký thành công! Vui lòng đăng nhập.');
-            setRegisterInfo({
-                fullName: '',
-                email: '',
-                password: '',
-                phone: '',
-                address: ''
+        try {
+            const response = await axios.post('http://localhost:8080/api/v1/customer/login', {
+                email,
+                password
             });
-        } else {
-            setRegisterMessage(response.data.message || 'Đăng ký thất bại!');
+
+            // Debug thông tin phản hồi
+            console.log("Response from login:", response.data);
+            const responseData = response.data;
+            if (responseData.status === 'SUCCESS') {
+                console.log("Customer data:", responseData.data.customer);
+                console.log("Token:", responseData.data.token);
+
+                const customerData = responseData.data.customer;
+                let token = responseData.data.token;
+
+                // Kiểm tra token hợp lệ (JWT phải có 3 phần)
+                if (!token || token.split('.').length !== 3) {
+                    alert('Token không hợp lệ từ server!');
+                    return;
+                }
+                token = token.trim();
+
+                // Lưu thông tin vào localStorage với cấu trúc phù hợp
+                localStorage.setItem('userInfo', JSON.stringify({
+                    ...customerData,
+                    token: token
+                }));
+
+                window.location.href = "/CustomerDetail";
+            }
+        } catch (error) {
+            console.error('Error logging in:', error);
+            alert('Email hoặc mật khẩu không chính xác!');
         }
-    } catch (error) {
-        setRegisterMessage(error.response?.data?.message || 'Đăng ký thất bại!');
-    }
-};
-const handleLogout = () => {
-    localStorage.removeItem('userInfo');
-    setUserInfo(null);
-    window.location.href = "/";
-};
+
+    };
+    const handleRegisterChange = (e) => {
+        setRegisterInfo({
+            ...registerInfo,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleRegister = async (e) => {
+        e.preventDefault();
+        setRegisterMessage('');
+        try {
+            const response = await axios.post('http://localhost:8080/api/v1/customer/register', registerInfo);
+            if (response.data.status === 'SUCCESS') {
+                setRegisterMessage('Đăng ký thành công! Vui lòng đăng nhập.');
+                setRegisterInfo({
+                    fullName: '',
+                    email: '',
+                    password: '',
+                    phone: '',
+                    address: ''
+                });
+            } else {
+                setRegisterMessage(response.data.message || 'Đăng ký thất bại!');
+            }
+        } catch (error) {
+            setRegisterMessage(error.response?.data?.message || 'Đăng ký thất bại!');
+        }
+    };
+    const handleLogout = () => {
+        localStorage.removeItem('userInfo');
+        setUserInfo(null);
+        window.location.href = "/";
+    };
 
     return (
         <div>
@@ -138,12 +138,18 @@ const handleLogout = () => {
                                     <a href="/" className="nav-item nav-link active">Home</a>
                                     <a href="AboutPage" className="nav-item nav-link">About</a>
                                     <a href="ServicePage" className="nav-item nav-link">Services</a>
-                                      {!userInfo ? (
+                                    {!userInfo ? (
                                         <a href="#" className="nav-item nav-link" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
                                     ) : (
                                         <div className="nav-item nav-link" style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
                                             <img
-                                                src={userInfo.imageUrl || "/assets/img/default-avatar.jpg"}
+                                                src={
+                                                    userInfo.imageUrl
+                                                        ? userInfo.imageUrl.startsWith('http')
+                                                            ? userInfo.imageUrl
+                                                            : `http://localhost:8080/${userInfo.imageUrl.replace(/^\/?/, '')}`
+                                                        : "/assets/img/default-avatar.jpg"
+                                                }
                                                 alt="avatar"
                                                 style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", marginRight: 8 }}
                                                 onClick={handleAvatarClick}
@@ -229,15 +235,15 @@ const handleLogout = () => {
                             </form>
                         </div>
                         <div className="modal-footer justify-content-center">
-                             <p className="text-center mb-0">
+                            <p className="text-center mb-0">
                                 Don't have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">Register</a>
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
-              {/* Register Modal */}
-              <div className="modal fade" id="registerModal" tabIndex={-1} aria-labelledby="registerModalLabel" aria-hidden="true">
+            {/* Register Modal */}
+            <div className="modal fade" id="registerModal" tabIndex={-1} aria-labelledby="registerModalLabel" aria-hidden="true">
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header">
@@ -282,26 +288,7 @@ const handleLogout = () => {
                                         required
                                     />
                                 </div>
-                                <div className="mb-3">
-                                    <label className="form-label">Số điện thoại</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        name="phone"
-                                        value={registerInfo.phone}
-                                        onChange={handleRegisterChange}
-                                    />
-                                </div>
-                                <div className="mb-3">
-                                    <label className="form-label">Địa chỉ</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        name="address"
-                                        value={registerInfo.address}
-                                        onChange={handleRegisterChange}
-                                    />
-                                </div>
+                                
                                 <button type="submit" className="btn btn-primary w-100">Đăng ký</button>
                             </form>
                         </div>
