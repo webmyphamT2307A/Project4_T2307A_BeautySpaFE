@@ -15,6 +15,9 @@ const Shadow = Loadable(lazy(() => import('pages/component-overview/shadows')));
 // render - sample page
 const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')));
 
+const UserAccount = Loadable(lazy(() => import('pages/account/user')));
+const AdminAccount = Loadable(lazy(() => import('pages/account/admin')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -49,6 +52,19 @@ const MainRoutes = {
     {
       path: 'sample-page',
       element: <SamplePage />
+    },
+    {
+      path: 'account',
+      children: [
+        {
+          path: 'user',
+          element: <UserAccount />
+        },
+        {
+          path: 'admin',
+          element: <AdminAccount />
+        }
+      ]
     }
   ]
 };
