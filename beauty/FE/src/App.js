@@ -10,6 +10,8 @@ import TerminalPage from './component/page/tesminalPage/TesminalPage';
 import GaleryPage from './component/page/galeryPage/GaleryPage';
 import AppointmentPage from './component/page/appointmentPage/AppointmentPage';
 import ErrorPage from './component/page/404';
+import CustomerDetail from './component/page/authPage/CustomerDetail'
+
 function App() {
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +46,8 @@ function App() {
             <Route path="/GaleryPage" element={<GaleryPage />} />
             <Route path="/AppointmentPage" element={<AppointmentPage />} />
             <Route path="/ErrorPage" element={<ErrorPage />} />
+            <Route path="/CustomerDetail" element={<CustomerDetail />} />
+
           </Routes>
         )}
       </div>
