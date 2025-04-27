@@ -9,19 +9,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 1);
     }
 
-    // Fixed Navbar
-window.addEventListener("scroll", function () {
-    const stickyTop = document.querySelector(".sticky-top");
-    if (stickyTop) {
-        if (window.scrollY > 300) {
-            stickyTop.classList.add("shadow-sm");
-        } else {
-            stickyTop.classList.remove("shadow-sm");
-        }
-        console.log("Sticky-top element:", document.querySelector(".sticky-top"));
-
-    }
-});
 
     // Back to top button
     const backToTop = document.querySelector(".back-to-top");
