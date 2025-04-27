@@ -11,14 +11,21 @@ const Appoinment = () => {
     serviceId: '',
     notes: '',
     customerId: '',
-    userId: '',        
-    branchId: '',      
-    timeSlotId: '',   
-    slot: '',          
-    price: '',        
+    userId: '',
+    branchId: '',
+    timeSlotId: '',
+    slot: '',
+    price: '',
     status: 'pending',
   });
   const [services, setServices] = useState([]);
+  const [timeSlots, setTimeSlots] = useState([]);
+  useEffect(() => {
+    axios.get('http://localhost:8080/api/v1/timeslot')
+      .then(res => setTimeSlots(Array.isArray(res.data) ? res.data : res.data.data || []))
+      .catch(() => setTimeSlots([]));
+  }, []);
+
   useEffect(() => {
     axios.get('http://localhost:8080/api/v1/services')
       .then(res => {
@@ -27,17 +34,7 @@ const Appoinment = () => {
       })
       .catch(() => setServices([]));
   }, []);
-  // useEffect(() => {
-  //   const storedUserInfo = JSON.parse(localStorage.getItem('userInfo'));
-  //   if (storedUserInfo) {
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       customerId: storedUserInfo.id,
-  //       fullName: storedUserInfo.fullName,
-  //       phoneNumber: storedUserInfo.phone, 
-  //     }));
-  //   }
-  // }, []);
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -66,13 +63,13 @@ const Appoinment = () => {
         phoneNumber: storedUserInfo.phone || '',
         userId: storedUserInfo.id || prev.userId,
         customerId: storedUserInfo.id,
-        
+
       }));
     } else {
       toast.error('Không có thông tin tài khoản!');
     }
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -83,6 +80,7 @@ const Appoinment = () => {
       formattedDate = `${day}/${month}/${year}`;
     }
   
+    // Tạo bản sao submitData và loại bỏ customerId, userId nếu rỗng
     const submitData = {
       ...formData,
       status: formData.status || 'pending',
@@ -92,6 +90,10 @@ const Appoinment = () => {
       price: formData.price || 10000,
       slot: formData.slot || "1",
     };
+  
+    // Xóa customerId và userId nếu là chuỗi rỗng hoặc null
+    if (!submitData.customerId) delete submitData.customerId;
+    if (!submitData.userId) delete submitData.userId;
   
     console.log('Form Data gửi lên:', submitData);
   
@@ -106,14 +108,14 @@ const Appoinment = () => {
     } catch (error) {
       if (error.response) {
         console.error('Backend Error:', error.response.data);
-        toast.error('Đặt lịch thất bại! Lỗi: ' + error.response.data.message); 
+        toast.error('Đặt lịch thất bại! Lỗi: ' + error.response.data.message);
       } else {
         console.error('Error:', error.message);
         toast.error('Đặt lịch thất bại!');
       }
     }
   };
-  
+
 
   return (
     <div className="container-fluid appointment py-5">
@@ -147,19 +149,19 @@ const Appoinment = () => {
                     />
                   </div>
                   <div className="col-lg-6">
-                  <select
-              name="serviceId"
-              value={formData.serviceId}
-              onChange={handleInputChange}
-              className="form-select py-3 border-white bg-transparent"
-            >
-              <option value="">Select Service</option>
-              {services.map(service => (
-                <option key={service.id} value={service.id}>
-                  {service.name} - {service.price}₫
-                </option>
-              ))}
-            </select>
+                    <select
+                      name="serviceId"
+                      value={formData.serviceId}
+                      onChange={handleInputChange}
+                      className="form-select py-3 border-white bg-transparent"
+                    >
+                      <option value="">Select Service</option>
+                      {services.map(service => (
+                        <option key={service.id} value={service.id}>
+                          {service.name} - {service.price}₫
+                        </option>
+                      ))}
+                    </select>
 
                   </div>
                   <div className="col-lg-6">
@@ -170,6 +172,22 @@ const Appoinment = () => {
                       onChange={handleInputChange}
                       className="form-control py-3 border-white bg-transparent"
                     />
+                  </div>
+                  <div className="col-lg-12">
+                    <select
+                      name="timeSlotId"
+                      value={formData.timeSlotId}
+                      onChange={handleInputChange}
+                      style={{width: '73vh'}}
+                      className="form-select py-3 border-white bg-transparent w-100 vw-50"
+                    >
+                      <option value="">Chọn khung giờ</option>
+                      {timeSlots.map(slot => (
+                        <option key={slot.slotId} value={slot.slotId}>
+                          {slot.startTime} - {slot.endTime}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="col-lg-12">
                     <textarea
