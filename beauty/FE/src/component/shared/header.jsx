@@ -155,10 +155,7 @@ const Header = () => {
                                                 style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", marginRight: 8 }}
                                                 onClick={handleAvatarClick}
                                             />
-                                            <span onClick={handleAvatarClick}>{userInfo.fullName || userInfo.email}</span>
-                                            <button className="btn btn-link ms-2 p-0" onClick={handleLogout} title="Đăng xuất">
-                                                <i className="fas fa-sign-out-alt"></i>
-                                            </button>
+                                          
                                         </div>
                                     )}
 
