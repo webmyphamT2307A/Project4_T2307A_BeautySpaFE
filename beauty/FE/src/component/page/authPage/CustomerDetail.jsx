@@ -170,6 +170,7 @@ const CustomerDetail = () => {
                 fullName: userInfo.fullName,
                 phone: userInfo.phone,
                 address: userInfo.address,
+                email: userInfo.email
             };
 
             // Append customer info to FormData with the name "info"
@@ -379,7 +380,7 @@ const CustomerDetail = () => {
                                                         name="email"
                                                         value={userInfo.email}
                                                         onChange={handleProfileChange}
-                                                        readOnly
+                                                        
                                                     />
                                                 </div>
                                             </div>
