@@ -78,6 +78,13 @@ export default function Profile() {
     setValue(newValue);
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) { }
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  };
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <ButtonBase
@@ -140,7 +147,7 @@ export default function Profile() {
                       </Grid>
                       <Grid>
                         <Tooltip title="Logout">
-                          <IconButton size="large" sx={{ color: 'text.primary' }}>
+                          <IconButton size="large" sx={{ color: 'text.primary' }} onClick={handleLogout}>
                             <LogoutOutlined />
                           </IconButton>
                         </Tooltip>

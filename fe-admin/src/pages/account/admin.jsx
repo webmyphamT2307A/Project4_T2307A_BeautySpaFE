@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, CloseOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
+import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/accounts';
 const ROLE_URL = 'http://localhost:8080/api/v1/roles';
@@ -35,7 +36,6 @@ const AdminAccount = () => {
     isActive: true
   });
 
-  // Lấy roles và branches từ BE
   useEffect(() => {
     fetch(`${API_URL}/find-all`)
       .then(res => res.json())
@@ -49,24 +49,28 @@ const AdminAccount = () => {
   }, []);
 
   // Lấy danh sách user từ BE
-  useEffect(() => {
-    setLoading(true);
-    fetch(`${API_URL}/find-all`)
-      .then(res => res.json())
-      .then(data => {
-        setUsers(data.data || []);
-        setFilteredUsers(data.data || []);
-        setLoading(false);
-      });
-  }, []);
+useEffect(() => {
+  setLoading(true);
+  fetch(`${API_URL}/find-all`)
+    .then(res => res.json())
+    .then(data => {
+      const usersData = (data.data || []).map(u => ({
+        ...u,
+        isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
+      }));
+      setUsers(usersData);
+      setFilteredUsers(usersData);
+      setLoading(false);
+      console.log(data.data);
+    });
+}, []);
 
-  // Search & filter
   useEffect(() => {
     let results = [...users];
     if (statusFilter !== 'all') {
-      const isActive = statusFilter === 'active';
-      results = results.filter(user => user.isActive === isActive);
+      results = results.filter(user => user.isActive === Boolean(Number(statusFilter)));
     }
+   
     if (searchQuery) {
       const lower = searchQuery.toLowerCase();
       results = results.filter(
@@ -83,7 +87,6 @@ const AdminAccount = () => {
 
   const handleOpen = (user = null) => {
     if (user) {
-      // Luôn lấy object role từ mảng roles theo id
       const selectedRole = roles.find(r => r.id === (user.role?.id || user.roleId));
       const selectedBranch = branches.find(b => b.id === (user.branch?.id || user.branchId));
       setCurrentUser(user);
@@ -95,7 +98,8 @@ const AdminAccount = () => {
         avatar: user.avatar || '',
         address: user.address || '',
         role: selectedRole || null,
-        branch: selectedBranch || null
+        branch: selectedBranch || null,
+        isActive: user.isActive
       });
     } else {
       setCurrentUser(null);
@@ -135,17 +139,7 @@ const AdminAccount = () => {
   // Thêm hoặc cập nhật user
   const handleSave = async () => {
     if (currentUser) {
-      // Log dữ liệu gửi lên
-      console.log('Update data:', {
-        fullName: formData.fullName,
-        password: formData.password || null,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        roleId: formData.role?.id,
-        branchId: formData.branch?.id
-      });
-      await fetch(`${API_URL}/update/${currentUser.id}`, {
+      const res = await fetch(`${API_URL}/update/${currentUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -156,12 +150,17 @@ const AdminAccount = () => {
           address: formData.address,
           roleId: formData.role?.id,
           branchId: formData.branch?.id,
+          isActive: formData.isActive,
           description: ""
         })
       });
+      if (res.ok) {
+        toast.success('Cập nhật thành công!');
+      } else {
+        toast.error('Cập nhật thất bại!');
+      }
     } else {
-      // Create
-      await fetch(`${API_URL}/create`, {
+      const res = await fetch(`${API_URL}/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,8 +173,12 @@ const AdminAccount = () => {
           branchId: formData.branch?.id
         })
       });
+      if (res.ok) {
+        toast.success('Tạo mới thành công!');
+      } else {
+        toast.error('Tạo mới thất bại!');
+      }
     }
-    // Refresh lại danh sách
     fetch(`${API_URL}/find-all`)
       .then(res => res.json())
       .then(data => {
@@ -184,10 +187,15 @@ const AdminAccount = () => {
       });
     setOpen(false);
   };
-
   // Xóa user
   const handleDelete = async (id) => {
-    await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
+    if (!window.confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) return;
+    const res = await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
+    if (res.ok) {
+      toast.success('Xóa thành công!');
+    } else {
+      toast.error('Xóa thất bại!');
+    }
     fetch(`${API_URL}/find-all`)
       .then(res => res.json())
       .then(data => {
@@ -202,7 +210,10 @@ const AdminAccount = () => {
     setPage(0);
   };
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
-  const handleStatusFilterChange = (e) => setStatusFilter(e.target.value);
+  const handleStatusFilterChange = (e) => {
+    const value = e.target.value;
+    setStatusFilter(value === 'all' ? 'all' : Number(value));
+  };
 
   // Hiển thị tên role
   const getRoleName = (user) => {
@@ -257,8 +268,8 @@ const AdminAccount = () => {
                 onChange={handleStatusFilterChange}
               >
                 <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value={1}>Active</MenuItem>
+                <MenuItem value={0}>Inactive</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -462,24 +473,7 @@ const AdminAccount = () => {
               ))}
             </Select>
           </FormControl>
-          <TextField
-            margin="dense"
-            name="avatar"
-            label="Avatar URL"
-            type="text"
-            fullWidth
-            value={formData.avatar}
-            onChange={handleChange}
-            InputProps={{
-              endAdornment: formData.avatar ? (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => handleClearField('avatar')}>
-                    <CloseOutlined style={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : null
-            }}
-          />
+          
           <TextField
             margin="dense"
             name="address"
