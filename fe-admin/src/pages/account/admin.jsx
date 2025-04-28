@@ -1,38 +1,15 @@
 import { useState, useEffect } from 'react';
 import {
-  Grid,
-  Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Switch,
-  FormControlLabel,
-  IconButton,
-  TablePagination,
-  Box,
-  InputAdornment,
-  Chip,
+  Grid, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Select, FormControl,
+  InputLabel, Switch, FormControlLabel, IconButton, TablePagination, Box, InputAdornment, Chip
 } from '@mui/material';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, CloseOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
-// project imports
 import MainCard from 'components/MainCard';
 
-// ==============================|| ADMIN ACCOUNT PAGE ||============================== //
-
+const API_URL = 'http://localhost:8080/api/v1/admin/accounts';
+const ROLE_URL = 'http://localhost:8080/api/v1/roles';
+const BRANCH_URL = 'http://localhost:8080/api/v1/branch';
 const AdminAccount = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -47,196 +24,208 @@ const AdminAccount = () => {
   const [roles, setRoles] = useState([]);
   const [branches, setBranches] = useState([]);
   const [formData, setFormData] = useState({
-    full_name: '',
+    fullName: '',
     phone: '',
     email: '',
     password: '',
-    image_url: '',
+    avatar: '',
     address: '',
-    role_id: 3, // Default to Staff role
-    branch_id: '',
-    description: '',
-    is_active: true
+    role: null,
+    branch: null,
+    isActive: true
   });
 
-  // Mock data for roles and branches
+  // Lấy roles và branches từ BE
   useEffect(() => {
-    setRoles([
-      { role_id: 1, name: 'Super Admin' },
-      { role_id: 2, name: 'Manager' },
-      { role_id: 3, name: 'Staff' },
-      { role_id: 4, name: 'Accountant' }
-    ]);
-
-    setBranches([
-      { branch_id: 1, name: 'Hanoi Branch', address: '123 Hai Ba Trung, Hanoi' },
-      { branch_id: 2, name: 'HCMC Branch', address: '456 Nguyen Hue, District 1, Ho Chi Minh City' },
-      { branch_id: 3, name: 'Da Nang Branch', address: '789 Bach Dang, Da Nang' }
-    ]);
+    fetch(`${API_URL}/find-all`)
+      .then(res => res.json())
+      .then(data => setRoles(data.data || []));
+    fetch(`${ROLE_URL}`)
+      .then(res => res.json())
+      .then(data => setRoles(data.data || []));
+    fetch(`${BRANCH_URL}`)
+      .then(res => res.json())
+      .then(data => setBranches(data.data || []));
   }, []);
 
-  // Mock data for admin users
+  // Lấy danh sách user từ BE
   useEffect(() => {
-    const mockUsers = [
-      { user_id: 1, full_name: 'John Admin', phone: '0901234567', email: 'john@admin.com', password: '********', image_url: '', address: 'Hanoi, Vietnam', role_id: 1, branch_id: 1, description: 'Main administrator', is_active: true, created_at: '2023-05-01', updated_at: '2023-05-01' },
-      { user_id: 2, full_name: 'Jane Manager', phone: '0909876543', email: 'jane@admin.com', password: '********', image_url: '', address: 'Ho Chi Minh City, Vietnam', role_id: 2, branch_id: 2, description: 'Branch manager', is_active: true, created_at: '2023-05-05', updated_at: '2023-05-05' },
-      { user_id: 3, full_name: 'Robert Staff', phone: '0908765432', email: 'robert@admin.com', password: '********', image_url: '', address: 'Da Nang, Vietnam', role_id: 3, branch_id: 3, description: 'Sales staff', is_active: false, created_at: '2023-05-10', updated_at: '2023-05-15' },
-      { user_id: 4, full_name: 'Maria Garcia', phone: '0907654321', email: 'maria@admin.com', password: '********', image_url: '', address: 'Nha Trang, Vietnam', role_id: 4, branch_id: 2, description: 'Financial operations', is_active: true, created_at: '2023-05-12', updated_at: '2023-05-12' },
-      { user_id: 5, full_name: 'David Lee', phone: '0906543210', email: 'david@admin.com', password: '********', image_url: '', address: 'Hue, Vietnam', role_id: 2, branch_id: 1, description: 'Operations manager', is_active: true, created_at: '2023-05-15', updated_at: '2023-05-20' },
-      { user_id: 6, full_name: 'Sarah Johnson', phone: '0905432109', email: 'sarah@admin.com', password: '********', image_url: '', address: 'Hai Phong, Vietnam', role_id: 3, branch_id: 1, description: 'Customer service', is_active: true, created_at: '2023-05-18', updated_at: '2023-05-18' },
-      { user_id: 7, full_name: 'Michael Wang', phone: '0904321098', email: 'michael@admin.com', password: '********', image_url: '', address: 'Can Tho, Vietnam', role_id: 3, branch_id: 2, description: 'Inventory manager', is_active: false, created_at: '2023-05-20', updated_at: '2023-05-25' },
-      { user_id: 8, full_name: 'Linda Kim', phone: '0903210987', email: 'linda@admin.com', password: '********', image_url: '', address: 'Vung Tau, Vietnam', role_id: 4, branch_id: 3, description: 'Accounting specialist', is_active: true, created_at: '2023-05-22', updated_at: '2023-05-22' }
-    ];
-    setUsers(mockUsers);
-    setFilteredUsers(mockUsers);
+    setLoading(true);
+    fetch(`${API_URL}/find-all`)
+      .then(res => res.json())
+      .then(data => {
+        setUsers(data.data || []);
+        setFilteredUsers(data.data || []);
+        setLoading(false);
+      });
   }, []);
 
-  // Handle search and filter functionality
+  // Search & filter
   useEffect(() => {
-    const delaySearch = setTimeout(() => {
-      let results = [...users];
-
-      // Apply status filter
-      if (statusFilter !== 'all') {
-        const isActive = statusFilter === 'active';
-        results = results.filter(user => user.is_active === isActive);
-      }
-
-      // Apply search query
-      if (searchQuery) {
-        const lowercasedQuery = searchQuery.toLowerCase();
-        results = results.filter(
-          user =>
-            user.user_id.toString().includes(lowercasedQuery) ||
-            user.full_name.toLowerCase().includes(lowercasedQuery) ||
-            user.phone.toLowerCase().includes(lowercasedQuery) ||
-            (user.email && user.email.toLowerCase().includes(lowercasedQuery))
-        );
-      }
-
-      setFilteredUsers(results);
-      setPage(0);
-    }, 300);
-
-    return () => clearTimeout(delaySearch);
+    let results = [...users];
+    if (statusFilter !== 'all') {
+      const isActive = statusFilter === 'active';
+      results = results.filter(user => user.isActive === isActive);
+    }
+    if (searchQuery) {
+      const lower = searchQuery.toLowerCase();
+      results = results.filter(
+        user =>
+          user.id?.toString().includes(lower) ||
+          user.fullName?.toLowerCase().includes(lower) ||
+          user.phone?.toLowerCase().includes(lower) ||
+          user.email?.toLowerCase().includes(lower)
+      );
+    }
+    setFilteredUsers(results);
+    setPage(0);
   }, [searchQuery, statusFilter, users]);
 
   const handleOpen = (user = null) => {
     if (user) {
+      // Luôn lấy object role từ mảng roles theo id
+      const selectedRole = roles.find(r => r.id === (user.role?.id || user.roleId));
+      const selectedBranch = branches.find(b => b.id === (user.branch?.id || user.branchId));
       setCurrentUser(user);
       setFormData({
-        full_name: user.full_name,
-        phone: user.phone,
-        email: user.email,
-        password: '', // Don't show existing password
-        image_url: user.image_url || '',
+        fullName: user.fullName || '',
+        phone: user.phone || '',
+        email: user.email || '',
+        password: '',
+        avatar: user.avatar || '',
         address: user.address || '',
-        role_id: user.role_id,
-        branch_id: user.branch_id || '',
-        description: user.description || '',
-        is_active: user.is_active
+        role: selectedRole || null,
+        branch: selectedBranch || null
       });
     } else {
       setCurrentUser(null);
-      // Set default role to Staff (role_id: 3)
       setFormData({
-        full_name: '',
+        fullName: '',
         phone: '',
         email: '',
         password: '',
-        image_url: '',
+        avatar: '',
         address: '',
-        role_id: 3, // Default to Staff role
-        branch_id: '',
-        description: '',
-        is_active: true
+        role: roles[0] || null,
+        branch: branches[0] || null,
+        isActive: true
       });
     }
     setOpen(true);
   };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const handleClose = () => setOpen(false);
 
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
-    const newValue = name === 'is_active' ? checked : value;
-    setFormData({
-      ...formData,
-      [name]: newValue
-    });
-  };
-  const handleClearField = (fieldName) => {
-    setFormData({...formData, [fieldName]: ''});
-  };
-  const handleSave = () => {
-    if (currentUser) {
-      // Update existing user
-      const updatedUsers = users.map(user =>
-        user.user_id === currentUser.user_id
-          ? {
-            ...user,
-            ...formData,
-            updated_at: new Date().toISOString().split('T')[0]
-          }
-          : user
-      );
-      setUsers(updatedUsers);
+    if (name === 'isActive') {
+      setFormData({ ...formData, isActive: checked });
+    } else if (name === 'role') {
+      const roleObj = roles.find(r => r.id === Number(value));
+      setFormData({ ...formData, role: roleObj });
+    } else if (name === 'branch') {
+      const branchObj = branches.find(b => b.id === Number(value));
+      setFormData({ ...formData, branch: branchObj });
     } else {
-      // Create new user
-      const newUser = {
-        user_id: Math.max(...users.map(u => u.user_id), 0) + 1,
-        ...formData,
-        created_at: new Date().toISOString().split('T')[0],
-        updated_at: new Date().toISOString().split('T')[0]
-      };
-      setUsers([...users, newUser]);
+      setFormData({ ...formData, [name]: value });
     }
+  };
+
+  const handleClearField = (fieldName) => setFormData({ ...formData, [fieldName]: '' });
+
+  // Thêm hoặc cập nhật user
+  const handleSave = async () => {
+    if (currentUser) {
+      // Log dữ liệu gửi lên
+      console.log('Update data:', {
+        fullName: formData.fullName,
+        password: formData.password || null,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        roleId: formData.role?.id,
+        branchId: formData.branch?.id
+      });
+      await fetch(`${API_URL}/update/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          password: formData.password || null,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          roleId: formData.role?.id,
+          branchId: formData.branch?.id,
+          description: ""
+        })
+      });
+    } else {
+      // Create
+      await fetch(`${API_URL}/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          password: formData.password,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          roleId: formData.role?.id,
+          branchId: formData.branch?.id
+        })
+      });
+    }
+    // Refresh lại danh sách
+    fetch(`${API_URL}/find-all`)
+      .then(res => res.json())
+      .then(data => {
+        setUsers(data.data || []);
+        setFilteredUsers(data.data || []);
+      });
     setOpen(false);
   };
 
-  const handleDelete = (id) => {
-    setUsers(users.filter(user => user.user_id !== id));
+  // Xóa user
+  const handleDelete = async (id) => {
+    await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
+    fetch(`${API_URL}/find-all`)
+      .then(res => res.json())
+      .then(data => {
+        setUsers(data.data || []);
+        setFilteredUsers(data.data || []);
+      });
   };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
+  const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+  const handleSearchChange = (e) => setSearchQuery(e.target.value);
+  const handleStatusFilterChange = (e) => setStatusFilter(e.target.value);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
+  // Hiển thị tên role
+  const getRoleName = (user) => {
+    // Nếu user có object role thì lấy tên
+    if (user.role && user.role.name) return user.role.name;
+    // Nếu user có role là object nhưng không có name, thử lấy theo id
+    if (user.role && user.role.id && roles.length > 0) {
+      const found = roles.find(r => Number(r.id) === Number(user.role.id));
+      return found ? found.name : 'Unknown Role';
+    }
+    return 'Unknown Role';
+  };
+  // Hiển thị tên branch
+  const getBranchName = (user) => {
+    if (user.branch && user.branch.name) return user.branch.name;
+    if (user.branchId && branches.length > 0) {
+      const found = branches.find(b => b.id === user.branchId);
+      return found ? found.name : '-';
+    }
+    return '-';
   };
 
-  const handleStatusFilterChange = (e) => {
-    setStatusFilter(e.target.value);
-  };
-
-  // Clear branch selection
-  const handleClearBranch = (e) => {
-    e.stopPropagation();
-    setFormData({...formData, branch_id: ''});
-  };
-
-  // Get current page users
   const currentUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  // Helper function to get role name by id
-  const getRoleName = (roleId) => {
-    const role = roles.find(r => r.role_id === roleId);
-    return role ? role.name : 'Unknown Role';
-  };
-
-  // Helper function to get branch name by id
-  const getBranchName = (branchId) => {
-    const branch = branches.find(b => b.branch_id === branchId);
-    return branch ? branch.name : 'Unknown Branch';
-  };
 
   return (
     <MainCard title="Admin Management">
@@ -284,68 +273,56 @@ const AdminAccount = () => {
         </Grid>
         <Grid item xs={12}>
           <Box sx={{ width: '100%', overflow: 'hidden' }}>
-            <TableContainer
-              component={Paper}
-              sx={{
-                maxHeight: 440,
-                '& .MuiTableHead-root': {
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 10
-                }
-              }}
-            >
+            <TableContainer component={Paper} sx={{ maxHeight: 440, '& .MuiTableHead-root': { position: 'sticky', top: 0, zIndex: 10 } }}>
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell width="5%" sx={{ backgroundColor: '#f8f8f8' }}>#</TableCell>
-                    <TableCell width="15%" sx={{ backgroundColor: '#f8f8f8' }}>Full Name</TableCell>
-                    <TableCell width="10%" sx={{ backgroundColor: '#f8f8f8' }}>Phone</TableCell>
-                    <TableCell width="15%" sx={{ backgroundColor: '#f8f8f8' }}>Email</TableCell>
-                    <TableCell width="12%" sx={{ backgroundColor: '#f8f8f8' }}>Role</TableCell>
-                    <TableCell width="13%" sx={{ backgroundColor: '#f8f8f8' }}>Branch</TableCell>
-                    <TableCell width="10%" sx={{ backgroundColor: '#f8f8f8' }}>Status</TableCell>
-                    <TableCell width="10%" sx={{ backgroundColor: '#f8f8f8' }}>Created</TableCell>
-                    <TableCell width="10%" align="right" sx={{ backgroundColor: '#f8f8f8' }}>Actions</TableCell>
+                    <TableCell>#</TableCell>
+                    <TableCell>Full Name</TableCell>
+                    <TableCell>Phone</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Branch</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {currentUsers.length > 0 ? (
                     currentUsers.map((user, index) => (
-                      <TableRow key={user.user_id} hover>
+                      <TableRow key={user.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{user.full_name}</TableCell>
+                        <TableCell>{user.fullName}</TableCell>
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
                           <Chip
-                            label={getRoleName(user.role_id)}
+                            label={getRoleName(user)}
                             size="small"
                             color="primary"
                             variant="outlined"
                             sx={{ borderRadius: '16px' }}
                           />
                         </TableCell>
-                        <TableCell>{user.branch_id ? getBranchName(user.branch_id) : '-'}</TableCell>
+                        <TableCell>{getBranchName(user)}</TableCell>
                         <TableCell>
                           <Chip
-                            label={user.is_active ? "Active" : "Inactive"}
+                            label={user.isActive ? "Active" : "Inactive"}
                             size="small"
-                            color={user.is_active ? "success" : "default"}
+                            color={user.isActive ? "success" : "default"}
                             sx={{
                               borderRadius: '16px',
                               fontWeight: 500,
                               fontSize: '0.75rem',
-                              color: user.is_active ? '#fff' : '#555',
+                              color: user.isActive ? '#fff' : '#555',
                             }}
                           />
                         </TableCell>
-                        <TableCell>{user.created_at}</TableCell>
-                        <TableCell align="right">
+                        <TableCell>
                           <IconButton onClick={() => handleOpen(user)} color="primary" size="small">
                             <EditOutlined />
                           </IconButton>
-                          <IconButton onClick={() => handleDelete(user.user_id)} color="error" size="small">
+                          <IconButton onClick={() => handleDelete(user.id)} color="error" size="small">
                             <DeleteOutlined />
                           </IconButton>
                         </TableCell>
@@ -353,7 +330,7 @@ const AdminAccount = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={9} align="center">No admins found</TableCell>
+                      <TableCell colSpan={8} align="center">No admins found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -377,19 +354,16 @@ const AdminAccount = () => {
         <DialogContent>
           <TextField
             margin="dense"
-            name="full_name"
+            name="fullName"
             label="Full Name"
             type="text"
             fullWidth
-            value={formData.full_name}
+            value={formData.fullName}
             onChange={handleChange}
             InputProps={{
-              endAdornment: formData.full_name ? (
+              endAdornment: formData.fullName ? (
                 <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('full_name')}
-                  >
+                  <IconButton size="small" onClick={() => handleClearField('fullName')}>
                     <CloseOutlined style={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
@@ -407,10 +381,7 @@ const AdminAccount = () => {
             InputProps={{
               endAdornment: formData.phone ? (
                 <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('phone')}
-                  >
+                  <IconButton size="small" onClick={() => handleClearField('phone')}>
                     <CloseOutlined style={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
@@ -428,15 +399,13 @@ const AdminAccount = () => {
             InputProps={{
               endAdornment: formData.email ? (
                 <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('email')}
-                  >
+                  <IconButton size="small" onClick={() => handleClearField('email')}>
                     <CloseOutlined style={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
               ) : null
             }}
+            disabled={!!currentUser}
           />
           {!currentUser && (
             <TextField
@@ -451,18 +420,11 @@ const AdminAccount = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     {formData.password && (
-                      <IconButton
-                        size="small"
-                        onClick={() => handleClearField('password')}
-                      >
+                      <IconButton size="small" onClick={() => handleClearField('password')}>
                         <CloseOutlined style={{ fontSize: 16 }} />
                       </IconButton>
                     )}
-                    <IconButton
-                      size="small"
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
+                    <IconButton size="small" onClick={() => setShowPassword(!showPassword)} edge="end">
                       {showPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                     </IconButton>
                   </InputAdornment>
@@ -473,26 +435,13 @@ const AdminAccount = () => {
           <FormControl fullWidth margin="dense">
             <InputLabel>Role</InputLabel>
             <Select
-              name="role_id"
-              value={formData.role_id}
+              name="role"
+              value={formData.role?.id || ''}
               label="Role"
               onChange={handleChange}
-              endAdornment={
-                <InputAdornment position="end" sx={{ mr: 2 }}>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setFormData({...formData, role_id: 3}); // Reset to default Staff role
-                    }}
-                  >
-                    <CloseOutlined style={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              }
             >
               {roles.map(role => (
-                <MenuItem key={role.role_id} value={role.role_id}>
+                <MenuItem key={role.id} value={role.id}>
                   {role.name}
                 </MenuItem>
               ))}
@@ -501,35 +450,13 @@ const AdminAccount = () => {
           <FormControl fullWidth margin="dense">
             <InputLabel>Branch</InputLabel>
             <Select
-              name="branch_id"
-              value={formData.branch_id}
+              name="branch"
+              value={formData.branch?.id || ''}
               label="Branch"
               onChange={handleChange}
-              displayEmpty
-              renderValue={(selected) => {
-                if (!selected) {
-                  return "No branch selected";
-                }
-                return getBranchName(selected);
-              }}
-              endAdornment={
-                formData.branch_id ? (
-                  <InputAdornment position="end" sx={{ mr: 2 }}>
-                    <IconButton
-                      size="small"
-                      onClick={handleClearBranch}
-                    >
-                      <CloseOutlined style={{ fontSize: 16 }} />
-                    </IconButton>
-                  </InputAdornment>
-                ) : null
-              }
             >
-              <MenuItem value="">
-                No branch selected
-              </MenuItem>
               {branches.map(branch => (
-                <MenuItem key={branch.branch_id} value={branch.branch_id}>
+                <MenuItem key={branch.id} value={branch.id}>
                   {branch.name}
                 </MenuItem>
               ))}
@@ -537,19 +464,16 @@ const AdminAccount = () => {
           </FormControl>
           <TextField
             margin="dense"
-            name="image_url"
-            label="Image URL"
+            name="avatar"
+            label="Avatar URL"
             type="text"
             fullWidth
-            value={formData.image_url}
+            value={formData.avatar}
             onChange={handleChange}
             InputProps={{
-              endAdornment: formData.image_url ? (
+              endAdornment: formData.avatar ? (
                 <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('image_url')}
-                  >
+                  <IconButton size="small" onClick={() => handleClearField('avatar')}>
                     <CloseOutlined style={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
@@ -569,33 +493,7 @@ const AdminAccount = () => {
             InputProps={{
               endAdornment: formData.address ? (
                 <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('address')}
-                  >
-                    <CloseOutlined style={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : null
-            }}
-          />
-          <TextField
-            margin="dense"
-            name="description"
-            label="Description"
-            type="text"
-            fullWidth
-            multiline
-            rows={2}
-            value={formData.description}
-            onChange={handleChange}
-            InputProps={{
-              endAdornment: formData.description ? (
-                <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('description')}
-                  >
+                  <IconButton size="small" onClick={() => handleClearField('address')}>
                     <CloseOutlined style={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
@@ -605,9 +503,9 @@ const AdminAccount = () => {
           <FormControlLabel
             control={
               <Switch
-                checked={formData.is_active}
+                checked={formData.isActive}
                 onChange={handleChange}
-                name="is_active"
+                name="isActive"
               />
             }
             label="Active"
