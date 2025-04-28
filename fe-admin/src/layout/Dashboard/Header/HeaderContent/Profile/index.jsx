@@ -56,6 +56,14 @@ export default function Profile() {
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('user'));
+  } catch (e) {
+    user = null;
+  }
+  const userName = user?.fullName || 'Chưa đăng nhập';
+  const userAvatar = user?.avatar || avatar1;
 
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
@@ -88,9 +96,9 @@ export default function Profile() {
         onClick={handleToggle}
       >
         <Stack direction="row" sx={{ gap: 1.25, alignItems: 'center', p: 0.5 }}>
-          <Avatar alt="profile user" src={avatar1} size="sm" />
+          <Avatar alt="profile user" src={userAvatar} size="sm" />
           <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>
-            John Doe
+            {userName}
           </Typography>
         </Stack>
       </ButtonBase>

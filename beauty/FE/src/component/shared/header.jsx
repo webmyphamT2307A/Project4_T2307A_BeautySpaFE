@@ -155,7 +155,7 @@ const Header = () => {
                                                 style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", marginRight: 8 }}
                                                 onClick={handleAvatarClick}
                                             />
-                                          
+
                                         </div>
                                     )}
 
