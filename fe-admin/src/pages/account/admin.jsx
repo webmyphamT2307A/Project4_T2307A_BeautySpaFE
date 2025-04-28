@@ -49,21 +49,26 @@ const AdminAccount = () => {
   }, []);
 
   // Lấy danh sách user từ BE
-  useEffect(() => {
-    setLoading(true);
-    fetch(`${API_URL}/find-all`)
-      .then(res => res.json())
-      .then(data => {
-        setUsers(data.data || []);
-        setFilteredUsers(data.data || []);
-        setLoading(false);
-      });
-  }, []);
+useEffect(() => {
+  setLoading(true);
+  fetch(`${API_URL}/find-all`)
+    .then(res => res.json())
+    .then(data => {
+      const usersData = (data.data || []).map(u => ({
+        ...u,
+        isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
+      }));
+      setUsers(usersData);
+      setFilteredUsers(usersData);
+      setLoading(false);
+      console.log(data.data);
+    });
+}, []);
 
   useEffect(() => {
     let results = [...users];
     if (statusFilter !== 'all') {
-      results = results.filter(user => user.isActive === (statusFilter === 1));
+      results = results.filter(user => user.isActive === Boolean(Number(statusFilter)));
     }
    
     if (searchQuery) {
