@@ -16,6 +16,13 @@ import WalletOutlined from '@ant-design/icons/WalletOutlined';
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
 
 export default function ProfileTab() {
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) { }
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  };
   return (
     <List component="nav" sx={{ p: 0, '& .MuiListItemIcon-root': { minWidth: 32 } }}>
       <ListItemButton>
@@ -43,10 +50,10 @@ export default function ProfileTab() {
         </ListItemIcon>
         <ListItemText primary="Billing" />
       </ListItemButton>
-      <ListItemButton>
+      <ListItemButton onClick={handleLogout}>
         <ListItemIcon>
           <LogoutOutlined />
-        </ListItemIcon>
+        </ListItemIcon >
         <ListItemText primary="Logout" />
       </ListItemButton>
     </List>
