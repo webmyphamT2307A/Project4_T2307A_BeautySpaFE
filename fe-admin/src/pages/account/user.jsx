@@ -31,6 +31,8 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, CloseOutlin
 // project imports
 import MainCard from 'components/MainCard';
 
+const API_URL = 'http://localhost:8080/api/v1/customer';
+
 // ==============================|| USER ACCOUNT PAGE ||============================== //
 
 const UserAccount = () => {
@@ -54,33 +56,34 @@ const UserAccount = () => {
     is_active: true
   });
 
-  // Mock data for demonstration
+  // Fetch users from BE
   useEffect(() => {
-    // Generate 20 mock users
-    const mockUsers = [
-      { customer_id: 1, full_name: 'John Doe', phone: '0901234567', email: 'john@example.com', image_url: '', address: 'Hanoi, Vietnam', is_active: true, created_at: '2023-05-01' },
-      { customer_id: 2, full_name: 'Jane Smith', phone: '0909876543', email: 'jane@example.com', image_url: '', address: 'Ho Chi Minh City, Vietnam', is_active: true, created_at: '2023-05-05' },
-      { customer_id: 3, full_name: 'Robert Brown', phone: '0908765432', email: 'robert@example.com', image_url: '', address: 'Da Nang, Vietnam', is_active: false, created_at: '2023-05-10' },
-      { customer_id: 4, full_name: 'Maria Garcia', phone: '0907654321', email: 'maria@example.com', image_url: '', address: 'Nha Trang, Vietnam', is_active: true, created_at: '2023-05-12' },
-      { customer_id: 5, full_name: 'David Lee', phone: '0906543210', email: 'david@example.com', image_url: '', address: 'Hue, Vietnam', is_active: true, created_at: '2023-05-15' },
-      { customer_id: 6, full_name: 'Sarah Johnson', phone: '0905432109', email: 'sarah@example.com', image_url: '', address: 'Hai Phong, Vietnam', is_active: true, created_at: '2023-05-18' },
-      { customer_id: 7, full_name: 'Michael Wang', phone: '0904321098', email: 'michael@example.com', image_url: '', address: 'Can Tho, Vietnam', is_active: false, created_at: '2023-05-20' },
-      { customer_id: 8, full_name: 'Linda Kim', phone: '0903210987', email: 'linda@example.com', image_url: '', address: 'Vung Tau, Vietnam', is_active: true, created_at: '2023-05-22' },
-      { customer_id: 9, full_name: 'James Wilson', phone: '0902109876', email: 'james@example.com', image_url: '', address: 'Hanoi, Vietnam', is_active: true, created_at: '2023-05-25' },
-      { customer_id: 10, full_name: 'Patricia Moore', phone: '0901098765', email: 'patricia@example.com', image_url: '', address: 'Ho Chi Minh City, Vietnam', is_active: false, created_at: '2023-05-28' },
-      { customer_id: 11, full_name: 'Thomas Zhang', phone: '0900987654', email: 'thomas@example.com', image_url: '', address: 'Da Nang, Vietnam', is_active: true, created_at: '2023-06-01' },
-      { customer_id: 12, full_name: 'Jennifer Lopez', phone: '0912345678', email: 'jennifer@example.com', image_url: '', address: 'Hanoi, Vietnam', is_active: true, created_at: '2023-06-03' },
-      { customer_id: 13, full_name: 'Richard Tran', phone: '0923456789', email: 'richard@example.com', image_url: '', address: 'Ho Chi Minh City, Vietnam', is_active: true, created_at: '2023-06-05' },
-      { customer_id: 14, full_name: 'Elizabeth Dinh', phone: '0934567890', email: 'elizabeth@example.com', image_url: '', address: 'Hoi An, Vietnam', is_active: false, created_at: '2023-06-08' },
-      { customer_id: 15, full_name: 'Daniel Nguyen', phone: '0945678901', email: 'daniel@example.com', image_url: '', address: 'Dalat, Vietnam', is_active: true, created_at: '2023-06-10' },
-      { customer_id: 16, full_name: 'Susan Park', phone: '0956789012', email: 'susan@example.com', image_url: '', address: 'Hanoi, Vietnam', is_active: true, created_at: '2023-06-12' },
-      { customer_id: 17, full_name: 'Paul Chen', phone: '0967890123', email: 'paul@example.com', image_url: '', address: 'Phu Quoc, Vietnam', is_active: true, created_at: '2023-06-15' },
-      { customer_id: 18, full_name: 'Nancy Adams', phone: '0978901234', email: 'nancy@example.com', image_url: '', address: 'Ho Chi Minh City, Vietnam', is_active: false, created_at: '2023-06-18' },
-      { customer_id: 19, full_name: 'Mark Thompson', phone: '0989012345', email: 'mark@example.com', image_url: '', address: 'Da Nang, Vietnam', is_active: true, created_at: '2023-06-20' },
-      { customer_id: 20, full_name: 'Karen Hoang', phone: '0990123456', email: 'karen@example.com', image_url: '', address: 'Hue, Vietnam', is_active: true, created_at: '2023-06-25' }
-    ];
-    setUsers(mockUsers);
-    setFilteredUsers(mockUsers);
+    setLoading(true);
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => {
+        const usersData = (data.data || []).map(u => ({
+          ...u,
+          customer_id: u.customer_id || u.id, // fallback nếu BE trả về id
+          full_name: u.full_name || u.fullName,
+          image_url: u.image_url || u.imageUrl,
+          is_active:
+            u.is_active === true ||
+              u.is_active === 1 ||
+              u.is_active === 'true' ||
+              u.is_active === '1' ||
+              u.isActive === true ||
+              u.isActive === 1 ||
+              u.isActive === 'true' ||
+              u.isActive === '1'
+              ? true
+              : false
+        }));
+        setUsers(usersData);
+        setFilteredUsers(usersData);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   // Handle search and filter functionality
@@ -114,7 +117,7 @@ const UserAccount = () => {
   }, [searchQuery, statusFilter, users]);
 
   const handleClearField = (fieldName) => {
-    setFormData({...formData, [fieldName]: ''});
+    setFormData({ ...formData, [fieldName]: '' });
   };
   const handleOpen = (user = null) => {
     if (user) {
@@ -156,27 +159,100 @@ const UserAccount = () => {
     });
   };
 
-  const handleSave = () => {
+  // Save (create or update) user
+  const handleSave = async () => {
     if (currentUser) {
       // Update existing user
-      const updatedUsers = users.map(user =>
-        user.customer_id === currentUser.customer_id ? { ...user, ...formData } : user
-      );
-      setUsers(updatedUsers);
+      const updateBody = {
+        fullName: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        imageUrl: formData.image_url,
+        isActive: formData.is_active
+      };
+      if (formData.password && formData.password.trim() !== '') {
+        updateBody.password = formData.password;
+      }
+      await fetch(`${API_URL}/update/${currentUser.customer_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateBody)
+      });
     } else {
       // Create new user
-      const newUser = {
-        customer_id: Math.max(...users.map(u => u.customer_id), 0) + 1,
-        ...formData,
-        created_at: new Date().toISOString().split('T')[0]
-      };
-      setUsers([...users, newUser]);
+      await fetch(`${API_URL}/created`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: formData.full_name,
+          password: formData.password,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          imageUrl: formData.image_url
+        })
+      });
     }
+    // Reload users
+    setLoading(true);
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => {
+        const usersData = (data.data || []).map(u => ({
+          ...u,
+          customer_id: u.customer_id || u.id,
+          full_name: u.full_name || u.fullName,
+          image_url: u.image_url || u.imageUrl,
+          is_active:
+            u.is_active === true ||
+              u.is_active === 1 ||
+              u.is_active === 'true' ||
+              u.is_active === '1' ||
+              u.isActive === true ||
+              u.isActive === 1 ||
+              u.isActive === 'true' ||
+              u.isActive === '1'
+              ? true
+              : false
+        }));
+        setUsers(usersData);
+        setFilteredUsers(usersData);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
     setOpen(false);
   };
 
-  const handleDelete = (id) => {
-    setUsers(users.filter(user => user.customer_id !== id));
+  const handleDelete = async (id) => {
+    await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
+    // Reload users
+    setLoading(true);
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => {
+        const usersData = (data.data || []).map(u => ({
+          ...u,
+          customer_id: u.customer_id || u.id,
+          full_name: u.full_name || u.fullName,
+          image_url: u.image_url || u.imageUrl,
+          is_active:
+            u.is_active === true ||
+              u.is_active === 1 ||
+              u.is_active === 'true' ||
+              u.is_active === '1' ||
+              u.isActive === true ||
+              u.isActive === 1 ||
+              u.isActive === 'true' ||
+              u.isActive === '1'
+              ? true
+              : false
+        }));
+        setUsers(usersData);
+        setFilteredUsers(usersData);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   };
 
   const handleChangePage = (event, newPage) => {
@@ -265,7 +341,6 @@ const UserAccount = () => {
                     <TableCell width="15%" sx={{ backgroundColor: '#f8f8f8' }}>Email</TableCell>
                     <TableCell width="18%" sx={{ backgroundColor: '#f8f8f8' }}>Address</TableCell>
                     <TableCell width="10%" sx={{ backgroundColor: '#f8f8f8' }}>Status</TableCell>
-                    <TableCell width="15%" sx={{ backgroundColor: '#f8f8f8' }}>Created Date</TableCell>
                     <TableCell width="10%" align="right" sx={{ backgroundColor: '#f8f8f8' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -291,7 +366,6 @@ const UserAccount = () => {
                             }}
                           />
                         </TableCell>
-                        <TableCell>{user.created_at}</TableCell>
                         <TableCell align="right">
                           <IconButton onClick={() => handleOpen(user)} color="primary" size="small">
                             <EditOutlined />
@@ -304,7 +378,7 @@ const UserAccount = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} align="center">No customers found</TableCell>
+                      <TableCell colSpan={7} align="center">No customers found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
