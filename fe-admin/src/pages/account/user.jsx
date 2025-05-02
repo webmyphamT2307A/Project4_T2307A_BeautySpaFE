@@ -162,14 +162,13 @@ const UserAccount = () => {
   // Save (create or update) user
   const handleSave = async () => {
     if (currentUser) {
-      // Update existing user
       const updateBody = {
         fullName: formData.full_name,
         email: formData.email,
         phone: formData.phone,
         address: formData.address,
         imageUrl: formData.image_url,
-        isActive: formData.is_active
+        isActive: !!formData.is_active 
       };
       if (formData.password && formData.password.trim() !== '') {
         updateBody.password = formData.password;
