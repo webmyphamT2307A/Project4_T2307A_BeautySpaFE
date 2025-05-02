@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Grid, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Select, FormControl,
-  InputLabel, Switch, FormControlLabel, IconButton, TablePagination, Box, InputAdornment, Chip
+  InputLabel, Switch, FormControlLabel, IconButton, TablePagination, Box, InputAdornment, Chip, Avatar
 } from '@mui/material';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, CloseOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 const API_URL = 'http://localhost:8080/api/v1/admin/accounts';
 const ROLE_URL = 'http://localhost:8080/api/v1/roles';
 const BRANCH_URL = 'http://localhost:8080/api/v1/branch';
+
 const AdminAccount = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -29,7 +30,7 @@ const AdminAccount = () => {
     phone: '',
     email: '',
     password: '',
-    avatar: '',
+    imageUrl: '',
     address: '',
     role: null,
     branch: null,
@@ -37,9 +38,6 @@ const AdminAccount = () => {
   });
 
   useEffect(() => {
-    fetch(`${API_URL}/find-all`)
-      .then(res => res.json())
-      .then(data => setRoles(data.data || []));
     fetch(`${ROLE_URL}`)
       .then(res => res.json())
       .then(data => setRoles(data.data || []));
@@ -49,28 +47,27 @@ const AdminAccount = () => {
   }, []);
 
   // Lấy danh sách user từ BE
-useEffect(() => {
-  setLoading(true);
-  fetch(`${API_URL}/find-all`)
-    .then(res => res.json())
-    .then(data => {
-      const usersData = (data.data || []).map(u => ({
-        ...u,
-        isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
-      }));
-      setUsers(usersData);
-      setFilteredUsers(usersData);
-      setLoading(false);
-      console.log(data.data);
-    });
-}, []);
+  useEffect(() => {
+    setLoading(true);
+    fetch(`${API_URL}/find-all`)
+      .then(res => res.json())
+      .then(data => {
+        const usersData = (data.data || []).map(u => ({
+          ...u,
+          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true',
+          imageUrl: u.imageUrl || u.avatar || '' // fallback cho trường ảnh
+        }));
+        setUsers(usersData);
+        setFilteredUsers(usersData);
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     let results = [...users];
     if (statusFilter !== 'all') {
       results = results.filter(user => user.isActive === Boolean(Number(statusFilter)));
     }
-   
     if (searchQuery) {
       const lower = searchQuery.toLowerCase();
       results = results.filter(
@@ -95,7 +92,7 @@ useEffect(() => {
         phone: user.phone || '',
         email: user.email || '',
         password: '',
-        avatar: user.avatar || '',
+        imageUrl: user.imageUrl || '',
         address: user.address || '',
         role: selectedRole || null,
         branch: selectedBranch || null,
@@ -108,7 +105,7 @@ useEffect(() => {
         phone: '',
         email: '',
         password: '',
-        avatar: '',
+        imageUrl: '',
         address: '',
         role: roles[0] || null,
         branch: branches[0] || null,
@@ -148,6 +145,7 @@ useEffect(() => {
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
+          imageUrl: formData.imageUrl,
           roleId: formData.role?.id,
           branchId: formData.branch?.id,
           isActive: formData.isActive,
@@ -169,6 +167,7 @@ useEffect(() => {
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
+          imageUrl: formData.imageUrl,
           roleId: formData.role?.id,
           branchId: formData.branch?.id
         })
@@ -182,11 +181,17 @@ useEffect(() => {
     fetch(`${API_URL}/find-all`)
       .then(res => res.json())
       .then(data => {
-        setUsers(data.data || []);
-        setFilteredUsers(data.data || []);
+        const usersData = (data.data || []).map(u => ({
+          ...u,
+          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true',
+          imageUrl: u.imageUrl || u.avatar || ''
+        }));
+        setUsers(usersData);
+        setFilteredUsers(usersData);
       });
     setOpen(false);
   };
+
   // Xóa user
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) return;
@@ -199,8 +204,13 @@ useEffect(() => {
     fetch(`${API_URL}/find-all`)
       .then(res => res.json())
       .then(data => {
-        setUsers(data.data || []);
-        setFilteredUsers(data.data || []);
+        const usersData = (data.data || []).map(u => ({
+          ...u,
+          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true',
+          imageUrl: u.imageUrl || u.avatar || ''
+        }));
+        setUsers(usersData);
+        setFilteredUsers(usersData);
       });
   };
 
@@ -217,9 +227,7 @@ useEffect(() => {
 
   // Hiển thị tên role
   const getRoleName = (user) => {
-    // Nếu user có object role thì lấy tên
     if (user.role && user.role.name) return user.role.name;
-    // Nếu user có role là object nhưng không có name, thử lấy theo id
     if (user.role && user.role.id && roles.length > 0) {
       const found = roles.find(r => Number(r.id) === Number(user.role.id));
       return found ? found.name : 'Unknown Role';
@@ -289,6 +297,7 @@ useEffect(() => {
                 <TableHead>
                   <TableRow>
                     <TableCell>#</TableCell>
+                    <TableCell>Avatar</TableCell>
                     <TableCell>Full Name</TableCell>
                     <TableCell>Phone</TableCell>
                     <TableCell>Email</TableCell>
@@ -303,6 +312,13 @@ useEffect(() => {
                     currentUsers.map((user, index) => (
                       <TableRow key={user.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                          <Avatar
+                            src={user.imageUrl}
+                            alt={user.fullName}
+                            sx={{ width: 40, height: 40, margin: 'auto', bgcolor: '#eee' }}
+                          />
+                        </TableCell>
                         <TableCell>{user.fullName}</TableCell>
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{user.email}</TableCell>
@@ -341,7 +357,7 @@ useEffect(() => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} align="center">No admins found</TableCell>
+                      <TableCell colSpan={9} align="center">No admins found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -363,6 +379,34 @@ useEffect(() => {
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>{currentUser ? 'Edit Admin' : 'Add Admin'}</DialogTitle>
         <DialogContent>
+          {/* Hiển thị ảnh đại diện nếu có */}
+          {formData.imageUrl && (
+            <Box display="flex" justifyContent="center" mb={2}>
+              <Avatar
+                src={formData.imageUrl}
+                alt="Avatar"
+                sx={{ width: 80, height: 80, border: '1px solid #eee', bgcolor: '#fff' }}
+              />
+            </Box>
+          )}
+          <TextField
+            margin="dense"
+            name="imageUrl"
+            label="Avatar URL"
+            type="text"
+            fullWidth
+            value={formData.imageUrl}
+            onChange={handleChange}
+            InputProps={{
+              endAdornment: formData.imageUrl ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => handleClearField('imageUrl')}>
+                    <CloseOutlined style={{ fontSize: 16 }} />
+                  </IconButton>
+                </InputAdornment>
+              ) : null
+            }}
+          />
           <TextField
             margin="dense"
             name="fullName"
@@ -473,7 +517,6 @@ useEffect(() => {
               ))}
             </Select>
           </FormControl>
-          
           <TextField
             margin="dense"
             name="address"
