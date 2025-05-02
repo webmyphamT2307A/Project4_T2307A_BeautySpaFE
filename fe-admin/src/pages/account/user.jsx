@@ -1,42 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
-  Grid,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  IconButton,
-  FormControlLabel,
-  Switch,
-  TablePagination,
-  Box,
-  Chip,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  InputAdornment,
+  Grid, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, FormControlLabel,
+  Switch, TablePagination, Box, Chip, Select, MenuItem, FormControl, InputLabel, InputAdornment, Avatar
 } from '@mui/material';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, CloseOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
-
-// project imports
 import MainCard from 'components/MainCard';
 
 const API_URL = 'http://localhost:8080/api/v1/customer';
 
-// ==============================|| USER ACCOUNT PAGE ||============================== //
-
 const UserAccount = () => {
+  const fileInputRef = useRef();
   const [users, setUsers] = useState([]);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -56,69 +33,38 @@ const UserAccount = () => {
     is_active: true
   });
 
-  // Fetch users from BE
   useEffect(() => {
-    setLoading(true);
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
-        const usersData = (data.data || []).map(u => ({
-          ...u,
-          customer_id: u.customer_id || u.id, // fallback nếu BE trả về id
-          full_name: u.full_name || u.fullName,
-          image_url: u.image_url || u.imageUrl,
-          is_active:
-            u.is_active === true ||
-              u.is_active === 1 ||
-              u.is_active === 'true' ||
-              u.is_active === '1' ||
-              u.isActive === true ||
-              u.isActive === 1 ||
-              u.isActive === 'true' ||
-              u.isActive === '1'
-              ? true
-              : false
-        }));
-        setUsers(usersData);
-        setFilteredUsers(usersData);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    loadCustomers();
+    // eslint-disable-next-line
   }, []);
 
-  // Handle search and filter functionality
   useEffect(() => {
     const delaySearch = setTimeout(() => {
       let results = [...users];
-
-      // Apply status filter
       if (statusFilter !== 'all') {
         const isActive = statusFilter === 'active';
         results = results.filter(user => user.is_active === isActive);
       }
-
-      // Apply search query
       if (searchQuery) {
         const lowercasedQuery = searchQuery.toLowerCase();
         results = results.filter(
           user =>
-            user.customer_id.toString().includes(lowercasedQuery) ||
-            user.full_name.toLowerCase().includes(lowercasedQuery) ||
-            user.phone.toLowerCase().includes(lowercasedQuery) ||
+            user.customer_id?.toString().includes(lowercasedQuery) ||
+            user.full_name?.toLowerCase().includes(lowercasedQuery) ||
+            user.phone?.toLowerCase().includes(lowercasedQuery) ||
             (user.email && user.email.toLowerCase().includes(lowercasedQuery))
         );
       }
-
       setFilteredUsers(results);
       setPage(0);
     }, 300);
-
     return () => clearTimeout(delaySearch);
   }, [searchQuery, statusFilter, users]);
 
   const handleClearField = (fieldName) => {
     setFormData({ ...formData, [fieldName]: '' });
   };
+
   const handleOpen = (user = null) => {
     if (user) {
       setCurrentUser(user);
@@ -126,11 +72,13 @@ const UserAccount = () => {
         full_name: user.full_name,
         phone: user.phone,
         email: user.email,
-        password: '', // Don't show existing password
+        password: '',
         image_url: user.image_url || '',
         address: user.address || '',
         is_active: user.is_active
       });
+      setAvatarFile(null);
+      setAvatarPreview('');
     } else {
       setCurrentUser(null);
       setFormData({
@@ -142,6 +90,8 @@ const UserAccount = () => {
         address: '',
         is_active: true
       });
+      setAvatarFile(null);
+      setAvatarPreview('');
     }
     setOpen(true);
   };
@@ -159,73 +109,16 @@ const UserAccount = () => {
     });
   };
 
-  // Save (create or update) user
-  const handleSave = async () => {
-    if (currentUser) {
-      const updateBody = {
-        fullName: formData.full_name,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        imageUrl: formData.image_url,
-        isActive: !!formData.is_active 
-      };
-      if (formData.password && formData.password.trim() !== '') {
-        updateBody.password = formData.password;
-      }
-      await fetch(`${API_URL}/update/${currentUser.customer_id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateBody)
-      });
-    } else {
-      // Create new user
-      await fetch(`${API_URL}/created`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: formData.full_name,
-          password: formData.password,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          imageUrl: formData.image_url
-        })
-      });
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
     }
-    // Reload users
-    setLoading(true);
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
-        const usersData = (data.data || []).map(u => ({
-          ...u,
-          customer_id: u.customer_id || u.id,
-          full_name: u.full_name || u.fullName,
-          image_url: u.image_url || u.imageUrl,
-          is_active:
-            u.is_active === true ||
-              u.is_active === 1 ||
-              u.is_active === 'true' ||
-              u.is_active === '1' ||
-              u.isActive === true ||
-              u.isActive === 1 ||
-              u.isActive === 'true' ||
-              u.isActive === '1'
-              ? true
-              : false
-        }));
-        setUsers(usersData);
-        setFilteredUsers(usersData);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-    setOpen(false);
   };
 
-  const handleDelete = async (id) => {
-    await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
-    // Reload users
+  // Hàm tải lại danh sách khách hàng
+  const loadCustomers = () => {
     setLoading(true);
     fetch(API_URL)
       .then(res => res.json())
@@ -234,16 +127,16 @@ const UserAccount = () => {
           ...u,
           customer_id: u.customer_id || u.id,
           full_name: u.full_name || u.fullName,
-          image_url: u.image_url || u.imageUrl,
+          image_url: u.image_url || u.imageUrl || '',
           is_active:
             u.is_active === true ||
-              u.is_active === 1 ||
-              u.is_active === 'true' ||
-              u.is_active === '1' ||
-              u.isActive === true ||
-              u.isActive === 1 ||
-              u.isActive === 'true' ||
-              u.isActive === '1'
+            u.is_active === 1 ||
+            u.is_active === 'true' ||
+            u.is_active === '1' ||
+            u.isActive === true ||
+            u.isActive === 1 ||
+            u.isActive === 'true' ||
+            u.isActive === '1'
               ? true
               : false
         }));
@@ -252,6 +145,52 @@ const UserAccount = () => {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  };
+
+  const handleSave = async () => {
+    const data = new FormData();
+    const customerObj = {
+      fullName: formData.full_name,
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      isActive: formData.is_active,
+      password: !currentUser ? formData.password : undefined
+    };
+    if (!avatarFile && formData.image_url) {
+      customerObj.imageUrl = formData.image_url;
+    }
+    // Sử dụng Blob để đảm bảo đúng content-type cho phần customer
+    data.append('customer', new Blob([JSON.stringify(customerObj)], { type: 'application/json' }));
+    if (avatarFile) {
+      data.append('file', avatarFile);
+    }
+  
+    const url = currentUser
+      ? `${API_URL}/update/${currentUser.customer_id}`
+      : `${API_URL}/created`;
+  
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        body: data
+        // KHÔNG set headers!
+      });
+      const result = await response.json();
+      if (result.status === 'SUCCESS') {
+        loadCustomers();
+      } else {
+        alert(result.message || 'Có lỗi xảy ra!');
+      }
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      alert('Có lỗi xảy ra khi lưu thông tin khách hàng');
+    }
+    setOpen(false);
+  };
+  const handleDelete = async (id) => {
+    await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
+    loadCustomers();
   };
 
   const handleChangePage = (event, newPage) => {
@@ -271,7 +210,6 @@ const UserAccount = () => {
     setStatusFilter(e.target.value);
   };
 
-  // Get current page users
   const currentUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
@@ -335,6 +273,7 @@ const UserAccount = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell width="5%" sx={{ backgroundColor: '#f8f8f8' }}>#</TableCell>
+                    <TableCell width="10%" sx={{ backgroundColor: '#f8f8f8' }}>Avatar</TableCell>
                     <TableCell width="15%" sx={{ backgroundColor: '#f8f8f8' }}>Full Name</TableCell>
                     <TableCell width="12%" sx={{ backgroundColor: '#f8f8f8' }}>Phone</TableCell>
                     <TableCell width="15%" sx={{ backgroundColor: '#f8f8f8' }}>Email</TableCell>
@@ -348,6 +287,13 @@ const UserAccount = () => {
                     currentUsers.map((user, index) => (
                       <TableRow key={user.customer_id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                          <Avatar
+                            src={user.image_url}
+                            alt={user.full_name}
+                            sx={{ width: 40, height: 40, margin: 'auto', bgcolor: '#eee' }}
+                          />
+                        </TableCell>
                         <TableCell>{user.full_name}</TableCell>
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{user.email}</TableCell>
@@ -377,7 +323,7 @@ const UserAccount = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} align="center">No customers found</TableCell>
+                      <TableCell colSpan={8} align="center">No customers found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -399,6 +345,49 @@ const UserAccount = () => {
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>{currentUser ? 'Edit Customer' : 'Add Customer'}</DialogTitle>
         <DialogContent>
+          <Box display="flex" justifyContent="center" mb={2} flexDirection="column" alignItems="center">
+            <Avatar
+              src={avatarPreview || formData.image_url}
+              alt="Avatar"
+              sx={{ width: 80, height: 80, border: '1px solid #eee', bgcolor: '#fff', mb: 1 }}
+            />
+            <Button
+              variant="outlined"
+              size="small"
+              component="label"
+              sx={{ mb: 1 }}
+            >
+              Upload Image
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+              />
+            </Button>
+          </Box>
+          <TextField
+            margin="dense"
+            name="image_url"
+            label="Image URL"
+            type="text"
+            fullWidth
+            value={formData.image_url}
+            onChange={handleChange}
+            InputProps={{
+              endAdornment: formData.image_url ? (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => handleClearField('image_url')}
+                  >
+                    <CloseOutlined style={{ fontSize: 16 }} />
+                  </IconButton>
+                </InputAdornment>
+              ) : null
+            }}
+          />
           <TextField
             margin="dense"
             name="full_name"
@@ -494,27 +483,6 @@ const UserAccount = () => {
               }}
             />
           )}
-          <TextField
-            margin="dense"
-            name="image_url"
-            label="Image URL"
-            type="text"
-            fullWidth
-            value={formData.image_url}
-            onChange={handleChange}
-            InputProps={{
-              endAdornment: formData.image_url ? (
-                <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('image_url')}
-                  >
-                    <CloseOutlined style={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : null
-            }}
-          />
           <TextField
             margin="dense"
             name="address"
