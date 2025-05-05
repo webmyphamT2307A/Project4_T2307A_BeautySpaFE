@@ -1,10 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Grid, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Select, FormControl,
-  InputLabel, Switch, FormControlLabel, IconButton, TablePagination, Box, InputAdornment, Chip, Avatar
+  InputLabel, Switch, FormControlLabel, IconButton, TablePagination, Box, InputAdornment, Chip,
+  Avatar, Typography, Divider, Tooltip
 } from '@mui/material';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, CloseOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  CloseOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+  UserOutlined,
+  UploadOutlined
+} from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
 
@@ -17,14 +28,18 @@ const AdminAccount = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false); // Added view dialog state
   const [currentUser, setCurrentUser] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all'); // Added role filter
   const [showPassword, setShowPassword] = useState(false);
   const [roles, setRoles] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null); // Added image preview
+  const fileInputRef = useRef(null); // Added file input ref
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -54,20 +69,39 @@ const AdminAccount = () => {
       .then(data => {
         const usersData = (data.data || []).map(u => ({
           ...u,
-          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true',
-          imageUrl: u.imageUrl || u.avatar || '' // fallback cho trường ảnh
+          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
         }));
-        setUsers(usersData);
-        setFilteredUsers(usersData);
+
+        // Sort by newest first
+        const sortedUsers = usersData.sort((a, b) =>
+          new Date(b.createdAt || b.created_at || '2023') -
+          new Date(a.createdAt || a.created_at || '2023')
+        );
+
+        setUsers(sortedUsers);
+        setFilteredUsers(sortedUsers);
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     let results = [...users];
+
+    // Apply status filter
     if (statusFilter !== 'all') {
       results = results.filter(user => user.isActive === Boolean(Number(statusFilter)));
     }
+
+    // Apply role filter
+    if (roleFilter !== 'all') {
+      results = results.filter(user =>
+        (user.role?.id === Number(roleFilter)) ||
+        (user.roleId === Number(roleFilter))
+      );
+    }
+
+    // Apply search filter
     if (searchQuery) {
       const lower = searchQuery.toLowerCase();
       results = results.filter(
@@ -78,9 +112,10 @@ const AdminAccount = () => {
           user.email?.toLowerCase().includes(lower)
       );
     }
+
     setFilteredUsers(results);
     setPage(0);
-  }, [searchQuery, statusFilter, users]);
+  }, [searchQuery, statusFilter, roleFilter, users]);
 
   const handleOpen = (user = null) => {
     if (user) {
@@ -98,6 +133,7 @@ const AdminAccount = () => {
         branch: selectedBranch || null,
         isActive: user.isActive
       });
+      setImagePreview(user.imageUrl || null);
     } else {
       setCurrentUser(null);
       setFormData({
@@ -111,9 +147,26 @@ const AdminAccount = () => {
         branch: branches[0] || null,
         isActive: true
       });
+      setImagePreview(null);
     }
     setOpen(true);
   };
+
+  // New handler for view details
+  const handleViewOpen = (user) => {
+    setCurrentUser(user);
+    setViewOpen(true);
+  };
+
+  const handleViewClose = () => {
+    setViewOpen(false);
+  };
+
+  const handleOpenEditFromView = () => {
+    handleViewClose();
+    handleOpen(currentUser);
+  };
+
   const handleClose = () => setOpen(false);
 
   const handleChange = (e) => {
@@ -131,7 +184,33 @@ const AdminAccount = () => {
     }
   };
 
-  const handleClearField = (fieldName) => setFormData({ ...formData, [fieldName]: '' });
+  // Image upload handler
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target.result;
+        setFormData({
+          ...formData,
+          imageUrl: imageUrl
+        });
+        setImagePreview(imageUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleClearField = (fieldName) => {
+    if (fieldName === 'imageUrl') {
+      setImagePreview(null);
+    }
+    setFormData({ ...formData, [fieldName]: '' });
+  };
 
   // Thêm hoặc cập nhật user
   const handleSave = async () => {
@@ -145,9 +224,9 @@ const AdminAccount = () => {
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
-          imageUrl: formData.imageUrl,
           roleId: formData.role?.id,
           branchId: formData.branch?.id,
+          imageUrl: formData.imageUrl,
           isActive: formData.isActive,
           description: ""
         })
@@ -183,11 +262,15 @@ const AdminAccount = () => {
       .then(data => {
         const usersData = (data.data || []).map(u => ({
           ...u,
-          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true',
-          imageUrl: u.imageUrl || u.avatar || ''
+          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
         }));
-        setUsers(usersData);
-        setFilteredUsers(usersData);
+        // Sort by newest first
+        const sortedUsers = usersData.sort((a, b) =>
+          new Date(b.createdAt || b.created_at || '2023') -
+          new Date(a.createdAt || a.created_at || '2023')
+        );
+        setUsers(sortedUsers);
+        setFilteredUsers(sortedUsers);
       });
     setOpen(false);
   };
@@ -206,34 +289,65 @@ const AdminAccount = () => {
       .then(data => {
         const usersData = (data.data || []).map(u => ({
           ...u,
-          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true',
-          imageUrl: u.imageUrl || u.avatar || ''
+          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
         }));
-        setUsers(usersData);
-        setFilteredUsers(usersData);
+        const sortedUsers = usersData.sort((a, b) =>
+          new Date(b.createdAt || b.created_at || '2023') -
+          new Date(a.createdAt || a.created_at || '2023')
+        );
+        setUsers(sortedUsers);
+        setFilteredUsers(sortedUsers);
       });
   };
 
   const handleChangePage = (event, newPage) => setPage(newPage);
+
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
+
   const handleStatusFilterChange = (e) => {
     const value = e.target.value;
     setStatusFilter(value === 'all' ? 'all' : Number(value));
   };
 
+  const handleRoleFilterChange = (e) => {
+    setRoleFilter(e.target.value);
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   // Hiển thị tên role
   const getRoleName = (user) => {
+    // Nếu user có object role thì lấy tên
     if (user.role && user.role.name) return user.role.name;
+    // Nếu user có role là object nhưng không có name, thử lấy theo id
     if (user.role && user.role.id && roles.length > 0) {
       const found = roles.find(r => Number(r.id) === Number(user.role.id));
       return found ? found.name : 'Unknown Role';
     }
+    // Nếu user có roleId, tìm theo roleId
+    if (user.roleId && roles.length > 0) {
+      const found = roles.find(r => Number(r.id) === Number(user.roleId));
+      return found ? found.name : 'Unknown Role';
+    }
     return 'Unknown Role';
   };
+
   // Hiển thị tên branch
   const getBranchName = (user) => {
     if (user.branch && user.branch.name) return user.branch.name;
@@ -280,6 +394,23 @@ const AdminAccount = () => {
                 <MenuItem value={0}>Inactive</MenuItem>
               </Select>
             </FormControl>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel id="role-filter-label">Role</InputLabel>
+              <Select
+                labelId="role-filter-label"
+                id="role-filter"
+                value={roleFilter}
+                label="Role"
+                onChange={handleRoleFilterChange}
+              >
+                <MenuItem value="all">All Roles</MenuItem>
+                {roles.map(role => (
+                  <MenuItem key={role.id} value={role.id}>
+                    {role.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
           <Button
             variant="contained"
@@ -296,15 +427,14 @@ const AdminAccount = () => {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell>#</TableCell>
-                    <TableCell>Avatar</TableCell>
-                    <TableCell>Full Name</TableCell>
-                    <TableCell>Phone</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Branch</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell align={'left'}>STT</TableCell>
+                    <TableCell align={'left'}>Full Name</TableCell>
+                    <TableCell align={'left'}>Phone</TableCell>
+                    <TableCell align={'left'}>Email</TableCell>
+                    <TableCell align={'left'}>Role</TableCell>
+                    <TableCell align={'left'}>Branch</TableCell>
+                    <TableCell align={'left'}>Status</TableCell>
+                    <TableCell align={'left'}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -313,13 +443,17 @@ const AdminAccount = () => {
                       <TableRow key={user.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                         <TableCell>
-                          <Avatar
-                            src={user.imageUrl}
-                            alt={user.fullName}
-                            sx={{ width: 40, height: 40, margin: 'auto', bgcolor: '#eee' }}
-                          />
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar
+                              src={user.imageUrl}
+                              alt={user.fullName}
+                              sx={{ width: 32, height: 32 }}
+                            >
+                              {!user.imageUrl && <UserOutlined />}
+                            </Avatar>
+                            {user.fullName}
+                          </Box>
                         </TableCell>
-                        <TableCell>{user.fullName}</TableCell>
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
@@ -346,12 +480,21 @@ const AdminAccount = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <IconButton onClick={() => handleOpen(user)} color="primary" size="small">
-                            <EditOutlined />
-                          </IconButton>
-                          <IconButton onClick={() => handleDelete(user.id)} color="error" size="small">
-                            <DeleteOutlined />
-                          </IconButton>
+                          <Tooltip title="View Details">
+                            <IconButton onClick={() => handleViewOpen(user)} color="info" size="small">
+                              <EyeOutlined />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit">
+                            <IconButton onClick={() => handleOpen(user)} color="primary" size="small">
+                              <EditOutlined />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <IconButton onClick={() => handleDelete(user.id)} color="error" size="small">
+                              <DeleteOutlined />
+                            </IconButton>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     ))
@@ -376,37 +519,59 @@ const AdminAccount = () => {
         </Grid>
       </Grid>
 
+      {/* Add/Edit Admin Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>{currentUser ? 'Edit Admin' : 'Add Admin'}</DialogTitle>
-        <DialogContent>
-          {/* Hiển thị ảnh đại diện nếu có */}
-          {formData.imageUrl && (
-            <Box display="flex" justifyContent="center" mb={2}>
+        <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
+          {currentUser ? 'Edit Admin' : 'Add Admin'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          {/* Image Upload Section */}
+          <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {imagePreview ? (
+              <Box sx={{ position: 'relative', mb: 2 }}>
+                <Avatar
+                  src={imagePreview}
+                  alt="Admin avatar"
+                  sx={{ width: 100, height: 100, borderRadius: '50%' }}
+                />
+                <IconButton
+                  size="small"
+                  sx={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -8,
+                    bgcolor: 'background.paper',
+                    boxShadow: 1
+                  }}
+                  onClick={() => handleClearField('imageUrl')}
+                >
+                  <CloseOutlined />
+                </IconButton>
+              </Box>
+            ) : (
               <Avatar
-                src={formData.imageUrl}
-                alt="Avatar"
-                sx={{ width: 80, height: 80, border: '1px solid #eee', bgcolor: '#fff' }}
-              />
-            </Box>
-          )}
-          <TextField
-            margin="dense"
-            name="imageUrl"
-            label="Avatar URL"
-            type="text"
-            fullWidth
-            value={formData.imageUrl}
-            onChange={handleChange}
-            InputProps={{
-              endAdornment: formData.imageUrl ? (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => handleClearField('imageUrl')}>
-                    <CloseOutlined style={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : null
-            }}
-          />
+                sx={{ width: 100, height: 100, bgcolor: 'primary.main', mb: 2 }}
+              >
+                <UserOutlined style={{ fontSize: 40 }} />
+              </Avatar>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<UploadOutlined />}
+              onClick={handleUploadClick}
+            >
+              Upload Avatar
+            </Button>
+          </Box>
+
           <TextField
             margin="dense"
             name="fullName"
@@ -517,6 +682,7 @@ const AdminAccount = () => {
               ))}
             </Select>
           </FormControl>
+
           <TextField
             margin="dense"
             name="address"
@@ -549,9 +715,117 @@ const AdminAccount = () => {
             margin="dense"
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSave} color="primary">Save</Button>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
+          <Button onClick={handleClose} variant="outlined" color="inherit">Cancel</Button>
+          <Button onClick={handleSave} variant="contained" color="primary">Save</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* View Admin Details Dialog */}
+      <Dialog open={viewOpen} onClose={handleViewClose} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
+          Admin Details
+          <IconButton
+            aria-label="close"
+            onClick={handleViewClose}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8
+            }}
+          >
+            <CloseOutlined />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          {currentUser && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* Avatar and basic info */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar
+                  src={currentUser.imageUrl}
+                  sx={{ width: 80, height: 80 }}
+                >
+                  {!currentUser.imageUrl && <UserOutlined style={{ fontSize: 40 }} />}
+                </Avatar>
+                <Box>
+                  <Typography variant="h5">{currentUser.fullName}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {getRoleName(currentUser)}
+                  </Typography>
+                  <Chip
+                    label={currentUser.isActive ? "Active" : "Inactive"}
+                    size="small"
+                    color={currentUser.isActive ? "success" : "default"}
+                    sx={{ mt: 0.5, borderRadius: '16px' }}
+                  />
+                </Box>
+              </Box>
+
+              <Divider />
+
+              {/* Contact information */}
+              <Box>
+                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                  Contact Information
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">Email</Typography>
+                    <Typography>{currentUser.email}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">Phone</Typography>
+                    <Typography>{currentUser.phone || 'Not provided'}</Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="caption" color="text.secondary">Address</Typography>
+                    <Typography>{currentUser.address || 'Not provided'}</Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Divider />
+
+              {/* Other details */}
+              <Box>
+                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                  Additional Information
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">Branch</Typography>
+                    <Typography>{getBranchName(currentUser)}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">Role</Typography>
+                    <Typography>{getRoleName(currentUser)}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">User ID</Typography>
+                    <Typography>#{currentUser.id}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">Created On</Typography>
+                    <Typography>{formatDate(currentUser.createdAt || currentUser.created_at)}</Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
+          <Button
+            onClick={handleOpenEditFromView}
+            startIcon={<EditOutlined />}
+            variant="contained"
+            color="primary"
+          >
+            Edit
+          </Button>
+          <Button onClick={handleViewClose} variant="outlined">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </MainCard>
