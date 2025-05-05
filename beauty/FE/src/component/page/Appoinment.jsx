@@ -80,9 +80,26 @@ const Appoinment = () => {
       formattedDate = `${day}/${month}/${year}`;
     }
   
-    // Tạo bản sao submitData và loại bỏ customerId, userId nếu rỗng
+    let customerId = formData.customerId;
+  
+    // Nếu chưa có customerId, tạo customer tạm trước
+    if (!customerId) {
+      try {
+        const res = await axios.post('http://localhost:8080/api/v1/customer/guest-create', {
+          fullName: formData.fullName,
+          phone: formData.phoneNumber,
+        });
+        customerId = res.data.id; 
+      } catch (err) {
+        toast.error('Không thể tạo khách hàng tạm!');
+        return;
+      }
+    }
+  
+    // Tạo submitData với customerId vừa lấy được
     const submitData = {
       ...formData,
+      customerId,
       status: formData.status || 'pending',
       appointmentDate: formattedDate,
       branchId: formData.branchId || 1,
@@ -90,32 +107,25 @@ const Appoinment = () => {
       price: formData.price || 10000,
       slot: formData.slot || "1",
     };
-  
-    // Xóa customerId và userId nếu là chuỗi rỗng hoặc null
-    if (!submitData.customerId) delete submitData.customerId;
     if (!submitData.userId) delete submitData.userId;
   
-    console.log('Form Data gửi lên:', submitData);
-  
+    // Kiểm tra thông tin
     if (!submitData.fullName || !submitData.phoneNumber || !submitData.appointmentDate || !submitData.serviceId) {
       toast.error('Vui lòng điền đầy đủ thông tin!');
       return;
     }
   
     try {
-      const response = await axios.post('http://localhost:8080/api/v1/admin/appointment/create', submitData);
+      await axios.post('http://localhost:8080/api/v1/admin/appointment/create', submitData);
       toast.success('Đặt lịch thành công!');
     } catch (error) {
       if (error.response) {
-        console.error('Backend Error:', error.response.data);
         toast.error('Đặt lịch thất bại! Lỗi: ' + error.response.data.message);
       } else {
-        console.error('Error:', error.message);
         toast.error('Đặt lịch thất bại!');
       }
     }
   };
-
 
   return (
     <div className="container-fluid appointment py-5">
