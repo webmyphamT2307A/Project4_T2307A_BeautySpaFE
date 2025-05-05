@@ -3,6 +3,8 @@ import { lazy } from 'react';
 // project imports
 import Loadable from 'components/Loadable';
 import DashboardLayout from 'layout/Dashboard';
+import ServiceManagement from '../pages/spa/service';
+import AppointmentManagement from '../pages/spa/appoinment';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
@@ -34,6 +36,19 @@ const MainRoutes = {
         {
           path: 'default',
           element: <DashboardDefault />
+        }
+      ]
+    },
+    {
+      path: 'spa',
+      children: [
+        {
+          path: 'service',
+          element: <ServiceManagement />
+        },
+        {
+          path: 'appointments',
+          element: <AppointmentManagement />
         }
       ]
     },
