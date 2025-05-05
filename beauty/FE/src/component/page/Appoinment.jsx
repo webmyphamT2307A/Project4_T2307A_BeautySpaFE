@@ -28,16 +28,15 @@ const Appoinment = () => {
   }, []);
   useEffect(() => {
     if (formData.appointmentDate && formData.serviceId && formData.timeSlotId) {
-      const appointmentDates = formData.appointmentDate
-      ? `${formData.appointmentDate}T00:00:00Z`
-      : '';
-    axios.get('http://localhost:8080/api/v1/timeslot/available', {
-      params: {
-        date: appointmentDates,
-        serviceId: formData.serviceId,
-        timeSlotId: formData.timeSlotId
-      }
-    })
+      // GỬI NGUYÊN yyyy-MM-dd, KHÔNG thêm T00:00:00Z
+      const appointmentDates = formData.appointmentDate;
+      axios.get('http://localhost:8080/api/v1/timeslot/available', {
+        params: {
+          date: appointmentDates,
+          serviceId: formData.serviceId,
+          timeSlotId: formData.timeSlotId
+        }
+      })
         .then(res => {
           if (res.data.data && res.data.data.availableSlot !== undefined) {
             setSlotInfo(res.data.data);
