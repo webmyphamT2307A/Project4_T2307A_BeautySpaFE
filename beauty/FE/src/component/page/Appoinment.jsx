@@ -31,13 +31,13 @@ const Appoinment = () => {
       const appointmentDates = formData.appointmentDate
       ? `${formData.appointmentDate}T00:00:00Z`
       : '';
-      axios.get('http://localhost:8080/api/v1/timeslot/available', {
-        params: {
-          date: appointmentDates,
-          serviceId: formData.serviceId,
-          timeSlotId: formData.timeSlotId
-        }
-      })
+    axios.get('http://localhost:8080/api/v1/timeslot/available', {
+      params: {
+        date: appointmentDates,
+        serviceId: formData.serviceId,
+        timeSlotId: formData.timeSlotId
+      }
+    })
         .then(res => {
           if (res.data.data && res.data.data.availableSlot !== undefined) {
             setSlotInfo(res.data.data);
@@ -145,6 +145,21 @@ const Appoinment = () => {
     try {
       await axios.post('http://localhost:8080/api/v1/admin/appointment/create', submitData);
       toast.success('Đặt lịch thành công!');
+      axios.get('http://localhost:8080/api/v1/timeslot/available', {
+        params: {
+          date: formData.appointmentDate,
+          serviceId: formData.serviceId,
+          timeSlotId: formData.timeSlotId
+        }
+      }).then(res => {
+        if (res.data.data && res.data.data.availableSlot !== undefined) {
+          setSlotInfo(res.data.data);
+        } else if (res.data.availableSlot !== undefined) {
+          setSlotInfo(res.data);
+        } else {
+          setSlotInfo(null);
+        }
+      });
     } catch (error) {
       if (error.response) {
         toast.error('Đặt lịch thất bại! Lỗi: ' + error.response.data.message);
