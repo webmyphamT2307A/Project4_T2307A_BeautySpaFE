@@ -233,11 +233,20 @@ const Appoinment = () => {
                       disabled={!formData.serviceId || !formData.appointmentDate}
                     >
                       <option value="">Chọn khung giờ</option>
-                      {timeSlots.map(slot => (
-                        <option key={slot.slotId} value={slot.slotId}>
-                          {slot.startTime} - {slot.endTime}
-                        </option>
-                      ))}
+                      {timeSlots.map(slot => {
+                        const slotEnd = new Date(`${formData.appointmentDate}T${slot.endTime}`);
+                        const now = new Date();
+                        const isPast = slotEnd < now;
+                        return (
+                          <option
+                            key={slot.slotId}
+                            value={slot.slotId}
+                            disabled={isPast}
+                          >
+                            {slot.startTime} - {slot.endTime} {isPast ? '(Đã qua)' : ''}
+                          </option>
+                        );
+                      })}
                     </select>
                     {/* Hiển thị slot còn lại ngay dưới select */}
                     {slotInfo && (
