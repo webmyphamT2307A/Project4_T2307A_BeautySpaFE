@@ -138,6 +138,7 @@ const Header = () => {
                                     <a href="/" className="nav-item nav-link active">Home</a>
                                     <a href="AboutPage" className="nav-item nav-link">About</a>
                                     <a href="ServicePage" className="nav-item nav-link">Services</a>
+                                    <a href="ProductPage" className="nav-item nav-link">Products</a>
 
                                     {!userInfo ? (
                                         <a href="#" className="nav-item nav-link" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
