@@ -20,12 +20,39 @@ const Appoinment = () => {
   });
   const [services, setServices] = useState([]);
   const [timeSlots, setTimeSlots] = useState([]);
+  const [slotInfo, setSlotInfo] = useState(null);
   useEffect(() => {
     axios.get('http://localhost:8080/api/v1/timeslot')
       .then(res => setTimeSlots(Array.isArray(res.data) ? res.data : res.data.data || []))
       .catch(() => setTimeSlots([]));
   }, []);
-
+  useEffect(() => {
+    if (formData.appointmentDate && formData.serviceId && formData.timeSlotId) {
+      const appointmentDates = formData.appointmentDate
+      ? `${formData.appointmentDate}T00:00:00Z`
+      : '';
+      axios.get('http://localhost:8080/api/v1/timeslot/available', {
+        params: {
+          date: appointmentDates,
+          serviceId: formData.serviceId,
+          timeSlotId: formData.timeSlotId
+        }
+      })
+        .then(res => {
+          if (res.data.data && res.data.data.availableSlot !== undefined) {
+            setSlotInfo(res.data.data);
+          } else if (res.data.availableSlot !== undefined) {
+            setSlotInfo(res.data);
+          } else {
+            setSlotInfo(null);
+          }
+        })
+        .catch(() => setSlotInfo(null));
+    } else {
+      setSlotInfo(null);
+    }
+  }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
+  console.log('slotInfo:', slotInfo);
   useEffect(() => {
     axios.get('http://localhost:8080/api/v1/services')
       .then(res => {
@@ -52,7 +79,7 @@ const Appoinment = () => {
       }));
     }
   };
-
+  console.log('formData:', formData);
 
   const handleUseAccountInfo = () => {
     const storedUserInfo = JSON.parse(localStorage.getItem('userInfo'));
@@ -72,16 +99,16 @@ const Appoinment = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Chuyển đổi ngày sang dd/MM/yyyy
     let formattedDate = formData.appointmentDate;
     if (formattedDate && formattedDate.includes('-')) {
       const [year, month, day] = formattedDate.split('-');
       formattedDate = `${day}/${month}/${year}`;
     }
-  
+
     let customerId = formData.customerId;
-  
+
     // Nếu chưa có customerId, tạo customer tạm trước
     if (!customerId) {
       try {
@@ -89,13 +116,13 @@ const Appoinment = () => {
           fullName: formData.fullName,
           phone: formData.phoneNumber,
         });
-        customerId = res.data.id; 
+        customerId = res.data.id;
       } catch (err) {
         toast.error('Không thể tạo khách hàng tạm!');
         return;
       }
     }
-  
+
     // Tạo submitData với customerId vừa lấy được
     const submitData = {
       ...formData,
@@ -108,13 +135,13 @@ const Appoinment = () => {
       slot: formData.slot || "1",
     };
     if (!submitData.userId) delete submitData.userId;
-  
+
     // Kiểm tra thông tin
     if (!submitData.fullName || !submitData.phoneNumber || !submitData.appointmentDate || !submitData.serviceId) {
       toast.error('Vui lòng điền đầy đủ thông tin!');
       return;
     }
-  
+
     try {
       await axios.post('http://localhost:8080/api/v1/admin/appointment/create', submitData);
       toast.success('Đặt lịch thành công!');
@@ -188,8 +215,8 @@ const Appoinment = () => {
                       name="timeSlotId"
                       value={formData.timeSlotId}
                       onChange={handleInputChange}
-                      style={{width: '73vh'}}
-                      className="form-select py-3 border-white bg-transparent w-100 vw-50"
+                      className="form-select py-3 border-white bg-transparent w-100"
+                      disabled={!formData.serviceId || !formData.appointmentDate}
                     >
                       <option value="">Chọn khung giờ</option>
                       {timeSlots.map(slot => (
@@ -198,6 +225,31 @@ const Appoinment = () => {
                         </option>
                       ))}
                     </select>
+                    {/* Hiển thị slot còn lại ngay dưới select */}
+                    {slotInfo && (
+                      <div className="mt-2">
+                        <div className="d-flex align-items-center">
+                          <span className="me-2">
+                            <b>Còn lại:</b>
+                            <span className={`badge ms-1 ${slotInfo.availableSlot > 3 ? 'bg-success' : slotInfo.availableSlot > 0 ? 'bg-warning text-dark' : 'bg-danger'}`}>
+                              {slotInfo.availableSlot}/{slotInfo.totalSlot} slot
+                            </span>
+                          </span>
+                          <div className="flex-grow-1 ms-2" style={{ minWidth: 80 }}>
+                            <div className="progress" style={{ height: 8 }}>
+                              <div
+                                className={`progress-bar ${slotInfo.availableSlot === 0 ? 'bg-danger' : slotInfo.availableSlot <= 3 ? 'bg-warning' : 'bg-success'}`}
+                                role="progressbar"
+                                style={{ width: `${(slotInfo.availableSlot / slotInfo.totalSlot) * 100}%` }}
+                                aria-valuenow={slotInfo.availableSlot}
+                                aria-valuemin={0}
+                                aria-valuemax={slotInfo.totalSlot}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="col-lg-12">
                     <textarea
@@ -217,6 +269,7 @@ const Appoinment = () => {
                       type="button"
                       onClick={handleUseAccountInfo}
                       className="btn btn-outline-light w-100 py-3"
+
                     >
                       Dùng thông tin tài khoản
                     </button>
