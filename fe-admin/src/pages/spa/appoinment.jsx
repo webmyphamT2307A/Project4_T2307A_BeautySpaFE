@@ -20,7 +20,7 @@ import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
 
 // Mock API URL - replace with your actual API endpoint
-const API_URL = 'http://localhost:8080/api/v1/appointments';
+const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
 
 const AppointmentManagement = () => {
   // States
@@ -43,13 +43,39 @@ const AppointmentManagement = () => {
   // Mock data loading
   useEffect(() => {
     setLoading(true);
-
-    // In a real application, fetch from API
-    // For demo, we'll generate mock data
-    const mockAppointments = generateMockAppointments(50);
-    setAppointments(mockAppointments);
-    setFilteredAppointments(mockAppointments);
-    setLoading(false);
+    fetch(`${API_URL}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
+          // Chuyển đổi dữ liệu BE về đúng format FE đang dùng
+          const appointments = data.data.map(item => ({
+            appointment_id: item.id,
+            full_name: item.fullName,
+            phone_number: item.phoneNumber,
+            status: item.status,
+            slot: item.slot,
+            notes: item.notes,
+            appointment_date: item.appointmentDate,
+            end_time: item.endTime,
+            price: item.price,
+            service: { name: item.serviceName, duration: 60, price: item.price },
+            branch: { name: item.branchName },
+            customer: { name: item.customerName, image: item.customerImage, email: '' },
+            user: { name: item.fullName, image: null }, 
+            created_at: item.appointmentDate,
+          }));
+          setAppointments(appointments);
+          setFilteredAppointments(appointments);
+        } else {
+          setAppointments([]);
+          setFilteredAppointments([]);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        setLoading(false);
+        toast.error('Lỗi khi tải dữ liệu lịch hẹn');
+      });
   }, []);
 
   // Filter appointments when search query or status filter changes
@@ -140,22 +166,43 @@ const AppointmentManagement = () => {
   };
 
   const handleStatusChange = () => {
-    try {
-      // In a real application, make an API call to update status
-      // For demo purposes, we'll update local state
-      const updatedAppointments = appointments.map(appointment =>
-        appointment.appointment_id === currentAppointment.appointment_id
-          ? { ...appointment, status: newStatus }
-          : appointment
-      );
-
-      setAppointments(updatedAppointments);
-      toast.success(`Appointment status updated to ${newStatus}`);
-      handleStatusDialogClose();
-    } catch (error) {
-      toast.error("Failed to update appointment status");
-      console.error(error);
-    }
+    setLoading(true);
+    fetch(`${API_URL}/update?AiD=${currentAppointment.appointment_id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...currentAppointment, status: newStatus })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'SUCCESS') {
+          toast.success('Cập nhật trạng thái thành công');
+          // Reload lại danh sách
+          // Có thể gọi lại API getAll hoặc cập nhật local state như cũ
+          setAppointments(prev =>
+            prev.map(a =>
+              a.appointment_id === currentAppointment.appointment_id
+                ? { ...a, status: newStatus }
+                : a
+            )
+          );
+          setFilteredAppointments(prev =>
+            prev.map(a =>
+              a.appointment_id === currentAppointment.appointment_id
+                ? { ...a, status: newStatus }
+                : a
+            )
+          );
+        } else {
+          toast.error('Cập nhật thất bại');
+        }
+        setLoading(false);
+        handleStatusDialogClose();
+      })
+      .catch(() => {
+        toast.error('Lỗi khi cập nhật trạng thái');
+        setLoading(false);
+        handleStatusDialogClose();
+      });
   };
 
   // Helper functions
@@ -222,81 +269,81 @@ const AppointmentManagement = () => {
     }
   };
 
-  // Mock data generator function
-  function generateMockAppointments(count) {
-    const statuses = ['pending', 'confirmed', 'completed', 'cancelled'];
-    const serviceNames = ['Haircut', 'Massage', 'Facial', 'Manicure', 'Pedicure', 'Hair Coloring', 'Spa Treatment'];
-    const branchNames = ['Main Branch', 'Downtown', 'Eastside', 'Westside'];
-    const slots = ['Morning', 'Afternoon', 'Evening'];
-    const customers = [
-      { id: 1, name: 'John Smith', phone: '555-123-4567', email: 'john@example.com', image: null },
-      { id: 2, name: 'Jane Doe', phone: '555-234-5678', email: 'jane@example.com', image: 'https://randomuser.me/api/portraits/women/43.jpg' },
-      { id: 3, name: 'Robert Johnson', phone: '555-345-6789', email: 'robert@example.com', image: 'https://randomuser.me/api/portraits/men/22.jpg' },
-      { id: 4, name: 'Emily Davis', phone: '555-456-7890', email: 'emily@example.com', image: 'https://randomuser.me/api/portraits/women/57.jpg' },
-      { id: 5, name: 'Michael Wilson', phone: '555-567-8901', email: 'michael@example.com', image: null }
-    ];
+  // // Mock data generator function
+  // function generateMockAppointments(count) {
+  //   const statuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+  //   const serviceNames = ['Haircut', 'Massage', 'Facial', 'Manicure', 'Pedicure', 'Hair Coloring', 'Spa Treatment'];
+  //   const branchNames = ['Main Branch', 'Downtown', 'Eastside', 'Westside'];
+  //   const slots = ['Morning', 'Afternoon', 'Evening'];
+  //   const customers = [
+  //     { id: 1, name: 'John Smith', phone: '555-123-4567', email: 'john@example.com', image: null },
+  //     { id: 2, name: 'Jane Doe', phone: '555-234-5678', email: 'jane@example.com', image: 'https://randomuser.me/api/portraits/women/43.jpg' },
+  //     { id: 3, name: 'Robert Johnson', phone: '555-345-6789', email: 'robert@example.com', image: 'https://randomuser.me/api/portraits/men/22.jpg' },
+  //     { id: 4, name: 'Emily Davis', phone: '555-456-7890', email: 'emily@example.com', image: 'https://randomuser.me/api/portraits/women/57.jpg' },
+  //     { id: 5, name: 'Michael Wilson', phone: '555-567-8901', email: 'michael@example.com', image: null }
+  //   ];
 
-    const staffMembers = [
-      { id: 1, name: 'Dr. Sarah Parker', image: 'https://randomuser.me/api/portraits/women/22.jpg' },
-      { id: 2, name: 'Thomas Lee', image: 'https://randomuser.me/api/portraits/men/33.jpg' },
-      { id: 3, name: 'Amanda Rodriguez', image: null }
-    ];
+  //   const staffMembers = [
+  //     { id: 1, name: 'Dr. Sarah Parker', image: 'https://randomuser.me/api/portraits/women/22.jpg' },
+  //     { id: 2, name: 'Thomas Lee', image: 'https://randomuser.me/api/portraits/men/33.jpg' },
+  //     { id: 3, name: 'Amanda Rodriguez', image: null }
+  //   ];
 
-    // Generate appointments
-    const appointments = [];
-    const now = new Date();
+  //   // Generate appointments
+  //   const appointments = [];
+  //   const now = new Date();
 
-    for (let i = 1; i <= count; i++) {
-      const randomDays = Math.floor(Math.random() * 30) - 15; // -15 to +14 days from now
-      const appointmentDate = new Date(now);
-      appointmentDate.setDate(now.getDate() + randomDays);
-      appointmentDate.setHours(8 + Math.floor(Math.random() * 8), Math.floor(Math.random() * 4) * 15, 0); // Between 8am and 4pm
+  //   for (let i = 1; i <= count; i++) {
+  //     const randomDays = Math.floor(Math.random() * 30) - 15; // -15 to +14 days from now
+  //     const appointmentDate = new Date(now);
+  //     appointmentDate.setDate(now.getDate() + randomDays);
+  //     appointmentDate.setHours(8 + Math.floor(Math.random() * 8), Math.floor(Math.random() * 4) * 15, 0); // Between 8am and 4pm
 
-      const duration = Math.floor(Math.random() * 4 + 1) * 30; // 30, 60, 90, or 120 minutes
-      const endTime = new Date(appointmentDate);
-      endTime.setMinutes(appointmentDate.getMinutes() + duration);
+  //     const duration = Math.floor(Math.random() * 4 + 1) * 30; // 30, 60, 90, or 120 minutes
+  //     const endTime = new Date(appointmentDate);
+  //     endTime.setMinutes(appointmentDate.getMinutes() + duration);
 
-      const randomCustomer = customers[Math.floor(Math.random() * customers.length)];
-      const randomStaff = staffMembers[Math.floor(Math.random() * staffMembers.length)];
-      const serviceName = serviceNames[Math.floor(Math.random() * serviceNames.length)];
-      const price = Math.floor(Math.random() * 180) + 20; // $20 to $200
+  //     const randomCustomer = customers[Math.floor(Math.random() * customers.length)];
+  //     const randomStaff = staffMembers[Math.floor(Math.random() * staffMembers.length)];
+  //     const serviceName = serviceNames[Math.floor(Math.random() * serviceNames.length)];
+  //     const price = Math.floor(Math.random() * 180) + 20; // $20 to $200
 
-      const appointment = {
-        appointment_id: i,
-        service_id: Math.floor(Math.random() * 10) + 1,
-        service: {
-          name: serviceName,
-          price: price,
-          duration: duration
-        },
-        user_id: randomStaff.id,
-        user: randomStaff,
-        customer_id: randomCustomer.id,
-        customer: randomCustomer,
-        appointment_date: appointmentDate.toISOString(),
-        end_time: endTime.toISOString(),
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        slot: slots[Math.floor(Math.random() * slots.length)],
-        notes: Math.random() > 0.7 ? "Special requests: " + serviceName + " with extra care" : "",
-        phone_number: randomCustomer.phone,
-        full_name: randomCustomer.name,
-        branch_id: Math.floor(Math.random() * 4) + 1,
-        branch: {
-          name: branchNames[Math.floor(Math.random() * branchNames.length)]
-        },
-        price: price,
-        created_at: new Date(appointmentDate.getTime() - Math.random() * 86400000 * 7).toISOString(), // Up to 7 days before appointment
-        is_active: true
-      };
+  //     const appointment = {
+  //       appointment_id: i,
+  //       service_id: Math.floor(Math.random() * 10) + 1,
+  //       service: {
+  //         name: serviceName,
+  //         price: price,
+  //         duration: duration
+  //       },
+  //       user_id: randomStaff.id,
+  //       user: randomStaff,
+  //       customer_id: randomCustomer.id,
+  //       customer: randomCustomer,
+  //       appointment_date: appointmentDate.toISOString(),
+  //       end_time: endTime.toISOString(),
+  //       status: statuses[Math.floor(Math.random() * statuses.length)],
+  //       slot: slots[Math.floor(Math.random() * slots.length)],
+  //       notes: Math.random() > 0.7 ? "Special requests: " + serviceName + " with extra care" : "",
+  //       phone_number: randomCustomer.phone,
+  //       full_name: randomCustomer.name,
+  //       branch_id: Math.floor(Math.random() * 4) + 1,
+  //       branch: {
+  //         name: branchNames[Math.floor(Math.random() * branchNames.length)]
+  //       },
+  //       price: price,
+  //       created_at: new Date(appointmentDate.getTime() - Math.random() * 86400000 * 7).toISOString(), // Up to 7 days before appointment
+  //       is_active: true
+  //     };
 
-      appointments.push(appointment);
-    }
+  //     appointments.push(appointment);
+  //   }
 
-    // Sort by appointment date (newest first)
-    return appointments.sort((a, b) =>
-      new Date(b.appointment_date) - new Date(a.appointment_date)
-    );
-  }
+  //   // Sort by appointment date (newest first)
+  //   return appointments.sort((a, b) =>
+  //     new Date(b.appointment_date) - new Date(a.appointment_date)
+  //   );
+  // }
 
   // Get current page appointments
   const currentAppointments = filteredAppointments.slice(
