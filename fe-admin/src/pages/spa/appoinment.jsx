@@ -58,10 +58,15 @@ const AppointmentManagement = () => {
             appointment_date: item.appointmentDate,
             end_time: item.endTime,
             price: item.price,
+            
             service: { name: item.serviceName, duration: 60, price: item.price },
             branch: { name: item.branchName },
-            customer: { name: item.customerName, image: item.customerImage, email: '' },
-            user: { name: item.fullName, image: null }, 
+            customer: { 
+              name: item.customerName, 
+              image: item.customerImageUrl || item.customerImage || '', 
+              email: item.customerEmail || '' 
+            },
+            user: { name: item.userName, image: item.userImageUrl || '' }, 
             created_at: item.appointmentDate,
           }));
           setAppointments(appointments);
