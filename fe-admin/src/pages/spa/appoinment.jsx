@@ -172,17 +172,32 @@ const AppointmentManagement = () => {
 
   const handleStatusChange = () => {
     setLoading(true);
+  
+    // Chuyển đổi ngày về dd/MM/yyyy
+    const dateObj = new Date(currentAppointment.appointment_date);
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`;
+  
+    const updatePayload = {
+      fullName: currentAppointment.full_name,
+      phoneNumber: currentAppointment.phone_number,
+      status: newStatus,
+      slot: currentAppointment.slot,
+      notes: currentAppointment.notes,
+      appointmentDate: formattedDate, // Đúng format BE yêu cầu
+    };
+  
     fetch(`${API_URL}/update?AiD=${currentAppointment.appointment_id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...currentAppointment, status: newStatus })
+      body: JSON.stringify(updatePayload)
     })
       .then(res => res.json())
       .then(data => {
         if (data.status === 'SUCCESS') {
           toast.success('Cập nhật trạng thái thành công');
-          // Reload lại danh sách
-          // Có thể gọi lại API getAll hoặc cập nhật local state như cũ
           setAppointments(prev =>
             prev.map(a =>
               a.appointment_id === currentAppointment.appointment_id
