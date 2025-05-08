@@ -36,6 +36,9 @@ import {
   CloseCircleOutlined,
   EyeOutlined
 } from '@ant-design/icons';
+import { toast } from 'react-toastify';
+
+const API_URL = 'http://localhost:8080/api/v1/services';
 
 const ServiceManagement = () => {
   // States
@@ -56,56 +59,28 @@ const ServiceManagement = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [imagePreview, setImagePreview] = useState(null);
 
-  // Fake data generator
+  // Load real data from BE
   useEffect(() => {
-    const serviceNames = [
-      'Haircut', 'Hair Styling', 'Hair Coloring', 'Hair Treatment',
-      'Manicure', 'Pedicure', 'Facial', 'Body Massage',
-      'Hot Stone Therapy', 'Aromatherapy', 'Deep Cleansing',
-      'Anti-Aging Treatment', 'Hair Removal', 'Makeup Application',
-      'Bridal Package', 'Men\'s Grooming', 'Kids Haircut',
-      'Hair Extension', 'Scalp Treatment', 'Nail Art'
-    ];
-
-    const descriptions = [
-      'Professional styling for all hair types',
-      'Customized treatment for your specific needs',
-      'Relaxing experience with premium products',
-      'Quick service with expert technicians',
-      'Luxury treatment for special occasions',
-      'Therapeutic session for stress relief',
-      'Deep cleansing with organic products',
-      'Perfect finishing touch for any occasion'
-    ];
-
-    const imageUrls = [
-      'https://images.unsplash.com/photo-1560066984-138dadb4c035',
-      'https://images.unsplash.com/photo-1580618672591-eb180b1a973f',
-      'https://images.unsplash.com/photo-1522337660859-02fbefca4702',
-      'https://images.unsplash.com/photo-1595475207225-428b62bda831',
-      'https://images.unsplash.com/photo-1562322140-8baeececf3df',
-      'https://images.unsplash.com/photo-1508184964240-ee96bb9677a7',
-      'https://images.unsplash.com/photo-1580087336611-29b3b33dad18',
-      'https://images.unsplash.com/photo-1607008829749-c8051e687f40'
-    ];
-
-    const fakeServices = Array(20).fill().map((_, idx) => ({
-      service_id: idx + 1,
-      name: serviceNames[idx % serviceNames.length],
-      description: descriptions[idx % descriptions.length],
-      price: Math.floor(Math.random() * 200) + 20,
-      duration: (Math.floor(Math.random() * 6) + 1) * 15,
-      created_at: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-      is_active: Math.random() > 0.2,
-      image_url: imageUrls[idx % imageUrls.length]
-    }));
-
-    // Sort by newest first (based on created_at)
-    const sortedServices = fakeServices.sort((a, b) =>
-      new Date(b.created_at) - new Date(a.created_at)
-    );
-
-    setServices(sortedServices);
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
+          const services = data.data.map(item => ({
+            service_id: item.id,
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            duration: item.duration,
+            created_at: item.createdAt,
+            is_active: item.isActive,
+            image_url: item.imageUrl
+          }));
+          setServices(services);
+        } else {
+          setServices([]);
+        }
+      })
+      .catch(() => setServices([]));
   }, []);
 
   // Handlers
@@ -174,8 +149,7 @@ const ServiceManagement = () => {
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // In a real app, you'd upload to server/cloud storage
-      // For this demo, we'll use a local URL
+      // In real app, upload to server and get URL
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageUrl = e.target.result;
@@ -193,45 +167,99 @@ const ServiceManagement = () => {
     if (fieldName === 'image_url') {
       setImagePreview(null);
     }
-    setFormData({...formData, [fieldName]: ''});
+    setFormData({ ...formData, [fieldName]: '' });
   };
 
+  // Save (edit) service
   const handleSave = () => {
     if (currentService) {
       // Edit
-      setServices(services.map(service =>
-        service.service_id === currentService.service_id ?
-          { ...service, ...formData, price: parseFloat(formData.price), duration: parseInt(formData.duration, 10) } :
-          service
-      ));
+      fetch(`${API_URL}/${currentService.service_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          price: parseFloat(formData.price),
+          duration: parseInt(formData.duration, 10),
+          imageUrl: formData.image_url
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'SUCCESS') {
+            setServices(services.map(service =>
+              service.service_id === currentService.service_id
+                ? {
+                  ...service,
+                  ...formData,
+                  price: parseFloat(formData.price),
+                  duration: parseInt(formData.duration, 10),
+                  image_url: formData.image_url
+                }
+                : service
+            ));
+            toast.success('Cập nhật dịch vụ thành công');
+          } else {
+            toast.error('Cập nhật thất bại');
+          }
+          setOpen(false);
+        })
+        .catch(() => {
+          toast.error('Lỗi khi cập nhật dịch vụ');
+          setOpen(false);
+        });
     } else {
-      // Add
-      const newService = {
-        service_id: services.length > 0 ? Math.max(...services.map(s => s.service_id)) + 1 : 1,
-        ...formData,
-        price: parseFloat(formData.price),
-        duration: parseInt(formData.duration, 10),
-        created_at: new Date().toISOString()
-      };
-      // Add new service and sort by newest first
-      const updatedServices = [...services, newService].sort((a, b) =>
-        new Date(b.created_at) - new Date(a.created_at)
-      );
-      setServices(updatedServices);
+      // Add mới: (nếu có API POST thì gọi ở đây)
+      toast.info('Chức năng thêm mới chưa hỗ trợ BE');
+      setOpen(false);
     }
-    setOpen(false);
   };
 
+  // Xóa mềm dịch vụ
   const handleDelete = (serviceId) => {
     if (window.confirm('Are you sure you want to delete this service?')) {
-      setServices(services.filter(service => service.service_id !== serviceId));
+      fetch(`${API_URL}/delete/${serviceId}`, {
+        method: 'PUT'
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'SUCCESS') {
+            setServices(services.filter(service => service.service_id !== serviceId));
+            toast.success('Xóa dịch vụ thành công');
+          } else {
+            toast.error('Xóa thất bại');
+          }
+        })
+        .catch(() => toast.error('Lỗi khi xóa dịch vụ'));
     }
   };
 
+  // Đổi trạng thái (active/inactive)
   const handleStatusChange = (serviceId, newStatus) => {
-    setServices(services.map(service =>
-      service.service_id === serviceId ? {...service, is_active: newStatus} : service
-    ));
+    const service = services.find(s => s.service_id === serviceId);
+    if (!service) return;
+    fetch(`${API_URL}/${serviceId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...service,
+        isActive: newStatus,
+        imageUrl: service.image_url // map lại trường cho đúng BE
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'SUCCESS') {
+          setServices(services.map(s =>
+            s.service_id === serviceId ? { ...s, is_active: newStatus } : s
+          ));
+          toast.success('Cập nhật trạng thái thành công');
+        } else {
+          toast.error('Cập nhật trạng thái thất bại');
+        }
+      })
+      .catch(() => toast.error('Lỗi khi cập nhật trạng thái'));
   };
 
   // Filter services based on search query
@@ -283,8 +311,8 @@ const ServiceManagement = () => {
         sx={{
           boxShadow: 'none',
           borderRadius: '10px',
-          height: '400px', // Fixed height for table container
-          overflow: 'auto'  // Enable scrolling
+          height: '400px',
+          overflow: 'auto'
         }}
       >
         <Table sx={{ minWidth: 650 }} stickyHeader>
@@ -344,7 +372,7 @@ const ServiceManagement = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    {new Date(service.created_at).toLocaleDateString()}
+                    {service.created_at ? new Date(service.created_at).toLocaleDateString() : ''}
                   </TableCell>
                   <TableCell align="center">
                     <Tooltip title="View Details">
@@ -596,7 +624,7 @@ const ServiceManagement = () => {
                 <Box>
                   <Typography variant="overline" color="textSecondary">Created</Typography>
                   <Typography variant="body2">
-                    {new Date(currentService.created_at).toLocaleDateString()}
+                    {currentService.created_at ? new Date(currentService.created_at).toLocaleDateString() : ''}
                   </Typography>
                 </Box>
               </Box>
