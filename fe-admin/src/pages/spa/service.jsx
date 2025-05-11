@@ -245,7 +245,7 @@ const ServiceManagement = () => {
       body: JSON.stringify({
         ...service,
         isActive: newStatus,
-        imageUrl: service.image_url // map lại trường cho đúng BE
+        imageUrl: service.image_url
       })
     })
       .then(res => res.json())
