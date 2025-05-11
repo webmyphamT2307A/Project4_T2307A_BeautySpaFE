@@ -21,6 +21,13 @@ const Appoinment = () => {
   const [services, setServices] = useState([]);
   const [timeSlots, setTimeSlots] = useState([]);
   const [slotInfo, setSlotInfo] = useState(null);
+  const [staffList, setStaffList] = useState([]);
+
+  useEffect(() => {
+    axios.get('http://localhost:8080/api/v1/user/accounts/staff')
+      .then(res => setStaffList(res.data))
+      .catch(() => setStaffList([]));
+  }, []);
   useEffect(() => {
     axios.get('http://localhost:8080/api/v1/timeslot')
       .then(res => setTimeSlots(Array.isArray(res.data) ? res.data : res.data.data || []))
@@ -248,6 +255,21 @@ const Appoinment = () => {
                         );
                       })}
                     </select>
+                    <div className="col-lg-12">
+                      <select
+                        name="userId"
+                        value={formData.userId}
+                        onChange={handleInputChange}
+                        className="form-select py-3 border-white bg-transparent w-100"
+                      >
+                        <option value="">Chọn nhân viên</option>
+                        {staffList.map(staff => (
+                          <option key={staff.id} value={staff.id}>
+                            {staff.fullName} ({staff.email})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     {/* Hiển thị slot còn lại ngay dưới select */}
                     {slotInfo && (
                       <div className="mt-2">
