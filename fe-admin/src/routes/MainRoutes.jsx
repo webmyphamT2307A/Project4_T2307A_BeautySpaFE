@@ -5,6 +5,8 @@ import Loadable from 'components/Loadable';
 import DashboardLayout from 'layout/Dashboard';
 import ServiceManagement from '../pages/spa/service';
 import AppointmentManagement from '../pages/spa/appoinment';
+import ServiceHistory from '../pages/spa/service-history';
+import path from 'path';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
@@ -49,6 +51,10 @@ const MainRoutes = {
         {
           path: 'appointments',
           element: <AppointmentManagement />
+        },
+        {
+          path: 'service-history',
+          element: <ServiceHistory />
         }
       ]
     },
