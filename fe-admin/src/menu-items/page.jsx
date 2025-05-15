@@ -8,7 +8,7 @@ const icons = {
 };
 
 // ==============================|| MENU ITEMS - EXTRA PAGES ||============================== //
-
+const isLoggedIn = Boolean(localStorage.getItem('token'));
 const pages = {
   id: 'authentication',
   title: 'Authentication',
