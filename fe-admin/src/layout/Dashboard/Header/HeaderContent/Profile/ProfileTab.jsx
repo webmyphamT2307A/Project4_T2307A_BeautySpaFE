@@ -21,6 +21,7 @@ export default function ProfileTab() {
       await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
     } catch (e) { }
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     window.location.href = '/login';
   };
   return (
