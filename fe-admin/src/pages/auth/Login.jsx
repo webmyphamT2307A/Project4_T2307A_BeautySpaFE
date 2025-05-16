@@ -33,6 +33,7 @@ export default function Login() {
       if (data.status === 'SUCCESS') {
         // ...sau khi đăng nhập thành công ở Login.jsx
         localStorage.setItem('token', data.data.token);
+        
         localStorage.setItem('user', JSON.stringify(data.data.user));
 
         navigate('/');

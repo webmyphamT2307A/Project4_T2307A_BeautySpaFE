@@ -1,13 +1,17 @@
 // assets
 import {
   ShopOutlined,
-  ScissorOutlined, CalendarOutlined
+  ScissorOutlined,
+  CalendarOutlined,
+   HistoryOutlined,
 } from '@ant-design/icons';
 
 // icons
 const icons = {
   ShopOutlined,
-  ScissorOutlined
+  ScissorOutlined,
+  CalendarOutlined,
+  HistoryOutlined,
 };
 
 // ==============================|| MENU ITEMS - SPA ||============================== //
@@ -29,8 +33,15 @@ const spa = {
       title: 'Appointments',
       type: 'item',
       url: '/spa/appointments',
-      icon: CalendarOutlined
-    }
+      icon: icons.CalendarOutlined
+    },
+    {
+      id: 'service-history',
+      title: 'Service History',
+      type: 'item',
+      url: '/spa/service-history',
+      icon: icons.HistoryOutlined
+    },
   ]
 };
 
