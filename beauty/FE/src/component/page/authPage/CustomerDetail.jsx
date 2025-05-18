@@ -349,31 +349,31 @@ const CustomerDetail = () => {
                                         </form>
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="history">
-                                        <h4 className="mb-4">Lịch sử dịch vụ</h4>
-                                        {serviceHistory.length === 0 ? (
-                                            <p>Không có lịch sử dịch vụ nào.</p>
-                                        ) : (
-                                            <div className="list-group">
-                                                {serviceHistory.map((history) => (
-                                                    <div key={history.id} className="list-group-item">
-                                                        <div className="d-flex justify-content-between align-items-center">
-                                                            <div>
-                                                                <h5>Dịch vụ ID: {history.serviceId}</h5>
-                                                                <p className="mb-1">Ngày sử dụng: {new Date(history.dateUsed).toLocaleDateString()}</p>
-                                                                <p className="mb-1">Ghi chú: {history.notes || 'Không có ghi chú'}</p>
-                                                            </div>
-                                                            <button
-                                                                className="btn btn-primary"
-                                                                onClick={() => handleViewDetails(history)}
-                                                            >
-                                                                Xem chi tiết
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </Tab.Pane>
+    <h4 className="mb-4">Lịch sử dịch vụ</h4>
+    {serviceHistory.length === 0 ? (
+        <p>Không có lịch sử dịch vụ nào.</p>
+    ) : (
+        <div className="list-group">
+            {serviceHistory.map((history) => (
+                <div key={history.id} className="list-group-item">
+                    <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5>{history.serviceName}</h5>
+                            <p className="mb-1">Giá: {history.price}₫</p>
+                            <p className="mb-1">Ngày hẹn: {new Date(history.appointmentDate).toLocaleDateString()}</p>
+                        </div>
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => handleViewDetails(history)}
+                        >
+                            Xem chi tiết
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    )}
+</Tab.Pane>
                                 </Tab.Content>
                             </Tab.Container>
                         </div>
@@ -390,8 +390,9 @@ const CustomerDetail = () => {
                                 <button type="button" className="btn-close" onClick={handleCloseDetails}></button>
                             </div>
                             <div className="modal-body">
-                                <p><b>Dịch vụ ID:</b> {selectedHistory.serviceId}</p>
-                                <p><b>Ngày sử dụng:</b> {new Date(selectedHistory.dateUsed).toLocaleDateString()}</p>
+                                <p><b>Dịch vụ:</b> {selectedHistory.serviceName}</p>
+                                <p><b>Giá:</b> {selectedHistory.price}₫</p>
+                                <p><b>Ngày hẹn:</b> {new Date(selectedHistory.appointmentDate).toLocaleDateString()}</p>
                                 <p><b>Ghi chú:</b> {selectedHistory.notes || 'Không có ghi chú'}</p>
                                 <p><b>Ngày tạo:</b> {new Date(selectedHistory.createdAt).toLocaleDateString()}</p>
                                 <p><b>Trạng thái:</b> {selectedHistory.isActive ? 'Hoạt động' : 'Không hoạt động'}</p>
