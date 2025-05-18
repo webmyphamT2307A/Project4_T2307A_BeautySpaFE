@@ -105,14 +105,14 @@ const RoleManager = () => {
             setRoles(roles.map(role =>
               role.id === currentRole.id ? { ...role, name: formData.name } : role
             ));
-            toast.success('Cập nhật role thành công');
+            toast.success('Role updated successfully');
           } else {
-            toast.error('Cập nhật thất bại');
+            toast.error('Failed to update role');
           }
           setOpen(false);
         })
         .catch(() => {
-          toast.error('Lỗi khi cập nhật role');
+          toast.error('Error updating role');
           setOpen(false);
         });
     } else {
@@ -123,7 +123,7 @@ const RoleManager = () => {
         .then(res => res.json())
         .then(data => {
           if (data.status === 'SUCCESS') {
-            toast.success('Tạo mới role thành công');
+            toast.success('Role created successfully');
             // Reload roles
             fetch(API_URL)
               .then(res => res.json())
@@ -133,19 +133,19 @@ const RoleManager = () => {
                 }
               });
           } else {
-            toast.error('Tạo mới thất bại');
+            toast.error('Failed to create role');
           }
           setOpen(false);
         })
         .catch(() => {
-          toast.error('Lỗi khi tạo mới role');
+          toast.error('Error creating role');
           setOpen(false);
         });
     }
   };
 
   const handleDelete = (roleId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa role này?')) {
+    if (window.confirm('Are you sure you want to delete this role?')) {
       fetch(`${API_URL}/delete?roleId=${roleId}`, {
         method: 'PUT'
       })
@@ -153,12 +153,12 @@ const RoleManager = () => {
         .then(data => {
           if (data.status === 'SUCCESS') {
             setRoles(roles.filter(role => role.id !== roleId));
-            toast.success('Xóa role thành công');
+            toast.success('Role deleted successfully');
           } else {
-            toast.error('Xóa thất bại');
+            toast.error('Failed to delete role');
           }
         })
-        .catch(() => toast.error('Lỗi khi xóa role'));
+        .catch(() => toast.error('Error deleting role'));
     }
   };
 
@@ -217,9 +217,9 @@ const RoleManager = () => {
         <Table sx={{ minWidth: 650 }} stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell>STT</TableCell>
-              <TableCell>Tên Role</TableCell>
-              <TableCell align="center">Hành Động</TableCell>
+              <TableCell>#</TableCell>
+              <TableCell>Role Name</TableCell>
+              <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
