@@ -349,31 +349,31 @@ const CustomerDetail = () => {
                                         </form>
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="history">
-    <h4 className="mb-4">Lịch sử dịch vụ</h4>
-    {serviceHistory.length === 0 ? (
-        <p>Không có lịch sử dịch vụ nào.</p>
-    ) : (
-        <div className="list-group">
-            {serviceHistory.map((history) => (
-                <div key={history.id} className="list-group-item">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5>{history.serviceName}</h5>
-                            <p className="mb-1">Giá: {history.price}₫</p>
-                            <p className="mb-1">Ngày hẹn: {new Date(history.appointmentDate).toLocaleDateString()}</p>
-                        </div>
-                        <button
-                            className="btn btn-primary"
-                            onClick={() => handleViewDetails(history)}
-                        >
-                            Xem chi tiết
-                        </button>
-                    </div>
-                </div>
-            ))}
-        </div>
-    )}
-</Tab.Pane>
+                                        <h4 className="mb-4">Lịch sử dịch vụ</h4>
+                                        {serviceHistory.length === 0 ? (
+                                            <p>Không có lịch sử dịch vụ nào.</p>
+                                        ) : (
+                                            <div className="list-group">
+                                                {serviceHistory.map((history) => (
+                                                    <div key={history.id} className="list-group-item">
+                                                        <div className="d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <h5>{history.serviceName}</h5>
+                                                                <p className="mb-1">Giá: {history.price}₫</p>
+                                                                <p className="mb-1">Ngày hẹn: {new Date(history.appointmentDate).toLocaleDateString()}</p>
+                                                            </div>
+                                                            <button
+                                                                className="btn btn-primary"
+                                                                onClick={() => handleViewDetails(history)}
+                                                            >
+                                                                Xem chi tiết
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </Tab.Pane>
                                 </Tab.Content>
                             </Tab.Container>
                         </div>
