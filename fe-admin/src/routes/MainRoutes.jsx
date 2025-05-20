@@ -68,6 +68,7 @@ const MainRoutes = {
         }
       ]
     },
+   
     {
       path: 'typography',
       element: <Typography />
