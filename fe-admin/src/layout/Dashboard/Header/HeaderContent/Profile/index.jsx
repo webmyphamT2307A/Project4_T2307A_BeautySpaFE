@@ -63,7 +63,7 @@ export default function Profile() {
     user = null;
   }
   const userName = user?.fullName || 'Chưa đăng nhập';
-  const userAvatar = user?.avatar || avatar1;
+  const userAvatar = user?.imageUrl || avatar1;
 
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
@@ -137,11 +137,11 @@ export default function Profile() {
                     <Grid container justifyContent="space-between" alignItems="center">
                       <Grid>
                         <Stack direction="row" sx={{ gap: 1.25, alignItems: 'center' }}>
-                          <Avatar alt="profile user" src={avatar1} sx={{ width: 32, height: 32 }} />
+                          <Avatar alt="profile user" src={userAvatar} sx={{ width: 32, height: 32 }} />
                           <Stack>
-                            <Typography variant="h6">John Doe</Typography>
+                            <Typography variant="h6">{userName}</Typography>
                             <Typography variant="body2" color="text.secondary">
-                              UI/UX Designer
+                              Developer
                             </Typography>
                           </Stack>
                         </Stack>
