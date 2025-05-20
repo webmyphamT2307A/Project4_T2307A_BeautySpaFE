@@ -7,6 +7,7 @@ import ServiceManagement from '../pages/spa/service';
 import AppointmentManagement from '../pages/spa/appoinment';
 import ServiceHistory from '../pages/spa/service-history';
 import RoleManger from '../pages/role/service';
+import AttendanceManger from '../pages/attendance/service';
 import path from 'path';
 
 // render- Dashboard
@@ -65,6 +66,15 @@ const MainRoutes = {
         {
           path: 'service',
           element: <RoleManger />
+        }
+      ]
+    },
+    {
+      path: 'attendance',
+      children: [
+        {
+          path: 'service',
+          element: <AttendanceManger />
         }
       ]
     },
