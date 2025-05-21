@@ -40,7 +40,7 @@ export default function Login() {
       const roleName = user?.role?.name;
 
       if (roleName === 'admin') {
-        window.location.href = 'http://localhost:3000';
+        window.location.href = 'http://localhost:3003';
       } else if (roleName === 'staff') {
         window.location.href = 'http://localhost:3002'; 
       } else {
