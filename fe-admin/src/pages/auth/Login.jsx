@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 // material-ui
 import Grid from '@mui/material/Grid2';
@@ -12,13 +12,21 @@ import Alert from '@mui/material/Alert';
 // project imports
 import AuthWrapper from 'sections/auth/AuthWrapper';
 
-// ================================|| JWT - LOGIN ||================================ //
-
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const token = queryParams.get('token');
+    if (token) {
+      console.log('Token from URL:', token);
+      localStorage.setItem('token', token);
+    }
+  }, [location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,17 +38,36 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (data.status === 'SUCCESS') {
-        // ...sau khi đăng nhập thành công ở Login.jsx
-        localStorage.setItem('token', data.data.token);
-        
-        localStorage.setItem('user', JSON.stringify(data.data.user));
+      console.log('Login response:', data);
 
-        navigate('/');
+      if (data.status === 'SUCCESS') {
+        const token = data.data.token;
+        const user = data.data.user;
+
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', user.id);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        const roleName = `ROLE_${user?.role?.name?.toUpperCase()}`;
+
+        if (roleName === 'ROLE_ADMIN') {
+          console.log('Redirecting to admin dashboard...');
+          window.location.href = `http://localhost:3003?token=${token}`;
+        } else if (roleName === 'ROLE_STAFF') {
+          console.log('Redirecting to staff dashboard...');
+          window.location.href = `http://localhost:3002?token=${token}`;
+        } else {
+          console.log('Invalid role, clearing session...');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('user');
+          setError('Vai trò không hợp lệ');
+        }
       } else {
         setError(data.message || 'Đăng nhập thất bại');
       }
     } catch (err) {
+      console.error('Error during login:', err);
       setError('Lỗi kết nối server');
     }
   };
@@ -64,14 +91,14 @@ export default function Login() {
                 label="Email"
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
               <TextField
                 label="Mật khẩu"
                 type="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <Button type="submit" variant="contained" color="primary">

@@ -7,7 +7,7 @@ import ServiceManagement from '../pages/spa/service';
 import AppointmentManagement from '../pages/spa/appoinment';
 import ServiceHistory from '../pages/spa/service-history';
 import RoleManger from '../pages/role/service';
-import path from 'path';
+import usePrivateRoute from './../hooks/usePrivateRoute';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
@@ -25,20 +25,25 @@ const AdminAccount = Loadable(lazy(() => import('pages/account/admin')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
+const ProtectedRoute = ({ element }) => {
+  usePrivateRoute(['ROLE_ADMIN']); // Chỉ cho phép ROLE_ADMIN truy cập
+  return element;
+};
+
 const MainRoutes = {
   path: '/',
   element: <DashboardLayout />,
   children: [
     {
       path: '/',
-      element: <DashboardDefault />
+      element: <ProtectedRoute element={<DashboardDefault />} />
     },
     {
       path: 'dashboard',
       children: [
         {
           path: 'default',
-          element: <DashboardDefault />
+          element: <ProtectedRoute element={<DashboardDefault />} />
         }
       ]
     },
@@ -47,15 +52,15 @@ const MainRoutes = {
       children: [
         {
           path: 'service',
-          element: <ServiceManagement />
+          element: <ProtectedRoute element={<ServiceManagement />} />
         },
         {
           path: 'appointments',
-          element: <AppointmentManagement />
+          element: <ProtectedRoute element={<AppointmentManagement />} />
         },
         {
           path: 'service-history',
-          element: <ServiceHistory />
+          element: <ProtectedRoute element={<ServiceHistory />} />
         }
       ]
     },
@@ -64,37 +69,36 @@ const MainRoutes = {
       children: [
         {
           path: 'service',
-          element: <RoleManger />
+          element: <ProtectedRoute element={<RoleManger />} />
         }
       ]
     },
-   
     {
       path: 'typography',
-      element: <Typography />
+      element: <ProtectedRoute element={<Typography />} />
     },
     {
       path: 'color',
-      element: <Color />
+      element: <ProtectedRoute element={<Color />} />
     },
     {
       path: 'shadow',
-      element: <Shadow />
+      element: <ProtectedRoute element={<Shadow />} />
     },
     {
       path: 'sample-page',
-      element: <SamplePage />
+      element: <ProtectedRoute element={<SamplePage />} />
     },
     {
       path: 'account',
       children: [
         {
           path: 'user',
-          element: <UserAccount />
+          element: <ProtectedRoute element={<UserAccount />} />
         },
         {
           path: 'admin',
-          element: <AdminAccount />
+          element: <ProtectedRoute element={<AdminAccount />} />
         }
       ]
     }
