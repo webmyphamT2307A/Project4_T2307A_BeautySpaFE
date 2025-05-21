@@ -20,30 +20,39 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      const res = await fetch('http://localhost:8080/api/v1/userDetail/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (data.status === 'SUCCESS') {
-        // ...sau khi đăng nhập thành công ở Login.jsx
-        localStorage.setItem('token', data.data.token);
-        
-        localStorage.setItem('user', JSON.stringify(data.data.user));
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError('');
+  try {
+    const res = await fetch('http://localhost:8080/api/v1/userDetail/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (data.status === 'SUCCESS') {
+      const token = data.data.token;
+      const user = data.data.user;
 
-        navigate('/');
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      const roleName = user?.role?.name;
+
+      if (roleName === 'admin') {
+        window.location.href = 'http://localhost:3000';
+      } else if (roleName === 'staff') {
+        window.location.href = 'http://localhost:3002'; 
       } else {
-        setError(data.message || 'Đăng nhập thất bại');
+        setError('Không có quyền truy cập phù hợp');
       }
-    } catch (err) {
-      setError('Lỗi kết nối server');
+    } else {
+      setError(data.message || 'Đăng nhập thất bại');
     }
-  };
+  } catch (err) {
+    setError('Lỗi kết nối server');
+  }
+};
 
   return (
     <AuthWrapper>
