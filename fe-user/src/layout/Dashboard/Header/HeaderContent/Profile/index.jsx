@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
-import { useRef, useState } from 'react';
-
+import { useRef, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import ButtonBase from '@mui/material/ButtonBase';
@@ -50,21 +50,60 @@ function a11yProps(index) {
 
 export default function Profile() {
   const theme = useTheme();
+  const location = useLocation();
 
   const anchorRef = useRef(null);
   const [open, setOpen] = useState(false);
+  const [userName, setUserName] = useState('Chưa đăng nhập');
+  const [userAvatar, setUserAvatar] = useState(avatar1);
+
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
-  let user = null;
-  try {
-    user = JSON.parse(localStorage.getItem('user'));
-  } catch (e) {
-    user = null;
-  }
-  const userName = user?.fullName || 'Chưa đăng nhập';
-  const userAvatar = user?.avatar || avatar1;
 
+  useEffect(() => {
+    let token = localStorage.getItem('token');
+
+    if (!token) {
+      // Lấy token từ URL
+      const queryParams = new URLSearchParams(window.location.search);
+      token = queryParams.get('token');
+      if (token) {
+        console.log('Token from URL:', token);
+        localStorage.setItem('token', token); // Lưu token vào localStorage
+      } else {
+        console.error('Token is missing in localStorage and URL');
+        return;
+      }
+    }
+
+    // Gọi API để lấy thông tin người dùng
+    fetch('http://localhost:8080/api/v1/userDetail/me', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`API returned status ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data.status === 'SUCCESS') {
+          localStorage.setItem('user', JSON.stringify(data.data));
+          setUserName(data.data.fullName || 'Chưa đăng nhập');
+          setUserAvatar(data.data.imageUrl || avatar1);
+          console.log('User data saved to localStorage:', data.data);
+        } else {
+          console.error('Failed to fetch user data:', data.message);
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching user data:', err.message);
+      });
+  }, []);
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
       return;
@@ -81,11 +120,14 @@ export default function Profile() {
   const handleLogout = async () => {
     try {
       await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
-    } catch (e) { }
+    } catch (e) {
+      console.error('Logout failed:', e);
+    }
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     window.location.href = '/login';
   };
+
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <ButtonBase
@@ -137,11 +179,11 @@ export default function Profile() {
                     <Grid container justifyContent="space-between" alignItems="center">
                       <Grid>
                         <Stack direction="row" sx={{ gap: 1.25, alignItems: 'center' }}>
-                          <Avatar alt="profile user" src={avatar1} sx={{ width: 32, height: 32 }} />
+                          <Avatar alt="profile user" src={userAvatar} sx={{ width: 32, height: 32 }} />
                           <Stack>
-                            <Typography variant="h6">John Doe</Typography>
+                            <Typography variant="h6">{userName}</Typography>
                             <Typography variant="body2" color="text.secondary">
-                              UI/UX Designer
+                              Developer
                             </Typography>
                           </Stack>
                         </Stack>

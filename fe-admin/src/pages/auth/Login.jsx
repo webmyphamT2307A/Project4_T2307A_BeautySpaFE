@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 // material-ui
 import Grid from '@mui/material/Grid2';
@@ -12,47 +12,61 @@ import Alert from '@mui/material/Alert';
 // project imports
 import AuthWrapper from 'sections/auth/AuthWrapper';
 
-// ================================|| JWT - LOGIN ||================================ //
-
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError('');
-  try {
-    const res = await fetch('http://localhost:8080/api/v1/userDetail/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (data.status === 'SUCCESS') {
-      const token = data.data.token;
-      const user = data.data.user;
-
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const token = queryParams.get('token');
+    if (token) {
+      console.log('Token from URL:', token);
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      const roleName = user?.role?.name;
-
-      if (roleName === 'admin') {
-        window.location.href = 'http://localhost:3003';
-      } else if (roleName === 'staff') {
-        window.location.href = 'http://localhost:3002'; 
-      } else {
-        setError('Không có quyền truy cập phù hợp');
-      }
-    } else {
-      setError(data.message || 'Đăng nhập thất bại');
     }
-  } catch (err) {
-    setError('Lỗi kết nối server');
-  }
-};
+  }, [location]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const res = await fetch('http://localhost:8080/api/v1/userDetail/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      console.log('Login response:', data);
+
+      if (data.status === 'SUCCESS') {
+        const token = data.data.token;
+        const user = data.data.user;
+
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', user.id);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        const roleName = user?.role?.name;
+
+        if (roleName === 'admin') {
+          console.log('Redirecting to admin dashboard...');
+          window.location.href = `http://localhost:3003?token=${token}`;
+        } else if (roleName === 'staff') {
+          console.log('Redirecting to staff dashboard...');
+          window.location.href = `http://localhost:3002?token=${token}`;
+        } else {
+          setError('Vai trò không hợp lệ');
+        }
+      } else {
+        setError(data.message || 'Đăng nhập thất bại');
+      }
+    } catch (err) {
+      console.error('Error during login:', err);
+      setError('Lỗi kết nối server');
+    }
+  };
 
   return (
     <AuthWrapper>
@@ -73,14 +87,14 @@ export default function Login() {
                 label="Email"
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
               <TextField
                 label="Mật khẩu"
                 type="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <Button type="submit" variant="contained" color="primary">
