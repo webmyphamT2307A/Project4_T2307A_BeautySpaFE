@@ -1,4 +1,6 @@
+// ProductPage.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../../shared/header';
 import Footer from '../../shared/footer';
 
@@ -11,6 +13,9 @@ const ProductPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [hoveredImage, setHoveredImage] = useState(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,34 +40,24 @@ const ProductPage = () => {
 
   useEffect(() => {
     let data = [...products];
-
     if (searchTerm) {
-      data = data.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      data = data.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }
-
     if (categoryFilter) {
       data = data.filter(p => p.category === categoryFilter);
     }
-
     setFiltered(data);
     setCurrentPage(1);
   }, [searchTerm, categoryFilter, products]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const displayed = filtered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
+  const displayed = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
 
-  // Styles for the zoom effect
   const imageWrapperStyle = {
     width: '100%',
     height: '200px',
-    overflow: 'hidden', // Hide the parts of image that overflow
+    overflow: 'hidden',
     position: 'relative',
   };
 
@@ -70,30 +65,25 @@ const ProductPage = () => {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    transform: isHovered ? 'scale(1.2)' : 'scale(1)', // Zoom in when hovered
-    transition: 'transform 0.3s ease', // Smooth transition
+    transform: isHovered ? 'scale(1.2)' : 'scale(1)',
+    transition: 'transform 0.3s ease',
   });
-
-  const [hoveredImage, setHoveredImage] = useState(null); // Track hovered image
 
   return (
     <div>
       <Header />
 
-      {/* Breadcrumb & Title */}
       <div className="container-fluid bg-breadcrumb py-5">
         <div className="container text-center py-5">
           <h3 className="text-white display-3 mb-4">All Products</h3>
           <ol className="breadcrumb justify-content-center mb-0">
             <li className="breadcrumb-item"><a href="/">Home</a></li>
-            <li className="breadcrumb-item"><a href="/shop">Shop</a></li>
             <li className="breadcrumb-item active text-white">All Products</li>
           </ol>
         </div>
       </div>
 
       <div className="container py-5">
-        {/* Filter + Search */}
         <div className="row mb-4">
           <div className="col-md-4 mb-2">
             <input
@@ -118,7 +108,6 @@ const ProductPage = () => {
           </div>
         </div>
 
-        {/* Product Grid */}
         {loading ? (
           <div className="text-center">Loading...</div>
         ) : (
@@ -135,7 +124,7 @@ const ProductPage = () => {
                       src={product.imageUrl}
                       className="card-img-top"
                       alt={product.name}
-                      style={imageStyle(hoveredImage === product.id)} // Apply zoom effect
+                      style={imageStyle(hoveredImage === product.id)}
                     />
                   </div>
                   <div className="card-body d-flex flex-column">
@@ -146,7 +135,11 @@ const ProductPage = () => {
                     <p className="card-text text-danger fw-bold">
                       {product.price.toLocaleString()}$
                     </p>
-                    <button className="btn btn-outline-primary mt-auto">
+                    <button
+                      className="btn btn-outline-primary mt-auto"
+                      onClick={() => navigate(`/product/${product.id}`)}
+
+                    >
                       View Details
                     </button>
                   </div>
@@ -156,7 +149,6 @@ const ProductPage = () => {
           </div>
         )}
 
-        {/* Pagination */}
         <div className="text-center mt-4">
           {[...Array(totalPages)].map((_, i) => (
             <button
