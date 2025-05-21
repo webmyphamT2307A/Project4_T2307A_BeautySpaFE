@@ -70,7 +70,7 @@ export default function Profile() {
       token = queryParams.get('token');
       if (token) {
         console.log('Token from URL:', token);
-        localStorage.setItem('token', token); // Lưu token vào localStorage
+        localStorage.setItem('token', token); 
       } else {
         console.error('Token is missing in localStorage and URL');
         return;

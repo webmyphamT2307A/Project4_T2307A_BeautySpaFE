@@ -48,15 +48,19 @@ export default function Login() {
         localStorage.setItem('userId', user.id);
         localStorage.setItem('user', JSON.stringify(user));
 
-        const roleName = user?.role?.name;
+        const roleName = `ROLE_${user?.role?.name?.toUpperCase()}`;
 
-        if (roleName === 'admin') {
+        if (roleName === 'ROLE_ADMIN') {
           console.log('Redirecting to admin dashboard...');
           window.location.href = `http://localhost:3003?token=${token}`;
-        } else if (roleName === 'staff') {
+        } else if (roleName === 'ROLE_STAFF') {
           console.log('Redirecting to staff dashboard...');
           window.location.href = `http://localhost:3002?token=${token}`;
         } else {
+          console.log('Invalid role, clearing session...');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('user');
           setError('Vai trò không hợp lệ');
         }
       } else {
