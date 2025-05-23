@@ -23,7 +23,7 @@ import Avatar from 'components/@extended/Avatar';
 import MainCard from 'components/MainCard';
 import Transitions from 'components/@extended/Transitions';
 import IconButton from 'components/@extended/IconButton';
-
+import Cookies from 'js-cookie';
 // assets
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import SettingOutlined from '@ant-design/icons/SettingOutlined';
@@ -61,28 +61,18 @@ export default function Profile() {
     setOpen((prevOpen) => !prevOpen);
   };
 
-  useEffect(() => {
-    let token = localStorage.getItem('token');
+ useEffect(() => {
+  const token = Cookies.get('token');
+  const role = Cookies.get('role');
 
-    if (!token) {
-      // Lấy token từ URL
-      const queryParams = new URLSearchParams(window.location.search);
-      token = queryParams.get('token');
-      if (token) {
-        console.log('Token from URL:', token);
-        localStorage.setItem('token', token); 
-      } else {
-        console.error('Token is missing in localStorage and URL');
-        return;
-      }
-    }
+  if (token && role) {
+    console.log('Token and role found in cookies:', token, role);
 
-    // Gọi API để lấy thông tin người dùng
     fetch('http://localhost:8080/api/v1/userDetail/me', {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => {
         if (!res.ok) {
@@ -92,10 +82,9 @@ export default function Profile() {
       })
       .then((data) => {
         if (data.status === 'SUCCESS') {
-          localStorage.setItem('user', JSON.stringify(data.data));
-          setUserName(data.data.fullName || 'Chưa đăng nhập');
-          setUserAvatar(data.data.imageUrl || avatar1);
-          console.log('User data saved to localStorage:', data.data);
+          console.log('User data:', data.data);
+          setUserName(data.data.fullName || 'user');
+          setUserAvatar(data.data.imageUrl || avatar1);  
         } else {
           console.error('Failed to fetch user data:', data.message);
         }
@@ -103,7 +92,11 @@ export default function Profile() {
       .catch((err) => {
         console.error('Error fetching user data:', err.message);
       });
-  }, []);
+  } else {
+    console.error('Token or role is missing in cookies');
+  }
+}, []);
+
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
       return;

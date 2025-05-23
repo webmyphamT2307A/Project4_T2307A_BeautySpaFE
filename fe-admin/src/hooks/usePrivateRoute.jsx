@@ -5,13 +5,17 @@ const usePrivateRoute = (allowedRoles) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const roleName = `ROLE_${user?.role?.name?.toUpperCase()}`;
+  const user = JSON.parse(localStorage.getItem('user'));
+  const roleName = `ROLE_${user?.role?.name?.toUpperCase()}`;
 
-    if (!allowedRoles.includes(roleName)) {
-      navigate('/login', { replace: true });
-    }
-  }, [allowedRoles, navigate]);
+  console.log('User from localStorage:', user);
+  console.log('RoleName:', roleName);
+
+  if (!allowedRoles.includes(roleName)) {
+    console.log('Role not allowed, redirecting to login...');
+    navigate('/login', { replace: true });
+  }
+}, [allowedRoles, navigate]);
 };
 
 export default usePrivateRoute;
