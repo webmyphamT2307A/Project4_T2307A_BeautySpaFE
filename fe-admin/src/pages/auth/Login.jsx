@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 
 // material-ui
 import Grid from '@mui/material/Grid2';
@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
-
+import Cookies from 'js-cookie';
 // project imports
 import AuthWrapper from 'sections/auth/AuthWrapper';
 
@@ -20,13 +20,16 @@ export default function Login() {
   const location = useLocation();
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const token = queryParams.get('token');
-    if (token) {
-      console.log('Token from URL:', token);
-      localStorage.setItem('token', token);
+    const token = Cookies.get('token');
+    const role = Cookies.get('role');
+    console.log('Token in useEffect:', token);
+    console.log('Role in useEffect:', role);
+
+    if (!token || !role) {
+      console.log('No token or role found, redirecting to login...');
+      navigate('/login');
     }
-  }, [location]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,23 +47,24 @@ export default function Login() {
         const token = data.data.token;
         const user = data.data.user;
 
-        localStorage.setItem('token', token);
-        localStorage.setItem('userId', user.id);
-        localStorage.setItem('user', JSON.stringify(user));
-
         const roleName = `ROLE_${user?.role?.name?.toUpperCase()}`;
+        console.log('Role from API:', roleName);
+         localStorage.setItem('user', JSON.stringify(user));
+        if (roleName === 'ROLE_ADMIN' || roleName === 'ROLE_STAFF') {
+          Cookies.set('token', token, { path: '/', sameSite: 'Strict', expires: 7 });
+          Cookies.set('role', roleName, { path: '/', sameSite: 'Strict', expires: 7 });
 
-        if (roleName === 'ROLE_ADMIN') {
-          console.log('Redirecting to admin dashboard...');
-          window.location.href = `http://localhost:3003?token=${token}`;
-        } else if (roleName === 'ROLE_STAFF') {
-          console.log('Redirecting to staff dashboard...');
-          window.location.href = `http://localhost:3002?token=${token}`;
+          if (roleName === 'ROLE_ADMIN') {
+            console.log('Redirecting to admin dashboard...');
+            window.location.href = 'http://localhost:3003';
+          } else if (roleName === 'ROLE_STAFF') {
+            console.log('Redirecting to staff dashboard...');
+            window.location.href = 'http://localhost:3002';
+          }
         } else {
-          console.log('Invalid role, clearing session...');
-          localStorage.removeItem('token');
-          localStorage.removeItem('userId');
-          localStorage.removeItem('user');
+          console.log('Invalid role, clearing cookies...');
+          Cookies.remove('token');
+          Cookies.remove('role');
           setError('Vai trò không hợp lệ');
         }
       } else {
