@@ -7,6 +7,7 @@ import DashboardLayout from 'layout/Dashboard';
 import AppointmentManagement from '../pages/spa/appoinment';
 // import ServiceHistory from '../pages/spa/service-history';
 // import RoleManger from '../pages/role/service';
+import AttendancePage from '../pages/roll_call/attendancePage';
 import path from 'path';
 
 // render- Dashboard
@@ -22,7 +23,6 @@ const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')))
 
 const UserAccount = Loadable(lazy(() => import('pages/account/user')));
 const AdminAccount = Loadable(lazy(() => import('pages/account/admin')));
-
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -40,6 +40,15 @@ const MainRoutes = {
           path: 'default',
           element: <DashboardDefault />
         }
+      ]
+    },
+    {
+      path: 'roll_call',
+      children: [
+    {
+      path: 'attendancePage',
+      element: <AttendancePage />
+    }
       ]
     },
     {
