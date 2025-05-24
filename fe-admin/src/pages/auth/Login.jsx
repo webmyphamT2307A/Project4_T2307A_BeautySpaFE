@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useContext } from 'react';
 
 // material-ui
 import Grid from '@mui/material/Grid2';
@@ -8,17 +8,28 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
-
+import Cookies from 'js-cookie';
 // project imports
 import AuthWrapper from 'sections/auth/AuthWrapper';
-
-// ================================|| JWT - LOGIN ||================================ //
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const token = Cookies.get('token');
+    const role = Cookies.get('role');
+    console.log('Token in useEffect:', token);
+    console.log('Role in useEffect:', role);
+
+    if (!token || !role) {
+      console.log('No token or role found, redirecting to login...');
+      navigate('/login');
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,17 +41,37 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (data.status === 'SUCCESS') {
-        // ...sau khi đăng nhập thành công ở Login.jsx
-        localStorage.setItem('token', data.data.token);
-        
-        localStorage.setItem('user', JSON.stringify(data.data.user));
+      console.log('Login response:', data);
 
-        navigate('/');
+      if (data.status === 'SUCCESS') {
+        const token = data.data.token;
+        const user = data.data.user;
+
+        const roleName = `ROLE_${user?.role?.name?.toUpperCase()}`;
+        console.log('Role from API:', roleName);
+         localStorage.setItem('user', JSON.stringify(user));
+        if (roleName === 'ROLE_ADMIN' || roleName === 'ROLE_STAFF') {
+          Cookies.set('token', token, { path: '/', sameSite: 'Strict', expires: 7 });
+          Cookies.set('role', roleName, { path: '/', sameSite: 'Strict', expires: 7 });
+
+          if (roleName === 'ROLE_ADMIN') {
+            console.log('Redirecting to admin dashboard...');
+            window.location.href = 'http://localhost:3003';
+          } else if (roleName === 'ROLE_STAFF') {
+            console.log('Redirecting to staff dashboard...');
+            window.location.href = 'http://localhost:3002';
+          }
+        } else {
+          console.log('Invalid role, clearing cookies...');
+          Cookies.remove('token');
+          Cookies.remove('role');
+          setError('Vai trò không hợp lệ');
+        }
       } else {
         setError(data.message || 'Đăng nhập thất bại');
       }
     } catch (err) {
+      console.error('Error during login:', err);
       setError('Lỗi kết nối server');
     }
   };
@@ -64,14 +95,14 @@ export default function Login() {
                 label="Email"
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
               <TextField
                 label="Mật khẩu"
                 type="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <Button type="submit" variant="contained" color="primary">

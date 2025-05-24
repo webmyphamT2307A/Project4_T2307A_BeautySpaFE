@@ -9,7 +9,6 @@ const CustomerDetail = () => {
     const [user, setUser] = useState({});
     const [loading, setLoading] = useState(true);
 
-    // Thông tin người dùng để cập nhật - đảm bảo khớp với CustomerDetailResponseDto
     const [userInfo, setUserInfo] = useState({
         fullName: '',
         email: '',
@@ -18,44 +17,31 @@ const CustomerDetail = () => {
         imageUrl: null
     });
 
-    // Thông tin mật khẩu để cập nhật - sửa tên trường để khớp với ChangePasswordCustomerRequestDto
     const [passwordInfo, setPasswordInfo] = useState({
         oldPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
 
+    const [serviceHistory, setServiceHistory] = useState([]);
+    const [selectedHistory, setSelectedHistory] = useState(null);
+
     const [message, setMessage] = useState({ type: '', content: '' });
 
-    // Thêm vào useEffect trong CustomerDetail.jsx
     useEffect(() => {
         const storedUser = localStorage.getItem('userInfo');
         if (storedUser) {
             try {
                 const parsedUser = JSON.parse(storedUser);
-                console.log("User data from localStorage:", parsedUser);
-
-                // Kiểm tra token
                 if (!parsedUser.token) {
-                    console.error("Token không tồn tại!");
                     localStorage.removeItem('userInfo');
                     window.location.href = '/';
                     return;
                 }
-
-                // Kiểm tra định dạng token
-                const tokenParts = parsedUser.token.split('.');
-                if (tokenParts.length !== 3) {
-                    console.error("Token không đúng định dạng JWT!");
-                    localStorage.removeItem('userInfo');
-                    window.location.href = '/';
-                    return;
-                }
-
                 setUser(parsedUser);
                 fetchUserDetails(parsedUser.id, parsedUser.token);
+                fetchServiceHistory(parsedUser.id, parsedUser.token); // Sử dụng customerId
             } catch (error) {
-                console.error("Lỗi khi phân tích dữ liệu:", error);
                 localStorage.removeItem('userInfo');
                 window.location.href = '/';
             }
@@ -66,19 +52,10 @@ const CustomerDetail = () => {
 
     const fetchUserDetails = async (userId, token) => {
         try {
-            console.log("Gửi request với token:", token);
-            console.log("Authorization header:", `Bearer ${token}`);
-
-            // Thêm timeout để tránh request treo
             const response = await axios.get(`http://localhost:8080/api/v1/customer/detail/${userId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                timeout: 10000 // 10 giây
+                headers: { 'Authorization': `Bearer ${token}` },
+                timeout: 10000
             });
-
-            console.log("Response từ API:", response.data);
-
             if (response.data && response.data.status === 'SUCCESS') {
                 const customerData = response.data.data;
                 setUserInfo({
@@ -90,74 +67,35 @@ const CustomerDetail = () => {
                 });
             }
         } catch (error) {
-            console.error('Error fetching user details:', error);
-
-            if (error.response) {
-                console.error('Status:', error.response.status);
-                console.error('Data:', error.response.data);
-                console.error('Headers:', error.response.headers);
-
-                if (error.response.status === 401) {
-                    setMessage({
-                        type: 'danger',
-                        content: 'Phiên đăng nhập hết hạn, vui lòng đăng nhập lại'
-                    });
-
-                    setTimeout(() => {
-                        localStorage.removeItem('userInfo');
-                        window.location.href = '/';
-                    }, 3000);
-                    return;
-                } else if (error.response.status === 404) {
-                    setMessage({
-                        type: 'danger',
-                        content: 'Không tìm thấy thông tin người dùng'
-                    });
-                } else {
-                    setMessage({
-                        type: 'danger',
-                        content: `Lỗi: ${error.response.data?.message || 'Không thể tải thông tin người dùng'}`
-                    });
-                }
-            } else if (error.request) {
-                console.error('Request was sent but no response was received:', error.request);
-                setMessage({
-                    type: 'danger',
-                    content: 'Máy chủ không phản hồi, vui lòng thử lại sau'
-                });
-            } else {
-                console.error('Error message:', error.message);
-                setMessage({
-                    type: 'danger',
-                    content: 'Có lỗi xảy ra khi gửi yêu cầu'
-                });
-            }
+            setMessage({ type: 'danger', content: 'Không thể tải thông tin người dùng!' });
         } finally {
             setLoading(false);
         }
     };
+
+    const fetchServiceHistory = async (customerId, token) => {
+        try {
+            const response = await axios.get(`http://localhost:8080/api/v1/serviceHistory/customer/${customerId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setServiceHistory(response.data.data || []);
+        } catch (error) {
+            console.error('Error fetching service history:', error);
+        }
+    };
+
     const handleProfileChange = (e) => {
         const { name, value, files } = e.target;
-
         if (name === "imageFile") {
-            setUserInfo({
-                ...userInfo,
-                imageFile: files[0]
-            });
+            setUserInfo({ ...userInfo, imageFile: files[0] });
         } else {
-            setUserInfo({
-                ...userInfo,
-                [name]: value
-            });
+            setUserInfo({ ...userInfo, [name]: value });
         }
     };
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
-        setPasswordInfo({
-            ...passwordInfo,
-            [name]: value
-        });
+        setPasswordInfo({ ...passwordInfo, [name]: value });
     };
 
     const handleProfileSubmit = async (e) => {
@@ -172,119 +110,71 @@ const CustomerDetail = () => {
                 address: userInfo.address,
                 email: userInfo.email
             };
-
-            // Append customer info to FormData with the name "info"
             formData.append('info', new Blob([JSON.stringify(customerDetail)], { type: 'application/json' }));
-
-            // Append file if it exists
             if (userInfo.imageFile) {
                 formData.append('file', userInfo.imageFile);
             }
-
-            // Make the PUT request
             const response = await axios.put(
                 `http://localhost:8080/api/v1/customer/update-info/${user.id}`,
                 formData,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${user.token}`,
-                    },
-                }
+                { headers: { 'Authorization': `Bearer ${user.token}` } }
             );
-
             if (response.data && response.data.status === 'SUCCESS') {
-                localStorage.setItem('userInfo', JSON.stringify({
-                    ...user,
-                    ...userInfo
-                }));
-
+                localStorage.setItem('userInfo', JSON.stringify({ ...user, ...userInfo }));
                 setMessage({ type: 'success', content: 'Cập nhật thông tin thành công!' });
             } else {
-                setMessage({ type: 'danger', content: response.data?.message || 'Có lỗi xảy ra!' });
+                setMessage({ type: 'danger', content: 'Có lỗi xảy ra!' });
             }
         } catch (error) {
-            console.error('Error updating profile:', error);
-            setMessage({ type: 'danger', content: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin!' });
+            setMessage({ type: 'danger', content: 'Có lỗi xảy ra khi cập nhật thông tin!' });
         }
     };
-
-
 
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         setMessage({ type: '', content: '' });
 
-        // Kiểm tra mật khẩu mới và xác nhận
         if (passwordInfo.newPassword !== passwordInfo.confirmPassword) {
             setMessage({ type: 'danger', content: 'Mật khẩu mới và xác nhận mật khẩu không khớp!' });
             return;
         }
 
-        // Kiểm tra các trường không được để trống
-        if (!passwordInfo.oldPassword || !passwordInfo.newPassword || !passwordInfo.confirmPassword) {
-            setMessage({ type: 'danger', content: 'Vui lòng nhập đầy đủ thông tin!' });
-            return;
-        }
-
-        // Log dữ liệu gửi lên để debug
-        console.log("Gửi đổi mật khẩu:", {
-            oldPassword: passwordInfo.oldPassword,
-            newPassword: passwordInfo.newPassword,
-            confirmPassword: passwordInfo.confirmPassword,
-            userId: user.id,
-            token: user.token
-        });
-
         try {
             const response = await axios.put(
                 `http://localhost:8080/api/v1/customer/change-password/${user.id}`,
-                {
-                    oldPassword: passwordInfo.oldPassword,
-                    newPassword: passwordInfo.newPassword,
-                    confirmPassword: passwordInfo.confirmPassword
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${user.token}`
-                    }
-                }
+                passwordInfo,
+                { headers: { 'Authorization': `Bearer ${user.token}` } }
             );
-
             if (response.data && response.data.status === 'SUCCESS') {
                 setMessage({ type: 'success', content: 'Đổi mật khẩu thành công!' });
-                setPasswordInfo({
-                    oldPassword: '',
-                    newPassword: '',
-                    confirmPassword: ''
-                });
+                setPasswordInfo({ oldPassword: '', newPassword: '', confirmPassword: '' });
             } else {
-                setMessage({ type: 'danger', content: response.data?.message || 'Đổi mật khẩu thất bại!' });
+                setMessage({ type: 'danger', content: 'Đổi mật khẩu thất bại!' });
             }
         } catch (error) {
-            // Log lỗi chi tiết để debug
-            console.error('Lỗi đổi mật khẩu:', error);
-            setMessage({
-                type: 'danger',
-                content: error.response?.data?.message || 'Có lỗi xảy ra khi đổi mật khẩu!'
-            });
+            setMessage({ type: 'danger', content: 'Có lỗi xảy ra khi đổi mật khẩu!' });
         }
     };
 
     const handleLogout = async () => {
         try {
-            // Gọi API logout (tùy chọn)
             await axios.post('http://localhost:8080/api/v1/customer/logout', {}, {
-                headers: {
-                    'Authorization': `Bearer ${user.token}`
-                }
+                headers: { 'Authorization': `Bearer ${user.token}` }
             });
         } catch (error) {
             console.error('Error during logout:', error);
         } finally {
-            // Xóa thông tin người dùng khỏi localStorage
             localStorage.removeItem('userInfo');
             window.location.href = '/';
         }
+    };
+
+    const handleViewDetails = (history) => {
+        setSelectedHistory(history);
+    };
+
+    const handleCloseDetails = () => {
+        setSelectedHistory(null);
     };
 
     if (loading) {
@@ -310,13 +200,7 @@ const CustomerDetail = () => {
                         <div className="bg-light p-4 rounded">
                             <div className="text-center mb-4">
                                 <img
-                                    src={
-                                        userInfo.imageUrl
-                                            ? userInfo.imageUrl.startsWith('http')
-                                                ? userInfo.imageUrl
-                                                : `http://localhost:8080/${userInfo.imageUrl.replace(/^\/?/, '')}`
-                                            : "/assets/img/default-avatar.jpg"
-                                    }
+                                    src={userInfo.imageUrl || "/assets/img/default-avatar.jpg"}
                                     alt="Ảnh đại diện"
                                     className="img-fluid rounded-circle"
                                     style={{ width: "150px", height: "150px", objectFit: "cover" }}
@@ -337,6 +221,13 @@ const CustomerDetail = () => {
                                     onClick={(e) => { e.preventDefault(); setKey('password') }}
                                 >
                                     Đổi mật khẩu
+                                </a>
+                                <a
+                                    href="#"
+                                    className={`list-group-item list-group-item-action ${key === 'history' ? 'active' : ''}`}
+                                    onClick={(e) => { e.preventDefault(); setKey('history') }}
+                                >
+                                    Lịch sử dịch vụ
                                 </a>
                                 <a
                                     href="#"
@@ -380,7 +271,6 @@ const CustomerDetail = () => {
                                                         name="email"
                                                         value={userInfo.email}
                                                         onChange={handleProfileChange}
-                                                        
                                                     />
                                                 </div>
                                             </div>
@@ -458,15 +348,66 @@ const CustomerDetail = () => {
                                             <button type="submit" className="btn btn-primary">Đổi mật khẩu</button>
                                         </form>
                                     </Tab.Pane>
+                                    <Tab.Pane eventKey="history">
+                                        <h4 className="mb-4">Lịch sử dịch vụ</h4>
+                                        {serviceHistory.length === 0 ? (
+                                            <p>Không có lịch sử dịch vụ nào.</p>
+                                        ) : (
+                                            <div className="list-group">
+                                                {serviceHistory.map((history) => (
+                                                    <div key={history.id} className="list-group-item">
+                                                        <div className="d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <h5>{history.serviceName}</h5>
+                                                                <p className="mb-1">Giá: {history.price}₫</p>
+                                                                <p className="mb-1">Ngày hẹn: {new Date(history.appointmentDate).toLocaleDateString()}</p>
+                                                            </div>
+                                                            <button
+                                                                className="btn btn-primary"
+                                                                onClick={() => handleViewDetails(history)}
+                                                            >
+                                                                Xem chi tiết
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </Tab.Pane>
                                 </Tab.Content>
                             </Tab.Container>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {selectedHistory && (
+                <div className="modal show d-block" tabIndex="-1">
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Chi tiết dịch vụ</h5>
+                                <button type="button" className="btn-close" onClick={handleCloseDetails}></button>
+                            </div>
+                            <div className="modal-body">
+                                <p><b>Dịch vụ:</b> {selectedHistory.serviceName}</p>
+                                <p><b>Giá:</b> {selectedHistory.price}₫</p>
+                                <p><b>Ngày hẹn:</b> {new Date(selectedHistory.appointmentDate).toLocaleDateString()}</p>
+                                <p><b>Ghi chú:</b> {selectedHistory.notes || 'Không có ghi chú'}</p>
+                                <p><b>Ngày tạo:</b> {new Date(selectedHistory.createdAt).toLocaleDateString()}</p>
+                                <p><b>Trạng thái:</b> {selectedHistory.isActive ? 'Hoạt động' : 'Không hoạt động'}</p>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={handleCloseDetails}>Đóng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Footer />
         </>
     );
-}
+};
 
 export default CustomerDetail;
