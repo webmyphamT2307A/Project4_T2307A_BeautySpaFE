@@ -1,11 +1,13 @@
 // assets
 import {
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  UnorderedListOutlined
 } from '@ant-design/icons';
 
 // icons
 const icons = {
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  UnorderedListOutlined
 };
 
 // ==============================|| MENU ITEMS - ATTENDANCE ||============================== //
@@ -21,6 +23,13 @@ const attendance = {
       type: 'item',
       url: '/roll_call/attendancePage',
       icon: icons.ClockCircleOutlined
+    },
+    {
+      id: 'attendance-history',
+      title: 'Attendance History',
+      type: 'item',
+      url: '/roll_call/attendanceHistoryPage',
+      icon: icons.UnorderedListOutlined
     }
   ]
 };
