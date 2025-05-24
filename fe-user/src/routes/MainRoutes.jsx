@@ -8,6 +8,7 @@ import AppointmentManagement from '../pages/spa/appoinment';
 // import ServiceHistory from '../pages/spa/service-history';
 // import RoleManger from '../pages/role/service';
 import AttendancePage from '../pages/roll_call/attendancePage';
+import AttendanceHistoryPage from '../pages/roll_call/attendanceHistoryPage';
 import path from 'path';
 
 // render- Dashboard
@@ -45,10 +46,14 @@ const MainRoutes = {
     {
       path: 'roll_call',
       children: [
-    {
-      path: 'attendancePage',
-      element: <AttendancePage />
-    }
+        {
+          path: 'attendancePage',
+          element: <AttendancePage />
+        },
+        {
+          path: 'attendanceHistoryPage',
+          element: <AttendanceHistoryPage />
+        }
       ]
     },
     {
