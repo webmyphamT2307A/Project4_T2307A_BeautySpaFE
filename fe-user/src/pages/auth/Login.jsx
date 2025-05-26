@@ -34,10 +34,9 @@ export default function Login() {
   const token = data.data.token;
   const user = data.data.user;
 
-  localStorage.setItem('token', token); // Lưu token
-  localStorage.setItem('user', JSON.stringify(user)); // Lưu thông tin người dùng
-  localStorage.setItem('role', user.role.name); // Lưu vai trò của người dùng
-
+  localStorage.setItem('token', token); 
+  localStorage.setItem('user', JSON.stringify(user)); 
+  localStorage.setItem('role', user.role.name); 
   // Chuyển hướng đến trang chính
   navigate('/');
 } else {
