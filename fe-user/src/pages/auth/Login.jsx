@@ -31,25 +31,18 @@ export default function Login() {
     });
     const data = await res.json();
     if (data.status === 'SUCCESS') {
-      const token = data.data.token;
-      const user = data.data.user;
+  const token = data.data.token;
+  const user = data.data.user;
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+  localStorage.setItem('token', token); // Lưu token
+  localStorage.setItem('user', JSON.stringify(user)); // Lưu thông tin người dùng
+  localStorage.setItem('role', user.role.name); // Lưu vai trò của người dùng
 
-      // ✅ Kiểm tra role và redirect đúng cổng
-      const roleName = user?.role?.name;
-
-      if (roleName === 'admins') {
-        window.location.href = 'http://localhost:3000';
-      } else if (roleName === 'staff') {
-        window.location.href = 'http://localhost:3002'; 
-      } else {
-        setError('Không có quyền truy cập phù hợp');
-      }
-    } else {
-      setError(data.message || 'Đăng nhập thất bại');
-    }
+  // Chuyển hướng đến trang chính
+  navigate('/');
+} else {
+  setError(data.message || 'Đăng nhập thất bại');
+}
   } catch (err) {
     setError('Lỗi kết nối server');
   }

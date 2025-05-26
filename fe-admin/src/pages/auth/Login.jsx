@@ -49,6 +49,8 @@ export default function Login() {
 
         const roleName = `ROLE_${user?.role?.name?.toUpperCase()}`;
         console.log('Role from API:', roleName);
+         localStorage.setItem('token', JSON.stringify(token));
+
          localStorage.setItem('user', JSON.stringify(user));
         if (roleName === 'ROLE_ADMIN' || roleName === 'ROLE_STAFF') {
           Cookies.set('token', token, { path: '/', sameSite: 'Strict', expires: 7 });
