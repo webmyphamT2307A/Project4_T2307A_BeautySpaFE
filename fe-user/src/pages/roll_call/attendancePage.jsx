@@ -38,7 +38,6 @@ const AttendancePage = () => {
 
       if (json.status === 'SUCCESS') {
         setStatusMessage(`✅ Điểm danh thành công lúc: ${new Date(now).toLocaleString()}`);
-        fetchAttendanceHistory(); // Cập nhật lịch sử chấm công
       } else {
         throw new Error(json.message || 'Điểm danh thất bại');
       }
@@ -54,7 +53,7 @@ const AttendancePage = () => {
   setStatusMessage('');
 
   try {
-    const now = new Date().toISOString(); // Lấy thời gian hiện tại
+    const now = new Date().toISOString();
     const token = localStorage.getItem('token');
     const userId = JSON.parse(localStorage.getItem('user'))?.id;
 
