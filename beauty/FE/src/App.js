@@ -12,8 +12,6 @@ import AppointmentPage from './component/page/appointmentPage/AppointmentPage';
 import ErrorPage from './component/page/404';
 import CustomerDetail from './component/page/authPage/CustomerDetail'
 import ServiceDetailPage from './component/page/servicePage/ServiceDetailPage';
-import ProductPage from './component/page/productPage/ProductPage';
-import ProductDetailPage from './component/page/productPage/ProductDetailPage';
 function App() {
   const [loading, setLoading] = useState(true);
 
@@ -47,8 +45,6 @@ function App() {
             <Route path="/TerminalPage" element={<TerminalPage />} />
             <Route path="/GaleryPage" element={<GaleryPage />} />
             <Route path="/AppointmentPage" element={<AppointmentPage />} />
-            <Route path="/ProductPage" element={<ProductPage />} />
-            <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/ErrorPage" element={<ErrorPage />} />
             <Route path="/CustomerDetail" element={<CustomerDetail />} />
             <Route path="/ServicePage/:id" element={<ServiceDetailPage />} />
