@@ -5,6 +5,7 @@ import {
   InputLabel, IconButton, TablePagination, Box, InputAdornment, Chip, MenuItem,
   Typography, Divider, Avatar, Tooltip
 } from '@mui/material';
+import Cookies from 'js-cookie';
 import {
   SearchOutlined,
   CloseOutlined,
@@ -19,7 +20,6 @@ import {
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
 
-// Mock API URL - replace with your actual API endpoint
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
 
 const AppointmentManagement = () => {
@@ -40,49 +40,67 @@ const AppointmentManagement = () => {
     endDate: ''
   });
 
-  // Mock data loading
-  useEffect(() => {
-    setLoading(true);
-    fetch(`${API_URL}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
-          // Chuyển đổi dữ liệu BE về đúng format FE đang dùng
-          const appointments = data.data.map(item => ({
-            appointment_id: item.id,
-            full_name: item.fullName,
-            phone_number: item.phoneNumber,
-            status: item.status,
-            slot: item.slot,
-            notes: item.notes,
-            appointment_date: item.appointmentDate,
-            end_time: item.endTime,
-            price: item.price,
-            
-            service: { name: item.serviceName, duration: 60, price: item.price },
-            branch: { name: item.branchName },
-            customer: { 
-              name: item.customerName, 
-              image: item.customerImageUrl || item.customerImage || '', 
-              email: item.customerEmail || '' 
-            },
-            user: { name: item.userName, image: item.userImageUrl || '' }, 
-            created_at: item.appointmentDate,
-          }));
-          setAppointments(appointments);
-          setFilteredAppointments(appointments);
-        } else {
-          setAppointments([]);
-          setFilteredAppointments([]);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        setLoading(false);
-        toast.error('Lỗi khi tải dữ liệu lịch hẹn');
-      });
-  }, []);
+ const fetchAppointments = async () => {
+  const token = Cookies.get('staff_token');
+  const role = Cookies.get('staff_role');
 
+  if (!token || role !== 'ROLE_STAFF') {
+    console.error('Người dùng chưa đăng nhập hoặc không có quyền truy cập');
+    toast.error('Vui lòng đăng nhập lại.');
+    return;
+  }
+
+  try {
+    const userId = Cookies.get('staff_userId');
+    const response = await fetch(`${API_URL}/byUser?userId=${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 401) {
+      throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
+    }
+
+    const data = await response.json();
+    if (data.status === 'SUCCESS') {
+      const mappedAppointments = data.data.map((item) => ({
+        appointment_id: item.id,
+        full_name: item.fullName,
+        phone_number: item.phoneNumber,
+        status: item.status,
+        slot: item.slot,
+        notes: item.notes,
+        appointment_date: item.appointmentDate,
+        end_time: item.endTime,
+        price: item.price,
+        service: { name: item.serviceName },
+        branch: { name: item.branchName },
+        customer: {
+          name: item.customerName,
+          image: item.customerImageUrl,
+        },
+        user: {
+          name: item.userName,
+          image: item.userImageUrl,
+        },
+      }));
+      setAppointments(mappedAppointments);
+    } else {
+      console.error('Lỗi khi lấy danh sách lịch hẹn:', data.message);
+    }
+  } catch (error) {
+    console.error('Lỗi khi gọi API:', error.message);
+    toast.error(error.message);
+    Cookies.remove('staff_token', { path: '/staff' });
+    Cookies.remove('staff_role', { path: '/staff' });
+    window.location.href = '/login';
+  }
+};
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
   // Filter appointments when search query or status filter changes
   useEffect(() => {
     let results = [...appointments];
@@ -90,6 +108,7 @@ const AppointmentManagement = () => {
     // Apply status filter
     if (statusFilter !== 'all') {
       results = results.filter(appointment => appointment.status === statusFilter);
+      console.log('Dữ liệu từ API:', appointments);
     }
 
     // Apply date range filter
@@ -111,7 +130,7 @@ const AppointmentManagement = () => {
         appointment =>
           appointment.full_name.toLowerCase().includes(query) ||
           appointment.phone_number.includes(query) ||
-          appointment.service.name.toLowerCase().includes(query)
+          appointment.service?.name?.toLowerCase().includes(query)
       );
     }
 
@@ -172,23 +191,22 @@ const AppointmentManagement = () => {
 
   const handleStatusChange = () => {
     setLoading(true);
-  
-    // Chuyển đổi ngày về dd/MM/yyyy
+
     const dateObj = new Date(currentAppointment.appointment_date);
     const day = String(dateObj.getDate()).padStart(2, '0');
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const year = dateObj.getFullYear();
     const formattedDate = `${day}/${month}/${year}`;
-  
+
     const updatePayload = {
       fullName: currentAppointment.full_name,
       phoneNumber: currentAppointment.phone_number,
       status: newStatus,
       slot: currentAppointment.slot,
       notes: currentAppointment.notes,
-      appointmentDate: formattedDate, // Đúng format BE yêu cầu
+      appointmentDate: formattedDate,
     };
-  
+
     fetch(`${API_URL}/update?AiD=${currentAppointment.appointment_id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -498,10 +516,10 @@ const AppointmentManagement = () => {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {appointment.service.name}
+                            {appointment.service?.name}
                           </Typography>
                           <Typography variant="caption" color="primary">
-                            ${appointment.price.toFixed(2)} • {appointment.service.duration} min
+                            ${appointment.price.toFixed(2)} • {appointment.service?.duration} min
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -526,7 +544,7 @@ const AppointmentManagement = () => {
                             </Typography>
                           </Box>
                         </TableCell>
-                        <TableCell>{appointment.branch.name}</TableCell>
+                        <TableCell>{appointment.branch?.name}</TableCell>
                         <TableCell>
                           <Chip
                             icon={statusProps.icon}
@@ -693,7 +711,7 @@ const AppointmentManagement = () => {
                   </Typography>
                   <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                      {currentAppointment.service.name}
+                      {currentAppointment.service?.name}
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                       <Typography variant="body2">Price:</Typography>

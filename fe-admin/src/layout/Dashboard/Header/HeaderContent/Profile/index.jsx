@@ -82,9 +82,14 @@ export default function Profile() {
     try {
       await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
     } catch (e) { }
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+     Cookies.remove('admin_token', { path: '/admin' });
+  Cookies.remove('admin_role', { path: '/admin' });
+  Cookies.remove('staff_token', { path: '/staff' });
+  Cookies.remove('staff_role', { path: '/staff' });
+
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+    window.location.href = '/admin/login';
   };
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
