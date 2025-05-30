@@ -1,8 +1,8 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 const Appoinment = () => {
   const [formData, setFormData] = useState({
     fullName: '',
@@ -22,20 +22,35 @@ const Appoinment = () => {
   const [timeSlots, setTimeSlots] = useState([]);
   const [slotInfo, setSlotInfo] = useState(null);
   const [staffList, setStaffList] = useState([]);
+  const [staffAvailabilityInfo, setStaffAvailabilityInfo] = useState(null);
 
+  // Fetch services
+  useEffect(() => {
+    axios.get('http://localhost:8080/api/v1/services')
+      .then(res => {
+        console.log('Service API:', res.data);
+        setServices(Array.isArray(res.data) ? res.data : res.data.data || []);
+      })
+      .catch(() => setServices([]));
+  }, []);
+
+  // Fetch staff list
   useEffect(() => {
     axios.get('http://localhost:8080/api/v1/user/accounts/staff')
       .then(res => setStaffList(res.data))
       .catch(() => setStaffList([]));
   }, []);
+
+  // Fetch time slots
   useEffect(() => {
     axios.get('http://localhost:8080/api/v1/timeslot')
       .then(res => setTimeSlots(Array.isArray(res.data) ? res.data : res.data.data || []))
       .catch(() => setTimeSlots([]));
   }, []);
+
+  // Fetch available slots
   useEffect(() => {
     if (formData.appointmentDate && formData.serviceId && formData.timeSlotId) {
-      // GỬI NGUYÊN yyyy-MM-dd, KHÔNG thêm T00:00:00Z
       const appointmentDates = formData.appointmentDate;
       axios.get('http://localhost:8080/api/v1/timeslot/available', {
         params: {
@@ -58,17 +73,52 @@ const Appoinment = () => {
       setSlotInfo(null);
     }
   }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
-  console.log('slotInfo:', slotInfo);
+
+  // Fetch staff availability
   useEffect(() => {
-    axios.get('http://localhost:8080/api/v1/services')
-      .then(res => {
-        console.log('Service API:', res.data);
-        setServices(Array.isArray(res.data) ? res.data : res.data.data || []);
+    if (formData.userId && formData.appointmentDate && formData.timeSlotId && formData.serviceId) {
+      const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
+
+      if (!selectedTimeSlot || !selectedTimeSlot.startTime) {
+        setStaffAvailabilityInfo(null);
+        return;
+      }
+
+      const [hours, minutes] = selectedTimeSlot.startTime.split(':');
+      const dateObj = new Date(formData.appointmentDate);
+      dateObj.setUTCHours(parseInt(hours, 10));
+      dateObj.setUTCMinutes(parseInt(minutes, 10));
+      dateObj.setUTCSeconds(0);
+      dateObj.setUTCMilliseconds(0);
+      const requestedDateTimeISO = dateObj.toISOString();
+
+      axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
+        params: {
+          userId: formData.userId,
+          requestedDateTime: requestedDateTimeISO,
+          durationMinutes: 60 // Giả sử thời lượng dịch vụ là 60 phút
+        }
       })
-      .catch(() => setServices([]));
-  }, []);
+        .then(res => {
+          if (res.data && res.data.data) {
+            setStaffAvailabilityInfo({
+              isAvailable: res.data.data.isAvailable,
+              message: res.data.data.availabilityMessage
+            });
+          } else {
+            setStaffAvailabilityInfo({ isAvailable: false, message: 'Không thể xác định lịch nhân viên.' });
+          }
+        })
+        .catch(err => {
+          console.error("Error checking staff availability:", err);
+          setStaffAvailabilityInfo({ isAvailable: false, message: 'Lỗi khi kiểm tra lịch nhân viên.' });
+        });
+    } else {
+      setStaffAvailabilityInfo(null);
+    }
+  }, [formData.userId, formData.appointmentDate, formData.timeSlotId, formData.serviceId, timeSlots]);
 
-
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === "serviceId") {
@@ -85,8 +135,8 @@ const Appoinment = () => {
       }));
     }
   };
-  console.log('formData:', formData);
 
+  // Use account info
   const handleUseAccountInfo = () => {
     const storedUserInfo = JSON.parse(localStorage.getItem('userInfo'));
     if (storedUserInfo) {
@@ -96,17 +146,16 @@ const Appoinment = () => {
         phoneNumber: storedUserInfo.phone || '',
         userId: storedUserInfo.id || prev.userId,
         customerId: storedUserInfo.id,
-
       }));
     } else {
       toast.error('Không có thông tin tài khoản!');
     }
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Chuyển đổi ngày sang dd/MM/yyyy
     let formattedDate = formData.appointmentDate;
     if (formattedDate && formattedDate.includes('-')) {
       const [year, month, day] = formattedDate.split('-');
@@ -115,7 +164,6 @@ const Appoinment = () => {
 
     let customerId = formData.customerId;
 
-    // Nếu chưa có customerId, tạo customer tạm trước
     if (!customerId) {
       try {
         const res = await axios.post('http://localhost:8080/api/v1/customer/guest-create', {
@@ -129,7 +177,6 @@ const Appoinment = () => {
       }
     }
 
-    // Tạo submitData với customerId vừa lấy được
     const submitData = {
       ...formData,
       customerId,
@@ -142,7 +189,6 @@ const Appoinment = () => {
     };
     if (!submitData.userId) delete submitData.userId;
 
-    // Kiểm tra thông tin
     if (!submitData.fullName || !submitData.phoneNumber || !submitData.appointmentDate || !submitData.serviceId) {
       toast.error('Vui lòng điền đầy đủ thông tin!');
       return;
@@ -220,7 +266,6 @@ const Appoinment = () => {
                         </option>
                       ))}
                     </select>
-
                   </div>
                   <div className="col-lg-6">
                     <input
@@ -270,7 +315,11 @@ const Appoinment = () => {
                         ))}
                       </select>
                     </div>
-                    {/* Hiển thị slot còn lại ngay dưới select */}
+                    {staffAvailabilityInfo && (
+                      <div className="mt-2" style={{ color: staffAvailabilityInfo.isAvailable ? 'green' : 'red', fontSize: '0.9em' }}>
+                        {staffAvailabilityInfo.message}
+                      </div>
+                    )}
                     {slotInfo && (
                       <div className="mt-2">
                         <div className="d-flex align-items-center">
@@ -307,20 +356,15 @@ const Appoinment = () => {
                       placeholder="Write Comments"
                     />
                   </div>
-
-                  {/* Nút sử dụng thông tin tài khoản */}
                   <div className="col-lg-6">
                     <button
                       type="button"
                       onClick={handleUseAccountInfo}
                       className="btn btn-outline-light w-100 py-3"
-
                     >
                       Dùng thông tin tài khoản
                     </button>
                   </div>
-
-                  {/* Nút Submit */}
                   <div className="col-lg-6">
                     <button
                       type="submit"
@@ -331,7 +375,6 @@ const Appoinment = () => {
                   </div>
                 </div>
               </form>
-
             </div>
           </div>
           <div className="col-lg-6">
@@ -370,67 +413,8 @@ const Appoinment = () => {
           </div>
         </div>
       </div>
-      {/* Counter Start */}
-      <div className="container-fluid counter-section">
-        <div className="container py-5">
-          <div className="row g-5 justify-content-center">
-            <div className="col-md-6 col-lg-4 col-xl-4">
-              <div className="counter-item p-5">
-                <div className="counter-content bg-white p-4">
-                  <i className="fas fa-globe fa-5x text-primary mb-3" />
-                  <h5 className="text-primary">Worldwide Clients</h5>
-                  <div className="svg-img">
-                    <svg width={100} height={50}>
-                      <polygon points="55, 10 85, 55 25, 55 25," style={{ fill: '#DCCAF2' }} />
-                    </svg>
-                  </div>
-                </div>
-                <div className="counter-quantity">
-                  <span className="text-white fs-2 fw-bold" data-toggle="counter-up">379</span>
-                  <span className="h1 fw-bold text-white">+</span>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 col-lg-4 col-xl-4">
-              <div className="counter-item p-5">
-                <div className="counter-content bg-white p-4">
-                  <i className="fas fa-spa fa-5x text-primary mb-3" />
-                  <h5 className="text-primary">Wellness &amp; Spa</h5>
-                  <div className="svg-img">
-                    <svg width={100} height={50}>
-                      <polygon points="55, 10 85, 55 25, 55 25," style={{ fill: '#DCCAF2' }} />
-                    </svg>
-                  </div>
-                </div>
-                <div className="counter-quantity">
-                  <span className="text-white fs-2 fw-bold" data-toggle="counter-up">829</span>
-                  <span className="h1 fw-bold text-white">+</span>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 col-lg-4 col-xl-4">
-              <div className="counter-item p-5">
-                <div className="counter-content bg-white p-4">
-                  <i className="fas fa-users fa-5x text-primary mb-3" />
-                  <h5 className="text-primary">Happy Customers</h5>
-                  <div className="svg-img">
-                    <svg width={100} height={50}>
-                      <polygon points="55, 10 85, 55 25, 55 25," style={{ fill: '#DCCAF2' }} />
-                    </svg>
-                  </div>
-                </div>
-                <div className="counter-quantity">
-                  <span className="text-white fs-2 fw-bold" data-toggle="counter-up">713</span>
-                  <span className="h1 fw-bold text-white">+</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* Counter End */}
     </div>
+  );
+};
 
-  )
-}
 export default Appoinment;
