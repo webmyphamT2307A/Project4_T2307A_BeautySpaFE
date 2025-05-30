@@ -71,7 +71,7 @@ export default function Login() {
         } else if (roleName === 'ROLE_STAFF') {
           Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
-          Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 }); // Lưu userId
+          Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 }); 
           console.log('Staff cookie set:', Cookies.get('staff_token'), Cookies.get('staff_role'), Cookies.get('staff_userId'));
           window.location.href = 'http://localhost:3002/staff';
         } else {

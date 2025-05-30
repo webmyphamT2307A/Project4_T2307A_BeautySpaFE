@@ -28,6 +28,7 @@ export default function Login() {
       console.log('Admin token and role found in cookies:', adminToken, adminRole);
       navigate('/admin');
     } else if (staffToken && staffRole === 'ROLE_STAFF') {
+      
       console.log('Staff token and role found in cookies:', staffToken, staffRole);
       navigate('/staff');
     } else {
@@ -69,10 +70,10 @@ export default function Login() {
           console.log('Admin cookie set:', Cookies.get('admin_token'), Cookies.get('admin_role'));
           window.location.href = 'http://localhost:3003/admin';
         } else if (roleName === 'ROLE_STAFF') {
-          // Lưu cookie staff
           Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
-          console.log('Staff cookie set:', Cookies.get('staff_token'), Cookies.get('staff_role'));
+          Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 }); // Lưu userId
+          console.log('Staff cookie set:', Cookies.get('staff_token'), Cookies.get('staff_role'), Cookies.get('staff_userId'));
           window.location.href = 'http://localhost:3002/staff';
         } else {
           console.log('Invalid role, clearing cookies...');
