@@ -2,6 +2,39 @@ import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Select from 'react-select';
+
+const customStyles = {
+  control: (provided) => ({
+    ...provided,
+    padding: '10px',
+    border: '1px solid white',
+    backgroundColor: 'transparent',
+    color: 'white',
+    width: '100%',
+  }),
+  option: (provided) => ({
+    ...provided,
+    display: 'flex',
+    alignItems: 'center',
+    padding: '10px',
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    display: 'flex',
+    alignItems: 'center',
+  }),
+};
+const formatOptionLabel = ({ fullName, imageUrl }) => (
+  <div style={{ display: 'flex', alignItems: 'center' }}>
+    <img
+      src={imageUrl || '/default-avatar.png'}
+      alt={fullName}
+      style={{ width: '30px', height: '30px', borderRadius: '50%', marginRight: '10px' }}
+    />
+    {fullName}
+  </div>
+);
 
 const Appoinment = () => {
   const [formData, setFormData] = useState({
@@ -301,19 +334,19 @@ const Appoinment = () => {
                       })}
                     </select>
                     <div className="col-lg-12">
-                      <select
-                        name="userId"
-                        value={formData.userId}
-                        onChange={handleInputChange}
-                        className="form-select py-3 border-white bg-transparent w-100"
-                      >
-                        <option value="">Chọn nhân viên</option>
-                        {staffList.map(staff => (
-                          <option key={staff.id} value={staff.id}>
-                            {staff.fullName} ({staff.email})
-                          </option>
-                        ))}
-                      </select>
+                      <Select
+                        options={staffList.map(staff => ({
+                          value: staff.id,
+                          label: staff.fullName,
+                          fullName: staff.fullName,
+                          imageUrl: staff.imageUrl,
+                        }))}
+                        onChange={(selectedOption) => setFormData({ ...formData, userId: selectedOption.value })}
+                        styles={customStyles}
+                        classNamePrefix="react-select"
+                        formatOptionLabel={formatOptionLabel}
+                        placeholder="Chọn nhân viên"
+                      />
                     </div>
                     {staffAvailabilityInfo && (
                       <div className="mt-2" style={{ color: staffAvailabilityInfo.isAvailable ? 'green' : 'red', fontSize: '0.9em' }}>
