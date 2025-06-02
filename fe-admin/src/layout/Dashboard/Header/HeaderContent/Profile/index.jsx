@@ -64,7 +64,7 @@ export default function Profile() {
   }
   const userName = user?.fullName || 'Chưa đăng nhập';
   const userAvatar = user?.imageUrl || avatar1;
-
+  const userRole = user?.role?.name || 'guest';
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
       return;
@@ -146,7 +146,7 @@ export default function Profile() {
                           <Stack>
                             <Typography variant="h6">{userName}</Typography>
                             <Typography variant="body2" color="text.secondary">
-                              Developer
+                              {userRole === 'admin' ? 'Quản trị viên' : userRole === 'staff' ? 'Nhân viên' : 'Khách'}
                             </Typography>
                           </Stack>
                         </Stack>
