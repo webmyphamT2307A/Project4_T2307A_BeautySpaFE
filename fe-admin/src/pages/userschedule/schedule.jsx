@@ -39,6 +39,19 @@ const SCHEDULE_API_URL = `${API_BASE_URL}/users-schedules`;
 const USER_API_URL = `${API_BASE_URL}/admin/accounts/find-all`;
 const STAFF_ROLE_NAME = "STAFF";
 
+// Define status options based on your ENUM
+const statusOptions = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  // You can add other statuses if your ENUM is more extensive
+  // or if you want to allow other temporary client-side statuses
+  // that might be mapped to the ENUM on the backend or before saving.
+  // For now, we'll stick to the database ENUM.
+];
+
+
 const UserScheduleManager = () => {
   const [schedules, setSchedules] = useState([]);
   const [users, setUsers] = useState([]);
@@ -50,7 +63,7 @@ const UserScheduleManager = () => {
     workDate: '',
     checkInTime: '',
     checkOutTime: '',
-    status: 'Pending Confirmation',
+    status: 'pending', // Default to a valid ENUM value
     isLastTask: false,
     isActive: true
   });
@@ -142,7 +155,7 @@ const UserScheduleManager = () => {
         workDate: schedule.workDate || '',
         checkInTime: schedule.checkInTime || '',
         checkOutTime: schedule.checkOutTime || '',
-        status: schedule.status || '',
+        status: schedule.status || 'pending', // Ensure status is one of the ENUM values
         isLastTask: schedule.isLastTask || false,
         isActive: schedule.isActive === undefined ? true : schedule.isActive,
       });
@@ -154,7 +167,7 @@ const UserScheduleManager = () => {
         workDate: '',
         checkInTime: '',
         checkOutTime: '',
-        status: 'Pending Confirmation',
+        status: 'pending', // Default to 'pending'
         isLastTask: false,
         isActive: true
       });
@@ -179,6 +192,11 @@ const UserScheduleManager = () => {
         toast.error("Please enter Employee, Work Date, and Shift.");
         return;
     }
+    if (!formData.status || !statusOptions.find(opt => opt.value === formData.status)) {
+        toast.error("Please select a valid status.");
+        return;
+    }
+
 
     const requestBody = {
         ...formData,
@@ -404,7 +422,23 @@ const UserScheduleManager = () => {
           <TextField margin="dense" name="shift" label="Shift" type="text" fullWidth value={formData.shift} onChange={handleFormChange} required/>
           <TextField margin="dense" name="checkInTime" label="Check-In Time" type="time" fullWidth value={formData.checkInTime} onChange={handleFormChange} InputLabelProps={{ shrink: true }} />
           <TextField margin="dense" name="checkOutTime" label="Check-Out Time" type="time" fullWidth value={formData.checkOutTime} onChange={handleFormChange} InputLabelProps={{ shrink: true }} />
-          <TextField margin="dense" name="status" label="Status" type="text" fullWidth value={formData.status} onChange={handleFormChange} />
+          {/* Replace TextField for status with Select */}
+          <FormControl fullWidth margin="dense" required>
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              labelId="status-label"
+              name="status"
+              value={formData.status}
+              label="Status"
+              onChange={handleFormChange}
+            >
+              {statusOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} variant="outlined" color="inherit">Cancel</Button>
