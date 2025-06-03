@@ -2,11 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-// Select from 'react-select' is removed as it's no longer used for staff.
-// If you use it elsewhere, keep the import. Otherwise, it can be removed.
-// import Select from 'react-select';
 
-// customStyles and formatOptionLabel are removed as react-select for staff is removed.
 
 const Appointment = () => {
   const [formData, setFormData] = useState({
@@ -42,15 +38,30 @@ const Appointment = () => {
   }, []);
 
   // Fetch staff list and shuffle it
-  useEffect(() => {
+   useEffect(() => {
     axios.get('http://localhost:8080/api/v1/user/accounts/staff')
       .then(res => {
-        const fetchedStaff = Array.isArray(res.data) ? res.data : (res.data.data || []);
-        // Shuffle the array
-        const shuffledStaff = [...fetchedStaff].sort(() => 0.5 - Math.random());
+        const rawStaffList = Array.isArray(res.data) ? res.data : (res.data.data || []);
+        
+        const processedStaff = rawStaffList.map(staff => ({
+          ...staff,
+        
+          isActiveResolved: staff.isActive === true || staff.isActive === 1 || String(staff.isActive).toLowerCase() === 'true'
+        }));
+
+        // Lọc ra những nhân viên có isActiveResolved là true
+        const activeStaff = processedStaff.filter(staff => staff.isActiveResolved === true);
+        
+        // Shuffle (trộn ngẫu nhiên) danh sách nhân viên active
+        const shuffledStaff = [...activeStaff].sort(() => 0.5 - Math.random());
+        
         setStaffList(shuffledStaff);
       })
-      .catch(() => setStaffList([]));
+      .catch((error) => {
+        console.error("Error fetching staff list:", error);
+        setStaffList([]);
+        toast.error("Không thể tải danh sách nhân viên.");
+      });
   }, []);
 
   // Fetch time slots
@@ -206,11 +217,11 @@ const Appointment = () => {
       ...formData,
       customerId: customerIdToSubmit,
       status: formData.status || 'pending',
-      appointmentDate: formattedDate, // Use the formatted date
-      branchId: formData.branchId || 1, // Default or ensure it's selected
-      timeSlotId: formData.timeSlotId, // Ensure this is selected
+      appointmentDate: formattedDate, 
+      branchId: formData.branchId || 1,
+      timeSlotId: formData.timeSlotId,
       price: formData.price,
-      slot: formData.slot || "1", // Ensure this has a value or default
+      slot: formData.slot || "1", 
     };
 
     // Only include userId if it's selected
