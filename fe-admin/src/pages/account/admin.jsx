@@ -22,24 +22,26 @@ import { toast } from 'react-toastify';
 const API_URL = 'http://localhost:8080/api/v1/admin/accounts';
 const ROLE_URL = 'http://localhost:8080/api/v1/roles';
 const BRANCH_URL = 'http://localhost:8080/api/v1/branch';
+const SKILL_URL = 'http://localhost:8080/api/v1/user/accounts/skill';
 
 const AdminAccount = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [viewOpen, setViewOpen] = useState(false); // Added view dialog state
+  const [viewOpen, setViewOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [roleFilter, setRoleFilter] = useState('all'); // Added role filter
+  const [roleFilter, setRoleFilter] = useState('all');
   const [showPassword, setShowPassword] = useState(false);
   const [roles, setRoles] = useState([]);
   const [branches, setBranches] = useState([]);
-  const [imagePreview, setImagePreview] = useState(null); // Added image preview
-  const fileInputRef = useRef(null); // Added file input ref
+  const [skills, setSkills] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -49,6 +51,7 @@ const AdminAccount = () => {
     address: '',
     role: null,
     branch: null,
+    skills: [],
     isActive: true
   });
 
@@ -59,6 +62,9 @@ const AdminAccount = () => {
     fetch(`${BRANCH_URL}`)
       .then(res => res.json())
       .then(data => setBranches(data.data || []));
+    fetch(`${SKILL_URL}`)
+      .then(res => res.json())
+      .then(data => setSkills(data.data || []));
   }, []);
 
   // Lấy danh sách user từ BE
@@ -121,6 +127,7 @@ const AdminAccount = () => {
     if (user) {
       const selectedRole = roles.find(r => r.id === (user.role?.id || user.roleId));
       const selectedBranch = branches.find(b => b.id === (user.branch?.id || user.branchId));
+      const selectedSkills = user.skills || [];
       setCurrentUser(user);
       setFormData({
         fullName: user.fullName || '',
@@ -131,6 +138,7 @@ const AdminAccount = () => {
         address: user.address || '',
         role: selectedRole || null,
         branch: selectedBranch || null,
+        skills: selectedSkills || [],
         isActive: user.isActive
       });
       setImagePreview(user.imageUrl || null);
@@ -145,6 +153,7 @@ const AdminAccount = () => {
         address: '',
         role: roles[0] || null,
         branch: branches[0] || null,
+        skills: [],
         isActive: true
       });
       setImagePreview(null);
@@ -227,6 +236,7 @@ const AdminAccount = () => {
           roleId: formData.role?.id,
           branchId: formData.branch?.id,
           imageUrl: formData.imageUrl,
+          skills: formData.skills,
           isActive: formData.isActive,
           description: ""
         })
@@ -247,6 +257,7 @@ const AdminAccount = () => {
           phone: formData.phone,
           address: formData.address,
           imageUrl: formData.imageUrl,
+          skills: formData.skills,
           roleId: formData.role?.id,
           branchId: formData.branch?.id
         })
@@ -783,6 +794,41 @@ const AdminAccount = () => {
                     <Typography>{currentUser.address || 'Not provided'}</Typography>
                   </Grid>
                 </Grid>
+              </Box>
+
+              <Divider />
+
+              {/* Skills */}
+              <Box>
+                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                  Skills
+                </Typography>
+                {currentUser.skills && currentUser.skills.length > 0 ? (
+                  <TableContainer component={Paper}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell align="left">#</TableCell>
+                          <TableCell align="left">Skill Name</TableCell>
+                          <TableCell align="left">Description</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {currentUser.skills.map((skill, index) => (
+                          <TableRow key={skill.id}>
+                            <TableCell>{index + 1}</TableCell>
+                            <TableCell>{skill.skillName}</TableCell>
+                            <TableCell>{skill.description || 'No description'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No skills assigned
+                  </Typography>
+                )}
               </Box>
 
               <Divider />

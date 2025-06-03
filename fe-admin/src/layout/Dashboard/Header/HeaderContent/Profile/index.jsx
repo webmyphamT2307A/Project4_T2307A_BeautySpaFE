@@ -64,7 +64,7 @@ export default function Profile() {
   }
   const userName = user?.fullName || 'Chưa đăng nhập';
   const userAvatar = user?.imageUrl || avatar1;
-
+  const userRole = user?.role?.name || 'guest';
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
       return;
@@ -82,9 +82,14 @@ export default function Profile() {
     try {
       await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
     } catch (e) { }
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+     Cookies.remove('admin_token', { path: '/admin' });
+  Cookies.remove('admin_role', { path: '/admin' });
+  Cookies.remove('staff_token', { path: '/staff' });
+  Cookies.remove('staff_role', { path: '/staff' });
+
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+    window.location.href = '/admin/login';
   };
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
@@ -141,7 +146,7 @@ export default function Profile() {
                           <Stack>
                             <Typography variant="h6">{userName}</Typography>
                             <Typography variant="body2" color="text.secondary">
-                              Developer
+                              {userRole === 'admin' ? 'Quản trị viên' : userRole === 'staff' ? 'Nhân viên' : 'Khách'}
                             </Typography>
                           </Stack>
                         </Stack>

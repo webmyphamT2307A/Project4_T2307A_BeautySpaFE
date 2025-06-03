@@ -8,45 +8,53 @@ const AttendancePage = () => {
   const [loading, setLoading] = useState(false);
 
  
-  const handleCheckIn = async () => {
-    setLoading(true);
-    setStatusMessage('');
+ const handleCheckIn = async () => {
+  setLoading(true);
+  setStatusMessage('');
 
-    try {
-      const now = new Date().toISOString();
-      const token = localStorage.getItem('token');
-      const userId = JSON.parse(localStorage.getItem('user'))?.id;
+  try {
+    const now = new Date();
+    const token = localStorage.getItem('token');
+    const userId = JSON.parse(localStorage.getItem('user'))?.id;
 
-      if (!token || !userId) {
-        throw new Error('Người dùng chưa đăng nhập');
-      }
-
-      const response = await fetch('http://localhost:8080/api/v1/admin/attendance/check-in', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          userId: userId,
-          status: 'on_time',
-          checkIn: now,
-        }),
-      });
-
-      const json = await response.json();
-
-      if (json.status === 'SUCCESS') {
-        setStatusMessage(`✅ Điểm danh thành công lúc: ${new Date(now).toLocaleString()}`);
-      } else {
-        throw new Error(json.message || 'Điểm danh thất bại');
-      }
-    } catch (err) {
-      setStatusMessage(`❌ Lỗi: ${err.message}`);
-    } finally {
-      setLoading(false);
+    if (!token || !userId) {
+      throw new Error('Người dùng chưa đăng nhập');
     }
-  };
+
+    const checkInHour = now.getHours();
+    const checkInMinute = now.getMinutes();
+    let status = 'on_time'; 
+
+    if (checkInHour > 8 || (checkInHour === 8 && checkInMinute > 0)) {
+      status = 'late'; 
+    }
+
+    const response = await fetch('http://localhost:8080/api/v1/admin/attendance/check-in', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        userId: userId,
+        status: status,
+        checkIn: now.toISOString(), 
+      }),
+    });
+
+    const json = await response.json();
+
+    if (json.status === 'SUCCESS') {
+      setStatusMessage(`✅ Điểm danh thành công lúc: ${now.toLocaleString()} (${status === 'on_time' ? 'Đúng giờ' : 'Trễ'})`);
+    } else {
+      throw new Error(json.message || 'Điểm danh thất bại');
+    }
+  } catch (err) {
+    setStatusMessage(`❌ Lỗi: ${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCheckOut = async () => {
   setLoading(true);
@@ -69,7 +77,7 @@ const AttendancePage = () => {
       },
       body: JSON.stringify({
         userId: userId,
-        checkIn: now, // Gửi thời gian hiện tại
+        checkIn: now, 
       }),
     });
 
