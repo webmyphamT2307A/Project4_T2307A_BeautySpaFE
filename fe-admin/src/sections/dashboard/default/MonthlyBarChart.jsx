@@ -1,28 +1,126 @@
+import PropTypes from 'prop-types';
+import { useEffect, useState } from 'react';
+
 // material-ui
 import { useTheme } from '@mui/material/styles';
 
-import { BarChart } from '@mui/x-charts/BarChart';
+// third-party
+import ReactApexChart from 'react-apexcharts';
 
-const data = [80, 95, 70, 42, 65, 55, 78];
-const xLabels = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+// chart options
+const barChartOptions = {
+  chart: {
+    type: 'bar',
+    height: 340,
+    toolbar: {
+      show: false
+    }
+  },
+  plotOptions: {
+    bar: {
+      columnWidth: '60%',
+      borderRadius: 4
+    }
+  },
+  dataLabels: {
+    enabled: false
+  },
+  stroke: {
+    show: true,
+    width: 8,
+    colors: ['transparent']
+  },
+  xaxis: {
+    categories: [],
+    axisBorder: {
+      show: false
+    },
+    axisTicks: {
+      show: false
+    }
+  },
+  yaxis: {
+    labels: {
+      formatter: (val) => val.toFixed(0)
+    }
+  },
+  fill: {
+    opacity: 1
+  },
+  tooltip: {
+    y: {
+      formatter: (val) => `${val} customers`
+    }
+  },
+  legend: {
+    show: true,
+    fontFamily: '`Public Sans`, sans-serif',
+    offsetX: 10,
+    offsetY: 10,
+    labels: {
+      useSeriesColors: false
+    },
+    markers: {
+      width: 16,
+      height: 16,
+      radius: 5
+    },
+    itemMargin: {
+      horizontal: 15,
+      vertical: 8
+    }
+  },
+  responsive: [
+    {
+      breakpoint: 600,
+      options: {
+        plotOptions: {
+          bar: {
+            columnWidth: '90%'
+          }
+        }
+      }
+    }
+  ]
+};
 
 // ==============================|| MONTHLY BAR CHART ||============================== //
 
-export default function MonthlyBarChart() {
+const MonthlyBarChart = ({ timeFrame, chartData }) => {
   const theme = useTheme();
-  const axisFonstyle = { fontSize: 10, fill: theme.palette.text.secondary };
 
-  return (
-    <BarChart
-      height={380}
-      series={[{ data, label: 'Series-1' }]}
-      xAxis={[{ data: xLabels, scaleType: 'band', disableLine: true, disableTicks: true, tickLabelStyle: axisFonstyle }]}
-      leftAxis={null}
-      slotProps={{ legend: { hidden: true }, bar: { rx: 5, ry: 5 } }}
-      axisHighlight={{ x: 'none' }}
-      margin={{ left: 20, right: 20 }}
-      colors={[theme.palette.info.light]}
-      sx={{ '& .MuiBarElement-root:hover': { opacity: 0.6 } }}
-    />
-  );
-}
+  const [series, setSeries] = useState([]);
+  const [options, setOptions] = useState(barChartOptions);
+
+  useEffect(() => {
+    if (chartData && chartData.length > 0) {
+      const data = chartData.map((item) => item.data);
+      const categories = chartData.map((item) => item.name);
+
+      setSeries([
+        {
+          name: 'Customers',
+          data: data
+        }
+      ]);
+
+      setOptions((prevState) => ({
+        ...prevState,
+        xaxis: {
+          ...prevState.xaxis,
+          categories: categories
+        },
+        colors: [theme.palette.primary.main]
+      }));
+    }
+  }, [chartData, theme, timeFrame]);
+
+  return <ReactApexChart options={options} series={series} type="bar" height={340} />;
+};
+
+MonthlyBarChart.propTypes = {
+  timeFrame: PropTypes.string,
+  chartData: PropTypes.array
+};
+
+export default MonthlyBarChart;
