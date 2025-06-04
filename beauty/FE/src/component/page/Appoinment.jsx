@@ -98,7 +98,8 @@ const Appointment = () => {
   }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
 
   // Fetch staff availability
-  useEffect(() => {
+ // Bên trong useEffect của "Fetch staff availability"
+useEffect(() => {
     if (formData.userId && formData.appointmentDate && formData.timeSlotId && formData.serviceId) {
       const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
 
@@ -107,19 +108,29 @@ const Appointment = () => {
         return;
       }
 
-      const [hours, minutes] = selectedTimeSlot.startTime.split(':');
-      const dateObj = new Date(formData.appointmentDate);
-      dateObj.setUTCHours(parseInt(hours, 10));
-      dateObj.setUTCMinutes(parseInt(minutes, 10));
-      dateObj.setUTCSeconds(0);
-      dateObj.setUTCMilliseconds(0);
-      const requestedDateTimeISO = dateObj.toISOString();
+      // Giả sử selectedTimeSlot.startTime có dạng "HH:mm" hoặc "HH:mm:ss"
+      const [slotHours, slotMinutes] = selectedTimeSlot.startTime.split(':').map(Number);
 
+      // Giả sử formData.appointmentDate có dạng "YYYY-MM-DD"
+      const [year, month, day] = formData.appointmentDate.split('-').map(Number);
+
+      // 1. Tạo đối tượng Date với ngày địa phương và giờ địa phương của slot đã chọn
+      // Lưu ý: Tháng trong JavaScript Date constructor là 0-indexed (0-11)
+      const localDateTimeForSlot = new Date(year, month - 1, day, slotHours, slotMinutes, 0, 0);
+
+      // 2. Chuyển đổi thời gian địa phương này sang chuỗi ISO UTC
+      const requestedDateTimeISO = localDateTimeForSlot.toISOString();
+      // Ví dụ: Nếu formData.appointmentDate = "2025-06-05", slot.startTime = "09:00"
+      // và trình duyệt đang ở múi giờ Việt Nam (UTC+7).
+      // localDateTimeForSlot sẽ là: 05 tháng 6 năm 2025, 09:00:00 giờ địa phương.
+      // requestedDateTimeISO sẽ là: "2025-06-05T02:00:00.000Z" (tức 09:00 giờ VN - 7 tiếng = 02:00 UTC)
+
+      // Gọi API với requestedDateTimeISO đã được chuẩn hóa đúng sang UTC
       axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
         params: {
           userId: formData.userId,
-          requestedDateTime: requestedDateTimeISO,
-          durationMinutes: 60 // Assuming service duration is 60 minutes
+          requestedDateTime: requestedDateTimeISO, // Gửi đi giá trị UTC đúng
+          durationMinutes: 60 // Hoặc lấy từ service.duration nếu có, hoặc từ DTO
         }
       })
         .then(res => {
@@ -140,7 +151,6 @@ const Appointment = () => {
       setStaffAvailabilityInfo(null);
     }
   }, [formData.userId, formData.appointmentDate, formData.timeSlotId, formData.serviceId, timeSlots]);
-
   // Handle input changes for general fields
   const handleInputChange = (e) => {
     const { name, value } = e.target;
