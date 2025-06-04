@@ -541,25 +541,35 @@ const AppointmentManagement = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <Tooltip title="View Details">
-                            <IconButton
-                              onClick={() => handleViewOpen(appointment)}
-                              color="info"
-                              size="small"
-                            >
-                              <EyeOutlined />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Update Status">
-                            <IconButton
-                              onClick={() => handleStatusDialogOpen(appointment)}
-                              color="primary"
-                              size="small"
-                            >
-                              <EditOutlined />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
+  <Tooltip title="View Details">
+    <IconButton
+      onClick={() => handleViewOpen(appointment)}
+      color="info"
+      size="small"
+    >
+      <EyeOutlined />
+    </IconButton>
+  </Tooltip>
+
+  <Tooltip 
+    title={
+      (appointment.status === 'completed' || appointment.status === 'cancelled')
+        ? `Status is '${appointment.status}'. Cannot update.`
+        : "Update Status"
+    }
+  >
+    <span> 
+      <IconButton
+        onClick={() => handleStatusDialogOpen(appointment)}
+        color="primary"
+        size="small"
+        disabled={appointment.status === 'completed' || appointment.status === 'cancelled'}
+      >
+        <EditOutlined />
+      </IconButton>
+    </span>
+  </Tooltip>
+</TableCell>
                       </TableRow>
                     );
                   })

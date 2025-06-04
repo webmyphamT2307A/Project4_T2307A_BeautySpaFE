@@ -124,7 +124,7 @@ const ServiceHistory = () => {
               <TableRow key={history.id}>
                 <TableCell>{history.id}</TableCell>
                 <TableCell>{history.serviceName}</TableCell>
-                <TableCell>{history.price}</TableCell>
+                <TableCell>{history.price}$</TableCell>
                 <TableCell>{history.customerId}</TableCell>
                 <TableCell>{new Date(history.appointmentDate).toLocaleString()}</TableCell>
                 <TableCell>{history.notes}</TableCell>
