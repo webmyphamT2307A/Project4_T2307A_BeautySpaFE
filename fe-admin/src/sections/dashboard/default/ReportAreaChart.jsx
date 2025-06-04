@@ -1,36 +1,94 @@
+import PropTypes from 'prop-types';
+import { useEffect, useState } from 'react';
+
 // material-ui
 import { useTheme } from '@mui/material/styles';
 
-import { chartsGridClasses, LineChart } from '@mui/x-charts';
-
-const data = [58, 115, 28, 83, 63, 75, 35];
-const labels = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// third-party
+import ReactApexChart from 'react-apexcharts';
 
 // ==============================|| REPORT AREA CHART ||============================== //
 
-export default function ReportAreaChart() {
+const ReportAreaChart = ({ timeFrame, chartData }) => {
   const theme = useTheme();
-  const axisFonstyle = { fill: theme.palette.text.secondary };
+  const { primary, secondary } = theme.palette.text;
+  const line = theme.palette.divider;
 
-  return (
-    <LineChart
-      grid={{ horizontal: true }}
-      xAxis={[{ data: labels, scaleType: 'point', disableLine: true, disableTicks: true, tickLabelStyle: axisFonstyle }]}
-      yAxis={[{ tickMaxStep: 10 }]}
-      leftAxis={null}
-      series={[
-        {
-          data,
-          showMark: false,
-          id: 'ReportAreaChart',
-          color: theme.palette.warning.main,
-          label: 'Series 1'
+  const [options, setOptions] = useState({
+    chart: {
+      height: 340,
+      type: 'area',
+      toolbar: {
+        show: false
+      }
+    },
+    dataLabels: {
+      enabled: false
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 2
+    },
+    grid: {
+      strokeDashArray: 0
+    },
+    xaxis: {
+      categories: [],
+      axisBorder: {
+        show: false
+      },
+      axisTicks: {
+        show: false
+      }
+    },
+    yaxis: {
+      tickAmount: 5,
+      labels: {
+        formatter: (value) => `$${value}`
+      }
+    },
+    tooltip: {
+      theme: 'light',
+      y: {
+        formatter: (value) => `$${value.toLocaleString()}`
+      }
+    }
+  });
+
+  useEffect(() => {
+    if (chartData && chartData.length > 0) {
+      const categories = chartData.map((item) => item.name);
+
+      setOptions((prevState) => ({
+        ...prevState,
+        xaxis: {
+          ...prevState.xaxis,
+          categories: categories
         }
-      ]}
-      slotProps={{ legend: { hidden: true } }}
-      height={340}
-      margin={{ top: 30, bottom: 50, left: 20, right: 20 }}
-      sx={{ '& .MuiLineElement-root': { strokeWidth: 1 }, [`& .${chartsGridClasses.line}`]: { strokeDasharray: '5 3' } }}
-    />
-  );
-}
+      }));
+    }
+  }, [chartData, timeFrame]);
+
+  const [series, setSeries] = useState([]);
+
+  useEffect(() => {
+    if (chartData && chartData.length > 0) {
+      const data = chartData.map((item) => item.data);
+      setSeries([
+        {
+          name: 'Revenue',
+          data: data
+        }
+      ]);
+    }
+  }, [chartData]);
+
+  return <ReactApexChart options={options} series={series} type="area" height={340} />;
+};
+
+ReportAreaChart.propTypes = {
+  timeFrame: PropTypes.string,
+  chartData: PropTypes.array
+};
+
+export default ReportAreaChart;
