@@ -9,6 +9,7 @@ import ServiceHistory from '../pages/spa/service-history';
 import RoleManger from '../pages/role/service';
 import UserScheduleManager from '../pages/userschedule/schedule';
 import usePrivateRoute from './../hooks/usePrivateRoute';
+import SalaryManagement from '../pages/salary/salary';
 import path from 'path';
 
 // render- Dashboard
@@ -83,6 +84,20 @@ const MainRoutes = {
           element: <ProtectedRoute element={<UserScheduleManager />} />
     }
   ]
+  },
+  {
+    path: 'salary',
+    children: [
+      
+      {
+        path: 'salary',
+        element: <ProtectedRoute element={<SalaryManagement />} />
+      }
+    ]
+
+  },
+  {
+    
   },
     {
       path: 'typography',
