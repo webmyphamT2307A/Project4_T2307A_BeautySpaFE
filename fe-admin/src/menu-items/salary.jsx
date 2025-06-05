@@ -24,14 +24,7 @@ const salary = {
       title: 'salary',
       type: 'item',
       url: '/salary/salary',
-      icon: icons.CalendarFilled
-    },
-    {
-      id: 'salary-calculation',
-      title: 'Calculate Salary', 
-      type: 'item',
-      url: '/salary/calculate',
-      icon: icons.DollarOutlined 
+      icon: icons.DollarOutlined
     }
   ]
 };
