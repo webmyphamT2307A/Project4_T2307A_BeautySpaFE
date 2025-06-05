@@ -9,18 +9,17 @@ import {
   SearchOutlined,
   CloseOutlined,
   EyeOutlined,
-  EditOutlined, // Dùng cho cập nhật trạng thái
+  EditOutlined, 
   CalendarOutlined,
   UserOutlined,
   CheckOutlined,
   ClockCircleOutlined,
   FilterOutlined,
-  FormOutlined  // Icon mới cho chỉnh sửa chi tiết (bao gồm gán nhân viên)
+  FormOutlined  
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
 
-// Mock API URL - replace with your actual API endpoint
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
 const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
 
@@ -42,7 +41,6 @@ const AppointmentManagement = () => {
     endDate: ''
   });
 
-  // States mới cho chức năng chỉnh sửa nhân viên
   const [staffList, setStaffList] = useState([]);
   const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
   const [appointmentToEditDetails, setAppointmentToEditDetails] = useState(null);
@@ -66,9 +64,9 @@ const AppointmentManagement = () => {
             end_time: item.endTime,
             price: item.price,
             service: {
-              id: item.serviceId, // Giả sử BE trả về serviceId
+              id: item.serviceId, 
               name: item.serviceName,
-              duration: item.serviceDuration || 60, // Lấy duration từ BE hoặc mặc định
+              duration: item.serviceDuration || 60, 
               price: item.price
             },
             branch: {
@@ -81,7 +79,7 @@ const AppointmentManagement = () => {
               email: item.customerEmail || ''
             },
             user: { name: item.userName, image: item.userImageUrl || '' },
-            created_at: item.appointmentDate, // Hoặc item.createdAt nếu BE có
+            created_at: item.appointmentDate, 
           }));
           setAppointments(mappedAppointments);
           setFilteredAppointments(mappedAppointments);
@@ -108,18 +106,12 @@ const AppointmentManagement = () => {
         return res.json();
       })
       .then(data => {
-        console.log('Dữ liệu nhân viên thô từ API:', data); // Giữ lại để bạn kiểm tra
+        console.log('Dữ liệu nhân viên thô từ API:', data);
 
         if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
-          // SỬA LOGIC LỌC Ở ĐÂY
-          // Giả sử:
-          // - Đối tượng user từ BE có dạng: user.role.id (trong đó role là một object)
-          // - roleId cho ADMIN là 1 (ví dụ)
-          // - roleId cho STAFF là 2 (ví dụ)
-          // BẠN CẦN THAY ĐỔI CÁC SỐ NÀY VÀ CÁCH TRUY CẬP CHO ĐÚNG
+        
           const filteredStaff = data.data.filter(user =>
-            user.role && (user.role.id === 1 || user.role.id === 2) && user.isActive // Thêm điều kiện user.isActive
-            // Nếu Role object có trường name: user.role.name === 'ADMIN' || user.role.name === 'STAFF'
+            user.role && (user.role.id === 1 || user.role.id === 2) && user.isActive 
           );
           
           console.log('Danh sách nhân viên đã lọc:', filteredStaff);
@@ -210,13 +202,12 @@ const AppointmentManagement = () => {
     const updatePayload = {
       fullName: currentAppointment.full_name,
       phoneNumber: currentAppointment.phone_number,
-      status: newStatus, // Trạng thái mới
+      status: newStatus,
       slot: currentAppointment.slot,
       notes: currentAppointment.notes,
       appointmentDate: formattedDate,
-      // Thêm các trường BE AppointmentDto yêu cầu nếu cần, ví dụ:
       price: currentAppointment.price,
-      userId: currentAppointment.user?.id || null, // Giữ userId hiện tại
+      userId: currentAppointment.user?.id || null, 
       serviceId: currentAppointment.service?.id,
       branchId: currentAppointment.branch?.id,
     };
@@ -252,7 +243,7 @@ const AppointmentManagement = () => {
   // Handlers cho Edit Detail Dialog (bao gồm gán nhân viên)
   const handleOpenEditDetailDialog = (appointment) => {
     setAppointmentToEditDetails(appointment);
-    setSelectedStaffId(appointment.user?.id || null); // Khởi tạo ID nhân viên đang được chọn, null nếu chưa gán
+    setSelectedStaffId(appointment.user?.id || null);
     setEditDetailDialogOpen(true);
   };
 
@@ -263,7 +254,6 @@ const AppointmentManagement = () => {
   };
 
   const handleSelectedStaffChange = (event) => {
-    // Nếu giá trị là rỗng (từ MenuItem "Bỏ gán"), coi là null
     setSelectedStaffId(event.target.value === '' ? null : event.target.value);
   };
 
@@ -282,14 +272,14 @@ const AppointmentManagement = () => {
     const updatePayload = {
       fullName: appointmentToEditDetails.full_name,
       phoneNumber: appointmentToEditDetails.phone_number,
-      status: appointmentToEditDetails.status, // Giữ nguyên trạng thái hoặc cho phép sửa ở form này
+      status: appointmentToEditDetails.status, 
       slot: appointmentToEditDetails.slot,
-      notes: appointmentToEditDetails.notes, // Cho phép sửa notes trong dialog này nếu muốn
+      notes: appointmentToEditDetails.notes, 
       appointmentDate: formattedAppDate,
       price: appointmentToEditDetails.price,
       serviceId: appointmentToEditDetails.service?.id,
       branchId: appointmentToEditDetails.branch?.id,
-      userId: selectedStaffId // ID nhân viên mới (có thể là null)
+      userId: selectedStaffId 
     };
 
     fetch(`${API_URL}/update?AiD=${appointmentToEditDetails.appointment_id}`, {
@@ -308,12 +298,10 @@ const AppointmentManagement = () => {
             app.appointment_id === appointmentToEditDetails.appointment_id
               ? {
                   ...app,
-                  // Cập nhật các trường đã thay đổi, ví dụ: user, notes
                   user: newStaffMemberInfo
                     ? { id: newStaffMemberInfo.id, name: newStaffMemberInfo.fullName, image: newStaffMemberInfo.imageUrl || '', email: newStaffMemberInfo.email || '' }
                     : null,
-                  notes: updatePayload.notes // Nếu notes được sửa đổi
-                  // ... các trường khác nếu có
+                  notes: updatePayload.notes 
                 }
               : app
           );
