@@ -111,7 +111,7 @@ const AppointmentManagement = () => {
         if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
         
           const filteredStaff = data.data.filter(user =>
-            user.role && (user.role.id === 1 || user.role.id === 2) && user.isActive 
+            user.role &&  user.role.id === 3 && user.isActive 
           );
           
           console.log('Danh sách nhân viên đã lọc:', filteredStaff);
