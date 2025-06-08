@@ -18,19 +18,23 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-
   useEffect(() => {
-    const token = Cookies.get('token');
-    const role = Cookies.get('role');
-    console.log('Token in useEffect:', token);
-    console.log('Role in useEffect:', role);
+    const adminToken = Cookies.get('admin_token');
+    const adminRole = Cookies.get('admin_role');
+    const staffToken = Cookies.get('staff_token');
+    const staffRole = Cookies.get('staff_role');
 
-    if (!token || !role) {
-      console.log('No token or role found, redirecting to login...');
+    if (adminToken && adminRole === 'ROLE_ADMIN') {
+      console.log('Admin token and role found in cookies:', adminToken, adminRole);
+      navigate('/admin');
+    } else if (staffToken && staffRole === 'ROLE_STAFF') {
+      console.log('Staff token and role found in cookies:', staffToken, staffRole);
+      navigate('/staff');
+    } else {
+      console.error('No valid token or role found in cookies');
       navigate('/login');
     }
-  }, []);
-
+  }, [navigate]);
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -40,6 +44,11 @@ export default function Login() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
       console.log('Login response:', data);
 
@@ -49,22 +58,28 @@ export default function Login() {
 
         const roleName = `ROLE_${user?.role?.name?.toUpperCase()}`;
         console.log('Role from API:', roleName);
-         localStorage.setItem('user', JSON.stringify(user));
-        if (roleName === 'ROLE_ADMIN' || roleName === 'ROLE_STAFF') {
-          Cookies.set('token', token, { path: '/', sameSite: 'Strict', expires: 7 });
-          Cookies.set('role', roleName, { path: '/', sameSite: 'Strict', expires: 7 });
 
-          if (roleName === 'ROLE_ADMIN') {
-            console.log('Redirecting to admin dashboard...');
-            window.location.href = 'http://localhost:3003';
-          } else if (roleName === 'ROLE_STAFF') {
-            console.log('Redirecting to staff dashboard...');
-            window.location.href = 'http://localhost:3002';
-          }
+        localStorage.setItem('token', JSON.stringify(token));
+        localStorage.setItem('user', JSON.stringify(user));
+
+        if (roleName === 'ROLE_ADMIN') {
+          // Lưu cookie admin
+          Cookies.set('admin_token', token, { path: '/admin', sameSite: 'Strict', expires: 7 });
+          Cookies.set('admin_role', roleName, { path: '/admin', sameSite: 'Strict', expires: 7 });
+          console.log('Admin cookie set:', Cookies.get('admin_token'), Cookies.get('admin_role'));
+          window.location.href = 'http://localhost:3003/admin';
+        } else if (roleName === 'ROLE_STAFF') {
+          Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
+          Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
+          Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 }); 
+          console.log('Staff cookie set:', Cookies.get('staff_token'), Cookies.get('staff_role'), Cookies.get('staff_userId'));
+          window.location.href = 'http://localhost:3002/staff';
         } else {
           console.log('Invalid role, clearing cookies...');
-          Cookies.remove('token');
-          Cookies.remove('role');
+          Cookies.remove('admin_token', { path: '/admin' });
+          Cookies.remove('admin_role', { path: '/admin' });
+          Cookies.remove('staff_token', { path: '/staff' });
+          Cookies.remove('staff_role', { path: '/staff' });
           setError('Vai trò không hợp lệ');
         }
       } else {

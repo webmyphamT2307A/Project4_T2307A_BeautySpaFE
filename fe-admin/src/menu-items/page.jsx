@@ -32,7 +32,7 @@ const pages = {
           target: true
         }
       ]
-    : [] // Empty array if logged in
+    : [] 
 };
 
 export default pages;

@@ -10,12 +10,11 @@ const AttendanceHistoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Lọc
   const [nameFilter, setNameFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [isActiveFilter, setIsActiveFilter] = useState(''); // Thêm bộ lọc isActive
 
-  // Phân trang
   const itemsPerPage = 5;
   const [page, setPage] = useState(1);
 
@@ -60,9 +59,13 @@ const AttendanceHistoryPage = () => {
       result = result.filter(r => r.status === statusFilter);
     }
 
+    if (isActiveFilter !== '') {
+      result = result.filter(r => String(r.isActive) === isActiveFilter);
+    }
+
     setFilteredRecords(result);
     setPage(1);
-  }, [nameFilter, dateFilter, statusFilter, records]);
+  }, [nameFilter, dateFilter, statusFilter, isActiveFilter, records]);
 
   const paginatedData = filteredRecords.slice(
     (page - 1) * itemsPerPage,
@@ -101,6 +104,17 @@ const AttendanceHistoryPage = () => {
           <MenuItem value="late">Trễ</MenuItem>
           <MenuItem value="absent">Vắng</MenuItem>
         </TextField>
+        <TextField
+          label="Trạng thái hoạt động"
+          select
+          value={isActiveFilter}
+          onChange={(e) => setIsActiveFilter(e.target.value)}
+          sx={{ flex: 1, minWidth: 200 }}
+        >
+          <MenuItem value="">Tất cả</MenuItem>
+          <MenuItem value="true">Đang hoạt động</MenuItem>
+          <MenuItem value="false">Ngừng hoạt động</MenuItem>
+        </TextField>
       </Box>
 
       {loading && <CircularProgress />}
@@ -117,12 +131,13 @@ const AttendanceHistoryPage = () => {
                   <TableCell>Check Out</TableCell>
                   <TableCell>Trạng thái</TableCell>
                   <TableCell>Ngày tạo</TableCell>
+                  <TableCell>Hoạt động</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {paginatedData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5}>Không có dữ liệu phù hợp.</TableCell>
+                    <TableCell colSpan={6}>Không có dữ liệu phù hợp.</TableCell>
                   </TableRow>
                 ) : (
                   paginatedData.map((r) => (
@@ -132,6 +147,7 @@ const AttendanceHistoryPage = () => {
                       <TableCell>{r.checkOut ? new Date(r.checkOut).toLocaleString() : '---'}</TableCell>
                       <TableCell>{r.status}</TableCell>
                       <TableCell>{new Date(r.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{r.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}</TableCell>
                     </TableRow>
                   ))
                 )}

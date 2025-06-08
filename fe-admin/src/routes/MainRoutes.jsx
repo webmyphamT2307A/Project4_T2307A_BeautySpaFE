@@ -7,7 +7,10 @@ import ServiceManagement from '../pages/spa/service';
 import AppointmentManagement from '../pages/spa/appoinment';
 import ServiceHistory from '../pages/spa/service-history';
 import RoleManger from '../pages/role/service';
+import UserScheduleManager from '../pages/userschedule/schedule';
 import usePrivateRoute from './../hooks/usePrivateRoute';
+import SalaryManagement from '../pages/salary/salary';
+import path from 'path';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
@@ -73,6 +76,29 @@ const MainRoutes = {
         }
       ]
     },
+    {
+      path: 'userschedule',
+      children: [
+        {
+          path: 'schedule',
+          element: <ProtectedRoute element={<UserScheduleManager />} />
+    }
+  ]
+  },
+  {
+    path: 'salary',
+    children: [
+      
+      {
+        path: 'salary',
+        element: <ProtectedRoute element={<SalaryManagement />} />
+      }
+    ]
+
+  },
+  {
+    
+  },
     {
       path: 'typography',
       element: <ProtectedRoute element={<Typography />} />

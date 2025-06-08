@@ -61,39 +61,47 @@ export default function Profile() {
     setOpen((prevOpen) => !prevOpen);
   };
 
- useEffect(() => {
-  const token = Cookies.get('token');
-  const role = Cookies.get('role');
+  useEffect(() => {
+  let token = Cookies.get('admin_token') || Cookies.get('staff_token');
+  let role = Cookies.get('admin_role') || Cookies.get('staff_role');
+
+  if (!token || !role) {
+    const user = JSON.parse(localStorage.getItem('user'));
+    token = JSON.parse(localStorage.getItem('token'));
+    role = user?.role?.name ? `ROLE_${user.role.name.toUpperCase()}` : null;
+  }
+
+  const fetchUserData = async (token, role) => {
+    try {
+      const res = await fetch('http://localhost:8080/api/v1/userDetail/me', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`API returned status ${res.status}`);
+      }
+
+      const data = await res.json();
+      if (data.status === 'SUCCESS') {
+        console.log(`${role} user data:`, data.data);
+        setUserName(data.data.fullName || role);
+        setUserAvatar(data.data.imageUrl || avatar1);
+      } else {
+        console.error(`Failed to fetch ${role} user data:`, data.message);
+      }
+    } catch (err) {
+      console.error(`Error fetching ${role} user data:`, err.message);
+    }
+  };
 
   if (token && role) {
-    console.log('Token and role found in cookies:', token, role);
-
-    fetch('http://localhost:8080/api/v1/userDetail/me', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`API returned status ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (data.status === 'SUCCESS') {
-          console.log('User data:', data.data);
-          setUserName(data.data.fullName || 'user');
-          setUserAvatar(data.data.imageUrl || avatar1);  
-        } else {
-          console.error('Failed to fetch user data:', data.message);
-        }
-      })
-      .catch((err) => {
-        console.error('Error fetching user data:', err.message);
-      });
+    console.log('Token and role found:', token, role);
+    fetchUserData(token, role);
   } else {
-    console.error('Token or role is missing in cookies');
+    console.error('No valid token or role found in Cookies or localStorage');
   }
 }, []);
 
@@ -110,17 +118,22 @@ export default function Profile() {
     setValue(newValue);
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
-    } catch (e) {
-      console.error('Logout failed:', e);
-    }
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    window.location.href = '/login';
-  };
+const handleLogout = async () => {
+  try {
+    await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
+  } catch (e) {
+    console.error('Logout failed:', e);
+  }
 
+  Cookies.remove('admin_token', { path: '/admin' });
+  Cookies.remove('admin_role', { path: '/admin' });
+  Cookies.remove('staff_token', { path: '/staff' });
+  Cookies.remove('staff_role', { path: '/staff' });
+
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  window.location.href = '/staff/login';
+};
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <ButtonBase
