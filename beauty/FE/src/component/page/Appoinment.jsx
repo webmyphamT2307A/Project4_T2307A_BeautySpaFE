@@ -182,7 +182,7 @@ const Appoinment = () => {
         <div className="row g-5 align-items-center">
           <div className="col-lg-6">
             <div className="appointment-form p-5">
-              <p className="fs-4 text-uppercase text-primary">Get In Touch</p>
+              <p className="fs-4 text-uppercase text-primary-color">Get In Touch</p>
               <h1 className="display-4 mb-4 text-white">Get Appointment</h1>
               <form onSubmit={handleSubmit}>
                 <div className="row gy-3 gx-4">
@@ -192,7 +192,7 @@ const Appoinment = () => {
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      className="form-control py-3 border-white bg-transparent text-white"
+                      className="form-control appointment-text py-3 border-white bg-transparent text-white"
                       placeholder="Full Name"
                     />
                   </div>
@@ -202,7 +202,7 @@ const Appoinment = () => {
                       name="phoneNumber"
                       value={formData.phoneNumber}
                       onChange={handleInputChange}
-                      className="form-control py-3 border-white bg-transparent text-white"
+                      className="form-control appointment-text py-3 border-white bg-transparent text-white"
                       placeholder="Phone Number"
                     />
                   </div>
@@ -211,7 +211,7 @@ const Appoinment = () => {
                       name="serviceId"
                       value={formData.serviceId}
                       onChange={handleInputChange}
-                      className="form-select py-3 border-white bg-transparent"
+                      className="form-select appointment-text py-3 border-white bg-transparent"
                     >
                       <option value="">Select Service</option>
                       {services.map(service => (
@@ -228,7 +228,7 @@ const Appoinment = () => {
                       name="appointmentDate"
                       value={formData.appointmentDate}
                       onChange={handleInputChange}
-                      className="form-control py-3 border-white bg-transparent"
+                      className="form-control appointment-text py-3 border-white bg-transparent"
                     />
                   </div>
                   <div className="col-lg-12">
@@ -236,7 +236,7 @@ const Appoinment = () => {
                       name="timeSlotId"
                       value={formData.timeSlotId}
                       onChange={handleInputChange}
-                      className="form-select py-3 border-white bg-transparent w-100"
+                      className="form-select appointment-text py-3 border-white bg-transparent w-100"
                       disabled={!formData.serviceId || !formData.appointmentDate}
                     >
                       <option value="">Chọn khung giờ</option>
@@ -260,7 +260,7 @@ const Appoinment = () => {
                         name="userId"
                         value={formData.userId}
                         onChange={handleInputChange}
-                        className="form-select py-3 border-white bg-transparent w-100"
+                        className="form-select appointment-text py-3 border-white bg-transparent w-100"
                       >
                         <option value="">Chọn nhân viên</option>
                         {staffList.map(staff => (
@@ -301,7 +301,7 @@ const Appoinment = () => {
                       name="notes"
                       value={formData.notes}
                       onChange={handleInputChange}
-                      className="form-control border-white bg-transparent text-white"
+                      className="form-control appointment-text border-white bg-transparent text-white"
                       cols={30}
                       rows={5}
                       placeholder="Write Comments"

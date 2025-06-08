@@ -35,8 +35,16 @@
 .btn-square {
     width: 32px;
     height: 32px;
+    border: 1px solid #f8a4c1 !important; /* Viền hồng */
+    background-color: transparent;
+    color: white; /* Màu icon */
+    transition: all 0.3s ease;
 }
+.btn-square:hover {
+    background-color: white; /* Nền hồng khi hover */
+    color: #f8a4c1; /* Icon đen khi hover */
 
+}
 .btn-sm-square {
     width: 34px;
     height: 34px;
@@ -228,23 +236,26 @@
 /*** Services Start ***/
 .services .services-item {
     transition: 0.5s;
+    border: 1px solid #f8a4c1 !important; /* Viền hồng */
+    background-color: transparent;
+    transition: all 0.3s ease;
 }
 
-.services .services-item:hover {
+/* .services .services-item:hover {
     background: var(--bs-primary) !important;
     border-color: #a63f52 !important;
-}
+} */
 
 .services .services-item:hover .services-content p,
 .services .services-item:hover .services-content h3 {
-    color: var(--bs-white);
+    /* color: var(--bs-white); */
     transition: 0.5s;
 }
 
-.services .services-item:hover .services-content a.btn {
-    background: var(--bs-white);
+/* .services .services-item:hover .services-content a.btn {
+    background: var(--bs-white); 
     color: var(--bs-primary) !important;
-}
+} */
 
 .services .services-item:hover .services-content a.btn:hover {
     color: var(--bs-white) !important;
@@ -386,6 +397,15 @@
     background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, .4));
     object-fit: cover;
     border-radius: 10px;
+}
+.text-primary-color{
+    color: #f8a4c1;
+}
+.appointment-text {
+    color: rgb(201, 198, 198) !important;
+}
+::placeholder{
+    color: rgb(201, 198, 198) !important;
 }
 
 .appointment .appointment-time {

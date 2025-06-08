@@ -12,6 +12,7 @@ const ServiceDetailPage = () => {
     userName: '',
     rating: 5,
     comment: '',
+    images: [],
   });
 
   useEffect(() => {
@@ -32,21 +33,9 @@ const ServiceDetailPage = () => {
     };
 
     const mockReviews = [
-      {
-        userName: 'Nguyen Van A',
-        rating: 5,
-        comment: 'Dịch vụ rất chuyên nghiệp và nhiệt tình. Rất hài lòng!',
-      },
-      {
-        userName: 'Tran Thi B',
-        rating: 4,
-        comment: 'Nhân viên thân thiện, giá cả hợp lý.',
-      },
-      {
-        userName: 'Le Van C',
-        rating: 3,
-        comment: 'Tạm ổn, cần cải thiện thời gian chờ đợi.',
-      },
+      { userName: 'Nguyen Van A', rating: 5, comment: 'Dịch vụ rất chuyên nghiệp và nhiệt tình.' },
+      { userName: 'Tran Thi B', rating: 4, comment: 'Nhân viên thân thiện, giá cả hợp lý.' },
+      { userName: 'Le Van C', rating: 3, comment: 'Tạm ổn, cần cải thiện thời gian chờ đợi.' },
     ];
 
     fetchService();
@@ -60,141 +49,31 @@ const ServiceDetailPage = () => {
       return;
     }
 
-    setReviews((prevReviews) => [newReview, ...prevReviews]);
-
-    setNewReview({
-      userName: '',
-      rating: 5,
-      comment: '',
-    });
+    setReviews((prev) => [newReview, ...prev]);
+    setNewReview({ userName: '', rating: 5, comment: '', images: [] });
   };
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files).slice(0, 5);
+    setNewReview({ ...newReview, images: files });
+  };
+
+  const ratingCounts = [5, 4, 3, 2, 1].map((star) =>
+    reviews.filter((r) => r.rating === star).length
+  );
+
+  const averageRating = reviews.length
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : '0.0';
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: 40 }}>Loading...</div>;
   if (!service) return <div style={{ textAlign: 'center', marginTop: 40 }}>Service not found</div>;
 
-  // Styles inline
-  const styles = {
-    container: {
-      maxWidth: 900,
-      margin: 'auto',
-      padding: '40px 15px',
-    },
-    btnBack: {
-      backgroundColor: '#f8b4b8',
-      color: '#222',
-      fontWeight: '600',
-      padding: '10px 18px',
-      border: 'none',
-      borderRadius: 5,
-      display: 'inline-block',
-      textDecoration: 'none',
-      marginBottom: 20,
-      cursor: 'pointer',
-      transition: 'background-color 0.3s ease',
-    },
-    btnBackHover: {
-      backgroundColor: '#f09397',
-      color: '#000',
-    },
-    image: {
-      borderRadius: 15,
-      boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
-      width: '100%',
-      height: 'auto',
-      transition: 'transform 0.3s ease',
-    },
-    serviceTitle: {
-      fontSize: '2.5rem',
-      color: '#d6336c',
-      marginBottom: 10,
-      fontWeight: '700',
-    },
-    price: {
-      fontSize: '1.2rem',
-      color: '#555',
-      marginBottom: 24,
-    },
-    btnRegister: {
-      background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
-      color: 'white',
-      fontWeight: '700',
-      borderRadius: 30,
-      padding: '12px 40px',
-      boxShadow: '0 5px 15px rgba(245, 87, 108, 0.4)',
-      border: 'none',
-      cursor: 'pointer',
-      marginTop: 20,
-      display: 'inline-block',
-      textDecoration: 'none',
-      transition: 'box-shadow 0.3s ease',
-    },
-    btnRegisterHover: {
-      boxShadow: '0 8px 24px rgba(245, 87, 108, 0.7)',
-    },
-    reviewCard: {
-      borderRadius: 12,
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      padding: 20,
-      backgroundColor: '#fff5f8',
-      marginBottom: 16,
-      transition: 'box-shadow 0.3s ease',
-    },
-    reviewUser: {
-      fontWeight: '700',
-      color: '#d6336c',
-    },
-    reviewStars: {
-      fontSize: '1.1rem',
-      color: '#f5a623', // gold star color
-    },
-    reviewComment: {
-      marginTop: 8,
-      fontStyle: 'italic',
-      color: '#555',
-    },
-    formLabel: {
-      fontWeight: '600',
-      color: '#444',
-      display: 'block',
-      marginBottom: 6,
-    },
-    formInput: {
-      borderRadius: 8,
-      border: '1.5px solid #dcdcdc',
-      padding: '8px 12px',
-      fontSize: 16,
-      width: '100%',
-      boxSizing: 'border-box',
-      marginBottom: 16,
-      transition: 'border-color 0.3s ease',
-    },
-    formInputFocus: {
-      borderColor: '#d6336c',
-      boxShadow: '0 0 8px rgba(214, 51, 108, 0.4)',
-      outline: 'none',
-    },
-    btnSubmitReview: {
-      backgroundColor: '#d6336c',
-      color: 'white',
-      fontWeight: '700',
-      borderRadius: 30,
-      padding: '10px 36px',
-      border: 'none',
-      cursor: 'pointer',
-      transition: 'background-color 0.3s ease',
-    },
-  };
-
   return (
     <div>
       <Header />
-      <div style={styles.container}>
-        <Link
-          to="/ServicePage"
-          style={styles.btnBack}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f09397')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f8b4b8')}
-        >
+      <div style={{ maxWidth: 900, margin: 'auto', padding: '40px 15px' }}>
+        <Link to="/ServicePage" style={{ marginBottom: 20, display: 'inline-block', border: '1px solid #f8a4c1', padding: '8px 16px', borderRadius: 5, color: '#333', textDecoration: 'none', fontWeight: 'bold', transition: 'background-color 0.3s, color 0.3s', borderRadius: '999px'}}>
           ← Back to Services
         </Link>
 
@@ -203,104 +82,168 @@ const ServiceDetailPage = () => {
             <img
               src={service.imageUrl || service.image_url || '/default-image.jpg'}
               alt={service.name}
-              style={styles.image}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              style={{
+                borderRadius: 15,
+                boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+                width: '100%',
+              }}
             />
           </div>
 
           <div className="col-md-6">
-            <h2 style={styles.serviceTitle}>{service.name || 'Service Title'}</h2>
-            <p style={styles.price}>
+            <h2 style={{ fontSize: '2.5rem', color: '#d6336c', fontWeight: 700 }}>
+              {service.name}
+            </h2>
+            <p>
               <strong>Price:</strong>{' '}
               {service.price ? `${service.price.toLocaleString()} VND/session` : 'N/A'}
             </p>
             <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
-
-            <a
-              href="#"
-              style={styles.btnRegister}
-              onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 8px 24px rgba(245, 87, 108, 0.7)')}
-              onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 5px 15px rgba(245, 87, 108, 0.4)')}
-            >
+            <a href="#" style={{
+              background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
+              color: 'white',
+              fontWeight: '700',
+              borderRadius: 30,
+              padding: '12px 40px',
+              display: 'inline-block',
+              marginTop: 20,
+              textDecoration: 'none'
+            }}>
               REGISTER NOW!
             </a>
           </div>
         </div>
 
-        {/* Reviews */}
-        <div style={{ marginTop: 50 }}>
-          <h4 style={{ fontWeight: '700', marginBottom: 20 }}>Customer Reviews</h4>
-          {reviews.length === 0 ? (
-            <p style={{ color: '#777' }}>No reviews yet.</p>
-          ) : (
-            reviews.map((review, index) => (
-              <div key={index} style={styles.reviewCard}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong style={styles.reviewUser}>{review.userName}</strong>
-                  <span style={styles.reviewStars}>
-                    {'★'.repeat(review.rating)}
-                    {'☆'.repeat(5 - review.rating)}
-                  </span>
-                </div>
-                <p style={styles.reviewComment}>{review.comment}</p>
+        {/* REVIEWS SECTION (UPDATED) */}
+        <div style={{ marginTop: 60 }}>
+          <h3 style={{ fontWeight: 700, marginBottom: 25 }}>Reviews</h3>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ textAlign: 'center', marginRight: 40 }}>
+              <div style={{ fontSize: '3rem', color: '#f60', fontWeight: 'bold' }}>{averageRating}</div>
+              <div style={{ color: '#f5a623', fontSize: 20 }}>
+                {'★'.repeat(Math.round(averageRating)) + '☆'.repeat(5 - Math.round(averageRating))}
               </div>
-            ))
-          )}
-        </div>
-
-        {/* Write a Review Form */}
-        <div style={{ marginTop: 50 }}>
-          <h4 style={{ fontWeight: '700', marginBottom: 20 }}>Write a Review</h4>
-          <form onSubmit={handleReviewSubmit}>
-            <label style={styles.formLabel} htmlFor="userName">Your Name</label>
-            <input
-              id="userName"
-              type="text"
-              style={styles.formInput}
-              value={newReview.userName}
-              onChange={(e) => setNewReview({ ...newReview, userName: e.target.value })}
-              required
-              onFocus={(e) => (e.target.style.borderColor = '#d6336c')}
-              onBlur={(e) => (e.target.style.borderColor = '#dcdcdc')}
-            />
-
-            <label style={styles.formLabel} htmlFor="rating">Rating</label>
-            <select
-              id="rating"
-              style={styles.formInput}
-              value={newReview.rating}
-              onChange={(e) => setNewReview({ ...newReview, rating: parseInt(e.target.value) })}
-            >
-              {[5, 4, 3, 2, 1].map((star) => (
-                <option key={star} value={star}>
-                  {`${star} Star${star > 1 ? 's' : ''}`}
-                </option>
+              <div style={{ color: '#888' }}>{reviews.length} reviews</div>
+            </div>
+            <div style={{ flexGrow: 1 }}>
+              {[5, 4, 3, 2, 1].map((star, i) => (
+                <div key={star} style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
+                  <div style={{ minWidth: 60, textAlign: 'right', paddingRight: 10 }}> {star} star{star > 1 ? 's' : ''}</div>
+                  <div style={{ background: '#eee', height: 10, flex: 1, margin: '0 10px', position: 'relative' }}>
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${(ratingCounts[i] / (reviews.length || 1)) * 100}%`,
+                        background: '#f60',
+                      }}
+                    ></div>
+                  </div>
+                  <div style={{ width: 100, fontSize: 14, color: '#666' }}>
+                    {['Very Bad', 'Not Satisfied', 'Average', 'Satisfied', 'Very Satisfied'][4 - i]}
+                  </div>
+                </div>
               ))}
-            </select>
+            </div>
+          </div>
 
-            <label style={styles.formLabel} htmlFor="comment">Comment</label>
-            <textarea
-              id="comment"
-              rows="3"
-              style={styles.formInput}
-              value={newReview.comment}
-              onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-              required
-              onFocus={(e) => (e.target.style.borderColor = '#d6336c')}
-              onBlur={(e) => (e.target.style.borderColor = '#dcdcdc')}
-            ></textarea>
+          {/* Review form */}
+          <div style={{ marginTop: 40 }}>
+            <h4 style={{ marginBottom: 15 }}>Share your review about this product</h4>
+            <form onSubmit={handleReviewSubmit}>
+              <label>Your Name *</label>
+              <input
+                type="text"
+                value={newReview.userName}
+                onChange={(e) => setNewReview({ ...newReview, userName: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: 10,
+                  borderRadius: 5,
+                  border: '1px solid #ccc',
+                  marginBottom: 10,
+                }}
+              />
 
-            <button
-              type="submit"
-              style={styles.btnSubmitReview}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b82d5e')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#d6336c')}
-            >
-              Submit Review
-            </button>
-          </form>
+              <label style={{ display: 'block', marginBottom: 8 }}>Your rating *</label>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    onClick={() => setNewReview({ ...newReview, rating: star })}
+                    style={{
+                      fontSize: 30,
+                      cursor: 'pointer',
+                      color: star <= newReview.rating ? '#f60' : '#ccc',
+                      marginRight: 5,
+                    }}
+                  >
+                    ★
+                  </span>
+                ))}
+                <span style={{ marginLeft: 10, fontSize: 14, color: '#555' }}>
+                  {{
+                    1: 'Very Bad',
+                    2: 'Not Satisfied',
+                    3: 'Average',
+                    4: 'Satisfied',
+                    5: 'Very Satisfied',
+                  }[newReview.rating]}
+                </span>
+              </div>
+
+              <label>Comment *</label>
+              <textarea
+                value={newReview.comment}
+                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                rows={4}
+                style={{
+                  width: '100%',
+                  padding: 10,
+                  borderRadius: 5,
+                  border: '1px solid #ccc',
+                  marginBottom: 10,
+                }}
+              />
+
+              <br />
+              <button
+                type="submit"
+                style={{
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: 5,
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                }}
+              >
+                Submit
+              </button>
+            </form>
+          </div>
         </div>
+
+        {/* Review list */}
+        <div style={{ marginTop: 30 }}>
+          {reviews.map((r, i) => (
+            <div
+              key={i}
+              style={{
+                borderBottom: '1px solid #ddd',
+                paddingBottom: 10,
+                marginBottom: 16,
+              }}
+            >
+              <strong style={{ color: '#d6336c' }}>{r.userName}</strong>{' '}
+              <span style={{ color: '#f5a623' }}>
+                {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+              </span>
+              <p style={{ marginTop: 5 }}>{r.comment}</p>
+            </div>
+          ))}
+        </div>
+
       </div>
       <Footer />
     </div>
