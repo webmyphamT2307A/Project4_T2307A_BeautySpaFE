@@ -52,62 +52,68 @@ const AdminAccount = () => {
     role: null,
     branch: null,
     skills: [],
-    isActive: true
+    isActive: 1 // <-- SỬA ĐỔI: Giá trị mặc định là 1 (Active)
   });
 
-  useEffect(() => {
-    fetch(`${ROLE_URL}`)
-      .then(res => res.json())
-      .then(data => setRoles(data.data || []));
-    fetch(`${BRANCH_URL}`)
-      .then(res => res.json())
-      .then(data => setBranches(data.data || []));
-    fetch(`${SKILL_URL}`)
-      .then(res => res.json())
-      .then(data => setSkills(data.data || []));
-  }, []);
-
-  // Lấy danh sách user từ BE
-  useEffect(() => {
+  // <-- TỐI ƯU: Tách hàm fetch users để tái sử dụng
+  const fetchUsers = () => {
     setLoading(true);
     fetch(`${API_URL}/find-all`)
       .then(res => res.json())
       .then(data => {
-        const usersData = (data.data || []).map(u => ({
-          ...u,
-          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
-        }));
-
-        // Sort by newest first
-        const sortedUsers = usersData.sort((a, b) =>
-          new Date(b.createdAt || b.created_at || '2023') -
-          new Date(a.createdAt || a.created_at || '2023')
-        );
-
+        const usersData = data.data || [];
+        const sortedUsers = usersData.sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
         setUsers(sortedUsers);
-        setFilteredUsers(sortedUsers);
-        setLoading(false);
+        setFilteredUsers(sortedUsers); // Cập nhật cả filteredUsers
       })
-      .catch(() => setLoading(false));
+      .catch(err => {
+        console.error("Failed to fetch users:", err);
+        toast.error("Failed to load user data.");
+      })
+      .finally(() => setLoading(false));
+  };
+
+
+  useEffect(() => {
+    fetch(`${ROLE_URL}`).then(res => res.json()).then(data => setRoles(data.data || []));
+    fetch(`${BRANCH_URL}`).then(res => res.json()).then(data => setBranches(data.data || []));
+    fetch(`${SKILL_URL}`).then(res => res.json()).then(data => setSkills(data.data || []));
+    fetchUsers(); 
   }, []);
+useEffect(() => {
+  setLoading(true);
+
+  const endpoint = statusFilter === -1
+    ? `${API_URL}/find-all-deleted` 
+    : `${API_URL}/find-all`;
+
+  fetch(endpoint)
+    .then(res => res.json())
+    .then(data => {
+      const usersData = data.data || [];
+      const sortedUsers = usersData.sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
+      
+      setUsers(sortedUsers);
+    })
+    .catch(err => {
+      console.error("Failed to fetch users:", err);
+      toast.error("Không thể tải dữ liệu người dùng.");
+    })
+    .finally(() => setLoading(false));
+
+}, [statusFilter]);
 
   useEffect(() => {
     let results = [...users];
 
-    // Apply status filter
     if (statusFilter !== 'all') {
-      results = results.filter(user => user.isActive === Boolean(Number(statusFilter)));
+      results = results.filter(user => user.isActive === Number(statusFilter));
     }
 
-    // Apply role filter
     if (roleFilter !== 'all') {
-      results = results.filter(user =>
-        (user.role?.id === Number(roleFilter)) ||
-        (user.roleId === Number(roleFilter))
-      );
+      results = results.filter(user => (user.role?.id === Number(roleFilter)) || (user.roleId === Number(roleFilter)));
     }
 
-    // Apply search filter
     if (searchQuery) {
       const lower = searchQuery.toLowerCase();
       results = results.filter(
@@ -118,7 +124,6 @@ const AdminAccount = () => {
           user.email?.toLowerCase().includes(lower)
       );
     }
-
     setFilteredUsers(results);
     setPage(0);
   }, [searchQuery, statusFilter, roleFilter, users]);
@@ -127,7 +132,6 @@ const AdminAccount = () => {
     if (user) {
       const selectedRole = roles.find(r => r.id === (user.role?.id || user.roleId));
       const selectedBranch = branches.find(b => b.id === (user.branch?.id || user.branchId));
-      const selectedSkills = user.skills || [];
       setCurrentUser(user);
       setFormData({
         fullName: user.fullName || '',
@@ -138,39 +142,31 @@ const AdminAccount = () => {
         address: user.address || '',
         role: selectedRole || null,
         branch: selectedBranch || null,
-        skills: selectedSkills || [],
-        isActive: user.isActive
+        skills: user.skills || [],
+        isActive: user.isActive // <-- SỬA ĐỔI: Dùng giá trị số từ user
       });
       setImagePreview(user.imageUrl || null);
     } else {
       setCurrentUser(null);
       setFormData({
-        fullName: '',
-        phone: '',
-        email: '',
-        password: '',
-        imageUrl: '',
-        address: '',
-        role: roles[0] || null,
-        branch: branches[0] || null,
+        fullName: '', phone: '', email: '', password: '', imageUrl: '', address: '',
+        role: roles.length > 0 ? roles[0] : null,
+        branch: branches.length > 0 ? branches[0] : null,
         skills: [],
-        isActive: true
+        isActive: 1 // <-- SỬA ĐỔI: Mặc định là 1 (Active)
       });
       setImagePreview(null);
     }
     setOpen(true);
   };
-
-  // New handler for view details
+  
   const handleViewOpen = (user) => {
     setCurrentUser(user);
     setViewOpen(true);
   };
-
-  const handleViewClose = () => {
-    setViewOpen(false);
-  };
-
+  
+  const handleViewClose = () => setViewOpen(false);
+  
   const handleOpenEditFromView = () => {
     handleViewClose();
     handleOpen(currentUser);
@@ -181,7 +177,7 @@ const AdminAccount = () => {
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
     if (name === 'isActive') {
-      setFormData({ ...formData, isActive: checked });
+      setFormData({ ...formData, isActive: checked ? 1 : 0 }); // <-- SỬA ĐỔI: Cập nhật thành 1 hoặc 0
     } else if (name === 'role') {
       const roleObj = roles.find(r => r.id === Number(value));
       setFormData({ ...formData, role: roleObj });
@@ -192,184 +188,117 @@ const AdminAccount = () => {
       setFormData({ ...formData, [name]: value });
     }
   };
-
-  // Image upload handler
+  
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageUrl = e.target.result;
-        setFormData({
-          ...formData,
-          imageUrl: imageUrl
-        });
+        setFormData({ ...formData, imageUrl });
         setImagePreview(imageUrl);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current.click();
-  };
-
+  const handleUploadClick = () => fileInputRef.current.click();
   const handleClearField = (fieldName) => {
-    if (fieldName === 'imageUrl') {
-      setImagePreview(null);
-    }
+    if (fieldName === 'imageUrl') setImagePreview(null);
     setFormData({ ...formData, [fieldName]: '' });
   };
-
-  // Thêm hoặc cập nhật user
+  
   const handleSave = async () => {
-    if (currentUser) {
-      const res = await fetch(`${API_URL}/update/${currentUser.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: formData.fullName,
-          password: formData.password || null,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          roleId: formData.role?.id,
-          branchId: formData.branch?.id,
-          imageUrl: formData.imageUrl,
-          skills: formData.skills,
-          isActive: formData.isActive,
-          description: ""
-        })
-      });
-      if (res.ok) {
-        toast.success('Cập nhật thành công!');
-      } else {
-        toast.error('Cập nhật thất bại!');
-      }
-    } else {
-      const res = await fetch(`${API_URL}/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: formData.fullName,
-          password: formData.password,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          imageUrl: formData.imageUrl,
-          skills: formData.skills,
-          roleId: formData.role?.id,
-          branchId: formData.branch?.id
-        })
-      });
-      if (res.ok) {
-        toast.success('Tạo mới thành công!');
-      } else {
-        toast.error('Tạo mới thất bại!');
-      }
-    }
-    fetch(`${API_URL}/find-all`)
-      .then(res => res.json())
-      .then(data => {
-        const usersData = (data.data || []).map(u => ({
-          ...u,
-          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
-        }));
-        // Sort by newest first
-        const sortedUsers = usersData.sort((a, b) =>
-          new Date(b.createdAt || b.created_at || '2023') -
-          new Date(a.createdAt || a.created_at || '2023')
-        );
-        setUsers(sortedUsers);
-        setFilteredUsers(sortedUsers);
-      });
-    setOpen(false);
-  };
+    const isUpdate = !!currentUser;
+    const url = isUpdate ? `${API_URL}/update/${currentUser.id}` : `${API_URL}/create`;
+    const method = isUpdate ? 'PUT' : 'POST';
 
-  // Xóa user
+    const payload = {
+      fullName: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      roleId: formData.role?.id,
+      branchId: formData.branch?.id,
+      imageUrl: formData.imageUrl,
+      skills: formData.skills,
+    };
+
+    if (isUpdate) {
+      payload.isActive = formData.isActive;
+      if (formData.password) payload.password = formData.password;
+    } else {
+      payload.password = formData.password;
+    }
+    
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const result = await res.json();
+      if (res.ok) {
+        toast.success(result.message || (isUpdate ? 'Cập nhật thành công!' : 'Tạo mới thành công!'));
+        fetchUsers(); // <-- TỐI ƯU: Gọi hàm fetch chung để tải lại dữ liệu
+        handleClose();
+      } else {
+        toast.error(result.message || (isUpdate ? 'Cập nhật thất bại!' : 'Tạo mới thất bại!'));
+      }
+    } catch(err) {
+      toast.error("An error occurred. Please try again.");
+    }
+  };
+  
+  // <-- TỐI ƯU: Xóa user và cập nhật UI ngay lập tức
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) return;
-    const res = await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
-    if (res.ok) {
-      toast.success('Xóa thành công!');
-    } else {
-      toast.error('Xóa thất bại!');
+
+    try {
+      const res = await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
+      const result = await res.json();
+      
+      if (res.ok) {
+        toast.success(result.message || 'Xóa thành công!');
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== id));
+      } else {
+        toast.error(result.message || 'Xóa thất bại!');
+      }
+    } catch(err) {
+      toast.error("An error occurred. Please try again.");
     }
-    fetch(`${API_URL}/find-all`)
-      .then(res => res.json())
-      .then(data => {
-        const usersData = (data.data || []).map(u => ({
-          ...u,
-          isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
-        }));
-        const sortedUsers = usersData.sort((a, b) =>
-          new Date(b.createdAt || b.created_at || '2023') -
-          new Date(a.createdAt || a.created_at || '2023')
-        );
-        setUsers(sortedUsers);
-        setFilteredUsers(sortedUsers);
-      });
   };
-
+  
   const handleChangePage = (event, newPage) => setPage(newPage);
-
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
-
-  const handleStatusFilterChange = (e) => {
-    const value = e.target.value;
-    setStatusFilter(value === 'all' ? 'all' : Number(value));
-  };
-
-  const handleRoleFilterChange = (e) => {
-    setRoleFilter(e.target.value);
-  };
-
-  // Format date for display
+  const handleStatusFilterChange = (e) => setStatusFilter(e.target.value);
+  const handleRoleFilterChange = (e) => setRoleFilter(e.target.value);
+  
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return date.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
   };
-
-  // Hiển thị tên role
+  
   const getRoleName = (user) => {
-    // Nếu user có object role thì lấy tên
-    if (user.role && user.role.name) return user.role.name;
-    // Nếu user có role là object nhưng không có name, thử lấy theo id
-    if (user.role && user.role.id && roles.length > 0) {
-      const found = roles.find(r => Number(r.id) === Number(user.role.id));
-      return found ? found.name : 'Unknown Role';
-    }
-    // Nếu user có roleId, tìm theo roleId
-    if (user.roleId && roles.length > 0) {
-      const found = roles.find(r => Number(r.id) === Number(user.roleId));
-      return found ? found.name : 'Unknown Role';
-    }
-    return 'Unknown Role';
+    if (user.role?.name) return user.role.name;
+    const found = roles.find(r => Number(r.id) === Number(user.role?.id || user.roleId));
+    return found ? found.name : 'N/A';
   };
-
-  // Hiển thị tên branch
+  
   const getBranchName = (user) => {
-    if (user.branch && user.branch.name) return user.branch.name;
-    if (user.branchId && branches.length > 0) {
-      const found = branches.find(b => b.id === user.branchId);
-      return found ? found.name : '-';
-    }
-    return '-';
+    if (user.branch?.name) return user.branch.name;
+    const found = branches.find(b => b.id === (user.branch?.id || user.branchId));
+    return found ? found.name : '-';
   };
 
   const currentUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
 
   return (
     <MainCard title="Admin Management">
@@ -403,6 +332,7 @@ const AdminAccount = () => {
                 <MenuItem value="all">All Status</MenuItem>
                 <MenuItem value={1}>Active</MenuItem>
                 <MenuItem value={0}>Inactive</MenuItem>
+                <MenuItem value={-1}>Deleted</MenuItem> 
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -479,14 +409,14 @@ const AdminAccount = () => {
                         <TableCell>{getBranchName(user)}</TableCell>
                         <TableCell>
                           <Chip
-                            label={user.isActive ? "Active" : "Inactive"}
+                            label={user.isActive ==1  ? "Active" : "Inactive"}
                             size="small"
-                            color={user.isActive ? "success" : "default"}
+                            color={user.isActive ==1 ? "success" : "default"}
                             sx={{
                               borderRadius: '16px',
                               fontWeight: 500,
                               fontSize: '0.75rem',
-                              color: user.isActive ? '#fff' : '#555',
+                              color: user.isActive ==1 ? '#fff' : '#555',
                             }}
                           />
                         </TableCell>
