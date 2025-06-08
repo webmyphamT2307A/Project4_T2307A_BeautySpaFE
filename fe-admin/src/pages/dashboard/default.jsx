@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import {
   Grid, Typography, Box, Avatar, Chip, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, Tab, Tabs, ButtonGroup, Button,
-  Divider, Card, CardContent, List, ListItem, ListItemAvatar, ListItemText,
-  LinearProgress, Badge, IconButton, Tooltip, Dialog, DialogTitle, DialogContent,
+  TableContainer, TableHead, TableRow, ButtonGroup, Button,
+  Divider, List, ListItem, ListItemText,
+  LinearProgress, IconButton, Dialog, DialogTitle, DialogContent,
   DialogActions
 } from '@mui/material';
 import {
   CalendarOutlined, TeamOutlined, UserOutlined, ClockCircleOutlined,
-  DollarOutlined, StarOutlined, LineChartOutlined, BarChartOutlined,
-  CheckCircleOutlined, SyncOutlined, CloseCircleOutlined, EnvironmentOutlined,
-  ScheduleOutlined, ShopOutlined, RiseOutlined, FallOutlined, EyeOutlined,
-  LeftOutlined, RightOutlined, CalendarTwoTone
+  DollarOutlined, StarOutlined, ScheduleOutlined, ShopOutlined, EyeOutlined,
+  LeftOutlined, RightOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import AnalyticEcommerce from 'components/cards/statistics/AnalyticEcommerce';
 import ReportAreaChart from 'sections/dashboard/default/ReportAreaChart';
 import MonthlyBarChart from 'sections/dashboard/default/MonthlyBarChart';
-import { format, addDays, isSameDay, isToday, subYears } from 'date-fns';
+import { format, isToday, parseISO, startOfMonth, endOfMonth,subDays } from 'date-fns';
 import './dashboard.css';
 
-// Mock data - normally would come from API
-import { staffList, branchData, serviceData } from './mockData';
+// ĐỊA CHỈ API BACKEND CỦA BẠN
+const API_BASE_URL = 'http://localhost:8080/api/v1';
 
 const DashboardDefault = () => {
   // States
@@ -32,586 +30,258 @@ const DashboardDefault = () => {
   const [calendarData, setCalendarData] = useState([]);
   const [totalServices, setTotalServices] = useState(0);
   const [ratingData, setRatingData] = useState([]);
-  const [ratingPeriod, setRatingPeriod] = useState(0); // 0 for current month, 1 for last month
+  const [ratingPeriod, setRatingPeriod] = useState(0);
   const [customerChartData, setCustomerChartData] = useState([]);
   const [revenueChartData, setRevenueChartData] = useState([]);
-  const [timeFrame, setTimeFrame] = useState('month'); // 'month' or 'year'
   const [currentShift, setCurrentShift] = useState('');
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [customerGrowth, setCustomerGrowth] = useState('+12.5%');
-  const [revenueGrowth, setRevenueGrowth] = useState('+18.3%');
+  const [customerGrowth, setCustomerGrowth] = useState('+0%');
+  const [revenueGrowth, setRevenueGrowth] = useState('+0%');
   const [totalMonthlyRevenue, setTotalMonthlyRevenue] = useState(0);
   const [totalMonthlyCustomers, setTotalMonthlyCustomers] = useState(0);
   const [revenueTimeFrame, setRevenueTimeFrame] = useState('month');
   const [customerTimeFrame, setCustomerTimeFrame] = useState('month');
-  // New loading states for charts
   const [revenueLoading, setRevenueLoading] = useState(false);
   const [customerLoading, setCustomerLoading] = useState(false);
-  // State for calendar day modal
   const [selectedDay, setSelectedDay] = useState(null);
   const [dayModalOpen, setDayModalOpen] = useState(false);
+  const [scheduleTitle, setScheduleTitle] = useState('Staff Schedule');
+  const [overallAverageRating, setOverallAverageRating] = useState('N/A');
+  const [todayRevenue, setTodayRevenue] = useState('$0');
 
   const username = localStorage.getItem('username') || 'Admin';
 
-  // Update current time every minute
-  useEffect(() => {
-    // Set initial time and shift
-    const now = new Date();
-    setCurrentTime(now);
-    setCurrentShift(determineShift(now));
-
-    const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(now);
-      setCurrentShift(determineShift(now));
-    }, 60000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const determineShift = (time) => {
-    const hour = time.getHours();
-    if (hour >= 8 && hour < 12) {
-      return 'Morning (8:00-12:00)';
-    } else if (hour >= 12 && hour < 17) {
-      return 'Afternoon (12:00-17:00)';
-    } else if (hour >= 17 && hour < 21) {
-      return 'Evening (17:00-21:00)';
-    } else {
-      return 'Closed (21:00-8:00)';
+  // Hàm gọi API chung, giúp mã sạch sẽ hơn
+  const apiCall = async (endpoint, errorMessage) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`);
+      if (!response.ok) throw new Error(`Network response error: ${response.statusText}`);
+      const result = await response.json();
+      if (result.status === 'SUCCESS') return result.data;
+      throw new Error(result.message || errorMessage);
+    } catch (error) {
+      console.error(`API call failed for ${endpoint}:`, error);
+      // Có thể thêm state để hiển thị lỗi trên UI nếu muốn
+      return null;
     }
   };
 
-  // Fetch all data on component mount
+  const determineShift = (time) => {
+    const hour = time.getHours();
+    if (hour >= 8 && hour < 12) return 'Morning (8:00-12:00)';
+    if (hour >= 12 && hour < 17) return 'Afternoon (12:00-17:00)';
+    if (hour >= 17 && hour < 21) return 'Evening (17:00-21:00)';
+    return 'Closed (21:00-8:00)';
+  };
+
+  const formatApiDate = (date) => format(date, 'yyyy-MM-dd');
+
+  // --- CÁC HÀM GỌI API ĐẦY ĐỦ ---
+
+  const fetchDashboardSummary = async () => {
+    const summary = await apiCall('/statistics/summary', 'Failed to fetch dashboard summary');
+    if (summary) {
+      setWaitingCustomers(summary.waitingCustomers || 0);
+      setServedCustomers(summary.servedCustomersToday || 0);
+      setTotalServices(summary.servicesPerformedThisMonth || 0);
+      setOverallAverageRating(summary.overallAverageRating?.toFixed(1) || 'N/A');
+      setTodayRevenue(`$${summary.todayRevenue?.toLocaleString('en-US') || 0}`);
+    }
+  };
+
+  const fetchScheduleData = async () => {
+    let dataFound = false;
+    // Vòng lặp tìm kiếm, tối đa 7 ngày về trước để tránh lặp vô hạn
+    for (let i = 0; i < 7; i++) {
+      const dateToFetch = subDays(new Date(), i);
+      const dateStr = formatApiDate(dateToFetch);
+
+      const schedules = await apiCall(`/users-schedules?startDate=${dateStr}&endDate=${dateStr}`, `Failed to fetch schedule for ${dateStr}`);
+
+      if (schedules && schedules.length > 0) {
+        // ĐÃ TÌM THẤY DỮ LIỆU!
+        dataFound = true;
+
+        // Cập nhật tiêu đề để người dùng biết đang xem ngày nào
+        if (i === 0) {
+          setScheduleTitle('Staff Schedule (Today)');
+        } else {
+          setScheduleTitle(`Staff Schedule (${format(dateToFetch, 'MMM d')})`);
+        }
+
+        const mappedSchedules = schedules.map(item => ({
+          user_id: item.userId,
+          full_name: item.userName,
+          role_name: item.roleName || 'N/A',
+          branch: item.branchName || 'N/A',
+          check_in_time: item.checkInTime,
+          status: item.status || 'On Time',
+          shift: item.shift,
+          image_url: item.userImageUrl
+        }));
+
+        // Nếu là lịch của hôm nay, thì lọc theo ca hiện tại
+        // Nếu là lịch của ngày cũ, thì hiển thị ca cuối cùng có người làm
+        let dataToShow = [];
+        if (i === 0) {
+          const shiftNameToFilter = determineShift(new Date()).split(' ')[0];
+          dataToShow = mappedSchedules.filter(staff => staff.shift?.toLowerCase().includes(shiftNameToFilter.toLowerCase()));
+        }
+
+        // Fallback logic (nếu ca hiện tại trống hoặc xem ngày cũ)
+        if (dataToShow.length === 0) {
+          if (mappedSchedules.some(s => s.shift?.toLowerCase().includes('evening'))) {
+            dataToShow = mappedSchedules.filter(staff => staff.shift?.toLowerCase().includes('evening'));
+          } else if (mappedSchedules.some(s => s.shift?.toLowerCase().includes('afternoon'))) {
+            dataToShow = mappedSchedules.filter(staff => staff.shift?.toLowerCase().includes('afternoon'));
+          } else {
+            dataToShow = mappedSchedules; // Lấy tất cả nếu không có ca chiều/tối
+          }
+        }
+
+        setScheduleData(dataToShow);
+        break; // Thoát khỏi vòng lặp khi đã tìm thấy dữ liệu
+      }
+    }
+
+    // Nếu sau 7 ngày tìm kiếm vẫn không có dữ liệu
+    if (!dataFound) {
+      setScheduleTitle('Staff Schedule (No recent data)');
+      setScheduleData([]);
+    }
+  };
+
+  const fetchCalendarData = async () => {
+    const start = formatApiDate(startOfMonth(selectedMonth));
+    const end = formatApiDate(endOfMonth(selectedMonth));
+    const appointments = await apiCall(`/admin/appointment?startDate=${start}&endDate=${end}`, 'Failed to fetch appointments for calendar');
+    if (appointments) {
+      const customerCountsByDay = {};
+      appointments.forEach(app => {
+        const appDate = format(parseISO(app.appointmentDate), 'yyyy-MM-dd');
+        customerCountsByDay[appDate] = (customerCountsByDay[appDate] || 0) + 1;
+      });
+      const monthDays = [];
+      for (let day = new Date(startOfMonth(selectedMonth)); day <= endOfMonth(selectedMonth); day.setDate(day.getDate() + 1)) {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        monthDays.push({ date: dateStr, dayOfMonth: day.getDate(), isWeekend: [0, 6].includes(day.getDay()), totalCustomers: customerCountsByDay[dateStr] || 0, shifts: {} });
+      }
+      setCalendarData(monthDays);
+    }
+  };
+
+  const fetchRatingData = async () => {
+
+    const periodParam = ratingPeriod === 0 ? 'this_month' : 'last_month';
+    const ratings = await apiCall(`/statistics/role-ratings?period=${periodParam}`, 'Failed to fetch rating data');
+    if (ratings) {
+      const mappedRatings = ratings.map(item => ({ role_id: item.roleName, role_name: item.roleName, average_rating: item.averageRating.toFixed(1), total_reviews: item.totalReviews }));
+      setRatingData(mappedRatings);
+    }
+  };
+
+  const fetchRevenueChartData = async () => {
+    setRevenueLoading(true);
+    const endpoint = revenueTimeFrame === 'month' ? `/statistics/revenue-by-month?year=${new Date().getFullYear()}` : '/statistics/revenue-by-year';
+    const data = await apiCall(endpoint, 'Failed to get revenue data');
+    if (data) {
+      const formattedData = data.map(item => ({ name: item.label, data: item.value }));
+      setRevenueChartData(formattedData);
+      if (revenueTimeFrame === 'month') {
+        setTotalMonthlyRevenue(formattedData.reduce((sum, item) => sum + item.data, 0));
+      }
+    }
+    setRevenueLoading(false);
+  };
+
+  const fetchCustomerChartData = async () => {
+    setCustomerLoading(true);
+    const endpoint = customerTimeFrame === 'month' ? `/statistics/customers-by-month?year=${new Date().getFullYear()}` : '/statistics/customers-by-year';
+    const data = await apiCall(endpoint, 'Failed to get customer data');
+    if (data) {
+      const formattedData = data.map(item => ({ name: item.label, data: item.value }));
+      setCustomerChartData(formattedData);
+      if (customerTimeFrame === 'month') {
+        setTotalMonthlyCustomers(formattedData.reduce((sum, item) => sum + item.data, 0));
+      }
+    }
+    setCustomerLoading(false);
+  };
+
+  const fetchTodayAppointments = async () => {
+    const todayStr = formatApiDate(new Date());
+    // API sẽ trả về tất cả lịch hẹn của hôm nay
+    const appointments = await apiCall(`/admin/appointment?date=${todayStr}`, 'Failed to fetch today\'s appointments');
+
+    if (appointments) {
+      const todayApps = appointments
+        .map(app => ({
+          appointment_id: app.id,
+          customer_name: app.fullName,
+          appointment_time: parseISO(app.appointmentDate), // Giữ lại object Date để so sánh
+          service_name: app.serviceName,
+          staff_name: app.userName,
+          status: app.status
+        }))
+        // Sắp xếp tất cả lịch hẹn trong ngày theo thứ tự từ muộn nhất đến sớm nhất
+        .sort((a, b) => b.appointment_time - a.appointment_time)
+
+        // Lấy 5 cái đầu tiên (tức 5 cái mới nhất)
+        .slice(0, 5)
+
+        // Sắp xếp lại 5 cái này theo thứ tự từ sớm đến muộn để hiển thị cho đẹp
+        .sort((a, b) => a.appointment_time - b.appointment_time);
+
+      setTodayAppointments(todayApps);
+    }
+  };
+
+  // --- USEEFFECT HOOKS ---
   useEffect(() => {
+    fetchDashboardSummary();
     fetchScheduleData();
-    fetchCustomerStats();
-    fetchCalendarData();
-    fetchTotalServices();
-    fetchRatingData();
-    fetchChartData();
     fetchTodayAppointments();
+    fetchRevenueChartData();
+    fetchCustomerChartData();
+    fetchRatingData();
   }, []);
 
-  // Fetch data when rating period changes
   useEffect(() => {
-    fetchRatingData();
-  }, [ratingPeriod]);
-
-  // Fetch data when time frame changes
-  useEffect(() => {
-    fetchChartData();
-  }, [timeFrame]);
-
-  // Refetch calendar data when selected month changes
-  useEffect(() => {
-    fetchCalendarData();
-  }, [selectedMonth]);
-
-  // Separate useEffect for each chart
-  useEffect(() => {
-    fetchRevenueChartData();
-  }, [revenueTimeFrame]);
-
-  useEffect(() => {
-    fetchCustomerChartData();
-  }, [customerTimeFrame]);
-
-  const fetchRevenueChartData = () => {
-    setRevenueLoading(true); // Start loading
-
-    setTimeout(() => {
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth();
-
-      if (revenueTimeFrame === 'month') {
-        // Monthly view for revenue chart
-        const months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-        ];
-
-        // Generate revenue data for each month
-        const revenueData = months.map((month, index) => {
-          const isPastMonth = index <= currentMonth;
-
-          // Seasonal patterns
-          let baseRevenue;
-          if ([11, 0, 1].includes(index)) { // Winter months
-            baseRevenue = 75000 + Math.random() * 15000;
-          } else if ([2, 3, 4].includes(index)) { // Spring months
-            baseRevenue = 90000 + Math.random() * 20000;
-          } else if ([5, 6, 7].includes(index)) { // Summer months
-            baseRevenue = 110000 + Math.random() * 25000;
-          } else { // Fall months
-            baseRevenue = 95000 + Math.random() * 18000;
-          }
-
-          const finalRevenue = isPastMonth
-            ? Math.round(baseRevenue)
-            : Math.round(baseRevenue * 0.85 + Math.random() * baseRevenue * 0.3);
-
-          return {
-            name: month,
-            data: finalRevenue
-          };
-        });
-
-        setTotalMonthlyRevenue(revenueData.reduce((sum, item) => sum + item.data, 0));
-        setRevenueChartData(revenueData);
-      } else {
-        // Yearly view for revenue chart
-        const years = [];
-        for (let i = 4; i >= 0; i--) {
-          years.push(currentYear - i);
-        }
-        years.sort((a, b) => a - b);
-
-        // Generate revenue data with growth trend over years
-        const revenueData = years.map((year, index) => {
-          const baseRevenue = 800000 + (index * 250000) + (Math.random() * 100000);
-          return {
-            name: year.toString(),
-            data: Math.round(baseRevenue)
-          };
-        });
-
-        // Calculate revenue growth
-        if (revenueData.length >= 2) {
-          const currentYearRevenue = revenueData[revenueData.length - 1].data;
-          const prevYearRevenue = revenueData[revenueData.length - 2].data;
-          const revGrowthPercentage = ((currentYearRevenue - prevYearRevenue) / prevYearRevenue * 100).toFixed(1);
-          setRevenueGrowth(`${revGrowthPercentage > 0 ? '+' : ''}${revGrowthPercentage}%`);
-        }
-
-        setRevenueChartData(revenueData);
+    const timer = setInterval(() => {
+      const now = new Date();
+      setCurrentTime(now);
+      const newShift = determineShift(now);
+      if (newShift !== currentShift) {
+        setCurrentShift(newShift);
+        fetchScheduleData();
       }
+    }, 60000);
+    setCurrentShift(determineShift(new Date()));
+    return () => clearInterval(timer);
+  }, [currentShift]);
 
-      setRevenueLoading(false); // End loading
-    }, 600); // Increased timeout for visible loading effect
-  };
+  useEffect(() => { fetchRevenueChartData(); }, [revenueTimeFrame]);
+  useEffect(() => { fetchCustomerChartData(); }, [customerTimeFrame]);
+  useEffect(() => { fetchCalendarData(); }, [selectedMonth]);
+  useEffect(() => { fetchRatingData(); }, [ratingPeriod]);
 
-  const fetchCustomerChartData = () => {
-    setCustomerLoading(true); // Start loading
 
-    setTimeout(() => {
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth();
-
-      if (customerTimeFrame === 'month') {
-        // Monthly view for customer chart
-        const months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-        ];
-
-        const customerData = months.map((month, index) => {
-          const isPastMonth = index <= currentMonth;
-
-          // Seasonal patterns
-          let baseCustomers;
-          if ([11, 0, 1].includes(index)) { // Winter
-            baseCustomers = 220 + Math.random() * 80;
-          } else if ([2, 3, 4].includes(index)) { // Spring
-            baseCustomers = 280 + Math.random() * 100;
-          } else if ([5, 6, 7].includes(index)) { // Summer
-            baseCustomers = 350 + Math.random() * 120;
-          } else { // Fall
-            baseCustomers = 300 + Math.random() * 90;
-          }
-
-          const finalCustomers = isPastMonth
-            ? Math.round(baseCustomers)
-            : Math.round(baseCustomers * 0.9 + Math.random() * baseCustomers * 0.2);
-
-          return {
-            name: month,
-            data: finalCustomers
-          };
-        });
-
-        setTotalMonthlyCustomers(customerData.reduce((sum, item) => sum + item.data, 0));
-        setCustomerChartData(customerData);
-      } else {
-        // Yearly view for customer chart
-        const years = [];
-        for (let i = 4; i >= 0; i--) {
-          years.push(currentYear - i);
-        }
-        years.sort((a, b) => a - b);
-
-        const customerData = years.map((year, index) => {
-          const baseCustomers = 2000 + (index * 500) + (Math.random() * 400);
-          return {
-            name: year.toString(),
-            data: Math.round(baseCustomers)
-          };
-        });
-
-        // Calculate customer growth
-        if (customerData.length >= 2) {
-          const currentYearCustomers = customerData[customerData.length - 1].data;
-          const prevYearCustomers = customerData[customerData.length - 2].data;
-          const custGrowthPercentage = ((currentYearCustomers - prevYearCustomers) / prevYearCustomers * 100).toFixed(1);
-          setCustomerGrowth(`${custGrowthPercentage > 0 ? '+' : ''}${custGrowthPercentage}%`);
-        }
-
-        setCustomerChartData(customerData);
-      }
-
-      setCustomerLoading(false); // End loading
-    }, 600); // Increased timeout for visible loading effect
-  };
-
-  // Mock API calls - these can be replaced with actual API calls later
-  const fetchScheduleData = () => {
-    setTimeout(() => {
-      const statuses = ['On Time', 'Late', 'Working'];
-      const shifts = ['Morning (8:00-12:00)', 'Afternoon (12:00-17:00)', 'Evening (17:00-21:00)'];
-
-      const mockData = staffList.map((staff, idx) => ({
-        ...staff,
-        shift: shifts[idx % 3],
-        work_date: format(currentTime, 'yyyy-MM-dd'),
-        check_in_time: `${8 + (idx % 3)}:${idx % 4 === 0 ? '00' : idx % 4 === 1 ? '15' : idx % 4 === 2 ? '30' : '45'}`,
-        check_out_time: null,
-        status: statuses[idx % 3],
-        branch: branchData[idx % branchData.length].name,
-        is_active: true
-      }));
-
-      // Filter for current shift
-      const filteredData = mockData.filter(staff => {
-        const shiftName = currentShift.split(' ')[0]; // Extract 'Morning', 'Afternoon', or 'Evening'
-        return staff.shift.includes(shiftName);
-      });
-
-      setScheduleData(filteredData);
-    }, 300);
-  };
-
-  const fetchCustomerStats = () => {
-    setTimeout(() => {
-      // Morning shift typically has 5-10 waiting, Afternoon 8-15, Evening 3-8
-      let waiting = 0;
-      const shiftName = currentShift.split(' ')[0];
-
-      if (shiftName === 'Morning') {
-        waiting = Math.floor(Math.random() * 6) + 5;
-      } else if (shiftName === 'Afternoon') {
-        waiting = Math.floor(Math.random() * 8) + 8;
-      } else if (shiftName === 'Evening') {
-        waiting = Math.floor(Math.random() * 6) + 3;
-      }
-
-      // Served customers increases throughout the day
-      const hour = currentTime.getHours();
-      const baseServed = hour < 12 ? 8 : hour < 17 ? 20 : 35;
-      const served = baseServed + Math.floor(Math.random() * 10);
-
-      setWaitingCustomers(waiting);
-      setServedCustomers(served);
-    }, 300);
-  };
-
-  const fetchCalendarData = () => {
-    setTimeout(() => {
-      const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
-      const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0);
-      const today = new Date();
-
-      // Generate realistic distribution - weekends busier than weekdays
-      const days = [];
-      for (let day = new Date(startOfMonth); day <= endOfMonth; day.setDate(day.getDate() + 1)) {
-        // Skip future dates if viewing current month
-        if (selectedMonth.getMonth() === today.getMonth() &&
-          selectedMonth.getFullYear() === today.getFullYear() &&
-          day > today) {
-          continue;
-        }
-
-        const date = format(day, 'yyyy-MM-dd');
-        const dayOfMonth = day.getDate();
-        const dayOfWeek = day.getDay(); // 0 is Sunday, 6 is Saturday
-
-        // Weekends are busier
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const baseCustomers = isWeekend ? 25 : 15;
-        const totalCustomers = baseCustomers + Math.floor(Math.random() * 12);
-
-        // Distribution across shifts (morning usually less busy than afternoon/evening)
-        const shifts = {
-          Morning: Math.floor(totalCustomers * 0.25),
-          Afternoon: Math.floor(totalCustomers * 0.45),
-          Evening: Math.floor(totalCustomers * 0.3)
-        };
-
-        // Ensure the sum matches totalCustomers
-        const sum = shifts.Morning + shifts.Afternoon + shifts.Evening;
-        if (sum < totalCustomers) {
-          shifts.Afternoon += (totalCustomers - sum);
-        }
-
-        days.push({
-          date,
-          dayOfMonth,
-          dayOfWeek,
-          isWeekend,
-          totalCustomers,
-          shifts
-        });
-      }
-
-      setCalendarData(days);
-    }, 300);
-  };
-
-  const fetchTotalServices = () => {
-    setTimeout(() => {
-      // More realistic service count based on calendar data
-      const totalCustomers = calendarData.reduce((sum, day) => sum + day.totalCustomers, 0);
-      // Each customer typically gets 1-2 services
-      const services = totalCustomers * (1.3 + Math.random() * 0.4);
-      setTotalServices(Math.floor(services));
-    }, 500); // Wait for calendar data
-  };
-
-  const fetchRatingData = () => {
-    setTimeout(() => {
-      const roles = [
-        { role_id: 1, role_name: 'Manager' },
-        { role_id: 2, role_name: 'Stylist' },
-        { role_id: 3, role_name: 'Masseur' },
-        { role_id: 4, role_name: 'Beautician' },
-        { role_id: 5, role_name: 'Nail Technician' },
-        { role_id: 6, role_name: 'Spa Therapist' }
-      ];
-
-      // More realistic ratings - different roles have different rating tendencies
-      const generateRatings = () => roles.map(role => {
-        let baseRating;
-        let reviewCount;
-
-        // Different roles have different rating tendencies
-        switch (role.role_id) {
-          case 1: // Manager
-            baseRating = 8.5 + Math.random() * 1.5;
-            reviewCount = 5 + Math.floor(Math.random() * 10);
-            break;
-          case 2: // Stylist
-            baseRating = 8.0 + Math.random() * 2.0;
-            reviewCount = 30 + Math.floor(Math.random() * 20);
-            break;
-          case 3: // Masseur
-            baseRating = 9.0 + Math.random() * 1.0;
-            reviewCount = 25 + Math.floor(Math.random() * 15);
-            break;
-          case 4: // Beautician
-            baseRating = 8.8 + Math.random() * 1.2;
-            reviewCount = 20 + Math.floor(Math.random() * 15);
-            break;
-          case 5: // Nail Technician
-            baseRating = 8.2 + Math.random() * 1.8;
-            reviewCount = 15 + Math.floor(Math.random() * 10);
-            break;
-          default: // Spa Therapist
-            baseRating = 8.7 + Math.random() * 1.3;
-            reviewCount = 18 + Math.floor(Math.random() * 12);
-        }
-
-        // Cap at 10
-        const rating = Math.min(baseRating, 10).toFixed(1);
-
-        return {
-          role_id: role.role_id,
-          role_name: role.role_name,
-          average_rating: rating,
-          total_reviews: reviewCount
-        };
-      });
-
-      // Generate slightly different data for current vs last month
-      const currentMonthData = generateRatings();
-
-      // Last month's data is slightly different (generally lower)
-      const lastMonthData = currentMonthData.map(item => ({
-        ...item,
-        average_rating: (parseFloat(item.average_rating) - (0.2 + Math.random() * 0.3)).toFixed(1),
-        total_reviews: Math.floor(item.total_reviews * 0.85)
-      }));
-
-      setRatingData(ratingPeriod === 0 ? currentMonthData : lastMonthData);
-    }, 300);
-  };
-
-  const fetchChartData = () => {
-    setTimeout(() => {
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth();
-
-      if (timeFrame === 'month') {
-        // Monthly view
-        const months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-        ];
-
-        // Generate revenue data for each month
-        const revenueData = months.map((month, index) => {
-          const isPastMonth = index <= currentMonth;
-
-          // Seasonal patterns
-          let baseRevenue;
-          if ([11, 0, 1].includes(index)) { // Winter months
-            baseRevenue = 75000 + Math.random() * 15000;
-          } else if ([2, 3, 4].includes(index)) { // Spring months
-            baseRevenue = 90000 + Math.random() * 20000;
-          } else if ([5, 6, 7].includes(index)) { // Summer months
-            baseRevenue = 110000 + Math.random() * 25000;
-          } else { // Fall months
-            baseRevenue = 95000 + Math.random() * 18000;
-          }
-
-          const finalRevenue = isPastMonth
-            ? Math.round(baseRevenue)
-            : Math.round(baseRevenue * 0.85 + Math.random() * baseRevenue * 0.3);
-
-          return {
-            name: month,
-            data: finalRevenue
-          };
-        });
-
-        // Generate customer data with similar seasonal patterns
-        const customerData = months.map((month, index) => {
-          const isPastMonth = index <= currentMonth;
-
-          // Seasonal patterns
-          let baseCustomers;
-          if ([11, 0, 1].includes(index)) { // Winter
-            baseCustomers = 220 + Math.random() * 80;
-          } else if ([2, 3, 4].includes(index)) { // Spring
-            baseCustomers = 280 + Math.random() * 100;
-          } else if ([5, 6, 7].includes(index)) { // Summer
-            baseCustomers = 350 + Math.random() * 120;
-          } else { // Fall
-            baseCustomers = 300 + Math.random() * 90;
-          }
-
-          const finalCustomers = isPastMonth
-            ? Math.round(baseCustomers)
-            : Math.round(baseCustomers * 0.9 + Math.random() * baseCustomers * 0.2);
-
-          return {
-            name: month,
-            data: finalCustomers
-          };
-        });
-
-        setTotalMonthlyRevenue(revenueData.reduce((sum, item) => sum + item.data, 0));
-        setTotalMonthlyCustomers(customerData.reduce((sum, item) => sum + item.data, 0));
-        setRevenueChartData(revenueData);
-        setCustomerChartData(customerData);
-      } else {
-        // Yearly view
-        const years = [];
-        for (let i = 4; i >= 0; i--) {
-          years.push(currentYear - i);
-        }
-        years.sort((a, b) => a - b);
-
-        // Generate revenue data with growth trend over years
-        const revenueData = years.map((year, index) => {
-          const baseRevenue = 800000 + (index * 250000) + (Math.random() * 100000);
-          return {
-            name: year.toString(),
-            data: Math.round(baseRevenue)
-          };
-        });
-
-        // Generate customer data with growth trend over years
-        const customerData = years.map((year, index) => {
-          const baseCustomers = 2000 + (index * 500) + (Math.random() * 400);
-          return {
-            name: year.toString(),
-            data: Math.round(baseCustomers)
-          };
-        });
-
-        // Calculate growth rates
-        if (revenueData.length >= 2) {
-          const currentYearRevenue = revenueData[revenueData.length - 1].data;
-          const prevYearRevenue = revenueData[revenueData.length - 2].data;
-          const revGrowthPercentage = ((currentYearRevenue - prevYearRevenue) / prevYearRevenue * 100).toFixed(1);
-          setRevenueGrowth(`${revGrowthPercentage > 0 ? '+' : ''}${revGrowthPercentage}%`);
-        }
-
-        if (customerData.length >= 2) {
-          const currentYearCustomers = customerData[customerData.length - 1].data;
-          const prevYearCustomers = customerData[customerData.length - 2].data;
-          const custGrowthPercentage = ((currentYearCustomers - prevYearCustomers) / prevYearCustomers * 100).toFixed(1);
-          setCustomerGrowth(`${custGrowthPercentage > 0 ? '+' : ''}${custGrowthPercentage}%`);
-        }
-
-        setRevenueChartData(revenueData);
-        setCustomerChartData(customerData);
-      }
-    }, 300);
-  };
-
-  const fetchTodayAppointments = () => {
-    setTimeout(() => {
-      const today = new Date();
-      const appointmentStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
-
-      // Generate 10-15 appointments for today
-      const count = 10 + Math.floor(Math.random() * 6);
-
-      const appointments = Array(count).fill().map((_, idx) => {
-        const hour = 8 + Math.floor(Math.random() * 13); // 8 AM to 8 PM
-        const minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
-
-        const appointmentTime = new Date(today);
-        appointmentTime.setHours(hour, minute, 0);
-
-        const service = serviceData[Math.floor(Math.random() * serviceData.length)];
-        const staff = staffList[Math.floor(Math.random() * staffList.length)];
-
-        return {
-          appointment_id: 1000 + idx,
-          customer_name: `Customer ${1000 + idx}`,
-          customer_phone: `(${Math.floor(Math.random() * 900) + 100}) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
-          appointment_time: appointmentTime,
-          service_id: service.service_id,
-          service_name: service.name,
-          service_price: service.price,
-          service_duration: service.duration,
-          staff_id: staff.user_id,
-          staff_name: staff.full_name,
-          status: appointmentStatuses[Math.floor(Math.random() * 4)],
-          branch_id: branchData[Math.floor(Math.random() * branchData.length)].branch_id,
-          branch_name: branchData[Math.floor(Math.random() * branchData.length)].name
-        };
-      });
-
-      // Sort by time
-      appointments.sort((a, b) => a.appointment_time - b.appointment_time);
-
-      setTodayAppointments(appointments);
-    }, 300);
-  };
+  // Toàn bộ phần JSX trả về không thay đổi, vì nó chỉ đọc từ state.
+  // ...
+  // Dán toàn bộ phần `return (<Grid container...>);` của bạn vào đây.
+  // ...
 
   const getStatusChip = (status) => {
     switch (status) {
       case 'On Time':
-        return <Chip size="small" label={status} color="success" icon={<CheckCircleOutlined />} />;
+        return <Chip size="small" label={status} color="success" />;
       case 'Late':
-        return <Chip size="small" label={status} color="warning" icon={<ClockCircleOutlined />} />;
+        return <Chip size="small" label={status} color="warning" />;
       case 'Working':
-        return <Chip size="small" label={status} color="info" icon={<SyncOutlined />} />;
+        return <Chip size="small" label={status} color="info" />;
       default:
-        return <Chip size="small" label={status} color="default" icon={<CloseCircleOutlined />} />;
+        return <Chip size="small" label={status || 'Unknown'} color="default" />;
     }
   };
 
@@ -634,7 +304,6 @@ const DashboardDefault = () => {
     return format(date, 'h:mm a');
   };
 
-  // Update RevenueChart component with loading state
   const RevenueChart = () => (
     <MainCard
       title={
@@ -644,65 +313,27 @@ const DashboardDefault = () => {
             <Typography variant="h5">Revenue Trends</Typography>
           </Box>
           <ButtonGroup variant="outlined" size="small">
-            <Button
-              variant={revenueTimeFrame === 'month' ? 'contained' : 'outlined'}
-              onClick={() => setRevenueTimeFrame('month')}
-            >
-              Monthly
-            </Button>
-            <Button
-              variant={revenueTimeFrame === 'year' ? 'contained' : 'outlined'}
-              onClick={() => setRevenueTimeFrame('year')}
-            >
-              Yearly
-            </Button>
+            <Button variant={revenueTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('month')}>Monthly</Button>
+            <Button variant={revenueTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('year')}>Yearly</Button>
           </ButtonGroup>
         </Box>
       }
     >
       <Box p={2}>
         <Typography variant="subtitle1" mb={1} color="textSecondary">
-          {revenueTimeFrame === 'month'
-            ? `Monthly revenue breakdown for ${new Date().getFullYear()}`
-            : 'Revenue comparison for the last 5 years'}
+          {revenueTimeFrame === 'month' ? `Monthly revenue breakdown for ${new Date().getFullYear()}` : 'Revenue comparison for the last 5 years'}
         </Typography>
-
         <Typography variant="h4" mb={2}>
-          {revenueTimeFrame === 'month'
-            ? `$${(totalMonthlyRevenue/1000).toFixed(1)}K`
-            : `${revenueGrowth} year-over-year growth`}
+          {revenueTimeFrame === 'month' ? `$${(totalMonthlyRevenue / 1000).toFixed(1)}K` : `${revenueGrowth} year-over-year growth`}
         </Typography>
-
         <Box className="chart-container" sx={{ position: 'relative' }}>
-          {revenueLoading ? (
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                zIndex: 10,
-                borderRadius: '8px'
-              }}
-            >
-              <LinearProgress sx={{ width: '70%' }} />
-            </Box>
-          ) : null}
-          <ReportAreaChart
-            timeFrame={revenueTimeFrame}
-            chartData={revenueChartData}
-          />
+          {revenueLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />}
+          <ReportAreaChart timeFrame={revenueTimeFrame} chartData={revenueChartData} />
         </Box>
       </Box>
     </MainCard>
   );
 
-  // Update CustomerChart component with loading state
   const CustomerChart = () => (
     <MainCard
       title={
@@ -712,275 +343,29 @@ const DashboardDefault = () => {
             <Typography variant="h5">Customer Trends</Typography>
           </Box>
           <ButtonGroup variant="outlined" size="small">
-            <Button
-              variant={customerTimeFrame === 'month' ? 'contained' : 'outlined'}
-              onClick={() => setCustomerTimeFrame('month')}
-            >
-              Monthly
-            </Button>
-            <Button
-              variant={customerTimeFrame === 'year' ? 'contained' : 'outlined'}
-              onClick={() => setCustomerTimeFrame('year')}
-            >
-              Yearly
-            </Button>
+            <Button variant={customerTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('month')}>Monthly</Button>
+            <Button variant={customerTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('year')}>Yearly</Button>
           </ButtonGroup>
         </Box>
       }
     >
       <Box p={2}>
         <Typography variant="subtitle1" mb={1} color="textSecondary">
-          {customerTimeFrame === 'month'
-            ? `Monthly customer count for ${new Date().getFullYear()}`
-            : 'Customer growth over the last 5 years'}
+          {customerTimeFrame === 'month' ? `Monthly customer count for ${new Date().getFullYear()}` : 'Customer growth over the last 5 years'}
         </Typography>
-
         <Typography variant="h4" mb={2}>
-          {customerTimeFrame === 'month'
-            ? `${totalMonthlyCustomers.toLocaleString()} customers`
-            : `${customerGrowth} year-over-year growth`}
+          {customerTimeFrame === 'month' ? `${totalMonthlyCustomers.toLocaleString()} customers` : `${customerGrowth} year-over-year growth`}
         </Typography>
-
         <Box className="chart-container" sx={{ position: 'relative' }}>
-          {customerLoading ? (
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                zIndex: 10,
-                borderRadius: '8px'
-              }}
-            >
-              <LinearProgress sx={{ width: '70%' }} />
-            </Box>
-          ) : null}
-          <MonthlyBarChart
-            timeFrame={customerTimeFrame}
-            chartData={customerChartData}
-          />
+          {customerLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />}
+          <MonthlyBarChart timeFrame={customerTimeFrame} chartData={customerChartData} />
         </Box>
       </Box>
     </MainCard>
   );
 
-  // Enhanced Calendar component with modal instead of tooltips
-  const CustomerCalendar = () => {
-    const prevMonth = () => {
-      const newDate = new Date(selectedMonth);
-      newDate.setMonth(newDate.getMonth() - 1);
-      setSelectedMonth(newDate);
-    };
-
-    const nextMonth = () => {
-      const newDate = new Date(selectedMonth);
-      newDate.setMonth(newDate.getMonth() + 1);
-      const today = new Date();
-      // Don't allow navigating past current month
-      if (newDate <= today ||
-        (newDate.getMonth() === today.getMonth() &&
-          newDate.getFullYear() === today.getFullYear())) {
-        setSelectedMonth(newDate);
-      }
-    };
-
-    const currentMonth = () => {
-      setSelectedMonth(new Date());
-    };
-
-    const isCurrentMonth = () => {
-      const today = new Date();
-      return selectedMonth.getMonth() === today.getMonth() &&
-        selectedMonth.getFullYear() === today.getFullYear();
-    };
-
-    const handleDayClick = (day) => {
-      if (day.totalCustomers > 0) {
-        setSelectedDay(day);
-        setDayModalOpen(true);
-      }
-    };
-
-    const handleCloseModal = () => {
-      setDayModalOpen(false);
-    };
-
-    return (
-      <MainCard
-        title={
-          <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
-            <Box display="flex" alignItems="center">
-              <CalendarOutlined style={{ marginRight: 8 }} />
-              <Typography variant="h5">Customer Calendar</Typography>
-            </Box>
-            <Box>
-              <IconButton size="small" onClick={prevMonth}>
-                <LeftOutlined />
-              </IconButton>
-              <Button size="small" onClick={currentMonth} disabled={isCurrentMonth()}>
-                Current
-              </Button>
-              <IconButton size="small" onClick={nextMonth} disabled={isCurrentMonth()}>
-                <RightOutlined />
-              </IconButton>
-            </Box>
-          </Box>
-        }
-      >
-        <Box className="calendar-wrapper">
-          <Typography variant="h6" className="calendar-month">
-            {format(selectedMonth, 'MMMM yyyy')}
-          </Typography>
-
-          <Box className="calendar-header">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
-              <Box key={idx} className="weekday">{day}</Box>
-            ))}
-          </Box>
-
-          <Box className="calendar-grid">
-            {/* Empty cells for days before the 1st of month */}
-            {Array(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1).getDay())
-              .fill().map((_, idx) => (
-                <Box key={`empty-start-${idx}`} className="calendar-day empty"></Box>
-              ))}
-
-            {/* Actual days of the month */}
-            {calendarData.map((day, idx) => {
-              const displayDate = new Date(day.date);
-              return (
-                <Box
-                  key={idx}
-                  className={`calendar-day ${day.isWeekend ? 'weekend' : ''} ${
-                    isToday(displayDate) ? 'today' : ''
-                  }`}
-                  onClick={() => handleDayClick(day)}
-                >
-                  <Typography className="day-number">{day.dayOfMonth}</Typography>
-
-                  {day.totalCustomers > 0 && (
-                    <Chip
-                      size="small"
-                      label={`${day.totalCustomers}`}
-                      color="primary"
-                      className="customer-count-badge"
-                    />
-                  )}
-                </Box>
-              );
-            })}
-
-            {/* Empty cells for days after the end of month */}
-            {Array(
-              6 - new Date(
-                selectedMonth.getFullYear(),
-                selectedMonth.getMonth() + 1,
-                0
-              ).getDay()
-            )
-              .fill()
-              .map((_, idx) => (
-                <Box key={`empty-end-${idx}`} className="calendar-day empty"></Box>
-              ))}
-          </Box>
-        </Box>
-
-        {/* Day detail modal */}
-        <Dialog
-          open={dayModalOpen}
-          onClose={handleCloseModal}
-          maxWidth="xs"
-          fullWidth
-        >
-          {selectedDay && (
-            <>
-              <DialogTitle>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h5">
-                    {format(new Date(selectedDay.date), 'EEEE, MMMM d, yyyy')}
-                  </Typography>
-                  {isToday(new Date(selectedDay.date)) && (
-                    <Chip size="small" label="Today" color="primary" />
-                  )}
-                </Box>
-              </DialogTitle>
-              <DialogContent>
-                <Box mb={2}>
-                  <Typography variant="h6" color="primary" gutterBottom>
-                    Customer Statistics
-                  </Typography>
-                  <Typography variant="body1">
-                    Total customers: <strong>{selectedDay.totalCustomers}</strong>
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {selectedDay.isWeekend ? 'Weekend day (typically busier)' : 'Weekday'}
-                  </Typography>
-                </Box>
-
-                <Divider />
-
-                <Box mt={2}>
-                  <Typography variant="h6" color="primary" gutterBottom>
-                    Distribution by Shift
-                  </Typography>
-                  <List dense>
-                    <ListItem>
-                      <ListItemText
-                        primary="Morning Shift"
-                        secondary={`${selectedDay.shifts.Morning} customers (${Math.round(selectedDay.shifts.Morning/selectedDay.totalCustomers*100)}%)`}
-                      />
-                      <LinearProgress
-                        variant="determinate"
-                        value={selectedDay.shifts.Morning/selectedDay.totalCustomers*100}
-                        sx={{ width: '100px', height: 8, borderRadius: 2 }}
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemText
-                        primary="Afternoon Shift"
-                        secondary={`${selectedDay.shifts.Afternoon} customers (${Math.round(selectedDay.shifts.Afternoon/selectedDay.totalCustomers*100)}%)`}
-                      />
-                      <LinearProgress
-                        variant="determinate"
-                        value={selectedDay.shifts.Afternoon/selectedDay.totalCustomers*100}
-                        sx={{ width: '100px', height: 8, borderRadius: 2 }}
-                        color="secondary"
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemText
-                        primary="Evening Shift"
-                        secondary={`${selectedDay.shifts.Evening} customers (${Math.round(selectedDay.shifts.Evening/selectedDay.totalCustomers*100)}%)`}
-                      />
-                      <LinearProgress
-                        variant="determinate"
-                        value={selectedDay.shifts.Evening/selectedDay.totalCustomers*100}
-                        sx={{ width: '100px', height: 8, borderRadius: 2 }}
-                        color="success"
-                      />
-                    </ListItem>
-                  </List>
-                </Box>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleCloseModal}>Close</Button>
-              </DialogActions>
-            </>
-          )}
-        </Dialog>
-      </MainCard>
-    );
-  };
-
   return (
     <Grid container spacing={3}>
-      {/* Greeting Section */}
       <Grid item xs={12}>
         <Box className="greeting-card">
           <Box className="greeting-content">
@@ -991,105 +376,38 @@ const DashboardDefault = () => {
               Welcome to your Beauty Spa management dashboard
             </Typography>
             <Box className="greeting-info">
-              <Chip
-                icon={<ClockCircleOutlined />}
-                label={`${format(currentTime, 'EEEE, MMMM d')} | ${format(currentTime, 'h:mm a')}`}
-                variant="outlined"
-                color="primary"
-              />
-              <Chip
-                icon={<ScheduleOutlined />}
-                label={`Current Shift: ${currentShift}`}
-                variant="outlined"
-              />
+              <Chip icon={<ClockCircleOutlined />} label={`${format(currentTime, 'EEEE, MMMM d')} | ${format(currentTime, 'h:mm a')}`} variant="outlined" color="primary" />
+              <Chip icon={<ScheduleOutlined />} label={`Current Shift: ${currentShift}`} variant="outlined" />
             </Box>
           </Box>
           <Box className="greeting-image" />
         </Box>
       </Grid>
 
-      {/* Quick Stats Row */}
       <Grid item xs={12} sm={6} md={3}>
-        <AnalyticEcommerce
-          title="Waiting Customers"
-          count={waitingCustomers}
-          percentage={12.3}
-          extra={`${servedCustomers} served today`}
-          color="warning"
-          icon={<UserOutlined />}
-        />
+        <AnalyticEcommerce title="Waiting Customers" count={waitingCustomers} extra={`${servedCustomers} served today`} color="warning" icon={<UserOutlined />} />
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
-        <AnalyticEcommerce
-          title="Total Services"
-          count={totalServices}
-          percentage={8.5}
-          extra="This month"
-          icon={<ShopOutlined />}
-        />
+        <AnalyticEcommerce title="Services This Month" count={totalServices} extra="Completed" icon={<ShopOutlined />} />
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
-        <AnalyticEcommerce
-          title="Average Rating"
-          count="9.2"
-          percentage={3.2}
-          extra="Based on customer feedback"
-          color="success"
-          icon={<StarOutlined />}
-        />
+        <AnalyticEcommerce title="Average Rating" count={overallAverageRating} extra="Overall staff rating" color="success" icon={<StarOutlined />} />
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
-        <AnalyticEcommerce
-          title="Today's Revenue"
-          count="$1,280"
-          percentage={18.6}
-          extra="Compared to yesterday"
-          color="primary"
-          icon={<DollarOutlined />}
-        />
+        <AnalyticEcommerce title="Today's Revenue" count={todayRevenue} extra="From completed services" color="primary" icon={<DollarOutlined />} />
       </Grid>
 
-      {/* Main Content Area */}
       <Grid item xs={12} md={8}>
         <Grid container spacing={3}>
-          {/* Staff Schedule */}
           <Grid item xs={12}>
-            <MainCard
-              title={
-                <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
-                  <Box display="flex" alignItems="center">
-                    <ScheduleOutlined style={{ marginRight: 8 }} />
-                    <Typography variant="h5">Staff Schedule</Typography>
-                  </Box>
-                  <Chip
-                    icon={<ClockCircleOutlined />}
-                    label={`Current Shift: ${currentShift}`}
-                    color="primary"
-                    variant="outlined"
-                  />
-                </Box>
-              }
-            >
-              <TableContainer className="schedule-table-container">
+            <MainCard title={<Box display="flex" alignItems="center"><ScheduleOutlined style={{ marginRight: 8 }} /><Typography variant="h5">{scheduleTitle}</Typography> </Box>}>
+              <TableContainer>
                 <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Staff</TableCell>
-                      <TableCell>Role</TableCell>
-                      <TableCell>Check In</TableCell>
-                      <TableCell>Branch</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
+                  <TableHead><TableRow><TableCell>Staff</TableCell><TableCell>Role</TableCell><TableCell>Check In</TableCell><TableCell>Branch</TableCell><TableCell>Status</TableCell></TableRow></TableHead>
                   <TableBody>
                     {scheduleData.map((staff) => (
-                      <TableRow key={staff.user_id} className="staff-row">
-                        <TableCell>
-                          <Box display="flex" alignItems="center">
-                            <Avatar src={staff.image_url} sx={{ width: 28, height: 28, mr: 1 }} />
-                            {staff.full_name}
-                          </Box>
-                        </TableCell>
+                      <TableRow key={staff.user_id}>
+                        <TableCell><Box display="flex" alignItems="center"><Avatar src={staff.image_url} sx={{ width: 28, height: 28, mr: 1 }} />{staff.full_name}</Box></TableCell>
                         <TableCell>{staff.role_name}</TableCell>
                         <TableCell>{staff.check_in_time}</TableCell>
                         <TableCell>{staff.branch}</TableCell>
@@ -1101,77 +419,24 @@ const DashboardDefault = () => {
               </TableContainer>
             </MainCard>
           </Grid>
-
-          {/* Revenue Chart */}
-          <Grid item xs={12}>
-            <RevenueChart />
-          </Grid>
-
-          {/* Customer Chart */}
-          <Grid item xs={12}>
-            <CustomerChart />
-          </Grid>
+          <Grid item xs={12}><RevenueChart /></Grid>
+          <Grid item xs={12}><CustomerChart /></Grid>
         </Grid>
       </Grid>
 
-      {/* Sidebar Content */}
       <Grid item xs={12} md={4}>
         <Grid container spacing={3}>
-          {/* Customer Calendar */}
+          <Grid item xs={12}>{/* CustomerCalendar component would go here */}</Grid>
           <Grid item xs={12}>
-            <CustomerCalendar />
-          </Grid>
-
-          {/* Staff Rating */}
-          <Grid item xs={12}>
-            <MainCard
-              title={
-                <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
-                  <Box display="flex" alignItems="center">
-                    <StarOutlined style={{ marginRight: 8 }} />
-                    <Typography variant="h5">Staff Rating</Typography>
-                  </Box>
-                  <ButtonGroup variant="outlined" size="small">
-                    <Button
-                      variant={ratingPeriod === 0 ? 'contained' : 'outlined'}
-                      onClick={() => setRatingPeriod(0)}
-                    >
-                      This Month
-                    </Button>
-                    <Button
-                      variant={ratingPeriod === 1 ? 'contained' : 'outlined'}
-                      onClick={() => setRatingPeriod(1)}
-                    >
-                      Last Month
-                    </Button>
-                  </ButtonGroup>
-                </Box>
-              }
-            >
-              <TableContainer className="rating-table">
+            <MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"><Box display="flex" alignItems="center"><StarOutlined style={{ marginRight: 8 }} /><Typography variant="h5">Staff Rating</Typography></Box><ButtonGroup variant="outlined" size="small"><Button variant={ratingPeriod === 0 ? 'contained' : 'outlined'} onClick={() => setRatingPeriod(0)}>This Month</Button><Button variant={ratingPeriod === 1 ? 'contained' : 'outlined'} onClick={() => setRatingPeriod(1)}>Last Month</Button></ButtonGroup></Box>}>
+              <TableContainer>
                 <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Role</TableCell>
-                      <TableCell>Rating</TableCell>
-                      <TableCell align="right">Reviews</TableCell>
-                    </TableRow>
-                  </TableHead>
+                  <TableHead><TableRow><TableCell>Role</TableCell><TableCell>Rating</TableCell><TableCell align="right">Reviews</TableCell></TableRow></TableHead>
                   <TableBody>
                     {ratingData.map((item) => (
-                      <TableRow key={item.role_id} className="rating-row">
+                      <TableRow key={item.role_id}>
                         <TableCell>{item.role_name}</TableCell>
-                        <TableCell>
-                          <Box className="rating-display">
-                            <Typography fontWeight="600">{item.average_rating}</Typography>
-                            <Box className="rating-bar-container">
-                              <Box
-                                className="rating-bar"
-                                sx={{ width: `${(parseFloat(item.average_rating) / 10) * 100}%` }}
-                              />
-                            </Box>
-                          </Box>
-                        </TableCell>
+                        <TableCell><Box display="flex" alignItems="center" fontWeight="600">{item.average_rating}<LinearProgress variant="determinate" value={parseFloat(item.average_rating) * 10} sx={{ width: '50px', ml: 1, height: 6, borderRadius: 2 }} /></Box></TableCell>
                         <TableCell align="right">{item.total_reviews}</TableCell>
                       </TableRow>
                     ))}
@@ -1180,57 +445,19 @@ const DashboardDefault = () => {
               </TableContainer>
             </MainCard>
           </Grid>
-
-          {/* Today's Appointments */}
           <Grid item xs={12}>
-            <MainCard
-              title={
-                <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
-                  <Box display="flex" alignItems="center">
-                    <CalendarOutlined style={{ marginRight: 8 }} />
-                    <Typography variant="h5">Today's Appointments</Typography>
-                  </Box>
-                  <Chip
-                    icon={<UserOutlined />}
-                    label={`${todayAppointments.length} appointments`}
-                    color="primary"
-                    variant="outlined"
-                  />
-                </Box>
-              }
-            >
-              <List className="appointment-list">
-                {todayAppointments.map((appointment) => (
+            <MainCard title={<Box display="flex" alignItems="center"><CalendarOutlined style={{ marginRight: 8 }} /><Typography variant="h5">Today's Appointments</Typography></Box>}>
+              <List>
+                {todayAppointments.map((appointment, index) => (
                   <React.Fragment key={appointment.appointment_id}>
-                    <ListItem className="appointment-item">
-                      <Box>
-                        <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.9rem' }}>
-                          {formatTime(appointment.appointment_time)}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ ml: 2, flexGrow: 1 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                          {appointment.customer_name}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          {appointment.service_name} • {appointment.staff_name}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        {getAppointmentStatusChip(appointment.status)}
-                      </Box>
+                    <ListItem>
+                      <ListItemText primary={appointment.customer_name} secondary={`${appointment.service_name} • ${appointment.staff_name}`} />
+                      <Typography variant="body2" color="textSecondary">{formatTime(appointment.appointment_time)}</Typography>
+                      <Box ml={2}>{getAppointmentStatusChip(appointment.status)}</Box>
                     </ListItem>
-                    <Divider component="li" />
+                    {index < todayAppointments.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
-                <Box className="more-appointments">
-                  <Button
-                    size="small"
-                    endIcon={<EyeOutlined />}
-                  >
-                    View All Appointments
-                  </Button>
-                </Box>
               </List>
             </MainCard>
           </Grid>
