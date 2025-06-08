@@ -49,7 +49,7 @@ const AppointmentPage = () => {
                   <textarea className="form-control border-white bg-transparent text-white" name="text" id="area-text" cols={30} rows={5} placeholder="Write Comments" defaultValue={""} />
                 </div>
                 <div className="col-lg-12">
-                  <button type="button" className="btn btn-primary btn-primary-outline-0 w-100 py-3 px-5">SUBMIT NOW</button>
+                  <button type="button" className="btn btn-primary btn-primary-outline-0 w-100 py-3 px-5">REGISTER NOW</button>
                 </div>
               </div>
             </form>

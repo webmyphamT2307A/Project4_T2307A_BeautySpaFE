@@ -54,7 +54,7 @@ const Footer = () => {
                 <div className="container">
                     <div className="row g-4 align-items-center">
                         <div className="col-md-4 text-center text-md-start mb-md-0">
-                            <span className="text-light"><a href="#"><i className="fas fa-copyright text-light me-2" />Your Site Name</a>, All right reserved.</span>
+                            <span className="text-light"><a href="#"><i className="fas fa-copyright text-light me-2" />Sparlex</a>, All right reserved.</span>
                         </div>
                         <div className="col-md-4">
                             <div className="d-flex justify-content-center">

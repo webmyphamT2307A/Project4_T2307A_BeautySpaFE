@@ -1,6 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import { useState, useEffect } from 'react';
+import { useRef } from 'react';
 
 const Header = () => {
     const [email, setEmail] = useState('');
@@ -23,6 +24,25 @@ const Header = () => {
     const handleAvatarClick = () => {
         window.location.href = "/CustomerDetail";
     };
+    const [showSearch, setShowSearch] = useState(false);
+    const searchRef = useRef(null);
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setShowSearch(false);
+            }
+        };
+
+        if (showSearch) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showSearch]);
 
     // Thêm vào hàm handleLogin trong header.jsx
     const handleLogin = async (e) => {
@@ -173,7 +193,9 @@ const Header = () => {
                                     <a href="ContactPage" className="nav-item nav-link">Contact Us</a>
                                 </div>
                                 <div className="d-flex align-items-center flex-nowrap pt-xl-0">
-                                    <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" data-bs-toggle="modal" data-bs-target="#searchModal"><i className="fas fa-search" /></button>
+                                    <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" onClick={() => setShowSearch(!showSearch)}>
+                                        <i className="fas fa-search" />
+                                    </button>
                                     <a href="AppointmentPage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-4 ms-4">Book Appointment</a>
                                 </div>
                             </div>
@@ -183,22 +205,17 @@ const Header = () => {
             </div>
 
             {/* Search Modal */}
-            <div className="modal fade" id="searchModal" tabIndex={-1} aria-labelledby="searchModalLabel" aria-hidden="true">
-                <div className="modal-dialog modal-fullscreen">
-                    <div className="modal-content rounded-0">
-                        <div className="modal-header">
-                            <h4 className="modal-title mb-0" id="searchModalLabel">Search by keyword</h4>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
-                        </div>
-                        <div className="modal-body d-flex align-items-center">
-                            <div className="input-group w-75 mx-auto d-flex">
-                                <input type="search" className="form-control p-3" placeholder="keywords" />
-                                <span className="input-group-text p-3"><i className="fa fa-search" /></span>
-                            </div>
-                        </div>
+            {showSearch && (
+                <div ref={searchRef} className="search-bar-wrapper position-absolute w-100 d-flex justify-content-center" style={{ top: "170px", zIndex: 1050 }}>
+                    <div className="input-group shadow" style={{ maxWidth: "600px" }}>
+                        <input type="search" className="form-control p-3" placeholder="keywords" />
+                        <span className="input-group-text p-3"><i className="fa fa-search" /></span>
                     </div>
                 </div>
-            </div>
+            )}
+
+
+
 
             {/* Login Modal */}
             <div className="modal fade" id="loginModal" tabIndex={-1} aria-labelledby="loginModalLabel" aria-hidden="true">
@@ -287,7 +304,7 @@ const Header = () => {
                                         required
                                     />
                                 </div>
-                                
+
                                 <button type="submit" className="btn btn-primary w-100">Đăng ký</button>
                             </form>
                         </div>
