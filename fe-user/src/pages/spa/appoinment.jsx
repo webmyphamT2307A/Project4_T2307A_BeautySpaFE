@@ -26,6 +26,7 @@ const AppointmentManagement = () => {
   // States
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
+   const [userRole, setUserRole] = useState('');
   const [loading, setLoading] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
@@ -43,8 +44,9 @@ const AppointmentManagement = () => {
  const fetchAppointments = async () => {
   const token = Cookies.get('staff_token');
   const role = Cookies.get('staff_role');
+  setUserRole(role);
 
-  if (!token || role !== 'ROLE_STAFF') {
+  if (!token || role !== 'ROLE_STAFF' && role !== 'ROLE_MANAGE') {
     console.error('Người dùng chưa đăng nhập hoặc không có quyền truy cập');
     toast.error('Vui lòng đăng nhập lại.');
     return;
@@ -559,25 +561,28 @@ const AppointmentManagement = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <Tooltip title="View Details">
-                            <IconButton
-                              onClick={() => handleViewOpen(appointment)}
-                              color="info"
-                              size="small"
-                            >
-                              <EyeOutlined />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Update Status">
-                            <IconButton
-                              onClick={() => handleStatusDialogOpen(appointment)}
-                              color="primary"
-                              size="small"
-                            >
-                              <EditOutlined />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
+  <Tooltip title="View Details">
+    <IconButton
+      onClick={() => handleViewOpen(appointment)}
+      color="info"
+      size="small"
+    >
+      <EyeOutlined />
+    </IconButton>
+  </Tooltip>
+
+  {userRole === 'ROLE_MANAGE' && (
+    <Tooltip title="Update Status">
+      <IconButton
+        onClick={() => handleStatusDialogOpen(appointment)}
+        color="primary"
+        size="small"
+      >
+        <EditOutlined />
+      </IconButton>
+    </Tooltip>
+  )}
+</TableCell>
                       </TableRow>
                     );
                   })
@@ -744,14 +749,18 @@ const AppointmentManagement = () => {
                     <Grid item xs={12}>
                       <Divider sx={{ my: 1 }} />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() => handleStatusDialogOpen(currentAppointment)}
-                        >
-                          Update Status
-                        </Button>
-                      </Box>
+  
+  {/* --- BỌC NÚT UPDATE TRONG ĐIỀU KIỆN --- */}
+  {userRole === 'ROLE_MANAGE' && (
+    <Button
+      variant="contained"
+      color="primary"
+      onClick={() => handleStatusDialogOpen(currentAppointment)}
+    >
+      Update Status
+    </Button>
+  )}
+</Box>
                     </Grid>
                   </Grid>
                 </Box>
