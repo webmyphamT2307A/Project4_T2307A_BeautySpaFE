@@ -93,6 +93,7 @@ export default function DashboardDefault() {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
+        console.log('KIỂM TRA: Đang lấy dữ liệu cho userId =', userId); 
         const today = new Date();
         const todayStr = format(today, 'yyyy-MM-dd');
         const currentYear = getYear(today);
@@ -107,7 +108,7 @@ export default function DashboardDefault() {
           }),
           
           // 2. Thống kê tổng quan từ StatisticController
-          apiClient.get('/statistics/summary', {
+          apiClient.get('/statistics/staff/summary', {
             params: { userId: userId }
           }),
           
@@ -129,13 +130,14 @@ export default function DashboardDefault() {
         // Xử lý kết quả thống kê tổng quan (DashboardSummaryDto)
         if (summaryRes.status === 'fulfilled' && summaryRes.value.data.status === 'SUCCESS') {
           const summaryData = summaryRes.value.data.data;
+          console.log('DEBUG: ĐỐI TƯỢNG SUMMARY NHẬN ĐƯỢC TỪ BACKEND:', summaryData);
           setDashboardSummary({
-            waiting: summaryData.waiting || 0,
-            served: summaryData.served || 0,
-            revenue: summaryData.revenue || 0,
-            monthlyServices: summaryData.monthlyServices || 0,
-            avgRating: summaryData.avgRating || 0
-          });
+            waiting: summaryData.waitingCustomers || 0,
+            served: summaryData.servedCustomersToday || 0,
+            revenue: summaryData.todayRevenue || 0,
+            monthlyServices: summaryData.servicesPerformedThisMonth || 0,
+            avgRating: summaryData.overallAverageRating || 0 
+        });
         } else if (summaryRes.status === 'rejected') {
           console.error('Error fetching summary:', summaryRes.reason);
         }
@@ -240,7 +242,7 @@ export default function DashboardDefault() {
     { 
       title: 'Average Rating', 
       count: `${displayAverageRating}/10`, 
-      extra: 'Overall', 
+      extra: 'Your Rating', 
       icon: <StarOutlined />, 
       color: '#f57c00', 
       bg: '#fff8e1' 
