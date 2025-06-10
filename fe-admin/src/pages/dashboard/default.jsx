@@ -29,6 +29,7 @@ const CustomerCalendar = ({
   handleDayClick,
   isStatsModalOpen,
   handleCloseModal,
+  handleNavigateToAppointments,
   selectedDayStats,
   dialogView,
   setDialogView,
@@ -205,7 +206,7 @@ const CustomerCalendar = ({
             <DialogActions sx={{ p: 2 }}>
               {dialogView === 'stats' ? (
                 <>
-                  <Button onClick={handleViewDetailsClick} variant="contained">View Details</Button>
+                  <Button onClick={handleNavigateToAppointments} variant="contained">View Details</Button>
                   <Button onClick={handleCloseModal} sx={{ ml: 1 }}>Close</Button>
                 </>
               ) : (
@@ -294,6 +295,11 @@ const DashboardDefault = () => {
       setTotalServices(summary.servicesPerformedThisMonth || 0);
       setOverallAverageRating(summary.overallAverageRating?.toFixed(1) || 'N/A');
       setTodayRevenue(`$${summary.todayRevenue?.toLocaleString('en-US') || 0}`);
+    }
+  };
+   const handleNavigateToAppointments = () => {
+    if (selectedDayStats) {
+      navigate(`/spa/appointments?date=${selectedDayStats.date}`);
     }
   };
 
@@ -529,6 +535,7 @@ const DashboardDefault = () => {
                 handleViewDetailsClick={handleViewDetailsClick}
                 getAppointmentStatusChip={getAppointmentStatusChip}
                 formatTime={formatTime}
+                handleNavigateToAppointments={handleNavigateToAppointments}
               />
             </Grid>
             <Grid item xs={12}><MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"><Box display="flex" alignItems="center"><StarOutlined style={{ marginRight: 8 }} /><Typography variant="h5">Staff Rating</Typography></Box><ButtonGroup variant="outlined" size="small"><Button variant={ratingPeriod === 0 ? 'contained' : 'outlined'} onClick={() => setRatingPeriod(0)}>This Month</Button><Button variant={ratingPeriod === 1 ? 'contained' : 'outlined'} onClick={() => setRatingPeriod(1)}>Last Month</Button></ButtonGroup></Box>}><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Role</TableCell><TableCell>Rating</TableCell><TableCell align="right">Reviews</TableCell></TableRow></TableHead><TableBody>{ratingData.map((item) => (<TableRow key={item.role_id}><TableCell>{item.role_name}</TableCell><TableCell><Box display="flex" alignItems="center" fontWeight="600">{item.average_rating}<LinearProgress variant="determinate" value={parseFloat(item.average_rating) * 10} sx={{ width: '50px', ml: 1, height: 6, borderRadius: 2 }} /></Box></TableCell><TableCell align="right">{item.total_reviews}</TableCell></TableRow>))}</TableBody></Table></TableContainer></MainCard></Grid>
