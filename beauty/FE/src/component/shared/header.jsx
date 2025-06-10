@@ -76,6 +76,7 @@ const Header = () => {
                     ...customerData,
                     token: token
                 }));
+                 localStorage.setItem('token', token);
 
                 window.location.href = "/CustomerDetail";
             }
@@ -115,6 +116,7 @@ const Header = () => {
     };
     const handleLogout = () => {
         localStorage.removeItem('userInfo');
+        localStorage.removeItem('token');
         setUserInfo(null);
         window.location.href = "/";
     };
