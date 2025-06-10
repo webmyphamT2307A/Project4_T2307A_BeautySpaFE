@@ -46,6 +46,8 @@ const useAuth = () => {
 const ServiceDetailPage = () => {
   const { id } = useParams();
   const { isAuthenticated, user, token } = useAuth();
+  const [editingReviewId, setEditingReviewId] = useState(null); 
+  const [editedContent, setEditedContent] = useState({ rating: 0, comment: '' }); 
 
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,9 @@ const ServiceDetailPage = () => {
         console.error('Error fetching service:', error);
       }
     };
+      
 
+  
     // Hàm fetch danh sách review
     const fetchReviews = async () => {
       try {
@@ -98,6 +102,69 @@ const ServiceDetailPage = () => {
 
     fetchData();
   }, [id]);
+  // Hàm hủy chỉnh sửa
+  const handleCancelEdit = () => {
+    setEditingReviewId(null);
+  };
+
+  // Hàm gửi yêu cầu CẬP NHẬT review
+  const handleUpdateSubmit = async (reviewId) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/reviews/${reviewId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editedContent)
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Cập nhật đánh giá thành công!');
+        // Cập nhật lại list reviews trên giao diện
+        setReviews(reviews.map(r => r.id === reviewId ? result.data : r));
+        handleCancelEdit(); // Thoát chế độ chỉnh sửa
+      } else {
+        alert(`Lỗi: ${result.message}`);
+      }
+    } catch (error) {
+      alert('Đã có lỗi xảy ra khi cập nhật.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+const handleEditClick = (review) => {
+    setEditingReviewId(review.id);
+    setEditedContent({ rating: review.rating, comment: review.comment });
+  };
+  // Hàm gửi yêu cầu XÓA review
+  const handleDeleteClick = async (reviewId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa đánh giá này không?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/reviews/${reviewId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        alert('Xóa đánh giá thành công!');
+        // Xóa review khỏi list trên giao diện
+        setReviews(reviews.filter(r => r.id !== reviewId));
+      } else {
+        const result = await response.json();
+        alert(`Lỗi: ${result.message}`);
+      }
+    } catch (error) {
+      alert('Đã có lỗi xảy ra khi xóa.');
+    }
+  };
 
   // Hàm submit chỉ dành cho người dùng đã đăng nhập
   const handleReviewSubmit = async (e) => {
@@ -134,6 +201,7 @@ const ServiceDetailPage = () => {
 
       if (response.ok && result.status === 'SUCCESS') {
         alert('Cảm ơn bạn đã gửi đánh giá!');
+        
         setReviews((prev) => [result.data, ...prev]);
         setNewReview({ rating: 5, comment: '' });
       } else {
@@ -216,16 +284,26 @@ const ServiceDetailPage = () => {
               </div>
               <div style={{ color: '#888' }}>{reviews.length} reviews</div>
             </div>
-            <div style={{ flexGrow: 1, minWidth: '300px' }}>
+              <div style={{ flexGrow: 1, minWidth: '300px' }}>
               {[5, 4, 3, 2, 1].map((star, i) => (
-                <div key={star} style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
-                  <div style={{ minWidth: 60, textAlign: 'right', paddingRight: 10, fontSize: '0.9em' }}>{star} star{star > 1 ? 's' : ''}</div>
-                  <div style={{ background: '#eee', height: 10, flex: 1, margin: '0 10px', borderRadius: 5, position: 'relative', overflow: 'hidden' }}>
+                <div key={star} style={{ display: 'flex', alignItems: 'center', marginBottom: 4, gap: '8px' }}>
+                  {/* Cột 1: Nhãn bằng sao */}
+                  <div style={{ color: '#f5a623', minWidth: '90px', textAlign: 'right', letterSpacing: '2px' }}>
+                    {'★'.repeat(star)}{'☆'.repeat(5 - star)}
+                  </div>
+                  
+                  {/* Cột 2: Thanh tiến trình */}
+                  <div style={{ background: '#eee', height: 10, flex: 1, borderRadius: 5, overflow: 'hidden' }}>
                     <div style={{
                       height: '100%',
                       width: `${(ratingCounts[i] / (reviews.length || 1)) * 100}%`,
                       background: '#f60',
                     }}></div>
+                  </div>
+
+                  {/* Cột 3: Số lượng đếm */}
+                  <div style={{ minWidth: '30px', textAlign: 'left', fontSize: '0.9em', color: '#666' }}>
+                    {ratingCounts[i]}
                   </div>
                 </div>
               ))}
@@ -271,24 +349,64 @@ const ServiceDetailPage = () => {
           </div>
         </div>
 
-        {/* PHẦN DANH SÁCH REVIEW - Đầy đủ */}
-        <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
-          <h4 style={{ marginBottom: 20 }}>All Reviews ({reviews.length})</h4>
-          {reviews.length > 0 ? (
-            reviews.map((r) => (
-              <div key={r.id} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                  <strong style={{ color: '#d6336c', marginRight: 10 }}>{r.authorName}</strong>
-                  <span style={{ color: '#f5a623' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
-                </div>
-                <p style={{ margin: '0 0 8px 0', color: '#333' }}>{r.comment}</p>
-                <small style={{ color: '#888' }}>{new Date(r.createdAt).toLocaleString('vi-VN')}</small>
+      <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
+  <h4 style={{ marginBottom: 20 }}>All Reviews ({reviews.length})</h4>
+  {reviews.length > 0 ? (
+    reviews.map((r) => (
+      <div key={r.id} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
+        
+        {/* KIỂM TRA NẾU REVIEW NÀY ĐANG ĐƯỢC SỬA */}
+        {editingReviewId === r.id ? (
+          // GIAO DIỆN KHI SỬA
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 15 }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span key={star} onClick={() => setEditedContent({ ...editedContent, rating: star })} style={{ fontSize: 30, cursor: 'pointer', color: star <= editedContent.rating ? '#f60' : '#ccc' }}>★</span>
+              ))}
+            </div>
+            <textarea
+              value={editedContent.comment}
+              onChange={(e) => setEditedContent({ ...editedContent, comment: e.target.value })}
+              rows={3}
+              style={{ width: '100%', padding: 10, borderRadius: 5, border: '1px solid #ccc', marginBottom: 10, resize: 'vertical' }}
+            />
+            <div>
+              <button onClick={() => handleUpdateSubmit(r.id)} disabled={isSubmitting} style={{ backgroundColor: '#007bff', color: 'white', padding: '8px 16px', border: 'none', borderRadius: 5, cursor: 'pointer', marginRight: 8 }}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button onClick={handleCancelEdit} style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: 5, cursor: 'pointer', background: 'transparent' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          // GIAO DIỆN HIỂN THỊ BÌNH THƯỜNG
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <strong style={{ color: '#d6336c', marginRight: 10 }}>{r.authorName}</strong>
+                <span style={{ color: '#f5a623' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
               </div>
-            ))
-          ) : (
-            <p>There are no reviews yet. Be the first one!</p>
-          )}
-        </div>
+
+              {/* HIỂN THỊ NÚT SỬA/XÓA NẾU ĐÚNG CHỦ REVIEW */}
+              {isAuthenticated && user && user.id === r.customerId && (
+                <div>
+                  <button onClick={() => handleEditClick(r)} style={{ marginRight: 8, border: 'none', background: 'none', cursor: 'pointer', color: '#007bff' }}>Edit</button>
+                  <button onClick={() => handleDeleteClick(r.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#dc3545' }}>Delete</button>
+                </div>
+              )}
+            </div>
+            <p style={{ margin: '0 0 8px 0', color: '#333' }}>{r.comment}</p>
+            <small style={{ color: '#888' }}>{new Date(r.createdAt).toLocaleString('vi-VN')}</small>
+          </>
+        )}
+
+      </div>
+    ))
+  ) : (
+    <p>There are no reviews yet. Be the first one!</p>
+  )}
+</div>
       </div>
       <Footer />
     </div>
