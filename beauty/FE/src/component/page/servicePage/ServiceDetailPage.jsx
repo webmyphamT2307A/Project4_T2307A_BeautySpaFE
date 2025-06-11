@@ -96,7 +96,7 @@ const ServiceDetailPage = () => {
             </h2>
             <p>
               <strong>Price:</strong>{' '}
-              {service.price ? `${service.price.toLocaleString()} VND/session` : 'N/A'}
+              {service.price ? `${service.price.toLocaleString()} $/session` : 'N/A'}
             </p>
             <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
             <a href="#" style={{
