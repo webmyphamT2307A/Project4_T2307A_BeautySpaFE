@@ -63,7 +63,7 @@ export default function Register() {
             Cookies.set('manager_token', token, { path: '/manager', sameSite: 'Strict', expires: 7 });
             Cookies.set('manager_role', roleName, { path: '/manager', sameSite: 'Strict', expires: 7 });
             Cookies.set('manager_userId', user.id, { path: '/manager', sameSite: 'Strict', expires: 7 });
-            window.location.href = 'http://localhost:3004/manager';
+            window.location.href = 'http://localhost:3002/staff';
           } else {
             Cookies.remove('admin_token', { path: '/admin' });
             Cookies.remove('admin_role', { path: '/admin' });

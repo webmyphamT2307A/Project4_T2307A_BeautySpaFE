@@ -68,23 +68,20 @@ export default function Login() {
           Cookies.set('admin_token', token, { path: '/admin', sameSite: 'Strict', expires: 7 });
           Cookies.set('admin_role', roleName, { path: '/admin', sameSite: 'Strict', expires: 7 });
           window.location.href = 'http://localhost:3003/admin';
-        } else if (roleName === 'ROLE_STAFF') {
+        } else if (
+          roleName === 'ROLE_STAFF' ||
+          roleName === 'ROLE_MANAGER' ||
+          roleName === 'ROLE_MANAGE'
+        ) {
           Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 });
           window.location.href = 'http://localhost:3002/staff';
-        } else if (roleName === 'ROLE_MANAGER' || roleName === 'ROLE_MANAGE') {
-          Cookies.set('manager_token', token, { path: '/manager', sameSite: 'Strict', expires: 7 });
-          Cookies.set('manager_role', roleName, { path: '/manager', sameSite: 'Strict', expires: 7 });
-          Cookies.set('manager_userId', user.id, { path: '/manager', sameSite: 'Strict', expires: 7 });
-          window.location.href = 'http://localhost:3004/manager';
         } else {
           Cookies.remove('admin_token', { path: '/admin' });
           Cookies.remove('admin_role', { path: '/admin' });
           Cookies.remove('staff_token', { path: '/staff' });
           Cookies.remove('staff_role', { path: '/staff' });
-          Cookies.remove('manager_token', { path: '/manager' });
-          Cookies.remove('manager_role', { path: '/manager' });
           setError('Vai trò không hợp lệ');
         }
       } else {

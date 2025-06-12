@@ -41,20 +41,28 @@ const AppointmentManagement = () => {
     endDate: ''
   });
 
- const fetchAppointments = async () => {
+const fetchAppointments = async () => {
   const token = Cookies.get('staff_token');
   const role = Cookies.get('staff_role');
   setUserRole(role);
 
-  if (!token || role !== 'ROLE_STAFF' && role !== 'ROLE_MANAGE') {
+  let url = API_URL;
+  if (role === 'ROLE_STAFF') {
+    const userId = Cookies.get('staff_userId');
+    url += `/byUser?userId=${userId}`;
+  } else if (role === 'ROLE_MANAGE') {
+    url ;
+  }
+
+  if (!token || (role !== 'ROLE_STAFF' && role !== 'ROLE_MANAGE')) {
     console.error('Người dùng chưa đăng nhập hoặc không có quyền truy cập');
     toast.error('Vui lòng đăng nhập lại.');
     return;
   }
 
+  setLoading(true);
   try {
-    const userId = Cookies.get('staff_userId');
-    const response = await fetch(`${API_URL}/byUser?userId=${userId}`, {
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -65,39 +73,71 @@ const AppointmentManagement = () => {
     }
 
     const data = await response.json();
-    if (data.status === 'SUCCESS') {
-      const mappedAppointments = data.data.map((item) => ({
-        appointment_id: item.id,
-        full_name: item.fullName,
-        phone_number: item.phoneNumber,
-        status: item.status,
-        slot: item.slot,
-        notes: item.notes,
-        appointment_date: item.appointmentDate,
-        end_time: item.endTime,
-        price: item.price,
-        service: { name: item.serviceName },
-        branch: { name: item.branchName },
-        customer: {
-          name: item.customerName,
-          image: item.customerImageUrl,
-        },
-        user: {
-          name: item.userName,
-          image: item.userImageUrl,
-        },
-      }));
+    if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
+      let mappedAppointments;
+      if (role === 'ROLE_MANAGE') {
+        mappedAppointments = data.data.map(item => ({
+          appointment_id: item.id,
+          full_name: item.fullName,
+          phone_number: item.phoneNumber,
+          status: item.status,
+          slot: item.slot,
+          notes: item.notes,
+          appointment_date: item.appointmentDate,
+          end_time: item.endTime,
+          price: item.price,
+          service: {
+            id: item.serviceId,
+            name: item.serviceName,
+            duration: item.serviceDuration || 60,
+            price: item.price
+          },
+          branch: {
+            id: item.branchId,
+            name: item.branchName
+          },
+          customer: {
+            name: item.customerName,
+            image: item.customerImageUrl || item.customerImage || '',
+            email: item.customerEmail || ''
+          },
+          user: { name: item.userName, image: item.userImageUrl || '' },
+          created_at: item.appointmentDate,
+        }));
+      } else {
+        mappedAppointments = data.data.map(item => ({
+          appointment_id: item.id,
+          full_name: item.fullName,
+          phone_number: item.phoneNumber,
+          status: item.status,
+          slot: item.slot,
+          notes: item.notes,
+          appointment_date: item.appointmentDate,
+          end_time: item.endTime,
+          price: item.price,
+          service: { name: item.serviceName },
+          branch: { name: item.branchName },
+          customer: {
+            name: item.customerName,
+            image: item.customerImageUrl,
+          },
+          user: {
+            name: item.userName,
+            image: item.userImageUrl,
+          },
+        }));
+      }
       setAppointments(mappedAppointments);
+      setFilteredAppointments(mappedAppointments);
     } else {
-      console.error('Lỗi khi lấy danh sách lịch hẹn:', data.message);
+      setAppointments([]);
+      setFilteredAppointments([]);
+      toast.error(data.message || 'Lỗi khi tải dữ liệu lịch hẹn');
     }
   } catch (error) {
-    console.error('Lỗi khi gọi API:', error.message);
-    toast.error(error.message);
-    Cookies.remove('staff_token', { path: '/staff' });
-    Cookies.remove('staff_role', { path: '/staff' });
-    window.location.href = '/login';
+    toast.error(error.message || 'Lỗi khi tải dữ liệu lịch hẹn');
   }
+  setLoading(false);
 };
 
   useEffect(() => {
