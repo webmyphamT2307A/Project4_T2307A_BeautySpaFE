@@ -13,7 +13,7 @@ import ProfileOutlined from '@ant-design/icons/ProfileOutlined';
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
 import WalletOutlined from '@ant-design/icons/WalletOutlined';
-
+import Cookies from 'js-cookie';
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
 
 export default function ProfileTab() {
@@ -31,7 +31,7 @@ export default function ProfileTab() {
    
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    navigate('/staff/login');
+    navigate('/login');
   };
 
   return (
