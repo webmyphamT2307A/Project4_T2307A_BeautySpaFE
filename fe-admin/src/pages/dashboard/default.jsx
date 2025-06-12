@@ -490,14 +490,13 @@ const DashboardDefault = () => {
           <Box className="greeting-card">
             <Box className="greeting-content">
               <Typography variant="h3" className="greeting-title">
-                Good {currentTime.getHours() < 12 ? 'Morning' : currentTime.getHours() < 18 ? 'Afternoon' : 'Evening'}, {username}!
+                {`Xem được khoảng từ ${format(startOfMonth(selectedMonth), 'dd/MM/yyyy')} đến ${format(endOfMonth(selectedMonth), 'dd/MM/yyyy')}`}
               </Typography>
               <Typography variant="body1" className="greeting-subtitle">
-                Welcome to your Beauty Spa management dashboard
+                Lịch đặt lịch theo tháng hiện tại
               </Typography>
               <Box className="greeting-info">
-                <Chip icon={<ClockCircleOutlined />} label={`${format(currentTime, 'EEEE, MMMM d')} | ${format(currentTime, 'h:mm a')}`} variant="outlined" color="primary" />
-                <Chip icon={<ScheduleOutlined />} label={`Current Shift: ${determineShift(currentTime)}`} variant="outlined" />
+                <Chip icon={<CalendarOutlined />} label={`Tháng: ${format(selectedMonth, 'MM/yyyy')}`} variant="outlined" color="primary" />
               </Box>
             </Box>
             <Box className="greeting-image" />
