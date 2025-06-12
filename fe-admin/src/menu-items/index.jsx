@@ -9,11 +9,12 @@ import role from './role';
 import userschedule from './userschedule';
 import salary from './salary';
 import branch from './branch';
+import review from './review';
 
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [dashboard, pages, account, spa,role,userschedule,branch, salary,utilities, support]
+  items: [dashboard, pages, account, spa,role,userschedule,branch,review, salary,utilities, support]
 };
 
 export default menuItems;

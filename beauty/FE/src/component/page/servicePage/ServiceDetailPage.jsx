@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Header from '../../shared/header';
 import Footer from '../../shared/footer';
 
@@ -34,7 +36,7 @@ const useAuth = () => {
       token: null
     };
   });
-  
+
   // Trong một ứng dụng lớn, bạn có thể thêm các hàm login/logout ở đây
   // để cập nhật cả localStorage và state, giúp component re-render ngay lập tức.
   // Ví dụ: const logout = () => { localStorage.clear(); setAuthInfo({ ... }); }
@@ -46,8 +48,8 @@ const useAuth = () => {
 const ServiceDetailPage = () => {
   const { id } = useParams();
   const { isAuthenticated, user, token } = useAuth();
-  const [editingReviewId, setEditingReviewId] = useState(null); 
-  const [editedContent, setEditedContent] = useState({ rating: 0, comment: '' }); 
+  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [editedContent, setEditedContent] = useState({ rating: 0, comment: '' });
 
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -76,9 +78,9 @@ const ServiceDetailPage = () => {
         console.error('Error fetching service:', error);
       }
     };
-      
 
-  
+
+
     // Hàm fetch danh sách review
     const fetchReviews = async () => {
       try {
@@ -124,20 +126,19 @@ const ServiceDetailPage = () => {
       const result = await response.json();
 
       if (response.ok) {
-        alert('Cập nhật đánh giá thành công!');
-        // Cập nhật lại list reviews trên giao diện
+        toast.success('Cập nhật đánh giá thành công!');
         setReviews(reviews.map(r => r.id === reviewId ? result.data : r));
-        handleCancelEdit(); // Thoát chế độ chỉnh sửa
+        handleCancelEdit();
       } else {
-        alert(`Lỗi: ${result.message}`);
+        toast.error(`Lỗi: ${result.message}`);
       }
     } catch (error) {
-      alert('Đã có lỗi xảy ra khi cập nhật.');
+      toast.error('Đã có lỗi xảy ra khi cập nhật.');
     } finally {
       setIsSubmitting(false);
     }
   };
-const handleEditClick = (review) => {
+  const handleEditClick = (review) => {
     setEditingReviewId(review.id);
     setEditedContent({ rating: review.rating, comment: review.comment });
   };
@@ -154,15 +155,14 @@ const handleEditClick = (review) => {
       });
 
       if (response.ok) {
-        alert('Xóa đánh giá thành công!');
-        // Xóa review khỏi list trên giao diện
+        toast.success('Xóa đánh giá thành công!');
         setReviews(reviews.filter(r => r.id !== reviewId));
       } else {
         const result = await response.json();
-        alert(`Lỗi: ${result.message}`);
+        toast.error(`Lỗi: ${result.message}`);
       }
     } catch (error) {
-      alert('Đã có lỗi xảy ra khi xóa.');
+      toast.error('Đã có lỗi xảy ra khi xóa.');
     }
   };
 
@@ -172,7 +172,7 @@ const handleEditClick = (review) => {
     if (isSubmitting) return;
 
     if (!newReview.comment.trim()) {
-      alert('Vui lòng nhập nội dung bình luận.');
+      toast.warn('Vui lòng nhập nội dung bình luận.');
       return;
     }
 
@@ -200,16 +200,15 @@ const handleEditClick = (review) => {
       const result = await response.json();
 
       if (response.ok && result.status === 'SUCCESS') {
-        alert('Cảm ơn bạn đã gửi đánh giá!');
-        
+        toast.success('Cảm ơn bạn đã gửi đánh giá!');
         setReviews((prev) => [result.data, ...prev]);
         setNewReview({ rating: 5, comment: '' });
       } else {
-        alert(`Gửi đánh giá thất bại: ${result.message}`);
+        toast.error(`Gửi đánh giá thất bại: ${result.message}`);
       }
     } catch (error) {
       console.error('Error submitting review:', error);
-      alert('Đã xảy ra lỗi. Vui lòng thử lại.');
+      toast.error('Đã xảy ra lỗi. Vui lòng thử lại.');
     } finally {
       setIsSubmitting(false);
     }
@@ -229,6 +228,7 @@ const handleEditClick = (review) => {
   return (
     <div>
       <Header />
+      <ToastContainer position="top-right" autoClose={2000} />
       <div style={{ maxWidth: 900, margin: 'auto', padding: '40px 15px' }}>
         <Link to="/ServicePage" style={{ marginBottom: 20, display: 'inline-block', border: '1px solid #f8a4c1', padding: '8px 16px', color: '#333', textDecoration: 'none', fontWeight: 'bold', transition: 'background-color 0.3s, color 0.3s', borderRadius: '999px' }}>
           ← Back to Services
@@ -274,7 +274,7 @@ const handleEditClick = (review) => {
         {/* PHẦN REVIEWS */}
         <div style={{ marginTop: 60 }}>
           <h3 style={{ fontWeight: 700, marginBottom: 25 }}>Reviews</h3>
-          
+
           {/* PHẦN THỐNG KÊ REVIEW - Đầy đủ */}
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ textAlign: 'center', marginRight: 40, marginBottom: 20 }}>
@@ -284,14 +284,14 @@ const handleEditClick = (review) => {
               </div>
               <div style={{ color: '#888' }}>{reviews.length} reviews</div>
             </div>
-              <div style={{ flexGrow: 1, minWidth: '300px' }}>
+            <div style={{ flexGrow: 1, minWidth: '300px' }}>
               {[5, 4, 3, 2, 1].map((star, i) => (
                 <div key={star} style={{ display: 'flex', alignItems: 'center', marginBottom: 4, gap: '8px' }}>
                   {/* Cột 1: Nhãn bằng sao */}
                   <div style={{ color: '#f5a623', minWidth: '90px', textAlign: 'right', letterSpacing: '2px' }}>
                     {'★'.repeat(star)}{'☆'.repeat(5 - star)}
                   </div>
-                  
+
                   {/* Cột 2: Thanh tiến trình */}
                   <div style={{ background: '#eee', height: 10, flex: 1, borderRadius: 5, overflow: 'hidden' }}>
                     <div style={{
@@ -313,7 +313,7 @@ const handleEditClick = (review) => {
           {/* PHẦN FORM REVIEW - Đã cập nhật */}
           <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
             <h4 style={{ marginBottom: 15 }}>Share your review</h4>
-            
+
             {isAuthenticated ? (
               <form onSubmit={handleReviewSubmit}>
                 <div style={{ padding: '10px 15px', background: '#e9ecef', borderLeft: '4px solid #d6336c', marginBottom: 15, borderRadius: 4 }}>
@@ -349,64 +349,101 @@ const handleEditClick = (review) => {
           </div>
         </div>
 
-      <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
-  <h4 style={{ marginBottom: 20 }}>All Reviews ({reviews.length})</h4>
-  {reviews.length > 0 ? (
-    reviews.map((r) => (
-      <div key={r.id} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
-        
-        {/* KIỂM TRA NẾU REVIEW NÀY ĐANG ĐƯỢC SỬA */}
-        {editingReviewId === r.id ? (
-          // GIAO DIỆN KHI SỬA
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 15 }}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <span key={star} onClick={() => setEditedContent({ ...editedContent, rating: star })} style={{ fontSize: 30, cursor: 'pointer', color: star <= editedContent.rating ? '#f60' : '#ccc' }}>★</span>
-              ))}
-            </div>
-            <textarea
-              value={editedContent.comment}
-              onChange={(e) => setEditedContent({ ...editedContent, comment: e.target.value })}
-              rows={3}
-              style={{ width: '100%', padding: 10, borderRadius: 5, border: '1px solid #ccc', marginBottom: 10, resize: 'vertical' }}
-            />
-            <div>
-              <button onClick={() => handleUpdateSubmit(r.id)} disabled={isSubmitting} style={{ backgroundColor: '#007bff', color: 'white', padding: '8px 16px', border: 'none', borderRadius: 5, cursor: 'pointer', marginRight: 8 }}>
-                {isSubmitting ? 'Saving...' : 'Save Changes'}
-              </button>
-              <button onClick={handleCancelEdit} style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: 5, cursor: 'pointer', background: 'transparent' }}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          // GIAO DIỆN HIỂN THỊ BÌNH THƯỜNG
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <strong style={{ color: '#d6336c', marginRight: 10 }}>{r.authorName}</strong>
-                <span style={{ color: '#f5a623' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+        <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
+          <h4 style={{ marginBottom: 20 }}>All Reviews ({reviews.length})</h4>
+          {reviews.length > 0 ? (
+            reviews.map((r) => (
+              <div key={r.id} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
+
+                {/* KIỂM TRA NẾU REVIEW NÀY ĐANG ĐƯỢC SỬA */}
+                {editingReviewId === r.id ? (
+                  // GIAO DIỆN KHI SỬA
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 15 }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <span key={star} onClick={() => setEditedContent({ ...editedContent, rating: star })} style={{ fontSize: 30, cursor: 'pointer', color: star <= editedContent.rating ? '#f60' : '#ccc' }}>★</span>
+                      ))}
+                    </div>
+                    <textarea
+                      value={editedContent.comment}
+                      onChange={(e) => setEditedContent({ ...editedContent, comment: e.target.value })}
+                      rows={3}
+                      style={{ width: '100%', padding: 10, borderRadius: 5, border: '1px solid #ccc', marginBottom: 10, resize: 'vertical' }}
+                    />
+                    <div>
+                      <button onClick={() => handleUpdateSubmit(r.id)} disabled={isSubmitting} style={{ backgroundColor: '#007bff', color: 'white', padding: '8px 16px', border: 'none', borderRadius: 5, cursor: 'pointer', marginRight: 8 }}>
+                        {isSubmitting ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button onClick={handleCancelEdit} style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: 5, cursor: 'pointer', background: 'transparent' }}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // GIAO DIỆN HIỂN THỊ BÌNH THƯỜNG
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <strong style={{ color: '#d6336c', marginRight: 10 }}>{r.authorName}</strong>
+                        <span style={{ color: '#f5a623' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                      </div>
+
+                      {/* HIỂN THỊ NÚT SỬA/XÓA NẾU ĐÚNG CHỦ REVIEW */}
+                      {isAuthenticated && user && user.id === r.customerId && (
+                        // Tính toán thời gian cho phép sửa (30 phút)
+                        (() => {
+                          const createdAt = new Date(r.createdAt);
+                          const now = new Date();
+                          const diffMinutes = (now - createdAt) / (1000 * 60);
+                          const canEdit = diffMinutes <= 30;
+                          return (
+                            <div>
+                              <button
+                                onClick={() => canEdit && handleEditClick(r)}
+                                style={{
+                                  marginRight: 8,
+                                  border: 'none',
+                                  background: 'none',
+                                  cursor: canEdit ? 'pointer' : 'not-allowed',
+                                  color: canEdit ? '#007bff' : '#aaa',
+                                  fontSize: 20,
+                                  verticalAlign: 'middle'
+                                }}
+                                title={canEdit ? "Edit" : "Chỉ được sửa trong 30 phút sau khi đăng"}
+                                disabled={!canEdit}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(r.id)}
+                                style={{
+                                  border: 'none',
+                                  background: 'none',
+                                  cursor: 'pointer',
+                                  color: '#dc3545',
+                                  fontSize: 20,
+                                  verticalAlign: 'middle'
+                                }}
+                                title="Delete"
+                              >
+                                <i className="fas fa-trash-alt"></i>
+                              </button>
+                            </div>
+                          );
+                        })()
+                      )}
+                    </div>
+                    <p style={{ margin: '0 0 8px 0', color: '#333' }}>{r.comment}</p>
+                    <small style={{ color: '#888' }}>{new Date(r.createdAt).toLocaleString('vi-VN')}</small>
+                  </>
+                )}
+
               </div>
-
-              {/* HIỂN THỊ NÚT SỬA/XÓA NẾU ĐÚNG CHỦ REVIEW */}
-              {isAuthenticated && user && user.id === r.customerId && (
-                <div>
-                  <button onClick={() => handleEditClick(r)} style={{ marginRight: 8, border: 'none', background: 'none', cursor: 'pointer', color: '#007bff' }}>Edit</button>
-                  <button onClick={() => handleDeleteClick(r.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#dc3545' }}>Delete</button>
-                </div>
-              )}
-            </div>
-            <p style={{ margin: '0 0 8px 0', color: '#333' }}>{r.comment}</p>
-            <small style={{ color: '#888' }}>{new Date(r.createdAt).toLocaleString('vi-VN')}</small>
-          </>
-        )}
-
-      </div>
-    ))
-  ) : (
-    <p>There are no reviews yet. Be the first one!</p>
-  )}
-</div>
+            ))
+          ) : (
+            <p>There are no reviews yet. Be the first one!</p>
+          )}
+        </div>
       </div>
       <Footer />
     </div>
