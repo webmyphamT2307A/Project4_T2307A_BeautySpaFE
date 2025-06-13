@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useState, useEffect } from 'react';
-import { useRef } from 'react';
+// Import thêm Link và useNavigate từ react-router-dom
+import { Link, useNavigate } from 'react-router-dom';
 
 const Header = () => {
+    // Khởi tạo hook useNavigate
+    const navigate = useNavigate(); 
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [registerInfo, setRegisterInfo] = useState({
@@ -15,17 +18,22 @@ const Header = () => {
     });
     const [registerMessage, setRegisterMessage] = useState('');
     const [userInfo, setUserInfo] = useState(null);
+
     useEffect(() => {
         const storedUser = localStorage.getItem('userInfo');
         if (storedUser) {
             setUserInfo(JSON.parse(storedUser));
         }
     }, []);
+
     const handleAvatarClick = () => {
-        window.location.href = "/CustomerDetail";
+        // Dùng navigate thay vì window.location.href
+        navigate("/CustomerDetail"); 
     };
+
     const [showSearch, setShowSearch] = useState(false);
     const searchRef = useRef(null);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -44,47 +52,40 @@ const Header = () => {
         };
     }, [showSearch]);
 
-    // Thêm vào hàm handleLogin trong header.jsx
     const handleLogin = async (e) => {
         e.preventDefault();
-
         try {
             const response = await axios.post('http://localhost:8080/api/v1/customer/login', {
                 email,
                 password
             });
-
-            // Debug thông tin phản hồi
-            console.log("Response from login:", response.data);
             const responseData = response.data;
             if (responseData.status === 'SUCCESS') {
-                console.log("Customer data:", responseData.data.customer);
-                console.log("Token:", responseData.data.token);
-
                 const customerData = responseData.data.customer;
                 let token = responseData.data.token;
 
-                // Kiểm tra token hợp lệ (JWT phải có 3 phần)
                 if (!token || token.split('.').length !== 3) {
                     alert('Token không hợp lệ từ server!');
                     return;
                 }
                 token = token.trim();
 
-                // Lưu thông tin vào localStorage với cấu trúc phù hợp
                 localStorage.setItem('userInfo', JSON.stringify({
                     ...customerData,
                     token: token
                 }));
-
+                localStorage.setItem('token', token);
+                
+                // Dùng window.location.href để tải lại toàn bộ trang, cập nhật trạng thái login
                 window.location.href = "/CustomerDetail";
+
             }
         } catch (error) {
             console.error('Error logging in:', error);
             alert('Email hoặc mật khẩu không chính xác!');
         }
-
     };
+
     const handleRegisterChange = (e) => {
         setRegisterInfo({
             ...registerInfo,
@@ -99,13 +100,7 @@ const Header = () => {
             const response = await axios.post('http://localhost:8080/api/v1/customer/register', registerInfo);
             if (response.data.status === 'SUCCESS') {
                 setRegisterMessage('Đăng ký thành công! Vui lòng đăng nhập.');
-                setRegisterInfo({
-                    fullName: '',
-                    email: '',
-                    password: '',
-                    phone: '',
-                    address: ''
-                });
+                setRegisterInfo({ fullName: '', email: '', password: '', phone: '', address: '' });
             } else {
                 setRegisterMessage(response.data.message || 'Đăng ký thất bại!');
             }
@@ -113,90 +108,96 @@ const Header = () => {
             setRegisterMessage(error.response?.data?.message || 'Đăng ký thất bại!');
         }
     };
+
     const handleLogout = () => {
         localStorage.removeItem('userInfo');
+        localStorage.removeItem('token');
         setUserInfo(null);
+        // Tải lại trang chủ để cập nhật trạng thái logout
         window.location.href = "/";
     };
 
     return (
         <div>
             <div className="container-fluid sticky-top px-0">
-                <div className="container-fluid topbar d-none d-lg-block">
-                    <div className="container px-0">
-                        <div className="row align-items-center">
-                            <div className="col-lg-8">
-                                <div className="d-flex flex-wrap">
-                                    <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Find A Location</a>
-                                    <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+01234567890</a>
-                                    <a href="#"><i className="fas fa-envelope me-2" />Example@gmail.com</a>
-                                </div>
-                            </div>
+                 <div className="container-fluid topbar d-none d-lg-block">
+                     <div className="container px-0">
+                         <div className="row align-items-center">
+                             <div className="col-lg-8">
+                                 <div className="d-flex flex-wrap">
+                                     <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Find A Location</a>
+                                     <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+01234567890</a>
+                                     <a href="#"><i className="fas fa-envelope me-2" />Example@gmail.com</a>
+                                 </div>
+                             </div>
                             <div className="col-lg-4">
-                                <div className="d-flex align-items-center justify-content-end">
-                                    <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-facebook-f" /></a>
-                                    <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-twitter" /></a>
-                                    <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-instagram" /></a>
-                                    <a href="#" className="btn-square border rounded-circle nav-fill"><i className="fab fa-linkedin-in" /></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                 <div className="d-flex align-items-center justify-content-end">
+                                     <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-facebook-f" /></a>
+                                     <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-twitter" /></a>
+                                     <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-instagram" /></a>
+                                     <a href="#" className="btn-square border rounded-circle nav-fill"><i className="fab fa-linkedin-in" /></a>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
 
                 <div className="container-fluid bg-light">
                     <div className="container px-0">
                         <nav className="navbar navbar-light navbar-expand-xl">
-                            <a href="/" className="navbar-brand">
+                            <Link to="/" className="navbar-brand">
                                 <h1 className="text-primary display-4">Sparlex</h1>
-                            </a>
+                            </Link>
                             <button className="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
                                 <span className="fa fa-bars text-primary" />
                             </button>
                             <div className="collapse navbar-collapse bg-light py-3" id="navbarCollapse">
                                 <div className="navbar-nav mx-auto border-top">
-                                    <a href="/" className="nav-item nav-link active">Home</a>
-                                    <a href="AboutPage" className="nav-item nav-link">About</a>
-                                    <a href="ServicePage" className="nav-item nav-link">Services</a>
+                                    <Link to="/" className="nav-item nav-link active">Home</Link>
+                                    <Link to="/AboutPage" className="nav-item nav-link">About</Link>
+                                    <Link to="/ServicePage" className="nav-item nav-link">Services</Link>
 
                                     {!userInfo ? (
                                         <a href="#" className="nav-item nav-link" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
                                     ) : (
-                                        <div className="nav-item nav-link" style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
-                                            <img
-                                                src={
-                                                    userInfo.imageUrl
-                                                        ? userInfo.imageUrl.startsWith('http')
-                                                            ? userInfo.imageUrl
-                                                            : `http://localhost:8080/${userInfo.imageUrl.replace(/^\/?/, '')}`
-                                                        : "/assets/img/default-avatar.jpg"
-                                                }
-                                                alt="avatar"
-                                                style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", marginRight: 8 }}
-                                                onClick={handleAvatarClick}
-                                            />
-
+                                        <div className="nav-item dropdown">
+                                            <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown" style={{ display: "flex", alignItems: "center" }}>
+                                                <img
+                                                    src={
+                                                        userInfo.imageUrl
+                                                            ? userInfo.imageUrl.startsWith('http')
+                                                                ? userInfo.imageUrl
+                                                                : `http://localhost:8080/${userInfo.imageUrl.replace(/^\/?/, '')}`
+                                                            : "/assets/img/default-avatar.jpg"
+                                                    }
+                                                    alt="avatar"
+                                                    style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", marginRight: 8 }}
+                                                />
+                                            </a>
+                                            <div className="dropdown-menu m-0 bg-secondary rounded-0">
+                                                <Link to="/CustomerDetail" className="dropdown-item">Thông tin cá nhân</Link>
+                                                <button onClick={handleLogout} className="dropdown-item">Đăng xuất</button>
+                                            </div>
                                         </div>
                                     )}
-
 
                                     <div className="nav-item dropdown">
                                         <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
                                         <div className="dropdown-menu m-0 bg-secondary rounded-0">
-                                            <a href="TeamPage" className="dropdown-item">Team</a>
-                                            <a href="TerminalPage" className="dropdown-item">Testimonial</a>
-                                            <a href="GaleryPage" className="dropdown-item">Gallery</a>
-                                            <a href="AppointmentPage" className="dropdown-item">Appointment</a>
-                                            <a href="ErrorPage" className="dropdown-item">404 page</a>
+                                            <Link to="/TeamPage" className="dropdown-item">Team</Link>
+                                            <Link to="/TerminalPage" className="dropdown-item">Testimonial</Link>
+                                            <Link to="/GaleryPage" className="dropdown-item">Gallery</Link>
+                                            <Link to="/AppointmentPage" className="dropdown-item">Appointment</Link>
+                                            <Link to="/ErrorPage" className="dropdown-item">404 page</Link>
                                         </div>
                                     </div>
-                                    <a href="ContactPage" className="nav-item nav-link">Contact Us</a>
+                                    <Link to="/ContactPage" className="nav-item nav-link">Contact Us</Link>
                                 </div>
                                 <div className="d-flex align-items-center flex-nowrap pt-xl-0">
                                     <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" onClick={() => setShowSearch(!showSearch)}>
                                         <i className="fas fa-search" />
                                     </button>
-                                    <a href="AppointmentPage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-4 ms-4">Book Appointment</a>
+                                    <Link to="/AppointmentPage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-4 ms-4">Book Appointment</Link>
                                 </div>
                             </div>
                         </nav>
@@ -204,8 +205,8 @@ const Header = () => {
                 </div>
             </div>
 
-            {/* Search Modal */}
-            {showSearch && (
+            {/* Modals không thay đổi */}
+          {showSearch && (
                 <div ref={searchRef} className="search-bar-wrapper position-absolute w-100 d-flex justify-content-center" style={{ top: "170px", zIndex: 1050 }}>
                     <div className="input-group shadow" style={{ maxWidth: "600px" }}>
                         <input type="search" className="form-control p-3" placeholder="keywords" />
@@ -316,6 +317,8 @@ const Header = () => {
                     </div>
                 </div>
             </div>
+            <div className="modal fade" id="loginModal" tabIndex={-1}>{/* ... */}</div>
+            <div className="modal fade" id="registerModal" tabIndex={-1}>{/* ... */}</div>
         </div>
     );
 };

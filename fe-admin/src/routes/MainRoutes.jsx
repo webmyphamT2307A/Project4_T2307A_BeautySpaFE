@@ -11,6 +11,7 @@ import UserScheduleManager from '../pages/userschedule/schedule';
 import usePrivateRoute from './../hooks/usePrivateRoute';
 import SalaryManagement from '../pages/salary/salary';
 import BranchManager from '../pages/branch/service';
+import ReviewList from '../pages/review/review';
 import path from 'path';
 
 // render- Dashboard
@@ -104,6 +105,16 @@ const MainRoutes = {
       {
         path: 'service',
         element: <ProtectedRoute element={<BranchManager />} />
+      }
+    ]
+
+  },
+  {
+    path: 'review',
+    children:[
+      {
+        path: 'review',
+        element: <ProtectedRoute element={<ReviewList />} />
       }
     ]
 

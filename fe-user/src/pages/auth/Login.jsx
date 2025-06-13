@@ -23,6 +23,7 @@ export default function Login() {
     const adminRole = Cookies.get('admin_role');
     const staffToken = Cookies.get('staff_token');
     const staffRole = Cookies.get('staff_role');
+    
 
     if (adminToken && adminRole === 'ROLE_ADMIN') {
       console.log('Admin token and role found in cookies:', adminToken, adminRole);
@@ -64,19 +65,19 @@ export default function Login() {
         localStorage.setItem('user', JSON.stringify(user));
 
         if (roleName === 'ROLE_ADMIN') {
-          // Lưu cookie admin
           Cookies.set('admin_token', token, { path: '/admin', sameSite: 'Strict', expires: 7 });
           Cookies.set('admin_role', roleName, { path: '/admin', sameSite: 'Strict', expires: 7 });
-          console.log('Admin cookie set:', Cookies.get('admin_token'), Cookies.get('admin_role'));
           window.location.href = 'http://localhost:3003/admin';
-        } else if (roleName === 'ROLE_STAFF') {
+        } else if (
+          roleName === 'ROLE_STAFF' ||
+          roleName === 'ROLE_MANAGER' ||
+          roleName === 'ROLE_MANAGE'
+        ) {
           Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
-          Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 }); // Lưu userId
-          console.log('Staff cookie set:', Cookies.get('staff_token'), Cookies.get('staff_role'), Cookies.get('staff_userId'));
+          Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 });
           window.location.href = 'http://localhost:3002/staff';
         } else {
-          console.log('Invalid role, clearing cookies...');
           Cookies.remove('admin_token', { path: '/admin' });
           Cookies.remove('admin_role', { path: '/admin' });
           Cookies.remove('staff_token', { path: '/staff' });

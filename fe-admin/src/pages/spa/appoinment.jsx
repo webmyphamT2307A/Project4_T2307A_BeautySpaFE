@@ -18,6 +18,7 @@ import {
   FormOutlined  
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
@@ -25,6 +26,7 @@ const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
 
 const AppointmentManagement = () => {
   // States
+  const [searchParams] = useSearchParams();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -45,6 +47,17 @@ const AppointmentManagement = () => {
   const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
   const [appointmentToEditDetails, setAppointmentToEditDetails] = useState(null);
   const [selectedStaffId, setSelectedStaffId] = useState(null); 
+    useEffect(() => {
+        const dateFromUrl = searchParams.get('date');
+        if (dateFromUrl) {
+            // Tự động gán ngày từ URL vào bộ lọc
+            setDateFilter({
+                startDate: dateFromUrl,
+                endDate: dateFromUrl
+            });
+            // Bảng sẽ tự động cập nhật vì useEffect theo dõi `dateFilter` đã có sẵn
+        }
+    }, [searchParams]);
 
   // Fetch danh sách lịch hẹn ban đầu
   useEffect(() => {
