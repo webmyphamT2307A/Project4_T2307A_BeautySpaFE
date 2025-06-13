@@ -146,20 +146,31 @@ const ServiceManagement = () => {
     });
   };
 
-  const handleImageChange = (event) => {
+  const handleImageChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      // In real app, upload to server and get URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target.result;
-        setFormData({
-          ...formData,
-          image_url: imageUrl
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+
+      try {
+        const res = await fetch('http://localhost:8080/api/v1/upload', {
+          method: 'POST',
+          body: formDataUpload
         });
-        setImagePreview(imageUrl);
-      };
-      reader.readAsDataURL(file);
+        const data = await res.json();
+        if (res.ok && data.url) {
+          setFormData({
+            ...formData,
+            image_url: data.url
+          });
+          setImagePreview(data.url);
+          toast.success('Upload ảnh thành công!');
+        } else {
+          toast.error('Upload ảnh thất bại!');
+        }
+      } catch (err) {
+        toast.error('Lỗi khi upload ảnh!');
+      }
     }
   };
 
@@ -210,9 +221,43 @@ const ServiceManagement = () => {
           setOpen(false);
         });
     } else {
-      // Add mới: (nếu có API POST thì gọi ở đây)
-      toast.info('Chức năng thêm mới chưa hỗ trợ BE');
-      setOpen(false);
+      // Add mới: Gọi API POST
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          price: parseFloat(formData.price),
+          duration: parseInt(formData.duration, 10),
+          imageUrl: formData.image_url
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'SUCCESS') {
+            // Thêm vào danh sách FE luôn
+            const newService = {
+              service_id: data.data.id,
+              name: data.data.name,
+              description: data.data.description,
+              price: data.data.price,
+              duration: data.data.duration,
+              is_active: data.data.isActive,
+              image_url: data.data.imageUrl,
+              created_at: data.data.createdAt
+            };
+            setServices([newService, ...services]);
+            toast.success('Thêm dịch vụ thành công');
+          } else {
+            toast.error('Thêm dịch vụ thất bại');
+          }
+          setOpen(false);
+        })
+        .catch(() => {
+          toast.error('Lỗi khi thêm dịch vụ');
+          setOpen(false);
+        });
     }
   };
 

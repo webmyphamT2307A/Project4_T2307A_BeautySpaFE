@@ -420,7 +420,7 @@ const handleImageChange = async (event) => {
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Avatar
-                              src={user.imageUrl}
+                              src={user.imageUrl && !user.imageUrl.startsWith('http') ? `http://localhost:8080${user.imageUrl}` : user.imageUrl}
                               alt={user.fullName}
                               sx={{ width: 32, height: 32 }}
                             >
