@@ -355,7 +355,7 @@ useEffect(() => {
                       <option value="" style={{ color: 'black' }}>Select Service</option>
                       {services.map(service => (
                         <option key={service.id} value={service.id} style={{ color: 'black' }}>
-                          {service.name} - {service.price}₫
+                          {service.name} - {service.price}$
                         </option>
                       ))}
                     </select>

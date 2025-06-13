@@ -253,7 +253,9 @@ const ServiceDetailPage = () => {
             </h2>
             <p>
               <strong>Price:</strong>{' '}
+
               {service.price ? `${service.price.toLocaleString()}$` : 'N/A'}
+
             </p>
             <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
             <a href="#" style={{

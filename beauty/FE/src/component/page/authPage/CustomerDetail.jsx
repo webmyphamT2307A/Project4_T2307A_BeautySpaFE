@@ -359,7 +359,7 @@ const CustomerDetail = () => {
                                                         <div className="d-flex justify-content-between align-items-center">
                                                             <div>
                                                                 <h5>{history.serviceName}</h5>
-                                                                <p className="mb-1">Giá: {history.price}₫</p>
+                                                                <p className="mb-1">Giá: {history.price}$</p>
                                                                 <p className="mb-1">Ngày hẹn: {new Date(history.appointmentDate).toLocaleDateString()}</p>
                                                             </div>
                                                             <button
@@ -391,7 +391,7 @@ const CustomerDetail = () => {
                             </div>
                             <div className="modal-body">
                                 <p><b>Dịch vụ:</b> {selectedHistory.serviceName}</p>
-                                <p><b>Giá:</b> {selectedHistory.price}₫</p>
+                                <p><b>Giá:</b> {selectedHistory.price}$</p>
                                 <p><b>Ngày hẹn:</b> {new Date(selectedHistory.appointmentDate).toLocaleDateString()}</p>
                                 <p><b>Ghi chú:</b> {selectedHistory.notes || 'Không có ghi chú'}</p>
                                 <p><b>Ngày tạo:</b> {new Date(selectedHistory.createdAt).toLocaleDateString()}</p>
