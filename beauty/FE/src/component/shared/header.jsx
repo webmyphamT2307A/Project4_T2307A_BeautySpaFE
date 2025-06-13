@@ -157,7 +157,20 @@ const Header = () => {
                                     <Link to="/AboutPage" className="nav-item nav-link">About</Link>
                                     <Link to="/ServicePage" className="nav-item nav-link">Services</Link>
 
-                                    {!userInfo ? (
+                                 
+
+                                    <div className="nav-item dropdown">
+                                        <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
+                                        <div className="dropdown-menu m-0 bg-secondary rounded-0">
+                                            <Link to="/TeamPage" className="dropdown-item">Team</Link>
+                                            <Link to="/TerminalPage" className="dropdown-item">Testimonial</Link>
+                                            <Link to="/GaleryPage" className="dropdown-item">Gallery</Link>
+                                            <Link to="/AppointmentPage" className="dropdown-item">Appointment</Link>
+                                            <Link to="/ErrorPage" className="dropdown-item">404 page</Link>
+                                        </div>
+                                    </div>
+                                    <Link to="/ContactPage" className="nav-item nav-link">Contact Us</Link>
+                                       {!userInfo ? (
                                         <a href="#" className="nav-item nav-link" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
                                     ) : (
                                         <div className="nav-item dropdown">
@@ -180,18 +193,6 @@ const Header = () => {
                                             </div>
                                         </div>
                                     )}
-
-                                    <div className="nav-item dropdown">
-                                        <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
-                                        <div className="dropdown-menu m-0 bg-secondary rounded-0">
-                                            <Link to="/TeamPage" className="dropdown-item">Team</Link>
-                                            <Link to="/TerminalPage" className="dropdown-item">Testimonial</Link>
-                                            <Link to="/GaleryPage" className="dropdown-item">Gallery</Link>
-                                            <Link to="/AppointmentPage" className="dropdown-item">Appointment</Link>
-                                            <Link to="/ErrorPage" className="dropdown-item">404 page</Link>
-                                        </div>
-                                    </div>
-                                    <Link to="/ContactPage" className="nav-item nav-link">Contact Us</Link>
                                 </div>
                                 <div className="d-flex align-items-center flex-nowrap pt-xl-0">
                                     <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" onClick={() => setShowSearch(!showSearch)}>
