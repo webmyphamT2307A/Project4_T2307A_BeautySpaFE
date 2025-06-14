@@ -56,6 +56,7 @@ export default function Profile() {
   const [open, setOpen] = useState(false);
   const [userName, setUserName] = useState('Chưa đăng nhập');
   const [userAvatar, setUserAvatar] = useState(avatar1);
+  const [roleName, setRoleName] = useState('Chưa xác định vai trò');
 
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
@@ -90,6 +91,7 @@ export default function Profile() {
       if (data.status === 'SUCCESS') {
         setUserName(data.data.fullName || role);
         setUserAvatar(data.data.imageUrl || avatar1);
+        setRoleName(data.data.role?.name  || 'Chưa xác định vai trò');
       } else {
         console.error(`Failed to fetch ${role} user data:`, data.message);
       }
@@ -192,7 +194,7 @@ const handleLogout = async () => {
                           <Stack>
                             <Typography variant="h6">{userName}</Typography>
                             <Typography variant="body2" color="text.secondary">
-                              Developer
+                              {roleName === 'admin' ? 'Quản trị viên' : roleName === 'manage' ? 'Quản Lý' : 'Nhân viên'}
                             </Typography>
                           </Stack>
                         </Stack>
