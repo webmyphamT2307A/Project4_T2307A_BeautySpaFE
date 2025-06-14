@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,7 +23,10 @@ const Appointment = () => {
   const [timeSlots, setTimeSlots] = useState([]);
   const [slotInfo, setSlotInfo] = useState(null);
   const [staffList, setStaffList] = useState([]);
-  const [staffAvailabilityInfo, setStaffAvailabilityInfo] = useState(null);
+  
+  // --- THAY ĐỔI 1: State mới để quản lý lịch rảnh của TẤT CẢ nhân viên ---
+  const [staffAvailabilities, setStaffAvailabilities] = useState({}); // { staffId: { isAvailable, message } }
+  const [isCheckingAvailabilities, setIsCheckingAvailabilities] = useState(false);
 
   const [staffSearchTerm, setStaffSearchTerm] = useState('');
   const [selectedStaffId, setSelectedStaffId] = useState(null); // To track visually selected staff
@@ -38,21 +41,17 @@ const Appointment = () => {
   }, []);
 
   // Fetch staff list and shuffle it
-   useEffect(() => {
+    useEffect(() => {
     axios.get('http://localhost:8080/api/v1/user/accounts/staff')
       .then(res => {
         const rawStaffList = Array.isArray(res.data) ? res.data : (res.data.data || []);
         
         const processedStaff = rawStaffList.map(staff => ({
           ...staff,
-        
           isActiveResolved: staff.isActive === true || staff.isActive === 1 || String(staff.isActive).toLowerCase() === 'true'
         }));
 
-        // Lọc ra những nhân viên có isActiveResolved là true
         const activeStaff = processedStaff.filter(staff => staff.isActiveResolved === true);
-        
-        // Shuffle (trộn ngẫu nhiên) danh sách nhân viên active
         const shuffledStaff = [...activeStaff].sort(() => 0.5 - Math.random());
         
         setStaffList(shuffledStaff);
@@ -97,68 +96,76 @@ const Appointment = () => {
     }
   }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
 
-  // Fetch staff availability
- // Bên trong useEffect của "Fetch staff availability"
-useEffect(() => {
-    if (formData.userId && formData.appointmentDate && formData.timeSlotId && formData.serviceId) {
-      const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
-
-      if (!selectedTimeSlot || !selectedTimeSlot.startTime) {
-        setStaffAvailabilityInfo(null);
+  // --- THAY ĐỔI 2: Cập nhật useEffect để kiểm tra lịch cho TẤT CẢ nhân viên ---
+  useEffect(() => {
+    const checkAllStaffAvailability = async () => {
+      // Chỉ chạy khi có đủ thông tin cần thiết
+      if (!formData.appointmentDate || !formData.timeSlotId || !formData.serviceId || staffList.length === 0) {
+        setStaffAvailabilities({}); // Xóa dữ liệu cũ nếu thông tin chưa đủ
         return;
       }
 
-      // Giả sử selectedTimeSlot.startTime có dạng "HH:mm" hoặc "HH:mm:ss"
+      setIsCheckingAvailabilities(true);
+      setStaffAvailabilities({}); // Xóa dữ liệu cũ trước khi kiểm tra
+
+      const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
+      if (!selectedTimeSlot) {
+        setIsCheckingAvailabilities(false);
+        return;
+      }
+      
       const [slotHours, slotMinutes] = selectedTimeSlot.startTime.split(':').map(Number);
-
-      // Giả sử formData.appointmentDate có dạng "YYYY-MM-DD"
       const [year, month, day] = formData.appointmentDate.split('-').map(Number);
-
-      // 1. Tạo đối tượng Date với ngày địa phương và giờ địa phương của slot đã chọn
-      // Lưu ý: Tháng trong JavaScript Date constructor là 0-indexed (0-11)
-      const localDateTimeForSlot = new Date(year, month - 1, day, slotHours, slotMinutes, 0, 0);
-
-      // 2. Chuyển đổi thời gian địa phương này sang chuỗi ISO UTC
+      const localDateTimeForSlot = new Date(year, month - 1, day, slotHours, slotMinutes);
       const requestedDateTimeISO = localDateTimeForSlot.toISOString();
-      // Ví dụ: Nếu formData.appointmentDate = "2025-06-05", slot.startTime = "09:00"
-      // và trình duyệt đang ở múi giờ Việt Nam (UTC+7).
-      // localDateTimeForSlot sẽ là: 05 tháng 6 năm 2025, 09:00:00 giờ địa phương.
-      // requestedDateTimeISO sẽ là: "2025-06-05T02:00:00.000Z" (tức 09:00 giờ VN - 7 tiếng = 02:00 UTC)
-
-      // Gọi API với requestedDateTimeISO đã được chuẩn hóa đúng sang UTC
-      axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
-        params: {
-          userId: formData.userId,
-          requestedDateTime: requestedDateTimeISO, // Gửi đi giá trị UTC đúng
-          durationMinutes: 60 // Hoặc lấy từ service.duration nếu có, hoặc từ DTO
-        }
-      })
-        .then(res => {
-          if (res.data && res.data.data) {
-            setStaffAvailabilityInfo({
-              isAvailable: res.data.data.isAvailable,
-              message: res.data.data.availabilityMessage
-            });
-          } else {
-            setStaffAvailabilityInfo({ isAvailable: false, message: 'Không thể xác định lịch nhân viên.' });
+      
+      const availabilityChecks = staffList.map(staff => {
+        return axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
+          params: {
+            userId: staff.id,
+            requestedDateTime: requestedDateTimeISO,
+            durationMinutes: 60 // Cần thay đổi nếu dịch vụ có thời gian khác nhau
           }
-        })
-        .catch(err => {
-          console.error("Error checking staff availability:", err);
-          setStaffAvailabilityInfo({ isAvailable: false, message: 'Lỗi khi kiểm tra lịch nhân viên.' });
-        });
-    } else {
-      setStaffAvailabilityInfo(null);
-    }
-  }, [formData.userId, formData.appointmentDate, formData.timeSlotId, formData.serviceId, timeSlots]);
-  // Handle input changes for general fields
+        }).then(res => ({
+          staffId: staff.id,
+          isAvailable: res.data?.data?.isAvailable || false,
+          message: res.data?.data?.availabilityMessage || 'Không xác định'
+        })).catch(() => ({
+          staffId: staff.id,
+          isAvailable: false,
+          message: 'Lỗi kiểm tra'
+        }));
+      });
+
+      const results = await Promise.all(availabilityChecks);
+      
+      const newAvailabilities = results.reduce((acc, result) => {
+        acc[result.staffId] = { isAvailable: result.isAvailable, message: result.message };
+        return acc;
+      }, {});
+      
+      setStaffAvailabilities(newAvailabilities);
+      setIsCheckingAvailabilities(false);
+    };
+
+    checkAllStaffAvailability();
+  }, [formData.appointmentDate, formData.timeSlotId, formData.serviceId, staffList, timeSlots]);
+  
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Khi thay đổi các trường quan trọng, bỏ chọn nhân viên để tránh nhầm lẫn
+    if (['appointmentDate', 'timeSlotId', 'serviceId'].includes(name)) {
+        setFormData(prev => ({ ...prev, userId: '', [name]: value }));
+        setSelectedStaffId(null);
+    }
+
     if (name === "serviceId") {
       const selectedService = services.find(s => String(s.id) === value);
       setFormData((prev) => ({
         ...prev,
-        [name]: value,
+        serviceId: value,
         price: selectedService ? selectedService.price : '',
       }));
     } else {
@@ -169,15 +176,15 @@ useEffect(() => {
     }
   };
 
-  // Handle staff selection
   const handleStaffSelect = (staffId) => {
+    // Ngăn việc chọn lại nhân viên đã chọn hoặc nhân viên bận
+    const isBusy = staffAvailabilities[staffId]?.isAvailable === false;
+    if (selectedStaffId === staffId || isBusy) return;
+
     setFormData((prev) => ({ ...prev, userId: staffId }));
     setSelectedStaffId(staffId);
-    // Reset staff availability info when staff changes, it will be re-fetched by useEffect
-    setStaffAvailabilityInfo(null);
   };
 
-  // Use account info for customer details
   const handleUseAccountInfo = () => {
     const storedUserInfo = JSON.parse(localStorage.getItem('userInfo'));
     if (storedUserInfo) {
@@ -186,30 +193,30 @@ useEffect(() => {
         fullName: storedUserInfo.fullName || '',
         phoneNumber: storedUserInfo.phone || '',
         customerId: storedUserInfo.id,
-        // userId should be selected from the staff list, not from customer info
-        // userId: storedUserInfo.id || prev.userId, // Removed this line
       }));
-      // If you want to clear previously selected staff when user info is applied:
-      // setSelectedStaffId(null);
-      // setFormData(prev => ({...prev, userId: ''}));
     } else {
       toast.error('Không có thông tin tài khoản!');
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Kiểm tra lại lần cuối xem nhân viên đã chọn có bận không
+    if (formData.userId && staffAvailabilities[formData.userId]?.isAvailable === false) {
+        toast.error("Nhân viên bạn chọn đã bận vào khung giờ này. Vui lòng chọn nhân viên khác.");
+        return;
+    }
 
     let formattedDate = formData.appointmentDate;
     if (formattedDate && formattedDate.includes('-')) {
       const [year, month, day] = formattedDate.split('-');
-      formattedDate = `${day}/${month}/${year}`; // Assuming your backend expects dd/MM/yyyy
+      formattedDate = `${day}/${month}/${year}`;
     }
 
     let customerIdToSubmit = formData.customerId;
 
-    if (!customerIdToSubmit && (formData.fullName && formData.phoneNumber)) { // Only create guest if not logged in and has name/phone
+    if (!customerIdToSubmit && (formData.fullName && formData.phoneNumber)) {
       try {
         const res = await axios.post('http://localhost:8080/api/v1/customer/guest-create', {
           fullName: formData.fullName,
@@ -222,7 +229,6 @@ useEffect(() => {
       }
     }
 
-
     const submitData = {
       ...formData,
       customerId: customerIdToSubmit,
@@ -234,11 +240,8 @@ useEffect(() => {
       slot: formData.slot || "1", 
     };
 
-    // Only include userId if it's selected
     if (!submitData.userId) {
-      // toast.error('Vui lòng chọn một nhân viên.'); // Optional: require staff selection
-      // return;
-      delete submitData.userId; // Or allow booking without specific staff
+      delete submitData.userId;
     }
 
 
@@ -250,7 +253,6 @@ useEffect(() => {
     try {
       await axios.post('http://localhost:8080/api/v1/admin/appointment/create', submitData);
       toast.success('Đặt lịch thành công!');
-      // Reset form or parts of it
       setFormData(prev => ({
         ...prev,
         appointmentDate: '',
@@ -259,33 +261,10 @@ useEffect(() => {
         notes: '',
         userId: '',
         price: '',
-        // Keep customer info if they just booked
-        // fullName: '',
-        // phoneNumber: '',
-        // customerId: '',
       }));
       setSelectedStaffId(null);
       setSlotInfo(null);
-      setStaffAvailabilityInfo(null);
-
-      // Re-fetch available slots for the date (if date and service are still relevant or cleared)
-      if (formData.appointmentDate && formData.serviceId && formData.timeSlotId) {
-          axios.get('http://localhost:8080/api/v1/timeslot/available', {
-            params: {
-              date: formData.appointmentDate, // This will be the old date before reset, consider logic here
-              serviceId: formData.serviceId,
-              timeSlotId: formData.timeSlotId
-            }
-          }).then(res => {
-            if (res.data.data && res.data.data.availableSlot !== undefined) {
-              setSlotInfo(res.data.data);
-            } else if (res.data.availableSlot !== undefined) {
-              setSlotInfo(res.data);
-            } else {
-              setSlotInfo(null);
-            }
-          });
-      }
+      setStaffAvailabilities({});
 
     } catch (error) {
       if (error.response) {
@@ -300,18 +279,18 @@ useEffect(() => {
     staff.fullName && staff.fullName.toLowerCase().includes(staffSearchTerm.toLowerCase())
   );
 
-  // Helper to render stars
   const renderStars = (rating) => {
     const totalStars = 5;
     const filledStars = Math.round(rating || 0);
     return Array(totalStars).fill(0).map((_, index) => (
       <span key={index} style={{ color: index < filledStars ? '#ffc107' : '#e4e5e9', fontSize: '1em' }}>
-        &#9733; {/* Star character */}
+        &#9733;
       </span>
     ));
   };
 
 
+  // --- BẮT ĐẦU PHẦN GIAO DIỆN (JSX) ---
   return (
     <div className="container-fluid appointment py-5">
       <ToastContainer />
@@ -323,6 +302,7 @@ useEffect(() => {
               <h1 className="display-4 mb-4 text-white">Get Appointment</h1>
               <form onSubmit={handleSubmit}>
                 <div className="row gy-3 gx-4">
+                  {/* Customer Info Inputs */}
                   <div className="col-lg-6">
                     <input
                       type="text"
@@ -345,6 +325,8 @@ useEffect(() => {
                       style={{ color: 'white' }}
                     />
                   </div>
+                  
+                  {/* Service, Date, TimeSlot Selectors */}
                   <div className="col-lg-6">
                     <select
                       name="serviceId"
@@ -367,6 +349,7 @@ useEffect(() => {
                       value={formData.appointmentDate}
                       onChange={handleInputChange}
                       className="form-control py-3 border-white bg-transparent text-white custom-date-picker"
+                      min={new Date().toISOString().split("T")[0]} // Prevent selecting past dates
                     />
                   </div>
                   <div className="col-lg-12">
@@ -398,79 +381,8 @@ useEffect(() => {
                     </select>
                   </div>
 
-                  {/* Staff Search Input */}
-                  <div className="col-lg-12 mt-3">
-                      <input
-                          type="text"
-                          className="form-control py-3 border-white bg-transparent text-white custom-placeholder"
-                          placeholder="Tìm kiếm nhân viên theo tên..."
-                          value={staffSearchTerm}
-                          onChange={(e) => setStaffSearchTerm(e.target.value)}
-                          style={{ color: 'white' }}
-                      />
-                  </div>
-
-                  {/* Horizontal Staff List */}
-                  <div className="col-lg-12 mt-1">
-                    {/* <p className="text-white mb-2">Chọn nhân viên:</p> */}
-                    <div className="staff-list-horizontal py-2" style={{ display: 'flex', overflowX: 'auto', gap: '15px', minHeight: '220px' }}>
-                        {filteredStaffList.length > 0 ? filteredStaffList.map(staff => (
-                            <div
-                                key={staff.id}
-                                className={`staff-card p-3 border ${selectedStaffId === staff.id ? 'border-primary shadow' : 'border-secondary'}`}
-                                style={{
-                                    minWidth: '180px',
-                                    maxWidth: '180px',
-                                    backgroundColor: selectedStaffId === staff.id ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255,255,255,0.05)',
-                                    borderRadius: '8px',
-                                    textAlign: 'center',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s ease-in-out',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    justifyContent: 'space-between'
-                                }}
-                                onClick={() => handleStaffSelect(staff.id)}
-                            >
-                                <div>
-                                    <img
-                                        src={staff.imageUrl || '/default-avatar.png'} // Ensure you have a default avatar
-                                        alt={staff.fullName}
-                                        style={{ width: '70px', height: '70px', borderRadius: '50%', marginBottom: '10px', objectFit: 'cover', border: '2px solid white' }}
-                                    />
-                                    <h6 className="text-white mb-1" style={{ fontSize: '0.9rem' }}>{staff.fullName}</h6>
-                                    <p className="text-muted small mb-1" style={{ fontSize: '0.8rem' }}>
-                                        {/* Use staff.level or staff.skillsText. Your User model has skillsText */}
-                                        Level: {staff.skillsText || 'N/A'}
-                                    </p>
-                                    <div className="mb-2">
-                                        {renderStars(staff.averageRating)}
-                                        <span className="text-white-50 small ms-1" style={{ fontSize: '0.75rem' }}>({staff.totalReviews || 0})</span>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    className={`btn btn-sm w-100 mt-auto ${selectedStaffId === staff.id ? 'btn-primary' : 'btn-outline-light'}`}
-                                >
-                                    {selectedStaffId === staff.id ? <><i className="fas fa-check me-1"></i> Đã chọn</> : 'Chọn'}
-                                </button>
-                            </div>
-                        )) : (
-                            <div className="d-flex align-items-center justify-content-center w-100" style={{ minHeight: '150px'}}>
-                                <p className="text-white-50">Không có nhân viên nào phù hợp hoặc sẵn có.</p>
-                            </div>
-                        )}
-                    </div>
-                  </div>
-
-
-                  {staffAvailabilityInfo && (
-                    <div className="col-lg-12 mt-2" style={{ color: staffAvailabilityInfo.isAvailable ? 'lightgreen' : 'coral', fontSize: '0.9em' }}>
-                      {staffAvailabilityInfo.message}
-                    </div>
-                  )}
-
-                  {slotInfo && (
+                  {/* Available Slot Info */}
+                   {slotInfo && (
                     <div className="col-lg-12 mt-2">
                       <div className="d-flex align-items-center">
                         <span className="me-2 text-white">
@@ -495,6 +407,101 @@ useEffect(() => {
                     </div>
                   )}
 
+                  {/* Staff Search Input */}
+                  <div className="col-lg-12 mt-3">
+                      <input
+                        type="text"
+                        className="form-control py-3 border-white bg-transparent text-white custom-placeholder"
+                        placeholder="Tìm kiếm nhân viên theo tên..."
+                        value={staffSearchTerm}
+                        onChange={(e) => setStaffSearchTerm(e.target.value)}
+                        style={{ color: 'white' }}
+                      />
+                  </div>
+
+                  {/* Horizontal Staff List */}
+                  <div className="col-lg-12 mt-1">
+                    <div className="staff-list-horizontal py-2" style={{ display: 'flex', overflowX: 'auto', gap: '15px', minHeight: '220px' }}>
+                      {/* --- THAY ĐỔI 3: Cập nhật giao diện thẻ nhân viên --- */}
+                      {filteredStaffList.length > 0 ? filteredStaffList.map(staff => {
+                        const availability = staffAvailabilities[staff.id];
+                        const isBusy = availability?.isAvailable === false;
+                        const isSelected = selectedStaffId === staff.id;
+                        const canCheck = formData.appointmentDate && formData.timeSlotId && formData.serviceId;
+
+                        let buttonText = "Chọn";
+                        if (isSelected) {
+                          buttonText = <><i className="fas fa-check me-1"></i> Đã chọn</>;
+                        } else if (isCheckingAvailabilities && canCheck && !availability) {
+                          buttonText = "Đang kiểm tra...";
+                        } else if (isBusy && canCheck) {
+                          buttonText = "Bận";
+                        }
+                        
+                        return (
+                          <div
+                            key={staff.id}
+                            className={`staff-card p-3 border ${isSelected ? 'border-primary shadow' : 'border-secondary'}`}
+                            style={{
+                              minWidth: '180px',
+                              maxWidth: '180px',
+                              backgroundColor: isSelected ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255,255,255,0.05)',
+                              borderRadius: '8px',
+                              textAlign: 'center',
+                              cursor: isBusy || (isCheckingAvailabilities && canCheck) ? 'not-allowed' : 'pointer',
+                              transition: 'all 0.3s ease-in-out',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between',
+                              opacity: isBusy && canCheck ? 0.6 : 1, // Làm mờ nếu nhân viên bận
+                              position: 'relative'
+                            }}
+                            onClick={() => handleStaffSelect(staff.id)}
+                          >
+                            {/* Loading overlay */}
+                             {isCheckingAvailabilities && canCheck && !availability && (
+                                <div style={{
+                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
+                                    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 2, display: 'flex',
+                                    alignItems: 'center', justifyContent: 'center', borderRadius: '8px'
+                                }}>
+                                    <div className="spinner-border spinner-border-sm text-light" role="status"></div>
+                                </div>
+                             )}
+
+                            <div>
+                              <img
+                                src={staff.imageUrl || '/default-avatar.png'}
+                                alt={staff.fullName}
+                                style={{ width: '70px', height: '70px', borderRadius: '50%', marginBottom: '10px', objectFit: 'cover', border: '2px solid white' }}
+                              />
+                              <h6 className="text-white mb-1" style={{ fontSize: '0.9rem' }}>{staff.fullName}</h6>
+                              <p className="text-muted small mb-1" style={{ fontSize: '0.8rem' }}>
+                                Level: {staff.skillsText || 'N/A'}
+                              </p>
+                              <div className="mb-2">
+                                {renderStars(staff.averageRating)}
+                                <span className="text-white-50 small ms-1" style={{ fontSize: '0.75rem' }}>({staff.totalReviews || 0})</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className={`btn btn-sm w-100 mt-auto ${isSelected ? 'btn-primary' : isBusy && canCheck ? 'btn-danger' : 'btn-outline-light'}`}
+                              disabled={ (isBusy && canCheck) || (isCheckingAvailabilities && canCheck)}
+                            >
+                              {buttonText}
+                            </button>
+                          </div>
+                        )
+                      }) : (
+                        <div className="d-flex align-items-center justify-content-center w-100" style={{ minHeight: '150px'}}>
+                          <p className="text-white-50">Không có nhân viên nào phù hợp hoặc sẵn có.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Notes and Submit Buttons */}
                   <div className="col-lg-12 mt-3">
                     <textarea
                       name="notes"
@@ -531,7 +538,6 @@ useEffect(() => {
           <div className="col-lg-6">
             <div className="appointment-time p-5">
               <h1 className="display-5 mb-4 text-white">Opening Hours</h1>
-              {/* Opening hours remain the same */}
               <div className="d-flex justify-content-between fs-5 text-white">
                 <p>Saturday:</p>
                 <p>09:00 am – 10:00 pm</p>
@@ -549,7 +555,7 @@ useEffect(() => {
                 <p>09:00 am – 10:00 pm</p>
               </div>
               <div className="d-flex justify-content-between fs-5 text-white">
-                <p>Wednesday:</p> {/* Corrected spelling */}
+                <p>Wednesday:</p>
                 <p>09:00 am – 08:00 pm</p>
               </div>
               <div className="d-flex justify-content-between fs-5 text-white mb-4">
@@ -560,7 +566,7 @@ useEffect(() => {
                 <p>Friday:</p>
                 <p>CLOSED</p>
               </div>
-              <p className="text-white-50">Check out seasonal discounts for best offers.</p> {/* Adjusted text color for contrast */}
+              <p className="text-white-50">Check out seasonal discounts for best offers.</p>
             </div>
           </div>
         </div>
@@ -570,24 +576,24 @@ useEffect(() => {
           color: white !important;
         }
         .text-white-option option {
-          color: black !important; /* For dropdown options */
+          color: black !important;
           background-color: white !important;
         }
         .text-white-option option:disabled {
           color: #999 !important;
         }
         .form-control.custom-placeholder::placeholder {
-          color: #ccc; /* Light gray placeholder text */
-          opacity: 1; /* Firefox */
+          color: #ccc;
+          opacity: 1;
         }
-        .form-control.custom-placeholder:-ms-input-placeholder { /* Internet Explorer 10-11 */
+        .form-control.custom-placeholder:-ms-input-placeholder {
           color: #ccc;
         }
-        .form-control.custom-placeholder::-ms-input-placeholder { /* Microsoft Edge */
+        .form-control.custom-placeholder::-ms-input-placeholder {
           color: #ccc;
         }
         .custom-date-picker::-webkit-calendar-picker-indicator {
-            filter: invert(1); /* Makes the calendar icon white */
+            filter: invert(1);
         }
         .staff-list-horizontal::-webkit-scrollbar {
             height: 8px;
@@ -607,9 +613,10 @@ useEffect(() => {
             transform: translateY(-5px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        /* Add Font Awesome if you need icons like the checkmark */
-        /* You can link it in your public/index.html */
-        /* e.g., <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" /> */
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
       `}</style>
     </div>
   );
