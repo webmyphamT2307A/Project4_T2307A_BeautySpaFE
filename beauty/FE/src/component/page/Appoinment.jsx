@@ -2,6 +2,11 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 
 const Appointment = () => {
@@ -12,7 +17,7 @@ const Appointment = () => {
     serviceId: '',
     notes: '',
     customerId: '',
-    userId: '', // This will store the selected staff's ID
+    userId: '', 
     branchId: '',
     timeSlotId: '',
     slot: '',
@@ -27,9 +32,9 @@ const Appointment = () => {
   // --- THAY ĐỔI 1: State mới để quản lý lịch rảnh của TẤT CẢ nhân viên ---
   const [staffAvailabilities, setStaffAvailabilities] = useState({}); // { staffId: { isAvailable, message } }
   const [isCheckingAvailabilities, setIsCheckingAvailabilities] = useState(false);
-
   const [staffSearchTerm, setStaffSearchTerm] = useState('');
   const [selectedStaffId, setSelectedStaffId] = useState(null); // To track visually selected staff
+  const [showStaffSearch, setShowStaffSearch] = useState(false); // State để ẩn/hiện search
 
   // Fetch services
   useEffect(() => {
@@ -292,137 +297,203 @@ const Appointment = () => {
 
   // --- BẮT ĐẦU PHẦN GIAO DIỆN (JSX) ---
   return (
-    <div className="container-fluid appointment py-5">
-      <ToastContainer />
-      <div className="container py-5">
-        <div className="row g-5 align-items-center">
-          <div className="col-lg-6">
-            <div className="appointment-form p-5">
-              <p className="fs-4 text-uppercase text-primary">Get In Touch</p>
-              <h1 className="display-4 mb-4 text-white">Get Appointment</h1>
-              <form onSubmit={handleSubmit}>
-                <div className="row gy-3 gx-4">
-                  {/* Customer Info Inputs */}
-                  <div className="col-lg-6">
-                    <input
-                      type="text"
-                      name="fullName"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      className="form-control py-3 border-white bg-transparent text-white custom-placeholder"
-                      placeholder="Full Name"
-                      style={{ color: 'white' }}
-                    />
-                  </div>
-                  <div className="col-lg-6">
-                    <input
-                      type="text"
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      className="form-control py-3 border-white bg-transparent text-white custom-placeholder"
-                      placeholder="Phone Number"
-                      style={{ color: 'white' }}
-                    />
-                  </div>
-                  
-                  {/* Service, Date, TimeSlot Selectors */}
-                  <div className="col-lg-6">
-                    <select
-                      name="serviceId"
-                      value={formData.serviceId}
-                      onChange={handleInputChange}
-                      className="form-select py-3 border-white bg-transparent text-white-option"
-                    >
-                      <option value="" style={{ color: 'black' }}>Select Service</option>
-                      {services.map(service => (
-                        <option key={service.id} value={service.id} style={{ color: 'black' }}>
-                          {service.name} - {service.price}$
+  <div className="container-fluid appointment py-5">
+    <ToastContainer />
+    <div className="container py-5">
+      <div className="row g-5 align-items-center">
+        <div className="col-lg-6">
+          <div 
+            className="appointment-form p-4 position-relative overflow-hidden" 
+            style={{ 
+              height: '650px', // Cố định chiều cao
+              maxWidth: '100%'
+            }}
+          >
+            <p className="fs-4 text-uppercase text-primary">Get In Touch</p>
+            <h1 className="display-4 mb-2 text-white">Get Appointment</h1>
+            <form onSubmit={handleSubmit}>
+              <div className="row gy-2 gx-3">
+                {/* Customer Info Inputs */}
+                <div className="col-lg-6 col-12">
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    className="form-control py-2 border-white bg-transparent text-white custom-placeholder text-truncate"
+                    placeholder="Full Name"
+                    style={{ 
+                      color: 'white',
+                      maxWidth: '100%',
+                      height: '40px' // Giảm chiều cao
+                    }}
+                  />
+                </div>
+                <div className="col-lg-6 col-12">
+                  <input
+                    type="text"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    className="form-control py-2 border-white bg-transparent text-white custom-placeholder text-truncate"
+                    placeholder="Phone Number"
+                    style={{ 
+                      color: 'white',
+                      maxWidth: '100%',
+                      height: '40px'
+                    }}
+                  />
+                </div>
+                
+                {/* Service, Date, TimeSlot Selectors */}
+                <div className="col-lg-6 col-12">
+                  <select
+                    name="serviceId"
+                    value={formData.serviceId}
+                    onChange={handleInputChange}
+                    className="form-select py-2 border-white bg-transparent text-white-option text-truncate"
+                    style={{ 
+                      maxWidth: '100%',
+                      height: '40px'
+                    }}
+                  >
+                    <option value="" style={{ color: 'black' }}>Select Service</option>
+                    {services.map(service => (
+                      <option key={service.id} value={service.id} style={{ color: 'black' }}>
+                        {service.name} - {service.price}$
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-lg-6 col-12">
+                  <input
+                    type="date"
+                    name="appointmentDate"
+                    value={formData.appointmentDate}
+                    onChange={handleInputChange}
+                    className="form-control py-2 border-white bg-transparent text-white custom-date-picker"
+                    min={new Date().toISOString().split("T")[0]}
+                    style={{ 
+                      maxWidth: '100%',
+                      height: '40px'
+                    }}
+                  />
+                </div>
+                <div className="col-12">
+                  <select
+                    name="timeSlotId"
+                    value={formData.timeSlotId}
+                    onChange={handleInputChange}
+                    className="form-select py-2 border-white bg-transparent text-white-option w-100 text-truncate"
+                    disabled={!formData.serviceId || !formData.appointmentDate}
+                    style={{ 
+                      maxWidth: '100%',
+                      height: '40px'
+                    }}
+                  >
+                    <option value="" style={{ color: 'black' }}>Chọn khung giờ</option>
+                    {timeSlots.map(slot => {
+                      const slotDateTimeStr = `${formData.appointmentDate}T${slot.endTime}:00`; 
+                      const slotEnd = new Date(slotDateTimeStr);
+                      const now = new Date();
+                      const isPast = formData.appointmentDate && slot.endTime ? slotEnd < now : false;
+
+                      return (
+                        <option
+                          key={slot.slotId}
+                          value={slot.slotId}
+                          disabled={isPast}
+                          style={{ color: isPast ? '#aaa' : 'black', backgroundColor: 'white' }}
+                        >
+                          {slot.startTime} - {slot.endTime} {isPast ? '(Đã qua)' : ''}
                         </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-lg-6">
-                    <input
-                      type="date"
-                      name="appointmentDate"
-                      value={formData.appointmentDate}
-                      onChange={handleInputChange}
-                      className="form-control py-3 border-white bg-transparent text-white custom-date-picker"
-                      min={new Date().toISOString().split("T")[0]} // Prevent selecting past dates
-                    />
-                  </div>
-                  <div className="col-lg-12">
-                    <select
-                      name="timeSlotId"
-                      value={formData.timeSlotId}
-                      onChange={handleInputChange}
-                      className="form-select py-3 border-white bg-transparent text-white-option w-100"
-                      disabled={!formData.serviceId || !formData.appointmentDate}
-                    >
-                      <option value="" style={{ color: 'black' }}>Chọn khung giờ</option>
-                      {timeSlots.map(slot => {
-                        const slotDateTimeStr = `${formData.appointmentDate}T${slot.endTime}:00`; 
-                        const slotEnd = new Date(slotDateTimeStr);
-                        const now = new Date();
-                        const isPast = formData.appointmentDate && slot.endTime ? slotEnd < now : false;
+                      );
+                    })}
+                  </select>
+                </div>
 
-                        return (
-                          <option
-                            key={slot.slotId}
-                            value={slot.slotId}
-                            disabled={isPast}
-                            style={{ color: isPast ? '#aaa' : 'black', backgroundColor: 'white' }}
-                          >
-                            {slot.startTime} - {slot.endTime} {isPast ? '(Đã qua)' : ''}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-
-                  {/* Available Slot Info */}
-                   {slotInfo && (
-                    <div className="col-lg-12 mt-2">
-                      <div className="d-flex align-items-center">
-                        <span className="me-2 text-white">
-                          <b>Còn lại:</b>
-                          <span className={`badge ms-1 ${slotInfo.availableSlot > 3 ? 'bg-success' : slotInfo.availableSlot > 0 ? 'bg-warning text-dark' : 'bg-danger'}`}>
-                            {slotInfo.availableSlot}/{slotInfo.totalSlot} slot
-                          </span>
+                {/* Available Slot Info */}
+                {slotInfo && (
+                  <div className="col-12">
+                    <div className="d-flex align-items-center" style={{ height: '25px' }}>
+                      <span className="me-2 text-white text-truncate" style={{ fontSize: '0.75rem' }}>
+                        <b>Còn lại:</b>
+                        <span className={`badge ms-1 ${slotInfo.availableSlot > 3 ? 'bg-success' : slotInfo.availableSlot > 0 ? 'bg-warning text-dark' : 'bg-danger'}`}>
+                          {slotInfo.availableSlot}/{slotInfo.totalSlot} slot
                         </span>
-                        <div className="flex-grow-1 ms-2" style={{ minWidth: 80 }}>
-                          <div className="progress" style={{ height: 8, backgroundColor: 'rgba(255,255,255,0.2)' }}>
-                            <div
-                              className={`progress-bar ${slotInfo.availableSlot === 0 ? 'bg-danger' : slotInfo.availableSlot <= 3 ? 'bg-warning' : 'bg-success'}`}
-                              role="progressbar"
-                              style={{ width: `${(slotInfo.availableSlot / slotInfo.totalSlot) * 100}%` }}
-                              aria-valuenow={slotInfo.availableSlot}
-                              aria-valuemin="0"
-                              aria-valuemax={slotInfo.totalSlot}
-                            />
-                          </div>
+                      </span>
+                      <div className="flex-grow-1 ms-2" style={{ minWidth: '60px', maxWidth: '80px' }}>
+                        <div className="progress" style={{ height: 4, backgroundColor: 'rgba(255,255,255,0.2)' }}>
+                          <div
+                            className={`progress-bar ${slotInfo.availableSlot === 0 ? 'bg-danger' : slotInfo.availableSlot <= 3 ? 'bg-warning' : 'bg-success'}`}
+                            role="progressbar"
+                            style={{ width: `${(slotInfo.availableSlot / slotInfo.totalSlot) * 100}%` }}
+                            aria-valuenow={slotInfo.availableSlot}
+                            aria-valuemin="0"
+                            aria-valuemax={slotInfo.totalSlot}
+                          />
                         </div>
                       </div>
                     </div>
-                  )}
-
-                  {/* Staff Search Input */}
-                  <div className="col-lg-12 mt-3">
-                      <input
-                        type="text"
-                        className="form-control py-3 border-white bg-transparent text-white custom-placeholder"
-                        placeholder="Tìm kiếm nhân viên theo tên..."
-                        value={staffSearchTerm}
-                        onChange={(e) => setStaffSearchTerm(e.target.value)}
-                        style={{ color: 'white' }}
-                      />
                   </div>
+                )}                {/* Staff Section với Search Icon */}
+                <div className="col-12">
+                  <div className="position-relative">                    {/* Search Icon ở góc trên phải */}
+                    <div 
+                      className="position-absolute top-0 end-0 d-flex align-items-center justify-content-center staff-search-icon"
+                      style={{
+                        width: '30px',
+                        height: '30px',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        zIndex: 10,
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        transform: 'translateY(-5px)' // Đẩy lên trên một chút
+                      }}
+                      onClick={() => setShowStaffSearch(!showStaffSearch)}
+                    >
+                      <i className={`fas ${showStaffSearch ? 'fa-times' : 'fa-search'} text-white`} style={{ fontSize: '12px' }}></i>
+                    </div>
 
-                  {/* Horizontal Staff List */}
-                  <div className="col-lg-12 mt-1">
-                    <div className="staff-list-horizontal py-2" style={{ display: 'flex', overflowX: 'auto', gap: '15px', minHeight: '220px' }}>
-                      {/* --- THAY ĐỔI 3: Cập nhật giao diện thẻ nhân viên --- */}
+                    {/* Staff Search Input - Conditionally rendered */}
+                    {showStaffSearch && (
+                      <div className="mb-2">
+                        <input
+                          type="text"
+                          className="form-control py-2 border-white bg-transparent text-white custom-placeholder text-truncate"
+                          placeholder="Tìm kiếm nhân viên theo tên..."
+                          value={staffSearchTerm}
+                          onChange={(e) => setStaffSearchTerm(e.target.value)}
+                          style={{ 
+                            color: 'white',
+                            maxWidth: '100%',
+                            height: '40px'
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Horizontal Staff List với Swiper */}
+                <div className="col-12">
+                  <div className="position-relative">
+                    <Swiper
+                      modules={[Navigation]}
+                      spaceBetween={10}
+                      slidesPerView={'auto'}
+                      navigation={{
+                        nextEl: '.swiper-button-next-custom',
+                        prevEl: '.swiper-button-prev-custom',
+                      }}
+                      className="staff-swiper"
+                      style={{ 
+                        height: '150px', // Tăng chiều cao
+                        paddingLeft: '0px',
+                        paddingRight: '0px'
+                      }}
+                    >
                       {filteredStaffList.length > 0 ? filteredStaffList.map(staff => {
                         const availability = staffAvailabilities[staff.id];
                         const isBusy = availability?.isAvailable === false;
@@ -439,186 +510,300 @@ const Appointment = () => {
                         }
                         
                         return (
-                          <div
+                          <SwiperSlide 
                             key={staff.id}
-                            className={`staff-card p-3 border ${isSelected ? 'border-primary shadow' : 'border-secondary'}`}
-                            style={{
-                              minWidth: '180px',
-                              maxWidth: '180px',
-                              backgroundColor: isSelected ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255,255,255,0.05)',
-                              borderRadius: '8px',
-                              textAlign: 'center',
-                              cursor: isBusy || (isCheckingAvailabilities && canCheck) ? 'not-allowed' : 'pointer',
-                              transition: 'all 0.3s ease-in-out',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              justifyContent: 'space-between',
-                              opacity: isBusy && canCheck ? 0.6 : 1, // Làm mờ nếu nhân viên bận
-                              position: 'relative'
-                            }}
-                            onClick={() => handleStaffSelect(staff.id)}
+                            style={{ width: '130px' }} // Tăng chiều rộng
                           >
-                            {/* Loading overlay */}
-                             {isCheckingAvailabilities && canCheck && !availability && (
-                                <div style={{
-                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
-                                    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 2, display: 'flex',
-                                    alignItems: 'center', justifyContent: 'center', borderRadius: '8px'
-                                }}>
-                                    <div className="spinner-border spinner-border-sm text-light" role="status"></div>
-                                </div>
-                             )}
-
-                            <div>
-                              <img
-                                src={staff.imageUrl || '/default-avatar.png'}
-                                alt={staff.fullName}
-                                style={{ width: '70px', height: '70px', borderRadius: '50%', marginBottom: '10px', objectFit: 'cover', border: '2px solid white' }}
-                              />
-                              <h6 className="text-white mb-1" style={{ fontSize: '0.9rem' }}>{staff.fullName}</h6>
-                              <p className="text-muted small mb-1" style={{ fontSize: '0.8rem' }}>
-                                Level: {staff.skillsText || 'N/A'}
-                              </p>
-                              <div className="mb-2">
-                                {renderStars(staff.averageRating)}
-                                <span className="text-white-50 small ms-1" style={{ fontSize: '0.75rem' }}>({staff.totalReviews || 0})</span>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              className={`btn btn-sm w-100 mt-auto ${isSelected ? 'btn-primary' : isBusy && canCheck ? 'btn-danger' : 'btn-outline-light'}`}
-                              disabled={ (isBusy && canCheck) || (isCheckingAvailabilities && canCheck)}
+                            <div
+                              className={`staff-card p-2 border rounded d-flex flex-column justify-content-between text-center position-relative ${isSelected ? 'border-primary shadow' : 'border-secondary'}`}
+                              style={{
+                                width: '130px', // Tăng chiều rộng
+                                height: '130px', // Tăng chiều cao
+                                backgroundColor: isSelected ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255,255,255,0.05)',
+                                cursor: isBusy || (isCheckingAvailabilities && canCheck) ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.3s ease-in-out',
+                                opacity: isBusy && canCheck ? 0.6 : 1,
+                              }}
+                              onClick={() => handleStaffSelect(staff.id)}
                             >
-                              {buttonText}
-                            </button>
-                          </div>
+                              {/* Loading overlay */}
+                              {isCheckingAvailabilities && canCheck && !availability && (
+                                <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded" style={{
+                                  backgroundColor: 'rgba(0,0,0,0.5)', 
+                                  zIndex: 2
+                                }}>
+                                  <div className="spinner-border spinner-border-sm text-light" role="status"></div>
+                                </div>
+                              )}
+
+                              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div>
+                                  <img
+                                    src={staff.imageUrl || '/default-avatar.png'}
+                                    alt={staff.fullName}
+                                    className="rounded-circle border border-white mb-1"
+                                    style={{ 
+                                      width: '45px', 
+                                      height: '45px', 
+                                      objectFit: 'cover',
+                                      borderWidth: '1px !important'
+                                    }}
+                                  />
+                                  <h6 className="text-white mb-1 text-truncate" style={{ 
+                                    fontSize: '0.65rem',
+                                    lineHeight: '1.1'
+                                  }}>
+                                    {staff.fullName}
+                                  </h6>
+                                </div>
+                                
+                                <div style={{ minHeight: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                  <p className="text-muted small mb-1" style={{ 
+                                    fontSize: '0.55rem',
+                                    lineHeight: '1.1',
+                                    margin: '0',
+                                    padding: '0 1px',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    height: 'auto'
+                                  }}>
+                                    {staff.skillsText || 'N/A'}
+                                  </p>
+                                  
+                                  <div className="mb-1" style={{ fontSize: '0.7rem' }}>
+                                    {renderStars(staff.averageRating)}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <button
+                                type="button"
+                                className={`btn btn-sm w-100 ${isSelected ? 'btn-primary' : isBusy && canCheck ? 'btn-danger' : 'btn-outline-light'}`}
+                                disabled={(isBusy && canCheck) || (isCheckingAvailabilities && canCheck)}
+                                style={{ 
+                                  fontSize: '0.55rem', 
+                                  padding: '2px 4px', 
+                                  height: '22px',
+                                  marginTop: 'auto'
+                                }}
+                              >
+                                {buttonText}
+                              </button>
+                            </div>
+                          </SwiperSlide>
                         )
                       }) : (
-                        <div className="d-flex align-items-center justify-content-center w-100" style={{ minHeight: '150px'}}>
-                          <p className="text-white-50">Không có nhân viên nào phù hợp hoặc sẵn có.</p>
-                        </div>
+                        <SwiperSlide>
+                          <div className="d-flex align-items-center justify-content-center w-100" style={{ minHeight: '110px'}}>
+                            <p className="text-white-50" style={{ fontSize: '0.7rem' }}>Không có nhân viên nào phù hợp hoặc sẵn có.</p>
+                          </div>
+                        </SwiperSlide>
                       )}
+                    </Swiper>
+
+                    {/* Custom Navigation Arrows */}
+                    <div className="swiper-button-prev-custom position-absolute top-50 start-0 translate-middle-y" style={{ 
+                      zIndex: 10,
+                      left: '-15px',
+                      width: '30px',
+                      height: '30px',
+                      backgroundColor: 'rgba(0,0,0,0.5)',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: 'white',
+                      fontSize: '14px'
+                    }}>
+                      <i className="fas fa-chevron-left"></i>
+                    </div>
+                    
+                    <div className="swiper-button-next-custom position-absolute top-50 end-0 translate-middle-y" style={{ 
+                      zIndex: 10,
+                      right: '-15px',
+                      width: '30px',
+                      height: '30px',
+                      backgroundColor: 'rgba(0,0,0,0.5)',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: 'white',
+                      fontSize: '14px'
+                    }}>
+                      <i className="fas fa-chevron-right"></i>
                     </div>
                   </div>
-
-                  {/* Notes and Submit Buttons */}
-                  <div className="col-lg-12 mt-3">
-                    <textarea
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleInputChange}
-                      className="form-control border-white bg-transparent text-white custom-placeholder"
-                      cols="30"
-                      rows="5"
-                      placeholder="Write Comments"
-                      style={{ color: 'white' }}
-                    />
-                  </div>
-                  <div className="col-lg-6">
-                    <button
-                      type="button"
-                      onClick={handleUseAccountInfo}
-                      className="btn btn-outline-light w-100 py-3"
-                    >
-                      Dùng thông tin tài khoản
-                    </button>
-                  </div>
-                  <div className="col-lg-6">
-                    <button
-                      type="submit"
-                      className="btn btn-primary w-100 py-3"
-                    >
-                      Submit Now
-                    </button>
-                  </div>
                 </div>
-              </form>
-            </div>
+
+                {/* Notes */}
+                <div className="col-12">
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    className="form-control border-white bg-transparent text-white custom-placeholder"
+                    cols="30"
+                    rows="2"
+                    placeholder="Write Comments"
+                    style={{ 
+                      color: 'white',
+                      resize: 'none',
+                      height: '60px', // Giảm chiều cao
+                      maxWidth: '100%',
+                      fontSize: '0.8rem'
+                    }}
+                  />
+                </div>
+                
+                {/* Submit Buttons - QUAN TRỌNG: Phần này cần hiển thị */}
+                <div className="col-lg-6 col-12">
+                  <button
+                    type="button"
+                    onClick={handleUseAccountInfo}
+                    className="btn btn-outline-light w-100"
+                    style={{ 
+                      height: '35px',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    Dùng thông tin tài khoản
+                  </button>
+                </div>
+                <div className="col-lg-6 col-12">
+                  <button
+                    type="submit"
+                    className="btn btn-primary w-100"
+                    style={{ 
+                      height: '35px',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    Submit Now
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
-          <div className="col-lg-6">
-            <div className="appointment-time p-5">
-              <h1 className="display-5 mb-4 text-white">Opening Hours</h1>
-              <div className="d-flex justify-content-between fs-5 text-white">
-                <p>Saturday:</p>
-                <p>09:00 am – 10:00 pm</p>
-              </div>
-              <div className="d-flex justify-content-between fs-5 text-white">
-                <p>Sunday:</p>
-                <p>09:00 am – 10:00 pm</p>
-              </div>
-              <div className="d-flex justify-content-between fs-5 text-white">
-                <p>Monday:</p>
-                <p>09:00 am – 10:00 pm</p>
-              </div>
-              <div className="d-flex justify-content-between fs-5 text-white">
-                <p>Tuesday:</p>
-                <p>09:00 am – 10:00 pm</p>
-              </div>
-              <div className="d-flex justify-content-between fs-5 text-white">
-                <p>Wednesday:</p>
-                <p>09:00 am – 08:00 pm</p>
-              </div>
-              <div className="d-flex justify-content-between fs-5 text-white mb-4">
-                <p>Thursday:</p>
-                <p>09:00 am – 05:00 pm</p>
-              </div>
-              <div className="d-flex justify-content-between fs-5 text-white mb-4">
-                <p>Friday:</p>
-                <p>CLOSED</p>
-              </div>
-              <p className="text-white-50">Check out seasonal discounts for best offers.</p>
+        </div>
+        <div className="col-lg-6">
+          <div className="appointment-time p-5">
+            <h1 className="display-5 mb-4 text-white">Opening Hours</h1>
+            <div className="d-flex justify-content-between fs-5 text-white">
+              <p>Saturday:</p>
+              <p>09:00 am – 10:00 pm</p>
             </div>
+            <div className="d-flex justify-content-between fs-5 text-white">
+              <p>Sunday:</p>
+              <p>09:00 am – 10:00 pm</p>
+            </div>
+            <div className="d-flex justify-content-between fs-5 text-white">
+              <p>Monday:</p>
+              <p>09:00 am – 10:00 pm</p>
+            </div>
+            <div className="d-flex justify-content-between fs-5 text-white">
+              <p>Tuesday:</p>
+              <p>09:00 am – 10:00 pm</p>
+            </div>
+            <div className="d-flex justify-content-between fs-5 text-white">
+              <p>Wednesday:</p>
+              <p>09:00 am – 08:00 pm</p>
+            </div>
+            <div className="d-flex justify-content-between fs-5 text-white mb-4">
+              <p>Thursday:</p>
+              <p>09:00 am – 05:00 pm</p>
+            </div>
+            <div className="d-flex justify-content-between fs-5 text-white mb-4">
+              <p>Friday:</p>
+              <p>CLOSED</p>
+            </div>
+            <p className="text-white-50">Check out seasonal discounts for best offers.</p>
           </div>
         </div>
       </div>
-      <style jsx global>{`
-        .text-white-option {
-          color: white !important;
-        }
-        .text-white-option option {
-          color: black !important;
-          background-color: white !important;
-        }
-        .text-white-option option:disabled {
-          color: #999 !important;
-        }
-        .form-control.custom-placeholder::placeholder {
-          color: #ccc;
-          opacity: 1;
-        }
-        .form-control.custom-placeholder:-ms-input-placeholder {
-          color: #ccc;
-        }
-        .form-control.custom-placeholder::-ms-input-placeholder {
-          color: #ccc;
-        }
-        .custom-date-picker::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-        }
-        .staff-list-horizontal::-webkit-scrollbar {
-            height: 8px;
-        }
-        .staff-list-horizontal::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-        }
-        .staff-list-horizontal::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.3);
-            border-radius: 10px;
-        }
-        .staff-list-horizontal::-webkit-scrollbar-thumb:hover {
-            background: rgba(255,255,255,0.5);
-        }
-        .staff-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
-        }
-      `}</style>
     </div>
+    <style jsx global>{`
+      .text-white-option {
+        color: white !important;
+      }
+      .text-white-option option {
+        color: black !important;
+        background-color: white !important;
+      }
+      .text-white-option option:disabled {
+        color: #999 !important;
+      }
+      .form-control.custom-placeholder::placeholder {
+        color: #ccc;
+        opacity: 1;
+      }
+      .form-control.custom-placeholder:-ms-input-placeholder {
+        color: #ccc;
+      }
+      .form-control.custom-placeholder::-ms-input-placeholder {
+        color: #ccc;
+      }
+      .custom-date-picker::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+      }
+      
+      /* Swiper Custom Styles */
+      .staff-swiper .swiper-wrapper {
+        align-items: center;
+      }
+      
+      .swiper-button-prev-custom:hover,
+      .swiper-button-next-custom:hover {
+        background-color: rgba(0,0,0,0.8) !important;
+        transform: scale(1.1);
+        transition: all 0.3s ease;
+      }
+      
+      .swiper-button-disabled {
+        opacity: 0.3 !important;
+        cursor: not-allowed !important;
+      }
+      
+      .staff-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      }
+      
+      .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+      }
+      
+      /* Search icon styles */
+      .search-icon {
+        transition: all 0.3s ease;
+      }
+      
+      .search-icon:hover {
+        background-color: rgba(0,0,0,0.8) !important;
+        transform: scale(1.1);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      }
+      
+      /* Skill text responsive */
+      .staff-card p.text-muted {
+        word-break: break-word !important;
+        hyphens: auto !important;
+        -webkit-hyphens: auto !important;
+        -moz-hyphens: auto !important;
+      }
+      
+      /* Ensure text fits in container */
+      .staff-card .text-truncate {
+        max-width: 100% !important;
+        display: block !important;
+      }
+    `}</style>
+  </div>
   );
 };
 
