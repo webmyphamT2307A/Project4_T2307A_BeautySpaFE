@@ -443,14 +443,24 @@ const handleImageChange = async (event) => {
                         <TableCell>{getBranchName(user)}</TableCell>
                         <TableCell>
                           <Chip
-                            label={user.isActive ==1  ? "Active" : "Inactive"}
+                            label={
+                              user.isActive === 1   ? "Active" :
+                              user.isActive === 0   ? "Inactive" :
+                              user.isActive === -1  ? "Deleted" :
+                              ""
+                            }
                             size="small"
-                            color={user.isActive ==1 ? "success" : "default"}
+                            color={
+                              user.isActive === 1   ? "success" :
+                              user.isActive === 0   ? "default" :
+                              user.isActive === -1  ? "error" :
+                              "default"
+                            }
                             sx={{
                               borderRadius: '16px',
                               fontWeight: 500,
                               fontSize: '0.75rem',
-                              color: user.isActive ==1 ? '#fff' : '#555',
+                              color: user.isActive === 1 ? '#fff' : undefined
                             }}
                           />
                         </TableCell>
@@ -473,7 +483,8 @@ const handleImageChange = async (event) => {
                         </TableCell>
                       </TableRow>
                     ))
-                  ) : (
+                  ) :
+                   (
                     <TableRow>
                       <TableCell colSpan={9} align="center">No admins found</TableCell>
                     </TableRow>
@@ -729,9 +740,19 @@ const handleImageChange = async (event) => {
                     {getRoleName(currentUser)}
                   </Typography>
                   <Chip
-                    label={currentUser.isActive ? "Active" : "Inactive"}
+                    label={
+                      currentUser.isActive === 1   ? "Active" :
+                      currentUser.isActive === 0   ? "Inactive" :
+                      currentUser.isActive === -1  ? "Deleted" :
+                      ""
+                    }
                     size="small"
-                    color={currentUser.isActive ? "success" : "default"}
+                    color={
+                      currentUser.isActive === 1   ? "success" :
+                      currentUser.isActive === 0   ? "default" :
+                      currentUser.isActive === -1  ? "error" :
+                      "default"
+                    }
                     sx={{ mt: 0.5, borderRadius: '16px' }}
                   />
                 </Box>
