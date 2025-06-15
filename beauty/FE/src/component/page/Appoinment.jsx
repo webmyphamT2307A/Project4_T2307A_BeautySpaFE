@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -280,9 +280,25 @@ const Appointment = () => {
     }
   };
 
-  const filteredStaffList = staffList.filter(staff =>
-    staff.fullName && staff.fullName.toLowerCase().includes(staffSearchTerm.toLowerCase())
-  );
+  // Sửa lại filtered staff list - không lọc khi chưa chọn service
+  const filteredStaffList = useMemo(() => {
+    try {
+      let filtered = staffList || [];
+      
+      // KHÔNG lọc theo service nữa - hiển thị tất cả staff
+      // Chỉ lọc theo search term
+      if (staffSearchTerm?.trim()) {
+        filtered = filtered.filter(staff => 
+          staff?.fullName?.toLowerCase().includes(staffSearchTerm.toLowerCase())
+        );
+      }
+      
+      return filtered;
+    } catch (error) {
+      console.error('Error in filteredStaffList:', error);
+      return [];
+    }
+  }, [staffList, staffSearchTerm]); 
 
   const renderStars = (rating) => {
     const totalStars = 5;
@@ -300,21 +316,22 @@ const Appointment = () => {
   <div className="container-fluid appointment py-5">
     <ToastContainer />
     <div className="container py-5">
-      <div className="row g-5 align-items-center">
-        <div className="col-lg-6">
+      <div className="row g-5 align-items-start"> {/* Thay đổi từ align-items-center */}
+        <div className="col-lg-6 col-12"> {/* Thêm col-12 cho mobile */}
           <div 
-            className="appointment-form p-4 position-relative overflow-hidden" 
+            className="appointment-form p-3 p-lg-4 position-relative overflow-hidden" 
             style={{ 
-              height: '650px', // Cố định chiều cao
+              height: 'auto', // Thay đổi từ cố định sang auto cho mobile
+              minHeight: '600px', // Thêm min-height
               maxWidth: '100%'
             }}
           >
             <p className="fs-4 text-uppercase text-primary">Get In Touch</p>
-            <h1 className="display-4 mb-2 text-white">Get Appointment</h1>
+            <h1 className="display-5 display-lg-4 mb-3 text-white">Get Appointment</h1> {/* Responsive heading */}
             <form onSubmit={handleSubmit}>
-              <div className="row gy-2 gx-3">
+              <div className="row gy-2 gx-2 gx-lg-3"> {/* Giảm gap cho mobile */}
                 {/* Customer Info Inputs */}
-                <div className="col-lg-6 col-12">
+                <div className="col-12 col-lg-6"> {/* Mobile full width */}
                   <input
                     type="text"
                     name="fullName"
@@ -325,11 +342,11 @@ const Appointment = () => {
                     style={{ 
                       color: 'white',
                       maxWidth: '100%',
-                      height: '40px' // Giảm chiều cao
+                      height: '45px'
                     }}
                   />
                 </div>
-                <div className="col-lg-6 col-12">
+                <div className="col-12 col-lg-6">
                   <input
                     type="text"
                     name="phoneNumber"
@@ -340,13 +357,13 @@ const Appointment = () => {
                     style={{ 
                       color: 'white',
                       maxWidth: '100%',
-                      height: '40px'
+                      height: '45px'
                     }}
                   />
                 </div>
                 
                 {/* Service, Date, TimeSlot Selectors */}
-                <div className="col-lg-6 col-12">
+                <div className="col-12 col-lg-6">
                   <select
                     name="serviceId"
                     value={formData.serviceId}
@@ -354,7 +371,7 @@ const Appointment = () => {
                     className="form-select py-2 border-white bg-transparent text-white-option text-truncate"
                     style={{ 
                       maxWidth: '100%',
-                      height: '40px'
+                      height: '45px'
                     }}
                   >
                     <option value="" style={{ color: 'black' }}>Select Service</option>
@@ -365,7 +382,7 @@ const Appointment = () => {
                     ))}
                   </select>
                 </div>
-                <div className="col-lg-6 col-12">
+                <div className="col-12 col-lg-6">
                   <input
                     type="date"
                     name="appointmentDate"
@@ -375,7 +392,7 @@ const Appointment = () => {
                     min={new Date().toISOString().split("T")[0]}
                     style={{ 
                       maxWidth: '100%',
-                      height: '40px'
+                      height: '45px'
                     }}
                   />
                 </div>
@@ -388,7 +405,7 @@ const Appointment = () => {
                     disabled={!formData.serviceId || !formData.appointmentDate}
                     style={{ 
                       maxWidth: '100%',
-                      height: '40px'
+                      height: '45px'
                     }}
                   >
                     <option value="" style={{ color: 'black' }}>Chọn khung giờ</option>
@@ -415,15 +432,15 @@ const Appointment = () => {
                 {/* Available Slot Info */}
                 {slotInfo && (
                   <div className="col-12">
-                    <div className="d-flex align-items-center" style={{ height: '25px' }}>
-                      <span className="me-2 text-white text-truncate" style={{ fontSize: '0.75rem' }}>
+                    <div className="d-flex align-items-center flex-wrap" style={{ gap: '8px' }}>
+                      <span className="text-white text-truncate" style={{ fontSize: '0.75rem' }}>
                         <b>Còn lại:</b>
                         <span className={`badge ms-1 ${slotInfo.availableSlot > 3 ? 'bg-success' : slotInfo.availableSlot > 0 ? 'bg-warning text-dark' : 'bg-danger'}`}>
                           {slotInfo.availableSlot}/{slotInfo.totalSlot} slot
                         </span>
                       </span>
-                      <div className="flex-grow-1 ms-2" style={{ minWidth: '60px', maxWidth: '80px' }}>
-                        <div className="progress" style={{ height: 4, backgroundColor: 'rgba(255,255,255,0.2)' }}>
+                      <div className="flex-grow-1" style={{ minWidth: '60px', maxWidth: '150px' }}>
+                        <div className="progress" style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.2)' }}>
                           <div
                             className={`progress-bar ${slotInfo.availableSlot === 0 ? 'bg-danger' : slotInfo.availableSlot <= 3 ? 'bg-warning' : 'bg-success'}`}
                             role="progressbar"
@@ -436,52 +453,69 @@ const Appointment = () => {
                       </div>
                     </div>
                   </div>
-                )}                {/* Staff Section với Search Icon */}
-                <div className="col-12">
-                  <div className="position-relative">                    {/* Search Icon ở góc trên phải */}
-                    <div 
-                      className="position-absolute top-0 end-0 d-flex align-items-center justify-content-center staff-search-icon"
-                      style={{
-                        width: '30px',
-                        height: '30px',
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        borderRadius: '50%',
-                        cursor: 'pointer',
-                        zIndex: 10,
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        transform: 'translateY(-5px)' // Đẩy lên trên một chút
-                      }}
-                      onClick={() => setShowStaffSearch(!showStaffSearch)}
-                    >
-                      <i className={`fas ${showStaffSearch ? 'fa-times' : 'fa-search'} text-white`} style={{ fontSize: '12px' }}></i>
+                )}
+
+                {/* Staff Info và Search Icon */}
+                {formData.serviceId && (
+                  <div className="col-12 mb-1">
+                    <div className="d-flex align-items-center justify-content-between flex-wrap" style={{ gap: '5px' }}>
+                      <small className="text-white-50" style={{ fontSize: '0.7rem' }}>
+                        <i className="fas fa-users me-1"></i>
+                        {filteredStaffList.length} nhân viên{staffSearchTerm ? ' tìm được' : ' có sẵn'}
+                      </small>
+                      {filteredStaffList.length > 0 && (
+                        <div className="d-flex align-items-center" style={{ gap: '10px' }}>
+                          {staffSearchTerm && (
+                            <small className="text-info" style={{ fontSize: '0.6rem' }}>
+                              ✓ Kết quả tìm kiếm
+                            </small>
+                          )}
+                          <div
+                            className="search-icon d-flex align-items-center justify-content-center"
+                            style={{
+                              width: '28px',
+                              height: '28px',
+                              backgroundColor: 'rgba(0,0,0,0.6)',
+                              borderRadius: '50%',
+                              cursor: 'pointer',
+                              color: 'white',
+                              fontSize: '12px',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onClick={() => setShowStaffSearch(!showStaffSearch)}
+                          >
+                            <i className={`fas ${showStaffSearch ? 'fa-times' : 'fa-search'}`}></i>
+                          </div>
+                        </div>
+                      )}
                     </div>
-
-                    {/* Staff Search Input - Conditionally rendered */}
-                    {showStaffSearch && (
-                      <div className="mb-2">
-                        <input
-                          type="text"
-                          className="form-control py-2 border-white bg-transparent text-white custom-placeholder text-truncate"
-                          placeholder="Tìm kiếm nhân viên theo tên..."
-                          value={staffSearchTerm}
-                          onChange={(e) => setStaffSearchTerm(e.target.value)}
-                          style={{ 
-                            color: 'white',
-                            maxWidth: '100%',
-                            height: '40px'
-                          }}
-                        />
-                      </div>
-                    )}
                   </div>
-                </div>
+                )}
 
-                {/* Horizontal Staff List với Swiper */}
+                {/* Staff Search Input - Conditional */}
+                {showStaffSearch && (
+                  <div className="col-12">
+                    <input
+                      type="text"
+                      className="form-control py-2 border-white bg-transparent text-white custom-placeholder text-truncate"
+                      placeholder="Tìm kiếm nhân viên theo tên..."
+                      value={staffSearchTerm}
+                      onChange={(e) => setStaffSearchTerm(e.target.value)}
+                      style={{ 
+                        color: 'white',
+                        maxWidth: '100%',
+                        height: '40px'
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Horizontal Staff List */}
                 <div className="col-12">
                   <div className="position-relative">
                     <Swiper
                       modules={[Navigation]}
-                      spaceBetween={10}
+                      spaceBetween={8}
                       slidesPerView={'auto'}
                       navigation={{
                         nextEl: '.swiper-button-next-custom',
@@ -489,151 +523,157 @@ const Appointment = () => {
                       }}
                       className="staff-swiper"
                       style={{ 
-                        height: '150px', // Tăng chiều cao
+                        height: '140px', // Responsive height
                         paddingLeft: '0px',
                         paddingRight: '0px'
                       }}
-                    >
-                      {filteredStaffList.length > 0 ? filteredStaffList.map(staff => {
-                        const availability = staffAvailabilities[staff.id];
-                        const isBusy = availability?.isAvailable === false;
-                        const isSelected = selectedStaffId === staff.id;
-                        const canCheck = formData.appointmentDate && formData.timeSlotId && formData.serviceId;
-
-                        let buttonText = "Chọn";
-                        if (isSelected) {
-                          buttonText = <><i className="fas fa-check me-1"></i> Đã chọn</>;
-                        } else if (isCheckingAvailabilities && canCheck && !availability) {
-                          buttonText = "Đang kiểm tra...";
-                        } else if (isBusy && canCheck) {
-                          buttonText = "Bận";
+                      breakpoints={{
+                        320: {
+                          slidesPerView: 'auto',
+                          spaceBetween: 8
+                        },
+                        768: {
+                          slidesPerView: 'auto',
+                          spaceBetween: 10
+                        },
+                        992: {
+                          slidesPerView: 'auto',
+                          spaceBetween: 10
                         }
-                        
-                        return (
-                          <SwiperSlide 
-                            key={staff.id}
-                            style={{ width: '130px' }} // Tăng chiều rộng
-                          >
-                            <div
-                              className={`staff-card p-2 border rounded d-flex flex-column justify-content-between text-center position-relative ${isSelected ? 'border-primary shadow' : 'border-secondary'}`}
-                              style={{
-                                width: '130px', // Tăng chiều rộng
-                                height: '130px', // Tăng chiều cao
-                                backgroundColor: isSelected ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255,255,255,0.05)',
-                                cursor: isBusy || (isCheckingAvailabilities && canCheck) ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.3s ease-in-out',
-                                opacity: isBusy && canCheck ? 0.6 : 1,
-                              }}
-                              onClick={() => handleStaffSelect(staff.id)}
-                            >
-                              {/* Loading overlay */}
-                              {isCheckingAvailabilities && canCheck && !availability && (
-                                <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded" style={{
-                                  backgroundColor: 'rgba(0,0,0,0.5)', 
-                                  zIndex: 2
-                                }}>
-                                  <div className="spinner-border spinner-border-sm text-light" role="status"></div>
-                                </div>
-                              )}
+                      }}
+                    >
+                     {filteredStaffList.length === 0 ? (
+    <SwiperSlide>
+        <div className="d-flex align-items-center justify-content-center w-100" style={{ minHeight: '120px', width: '250px'}}>
+            <div className="text-center">
+                <i className="fas fa-search text-white-50 mb-2" style={{ fontSize: '1.5rem' }}></i>
+                <p className="text-white-50" style={{ fontSize: '0.7rem', marginBottom: '5px' }}>
+                    {/* Cập nhật thông báo cho rõ ràng hơn */}
+                    {staffSearchTerm ? 'Không tìm thấy nhân viên' : 'Không có nhân viên nào'}
+                </p>
+                <small className="text-white-50" style={{ fontSize: '0.6rem' }}>
+                    {staffSearchTerm ? 'Vui lòng thử từ khóa khác' : 'Vui lòng chờ hoặc tải lại'}
+                </small>
+            </div>
+        </div>
+    </SwiperSlide>
+) : (
+    filteredStaffList.map(staff => {
+        // --- Logic render thẻ nhân viên của bạn giữ nguyên ---
+        const isSelected = selectedStaffId === staff.id;
+        
+        // --- THAY ĐỔI NHỎ Ở ĐÂY ---
+        // Lấy trạng thái bận/rảnh từ state `staffAvailabilities`
+        const availability = staffAvailabilities[staff.id];
+        const isBusy = availability && availability.isAvailable === false;
+        
+        // Chỉ disable nút chọn khi đã có đủ thông tin để check và nhân viên bận
+        const canBeSelected = !isBusy;
 
-                              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <div>
-                                  <img
-                                    src={staff.imageUrl || '/default-avatar.png'}
-                                    alt={staff.fullName}
-                                    className="rounded-circle border border-white mb-1"
-                                    style={{ 
-                                      width: '45px', 
-                                      height: '45px', 
-                                      objectFit: 'cover',
-                                      borderWidth: '1px !important'
-                                    }}
-                                  />
-                                  <h6 className="text-white mb-1 text-truncate" style={{ 
-                                    fontSize: '0.65rem',
-                                    lineHeight: '1.1'
-                                  }}>
-                                    {staff.fullName}
-                                  </h6>
-                                </div>
-                                
-                                <div style={{ minHeight: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                  <p className="text-muted small mb-1" style={{ 
-                                    fontSize: '0.55rem',
-                                    lineHeight: '1.1',
-                                    margin: '0',
-                                    padding: '0 1px',
-                                    maxWidth: '100%',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                    height: 'auto'
-                                  }}>
-                                    {staff.skillsText || 'N/A'}
-                                  </p>
-                                  
-                                  <div className="mb-1" style={{ fontSize: '0.7rem' }}>
-                                    {renderStars(staff.averageRating)}
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <button
-                                type="button"
-                                className={`btn btn-sm w-100 ${isSelected ? 'btn-primary' : isBusy && canCheck ? 'btn-danger' : 'btn-outline-light'}`}
-                                disabled={(isBusy && canCheck) || (isCheckingAvailabilities && canCheck)}
+        return (
+            <SwiperSlide 
+                key={staff.id}
+                style={{ width: '120px' }}
+            >
+                <div
+                    className={`staff-card p-2 border rounded d-flex flex-column justify-content-between text-center position-relative ${isSelected ? 'border-primary shadow' : 'border-secondary'} ${isBusy ? 'staff-busy' : ''}`}
+                    style={{
+                        width: '120px',
+                        height: '120px',
+                        backgroundColor: isSelected ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255,255,255,0.05)',
+                        cursor: canBeSelected ? 'pointer' : 'not-allowed', // Thay đổi con trỏ chuột
+                        transition: 'all 0.3s ease-in-out',
+                        opacity: isBusy ? 0.6 : 1, // Làm mờ nhân viên bận
+                    }}
+                    onClick={() => canBeSelected && handleStaffSelect(staff.id)} // Chỉ cho phép chọn khi rảnh
+                >
+                    {/* ... Phần bên trong thẻ nhân viên giữ nguyên ... */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div>
+                            <img
+                                src={staff.imageUrl || '/default-avatar.png'}
+                                alt={staff.fullName}
+                                className="rounded-circle border border-white mb-1"
                                 style={{ 
-                                  fontSize: '0.55rem', 
-                                  padding: '2px 4px', 
-                                  height: '22px',
-                                  marginTop: 'auto'
+                                    width: '40px', 
+                                    height: '40px', 
+                                    objectFit: 'cover',
+                                    borderWidth: '1px !important'
                                 }}
-                              >
-                                {buttonText}
-                              </button>
+                            />
+                            <h6 className="text-white mb-1 text-truncate" style={{ fontSize: '0.6rem', lineHeight: '1.1' }}>
+                                {staff.fullName}
+                            </h6>
+                        </div>
+                        
+                        <div style={{ minHeight: '15px' }}>
+                            <p className="text-muted small mb-1" style={{ fontSize: '0.5rem', lineHeight: '1', margin: '0', padding: '0 1px', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {staff.skillsText || 'N/A'}
+                            </p>
+                            
+                            <div className="mb-1 d-flex align-items-center justify-content-center">
+                                <div className="me-1">
+                                    {renderStars(staff.averageRating)}
+                                </div>
+                                <span className="text-white-50" style={{ fontSize: '0.45rem' }}>
+                                    ({staff.totalReviews || 0})
+                                </span>
                             </div>
-                          </SwiperSlide>
-                        )
-                      }) : (
-                        <SwiperSlide>
-                          <div className="d-flex align-items-center justify-content-center w-100" style={{ minHeight: '110px'}}>
-                            <p className="text-white-50" style={{ fontSize: '0.7rem' }}>Không có nhân viên nào phù hợp hoặc sẵn có.</p>
-                          </div>
-                        </SwiperSlide>
-                      )}
+                        </div>
+                    </div>
+                    
+                    {/* Hiển thị thông báo bận nếu có */}
+                    {isBusy && (
+                        <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backdropFilter: 'blur(1px)'}}>
+                            <span className="badge bg-danger" style={{fontSize: '0.6rem'}}>Bận</span>
+                        </div>
+                    )}
+                    
+                    {/* Nút chọn */}
+                    <button
+                        type="button"
+                        className={`btn btn-sm w-100 ${isSelected ? 'btn-primary' : 'btn-outline-light'}`}
+                        style={{ fontSize: '0.5rem', padding: '2px 4px', height: '20px', marginTop: 'auto' }}
+                        disabled={!canBeSelected} // Disable nút nếu nhân viên bận
+                    >
+                        {isSelected ? <><i className="fas fa-check me-1"></i> Đã chọn</> : (isBusy ? 'Đã bận' : 'Chọn')}
+                    </button>
+                </div>
+            </SwiperSlide>
+        )
+    })
+)}
                     </Swiper>
 
-                    {/* Custom Navigation Arrows */}
-                    <div className="swiper-button-prev-custom position-absolute top-50 start-0 translate-middle-y" style={{ 
+                    {/* Custom Navigation Arrows - Responsive */}
+                    <div className="swiper-button-prev-custom position-absolute top-50 start-0 translate-middle-y d-none d-md-flex" style={{ 
                       zIndex: 10,
                       left: '-15px',
                       width: '30px',
                       height: '30px',
-                      backgroundColor: 'rgba(0,0,0,0.5)',
+                      backgroundColor: 'rgba(0,0,0,0.6)',
                       borderRadius: '50%',
-                      display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
                       color: 'white',
-                      fontSize: '14px'
+                      fontSize: '12px'
                     }}>
                       <i className="fas fa-chevron-left"></i>
                     </div>
                     
-                    <div className="swiper-button-next-custom position-absolute top-50 end-0 translate-middle-y" style={{ 
+                    <div className="swiper-button-next-custom position-absolute top-50 end-0 translate-middle-y d-none d-md-flex" style={{ 
                       zIndex: 10,
                       right: '-15px',
                       width: '30px',
                       height: '30px',
-                      backgroundColor: 'rgba(0,0,0,0.5)',
+                      backgroundColor: 'rgba(0,0,0,0.6)',
                       borderRadius: '50%',
-                      display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
                       color: 'white',
-                      fontSize: '14px'
+                      fontSize: '12px'
                     }}>
                       <i className="fas fa-chevron-right"></i>
                     </div>
@@ -648,38 +688,38 @@ const Appointment = () => {
                     onChange={handleInputChange}
                     className="form-control border-white bg-transparent text-white custom-placeholder"
                     cols="30"
-                    rows="2"
+                    rows="3"
                     placeholder="Write Comments"
                     style={{ 
                       color: 'white',
                       resize: 'none',
-                      height: '60px', // Giảm chiều cao
+                      height: '70px',
                       maxWidth: '100%',
                       fontSize: '0.8rem'
                     }}
                   />
                 </div>
                 
-                {/* Submit Buttons - QUAN TRỌNG: Phần này cần hiển thị */}
-                <div className="col-lg-6 col-12">
+                {/* Submit Buttons - Responsive */}
+                <div className="col-12 col-lg-6">
                   <button
                     type="button"
                     onClick={handleUseAccountInfo}
                     className="btn btn-outline-light w-100"
                     style={{ 
-                      height: '35px',
+                      height: '40px',
                       fontSize: '0.8rem'
                     }}
                   >
                     Dùng thông tin tài khoản
                   </button>
                 </div>
-                <div className="col-lg-6 col-12">
+                <div className="col-12 col-lg-6">
                   <button
                     type="submit"
                     className="btn btn-primary w-100"
                     style={{ 
-                      height: '35px',
+                      height: '40px',
                       fontSize: '0.8rem'
                     }}
                   >
@@ -690,7 +730,9 @@ const Appointment = () => {
             </form>
           </div>
         </div>
-        <div className="col-lg-6">
+        
+        {/* Opening Hours - Ẩn trên mobile */}
+        <div className="col-lg-6 d-none d-lg-block">
           <div className="appointment-time p-5">
             <h1 className="display-5 mb-4 text-white">Opening Hours</h1>
             <div className="d-flex justify-content-between fs-5 text-white">
@@ -726,7 +768,64 @@ const Appointment = () => {
         </div>
       </div>
     </div>
+    
+    {/* CSS Responsive */}
     <style jsx global>{`
+      /* Mobile responsive styles */
+      @media (max-width: 767.98px) {
+        .appointment-form {
+          height: auto !important;
+          min-height: 600px !important;
+          padding: 1rem !important;
+        }
+        
+        .display-4 {
+          font-size: 2rem !important;
+        }
+        
+        .staff-swiper {
+          height: 140px !important;
+        }
+        
+        .staff-card {
+          width: 110px !important;
+          height: 120px !important;
+        }
+        
+        .staff-card img {
+          width: 35px !important;
+          height: 35px !important;
+        }
+        
+        .staff-card h6 {
+          font-size: 0.55rem !important;
+        }
+        
+        .staff-card p {
+          font-size: 0.45rem !important;
+        }
+        
+        .staff-card button {
+          font-size: 0.45rem !important;
+          height: 18px !important;
+        }
+        
+        .search-icon {
+          width: 25px !important;
+          height: 25px !important;
+          font-size: 11px !important;
+        }
+      }
+      
+      /* Tablet responsive styles */
+      @media (min-width: 768px) and (max-width: 991.98px) {
+        .appointment-form {
+          height: auto !important;
+          min-height: 650px !important;
+        }
+      }
+      
+      /* Existing styles... */
       .text-white-option {
         color: white !important;
       }
@@ -751,7 +850,6 @@ const Appointment = () => {
         filter: invert(1);
       }
       
-      /* Swiper Custom Styles */
       .staff-swiper .swiper-wrapper {
         align-items: center;
       }
@@ -778,7 +876,6 @@ const Appointment = () => {
         border-color: #dc3545;
       }
       
-      /* Search icon styles */
       .search-icon {
         transition: all 0.3s ease;
       }
@@ -787,20 +884,6 @@ const Appointment = () => {
         background-color: rgba(0,0,0,0.8) !important;
         transform: scale(1.1);
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      }
-      
-      /* Skill text responsive */
-      .staff-card p.text-muted {
-        word-break: break-word !important;
-        hyphens: auto !important;
-        -webkit-hyphens: auto !important;
-        -moz-hyphens: auto !important;
-      }
-      
-      /* Ensure text fits in container */
-      .staff-card .text-truncate {
-        max-width: 100% !important;
-        display: block !important;
       }
     `}</style>
   </div>
