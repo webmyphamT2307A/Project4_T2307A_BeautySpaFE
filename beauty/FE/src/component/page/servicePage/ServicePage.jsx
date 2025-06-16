@@ -12,6 +12,11 @@ const ServicePage = () => {
 
   const navigate = useNavigate(); // hook điều hướng
 
+  // Function to handle image click
+  const handleImageClick = (serviceId) => {
+    navigate(`/ServicePage/${serviceId}`);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -64,7 +69,6 @@ const ServicePage = () => {
             <div className="row g-4">
               {displayedServices.map((service, index) => {
                 const isEven = index % 2 === 0;
-                const showMore = service.description.length > 120;
 
                 return (
                   <div className="col-lg-6" key={service.id}>
@@ -85,20 +89,16 @@ const ServicePage = () => {
                                 }}>
                                   {service.description}
                                 </p>
-                                {showMore && (
-                                  <button
-                                    className="btn btn-sm btn-link px-0"
-                                    onClick={() => navigate(`/ServicePage/${service.id}`)}
-                                  >
-                                    More
-                                  </button>
-                                )}
-                                <br />
                                 <a href="#" className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2">Make Order</a>
                               </div>
                             </div>
                             <div className="col-4 d-flex align-items-center justify-content-center">
-                              <div className="services-img rounded" style={{ width: '100px', height: '100px', overflow: 'hidden' }}>
+                              <div 
+                                className="services-img rounded service-image-clickable" 
+                                style={{ width: '100px', height: '100px', overflow: 'hidden' }}
+                                onClick={() => handleImageClick(service.id)}
+                                title="Click để xem chi tiết dịch vụ"
+                              >
                                 <img
                                   src={service.imageUrl || service.image_url}
                                   className="img-fluid rounded"
@@ -111,7 +111,12 @@ const ServicePage = () => {
                         ) : (
                           <>
                             <div className="col-4 d-flex align-items-center justify-content-center">
-                              <div className="services-img rounded" style={{ width: '100px', height: '100px', overflow: 'hidden' }}>
+                              <div 
+                                className="services-img rounded service-image-clickable" 
+                                style={{ width: '100px', height: '100px', overflow: 'hidden' }}
+                                onClick={() => handleImageClick(service.id)}
+                                title="Click để xem chi tiết dịch vụ"
+                              >
                                 <img
                                   src={service.imageUrl || service.image_url}
                                   className="img-fluid rounded"
@@ -133,15 +138,6 @@ const ServicePage = () => {
                                 }}>
                                   {service.description}
                                 </p>
-                                {showMore && (
-                                  <button
-                                    className="btn btn-sm btn-link px-0"
-                                    onClick={() => navigate(`/ServicePage/${service.id}`)}
-                                  >
-                                    More
-                                  </button>
-                                )}
-                                <br />
                                 <a href="#" className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2">Make Order</a>
                               </div>
                             </div>
@@ -168,6 +164,47 @@ const ServicePage = () => {
           </div>
         </div>
       </div>
+
+      {/* CSS for service image hover effects */}
+      <style jsx>{`
+        .service-image-clickable {
+          cursor: pointer;
+          transition: all 0.3s ease-in-out;
+          position: relative;
+        }
+
+        .service-image-clickable:hover {
+          transform: scale(1.05);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .service-image-clickable:hover img {
+          filter: brightness(1.1);
+        }
+
+        .service-image-clickable::after {
+          content: "👁️";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          border-radius: 50%;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease-in-out;
+          font-size: 14px;
+        }
+
+        .service-image-clickable:hover::after {
+          opacity: 1;
+        }
+      `}</style>
 
       <Footer />
     </div>
