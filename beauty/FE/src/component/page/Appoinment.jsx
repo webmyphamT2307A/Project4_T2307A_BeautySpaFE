@@ -192,11 +192,25 @@ const Appointment = () => {
         const { name, value } = e.target;
         
         validateField(name, value);
-        
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+    
+        if (name === 'serviceId') {
+            // --- BẮT ĐẦU THÊM VÀO ĐÂY ---
+            console.log("1. Đã chọn Service ID:", value); 
+            const selectedService = services.find(s => String(s.id) === value);
+            console.log("2. Dịch vụ tìm thấy:", selectedService); // In ra để xem có tìm thấy không
+            // --- KẾT THÚC THÊM VÀO ĐÂY ---
+            
+            setFormData(prev => ({
+                ...prev,
+                serviceId: value,
+                price: selectedService ? selectedService.price : ''
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
     const handleStaffSelect = (staffId) => {
