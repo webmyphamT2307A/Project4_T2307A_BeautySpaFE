@@ -62,7 +62,7 @@ const ServiceDetailPage = () => {
 
   // State đã được đơn giản hóa, không còn thông tin khách
   const [newReview, setNewReview] = useState({
-    rating: 5,
+    rating: 0,
     comment: '',
   });
 
@@ -188,8 +188,18 @@ const ServiceDetailPage = () => {
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (newReview.rating === 0) {
+      toast.warn('Vui lòng chọn số sao đánh giá.');
+      return;
+    }
+
     if (!newReview.comment.trim()) {
       toast.warn('Vui lòng nhập nội dung bình luận.');
+      return;
+    }
+
+    if (newReview.comment.length > 500) {
+      toast.warn('Nội dung bình luận không được vượt quá 500 ký tự.');
       return;
     }
 
@@ -219,7 +229,7 @@ const ServiceDetailPage = () => {
       if (response.ok && result.status === 'SUCCESS') {
         toast.success('Cảm ơn bạn đã gửi đánh giá!');
         setReviews((prev) => [result.data, ...prev]);
-        setNewReview({ rating: 5, comment: '' });
+        setNewReview({ rating: 0, comment: '' });
         setCurrentPage(1); // Reset to first page when new review is added
       } else {
         toast.error(`Gửi đánh giá thất bại: ${result.message}`);
@@ -287,18 +297,32 @@ const ServiceDetailPage = () => {
               {service.price ? `${service.price.toLocaleString()}$` : 'N/A'}
             </p>
             <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
-            <a href="#" style={{
-              background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
-              color: 'white',
-              fontWeight: '700',
-              borderRadius: 30,
-              padding: '12px 40px',
-              display: 'inline-block',
-              marginTop: 20,
-              textDecoration: 'none'
-            }}>
+            <button 
+              onClick={() => navigate(`/AppointmentPage?serviceId=${service.id}`)}
+              style={{
+                background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
+                color: 'white',
+                fontWeight: '700',
+                borderRadius: 30,
+                padding: '12px 40px',
+                display: 'inline-block',
+                marginTop: 20,
+                textDecoration: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 8px 20px rgba(240, 147, 151, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = 'none';
+              }}
+            >
               REGISTER NOW!
-            </a>
+            </button>
           </div>
 
           {/* Bên phải: Gợi ý dịch vụ - Beautiful Design */}
@@ -554,16 +578,23 @@ const ServiceDetailPage = () => {
                     <span key={star} onClick={() => setNewReview({ ...newReview, rating: star })} style={{ fontSize: 30, cursor: 'pointer', color: star <= newReview.rating ? '#f60' : '#ccc', marginRight: 5, userSelect: 'none' }}>★</span>
                   ))}
                   <span style={{ marginLeft: 10, fontSize: 14, color: '#555' }}>
-                    {{ 1: 'Very Bad', 2: 'Not Satisfied', 3: 'Average', 4: 'Satisfied', 5: 'Very Satisfied' }[newReview.rating]}
+                    {newReview.rating === 0 ? 'Chưa chọn đánh giá' : { 1: 'Very Bad', 2: 'Not Satisfied', 3: 'Average', 4: 'Satisfied', 5: 'Very Satisfied' }[newReview.rating]}
                   </span>
                 </div>
-                <label style={{ fontWeight: 500 }}>Comment *</label>
+                <label style={{ fontWeight: 500 }}>Comment * (Tối đa 500 ký tự)</label>
                 <textarea
                   value={newReview.comment}
                   onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
                   rows={4}
-                  style={{ width: '100%', padding: 10, borderRadius: 5, border: '1px solid #ccc', margin: '8px 0 15px 0', resize: 'vertical' }}
+                  maxLength={500}
+                  placeholder="Chia sẻ trải nghiệm của bạn về dịch vụ này..."
+                  style={{ width: '100%', padding: 10, borderRadius: 5, border: '1px solid #ccc', margin: '8px 0 5px 0', resize: 'vertical' }}
                 />
+                <div style={{ textAlign: 'right', marginBottom: 15 }}>
+                  <small style={{ color: newReview.comment.length > 450 ? '#f60' : '#888' }}>
+                    {newReview.comment.length}/500 ký tự
+                  </small>
+                </div>
                 <button type="submit" disabled={isSubmitting} style={{ backgroundColor: '#28a745', color: 'white', padding: '10px 20px', border: 'none', borderRadius: 5, fontWeight: 'bold', cursor: 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
                   {isSubmitting ? 'Submitting...' : 'Submit Review'}
                 </button>
