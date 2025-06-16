@@ -24,7 +24,22 @@ const Header = () => {
         if (storedUser) {
             setUserInfo(JSON.parse(storedUser));
         }
+        
+        // Fetch services data for search
+        fetchServicesData();
     }, []);
+
+    // Fetch services data
+    const fetchServicesData = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/api/v1/services');
+            if (response.data.status === 'SUCCESS') {
+                setServicesData(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching services:', error);
+        }
+    };
 
     const handleAvatarClick = () => {
         // Dùng navigate thay vì window.location.href
@@ -33,11 +48,19 @@ const Header = () => {
 
     const [showSearch, setShowSearch] = useState(false);
     const searchRef = useRef(null);
+    
+    // Search functionality states
+    const [searchTerm, setSearchTerm] = useState('');
+    const [servicesData, setServicesData] = useState([]);
+    const [filteredServices, setFilteredServices] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (searchRef.current && !searchRef.current.contains(event.target)) {
                 setShowSearch(false);
+                setShowSuggestions(false);
             }
         };
 
@@ -51,6 +74,71 @@ const Header = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [showSearch]);
+
+    // Search functionality
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+        setSelectedSuggestionIndex(-1);
+        
+        if (value.trim()) {
+            const filtered = servicesData.filter(service =>
+                service.name.toLowerCase().includes(value.toLowerCase()) ||
+                service.description.toLowerCase().includes(value.toLowerCase())
+            );
+            setFilteredServices(filtered);
+            setShowSuggestions(true);
+        } else {
+            setFilteredServices([]);
+            setShowSuggestions(false);
+        }
+    };
+
+    const handleSearchSubmit = (serviceId = null) => {
+        if (serviceId) {
+            // Navigate to specific service
+            navigate(`/ServicePage/${serviceId}`);
+        } else if (filteredServices.length > 0) {
+            // Navigate to first search result
+            navigate(`/ServicePage/${filteredServices[0].id}`);
+        }
+        setShowSuggestions(false);
+        setSearchTerm('');
+        setShowSearch(false);
+    };
+
+    const handleKeyDown = (e) => {
+        if (!showSuggestions || filteredServices.length === 0) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                setSelectedSuggestionIndex(prev => 
+                    prev < filteredServices.length - 1 ? prev + 1 : prev
+                );
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                setSelectedSuggestionIndex(prev => prev > 0 ? prev - 1 : prev);
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (selectedSuggestionIndex >= 0) {
+                    handleSearchSubmit(filteredServices[selectedSuggestionIndex].id);
+                } else {
+                    handleSearchSubmit();
+                }
+                break;
+            case 'Escape':
+                setShowSuggestions(false);
+                setSelectedSuggestionIndex(-1);
+                break;
+        }
+    };
+
+    const handleSuggestionClick = (serviceId) => {
+        handleSearchSubmit(serviceId);
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -159,16 +247,7 @@ const Header = () => {
 
                                  
 
-                                    <div className="nav-item dropdown">
-                                        <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
-                                        <div className="dropdown-menu m-0 bg-secondary rounded-0">
-                                            <Link to="/TeamPage" className="dropdown-item">Team</Link>
-                                            <Link to="/TerminalPage" className="dropdown-item">Testimonial</Link>
-                                            <Link to="/GaleryPage" className="dropdown-item">Gallery</Link>
-                                            <Link to="/AppointmentPage" className="dropdown-item">Appointment</Link>
-                                            <Link to="/ErrorPage" className="dropdown-item">404 page</Link>
-                                        </div>
-                                    </div>
+                                    
                                     <Link to="/ContactPage" className="nav-item nav-link">Contact Us</Link>
                                        {!userInfo ? (
                                         <a href="#" className="nav-item nav-link" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
@@ -209,9 +288,110 @@ const Header = () => {
             {/* Modals không thay đổi */}
           {showSearch && (
                 <div ref={searchRef} className="search-bar-wrapper position-absolute w-100 d-flex justify-content-center" style={{ top: "170px", zIndex: 1050 }}>
-                    <div className="input-group shadow" style={{ maxWidth: "600px" }}>
-                        <input type="search" className="form-control p-3" placeholder="keywords" />
-                        <span className="input-group-text p-3"><i className="fa fa-search" /></span>
+                    <div className="position-relative" style={{ maxWidth: "600px", width: "100%" }}>
+                        <div className="input-group shadow">
+                            <input 
+                                type="search" 
+                                className="form-control p-3" 
+                                placeholder="Tìm kiếm dịch vụ..." 
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                                onKeyDown={handleKeyDown}
+                                onFocus={() => searchTerm && setShowSuggestions(true)}
+                                style={{ fontSize: '1rem' }}
+                            />
+                            <span 
+                                className="input-group-text p-3 btn-primary" 
+                                style={{ cursor: 'pointer', border: 'none' }}
+                                onClick={() => handleSearchSubmit()}
+                            >
+                                <i className="fa fa-search" />
+                            </span>
+                        </div>
+                        
+                        {/* Search Suggestions Dropdown */}
+                        {showSuggestions && filteredServices.length > 0 && (
+                            <div 
+                                className="position-absolute w-100 bg-white border rounded shadow-lg mt-1"
+                                style={{ 
+                                    zIndex: 1051,
+                                    maxHeight: '400px',
+                                    overflowY: 'auto'
+                                }}
+                            >
+                                {filteredServices.slice(0, 8).map((service, index) => (
+                                    <div
+                                        key={service.id}
+                                        className={`p-3 border-bottom cursor-pointer search-suggestion ${
+                                            index === selectedSuggestionIndex ? 'bg-light' : ''
+                                        }`}
+                                        onClick={() => handleSuggestionClick(service.id)}
+                                        style={{
+                                            cursor: 'pointer',
+                                            transition: 'background-color 0.2s ease',
+                                            backgroundColor: index === selectedSuggestionIndex ? '#f8f9fa' : 'transparent'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (index !== selectedSuggestionIndex) {
+                                                e.target.style.backgroundColor = '#f1f3f4';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (index !== selectedSuggestionIndex) {
+                                                e.target.style.backgroundColor = 'transparent';
+                                            }
+                                        }}
+                                    >
+                                        <div className="d-flex align-items-center">
+                                            <img
+                                                src={service.imageUrl || service.image_url || '/default-image.jpg'}
+                                                alt={service.name}
+                                                style={{
+                                                    width: '50px',
+                                                    height: '50px',
+                                                    objectFit: 'cover',
+                                                    borderRadius: '8px',
+                                                    marginRight: '15px'
+                                                }}
+                                            />
+                                            <div className="flex-grow-1">
+                                                <div className="fw-bold text-dark" style={{ fontSize: '1rem' }}>
+                                                    {service.name}
+                                                </div>
+                                                <div className="text-muted small" style={{ fontSize: '0.85rem' }}>
+                                                    {service.description.length > 60 
+                                                        ? service.description.substring(0, 60) + '...' 
+                                                        : service.description}
+                                                </div>
+                                                <div className="text-primary small fw-bold">
+                                                    {service.price ? `${service.price.toLocaleString()}$` : 'Liên hệ'}
+                                                </div>
+                                            </div>
+                                            <div className="ms-auto">
+                                                <i className="fas fa-arrow-right text-primary"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                
+                                {filteredServices.length > 8 && (
+                                    <div className="p-2 text-center text-muted small">
+                                        Và {filteredServices.length - 8} kết quả khác...
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        {/* No results message */}
+                        {showSuggestions && searchTerm && filteredServices.length === 0 && (
+                            <div 
+                                className="position-absolute w-100 bg-white border rounded shadow-lg p-3 text-center text-muted mt-1"
+                                style={{ zIndex: 1051 }}
+                            >
+                                <i className="fas fa-search-minus mb-2"></i>
+                                <div>Không tìm thấy dịch vụ nào</div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -320,6 +500,45 @@ const Header = () => {
             </div>
             <div className="modal fade" id="loginModal" tabIndex={-1}>{/* ... */}</div>
             <div className="modal fade" id="registerModal" tabIndex={-1}>{/* ... */}</div>
+            
+            {/* CSS for Search Functionality */}
+            <style jsx>{`
+                .search-suggestion:hover {
+                    background-color: #f8f9fa !important;
+                }
+                
+                .search-bar-wrapper::-webkit-scrollbar {
+                    width: 6px;
+                }
+                
+                .search-bar-wrapper::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                    border-radius: 3px;
+                }
+                
+                .search-bar-wrapper::-webkit-scrollbar-thumb {
+                    background: #c1c1c1;
+                    border-radius: 3px;
+                }
+                
+                .search-bar-wrapper::-webkit-scrollbar-thumb:hover {
+                    background: #a8a8a8;
+                }
+                
+                .input-group-text.btn-primary:hover {
+                    opacity: 0.85;
+                    transform: scale(1.05);
+                    transition: all 0.2s ease;
+                }
+                
+                .search-suggestion {
+                    transition: all 0.2s ease;
+                }
+                
+                .search-suggestion:last-child {
+                    border-bottom: none !important;
+                }
+            `}</style>
         </div>
     );
 };

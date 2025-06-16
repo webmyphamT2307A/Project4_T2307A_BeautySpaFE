@@ -67,7 +67,7 @@ const Contact = () => {
                 ...formData,
                 guestName: formData.firstName, // Ánh xạ firstName sang guestName nếu backend yêu cầu
             };
-            const response = await axios.post('http://localhost:8080/api/v1/feedbacks', payload);
+            const response = await axios.post('http://localhost:8080/api/v1/feedbacks/created', payload);
 
             if (response.data.status === 'SUCCESS') {
                 setStatusMessage('Your message has been sent successfully! Thank you.');
