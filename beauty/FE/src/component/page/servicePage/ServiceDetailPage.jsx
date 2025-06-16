@@ -37,9 +37,7 @@ const useAuth = () => {
     };
   });
 
-  // Trong một ứng dụng lớn, bạn có thể thêm các hàm login/logout ở đây
-  // để cập nhật cả localStorage và state, giúp component re-render ngay lập tức.
-  // Ví dụ: const logout = () => { localStorage.clear(); setAuthInfo({ ... }); }
+ 
 
   return authInfo;
 };
@@ -56,6 +54,10 @@ const ServiceDetailPage = () => {
   const [reviews, setReviews] = useState([]);
   const [relatedServices, setRelatedServices] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Pagination state for reviews
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 5;
 
   // State đã được đơn giản hóa, không còn thông tin khách
   const [newReview, setNewReview] = useState({
@@ -217,6 +219,7 @@ const ServiceDetailPage = () => {
         toast.success('Cảm ơn bạn đã gửi đánh giá!');
         setReviews((prev) => [result.data, ...prev]);
         setNewReview({ rating: 5, comment: '' });
+        setCurrentPage(1); // Reset to first page when new review is added
       } else {
         toast.error(`Gửi đánh giá thất bại: ${result.message}`);
       }
@@ -235,6 +238,19 @@ const ServiceDetailPage = () => {
   const averageRating = reviews.length
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : '0.0';
+
+  // Pagination calculations
+  const totalPages = Math.ceil(reviews.length / reviewsPerPage);
+  const startIndex = (currentPage - 1) * reviewsPerPage;
+  const endIndex = startIndex + reviewsPerPage;
+  const currentReviews = reviews.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    // Scroll to reviews section
+    document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Loading...</div>;
   if (!service) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Service not found</div>;
@@ -482,7 +498,7 @@ const ServiceDetailPage = () => {
         </div>
 
         {/* PHẦN REVIEWS */}
-        <div style={{ marginTop: 60 }}>
+        <div id="reviews-section" style={{ marginTop: 60 }}>
           <h3 style={{ fontWeight: 700, marginBottom: 25 }}>Reviews</h3>
 
           {/* PHẦN THỐNG KÊ REVIEW - Đầy đủ */}
@@ -560,9 +576,16 @@ const ServiceDetailPage = () => {
         </div>
 
         <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
-          <h4 style={{ marginBottom: 20 }}>All Reviews ({reviews.length})</h4>
-          {reviews.length > 0 ? (
-            reviews.map((r) => (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h4 style={{ marginBottom: 0 }}>All Reviews ({reviews.length})</h4>
+            {totalPages > 1 && (
+              <small style={{ color: '#666' }}>
+                Trang {currentPage} / {totalPages} (Hiển thị {currentReviews.length} / {reviews.length} đánh giá)
+              </small>
+            )}
+          </div>
+          {currentReviews.length > 0 ? (
+            currentReviews.map((r) => (
               <div key={r.id} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
 
                 {/* KIỂM TRA NẾU REVIEW NÀY ĐANG ĐƯỢC SỬA */}
@@ -652,6 +675,112 @@ const ServiceDetailPage = () => {
             ))
           ) : (
             <p>There are no reviews yet. Be the first one!</p>
+          )}
+
+          {/* Pagination UI */}
+          {totalPages > 1 && (
+            <div style={{ 
+              marginTop: 30, 
+              paddingTop: 20, 
+              borderTop: '1px solid #f0f0f0', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d6336c',
+                  borderRadius: '5px',
+                  background: currentPage === 1 ? '#f8f9fa' : 'white',
+                  color: currentPage === 1 ? '#6c757d' : '#d6336c',
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  fontWeight: '500',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (currentPage !== 1) {
+                    e.target.style.background = '#d6336c';
+                    e.target.style.color = 'white';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (currentPage !== 1) {
+                    e.target.style.background = 'white';
+                    e.target.style.color = '#d6336c';
+                  }
+                }}
+              >
+                <i className="fas fa-chevron-left"></i> Previous
+              </button>
+
+              {/* Page Numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '1px solid #d6336c',
+                    borderRadius: '5px',
+                    background: pageNum === currentPage ? '#d6336c' : 'white',
+                    color: pageNum === currentPage ? 'white' : '#d6336c',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (pageNum !== currentPage) {
+                      e.target.style.background = '#d6336c';
+                      e.target.style.color = 'white';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (pageNum !== currentPage) {
+                      e.target.style.background = 'white';
+                      e.target.style.color = '#d6336c';
+                    }
+                  }}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d6336c',
+                  borderRadius: '5px',
+                  background: currentPage === totalPages ? '#f8f9fa' : 'white',
+                  color: currentPage === totalPages ? '#6c757d' : '#d6336c',
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  fontWeight: '500',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (currentPage !== totalPages) {
+                    e.target.style.background = '#d6336c';
+                    e.target.style.color = 'white';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (currentPage !== totalPages) {
+                    e.target.style.background = 'white';
+                    e.target.style.color = '#d6336c';
+                  }
+                }}
+              >
+                Next <i className="fas fa-chevron-right"></i>
+              </button>
+            </div>
           )}
         </div>
       </div>
