@@ -54,6 +54,7 @@ const ServiceDetailPage = () => {
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
+  const [relatedServices, setRelatedServices] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // State đã được đơn giản hóa, không còn thông tin khách
@@ -79,7 +80,20 @@ const ServiceDetailPage = () => {
       }
     };
 
-
+    // Hàm fetch related services
+    const fetchRelatedServices = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/v1/services');
+        const result = await response.json();
+        if (result.status === 'SUCCESS') {
+          // Filter out current service and take first 6 services
+          const filtered = result.data.filter(s => s.id !== parseInt(id)).slice(0, 6);
+          setRelatedServices(filtered);
+        }
+      } catch (error) {
+        console.error('Error fetching related services:', error);
+      }
+    };
 
     // Hàm fetch danh sách review
     const fetchReviews = async () => {
@@ -98,7 +112,7 @@ const ServiceDetailPage = () => {
 
     const fetchData = async () => {
       setLoading(true);
-      await Promise.all([fetchServiceDetails(), fetchReviews()]);
+      await Promise.all([fetchServiceDetails(), fetchRelatedServices(), fetchReviews()]);
       setLoading(false);
     };
 
@@ -234,8 +248,9 @@ const ServiceDetailPage = () => {
           ← Back to Services
         </Link>
 
-        {/* PHẦN THÔNG TIN DỊCH VỤ - Đầy đủ */}
-        <div className="row align-items-center">
+        {/* PHẦN THÔNG TIN DỊCH VỤ - New Layout */}
+        <div className="row">
+          {/* Bên trái: Ảnh dịch vụ và thông tin chính */}
           <div className="col-md-6 mb-4">
             <img
               src={service.imageUrl || service.image_url || '/default-image.jpg'}
@@ -244,18 +259,15 @@ const ServiceDetailPage = () => {
                 borderRadius: 15,
                 boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
                 width: '100%',
+                marginBottom: '20px'
               }}
             />
-          </div>
-          <div className="col-md-6">
             <h2 style={{ fontSize: '2.5rem', color: '#d6336c', fontWeight: 700 }}>
               {service.name}
             </h2>
             <p>
               <strong>Price:</strong>{' '}
-
               {service.price ? `${service.price.toLocaleString()}$` : 'N/A'}
-
             </p>
             <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
             <a href="#" style={{
@@ -270,6 +282,202 @@ const ServiceDetailPage = () => {
             }}>
               REGISTER NOW!
             </a>
+          </div>
+
+          {/* Bên phải: Gợi ý dịch vụ - Beautiful Design */}
+          <div className="col-md-6">
+            <div style={{
+              background: 'linear-gradient(135deg, #fff5f8 0%, #ffeef2 100%)',
+              borderRadius: '20px',
+              padding: '25px',
+              boxShadow: '0 10px 30px rgba(214, 51, 108, 0.1)',
+              border: '1px solid rgba(214, 51, 108, 0.1)'
+            }}>
+              <h3 style={{ 
+                fontSize: '1.8rem', 
+                color: '#d6336c', 
+                fontWeight: 700, 
+                marginBottom: '25px',
+                textAlign: 'center',
+                position: 'relative'
+              }}>
+                <span style={{
+                  background: 'linear-gradient(135deg, #d6336c, #f5576c)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
+                  Dịch vụ gợi ý
+                </span>
+                <div style={{
+                  width: '50px',
+                  height: '3px',
+                  background: 'linear-gradient(90deg, #d6336c, #f5576c)',
+                  margin: '10px auto 0',
+                  borderRadius: '2px'
+                }}></div>
+              </h3>
+              
+              <div className="row g-2">
+                {relatedServices.map((relatedService, index) => (
+                  <div key={relatedService.id} className="col-4">
+                    <div className="related-service-card" style={{
+                      background: 'white',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                      border: '1px solid rgba(214, 51, 108, 0.1)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      height: '160px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}
+                    onMouseEnter={(e) => {
+                      const card = e.currentTarget;
+                      card.style.transform = 'translateY(-8px) scale(1.02)';
+                      card.style.boxShadow = '0 15px 35px rgba(214, 51, 108, 0.2)';
+                      card.style.borderColor = '#d6336c';
+                    }}
+                    onMouseLeave={(e) => {
+                      const card = e.currentTarget;
+                      card.style.transform = 'translateY(0) scale(1)';
+                      card.style.boxShadow = 'none';
+                      card.style.borderColor = 'rgba(214, 51, 108, 0.1)';
+                    }}
+                    onClick={() => window.location.href = `/ServicePage/${relatedService.id}`}
+                    >
+                      {/* Gradient overlay */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '60%',
+                        background: 'linear-gradient(135deg, rgba(214, 51, 108, 0.05), rgba(245, 87, 108, 0.05))',
+                        zIndex: 1
+                      }}></div>
+                      
+                      <div style={{ position: 'relative', zIndex: 2 }}>
+                        <img
+                          src={relatedService.imageUrl || relatedService.image_url || '/default-image.jpg'}
+                          alt={relatedService.name}
+                          style={{
+                            width: '50px',
+                            height: '50px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            margin: '0 auto 8px',
+                            border: '2px solid rgba(214, 51, 108, 0.2)',
+                            transition: 'all 0.3s ease'
+                          }}
+                        />
+                        
+                        <h6 style={{ 
+                          fontSize: '0.75rem', 
+                          fontWeight: '700', 
+                          margin: '0 0 4px 0',
+                          color: '#333',
+                          lineHeight: '1.1',
+                          height: '16px',
+                          overflow: 'hidden',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 1,
+                          WebkitBoxOrient: 'vertical'
+                        }}>
+                          {relatedService.name}
+                        </h6>
+                        
+                        <p style={{ 
+                          fontSize: '0.65rem', 
+                          color: '#888', 
+                          margin: '0 0 8px 0',
+                          height: '24px',
+                          overflow: 'hidden',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          lineHeight: '1.2'
+                        }}>
+                          {relatedService.description}
+                        </p>
+                        
+                        <div style={{
+                          background: 'linear-gradient(135deg, #d6336c, #f5576c)',
+                          borderRadius: '15px',
+                          padding: '4px 10px',
+                          display: 'inline-block'
+                        }}>
+                          <span style={{ 
+                            fontSize: '0.7rem', 
+                            fontWeight: '700', 
+                            color: 'white'
+                          }}>
+                            {relatedService.price ? `${relatedService.price.toLocaleString()}$` : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Hover icon */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        width: '30px',
+                        height: '30px',
+                        borderRadius: '50%',
+                        background: 'rgba(214, 51, 108, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                        zIndex: 3
+                      }} className="hover-icon">
+                        <i className="fas fa-eye" style={{ color: '#d6336c', fontSize: '0.8rem' }}></i>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* View All Services Button - Enhanced */}
+              <div style={{ marginTop: '25px' }}>
+                <a 
+                  href="/ServicePage" 
+                  style={{
+                    display: 'block',
+                    textAlign: 'center',
+                    padding: '15px',
+                    background: 'linear-gradient(135deg, #d6336c, #f5576c)',
+                    borderRadius: '25px',
+                    color: 'white',
+                    textDecoration: 'none',
+                    fontWeight: '700',
+                    fontSize: '1rem',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 5px 15px rgba(214, 51, 108, 0.3)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 8px 25px rgba(214, 51, 108, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 5px 15px rgba(214, 51, 108, 0.3)';
+                  }}
+                >
+                  <i className="fas fa-spa" style={{ marginRight: '8px' }}></i>
+                  Xem tất cả dịch vụ
+                  <i className="fas fa-arrow-right" style={{ marginLeft: '8px' }}></i>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -447,6 +655,37 @@ const ServiceDetailPage = () => {
           )}
         </div>
       </div>
+      {/* Custom CSS for hover effects */}
+      <style jsx>{`
+        .related-service-card:hover .hover-icon {
+          opacity: 1 !important;
+        }
+        
+        .related-service-card:hover img {
+          transform: scale(1.1);
+          border-color: #d6336c !important;
+        }
+        
+        @media (max-width: 768px) {
+          .related-service-card {
+            height: auto !important;
+            min-height: 140px;
+          }
+          
+          .col-4 {
+            flex: 0 0 50% !important;
+            max-width: 50% !important;
+          }
+        }
+        
+        @media (max-width: 576px) {
+          .col-4 {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+          }
+        }
+      `}</style>
+
       <Footer />
     </div>
   );
