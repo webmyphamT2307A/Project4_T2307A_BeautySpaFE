@@ -301,8 +301,8 @@ const Header = () => {
                                 style={{ fontSize: '1rem' }}
                             />
                             <span 
-                                className="input-group-text p-3" 
-                                style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #007bff, #0056b3)', color: 'white' }}
+                                className="input-group-text p-3 btn-primary" 
+                                style={{ cursor: 'pointer', border: 'none' }}
                                 onClick={() => handleSearchSubmit()}
                             >
                                 <i className="fa fa-search" />
@@ -525,9 +525,10 @@ const Header = () => {
                     background: #a8a8a8;
                 }
                 
-                .input-group-text:hover {
-                    background: linear-gradient(135deg, #0056b3, #004085) !important;
+                .input-group-text.btn-primary:hover {
+                    opacity: 0.85;
                     transform: scale(1.05);
+                    transition: all 0.2s ease;
                 }
                 
                 .search-suggestion {
