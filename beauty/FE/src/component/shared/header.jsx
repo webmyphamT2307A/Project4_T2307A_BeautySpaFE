@@ -159,16 +159,7 @@ const Header = () => {
 
                                  
 
-                                    <div className="nav-item dropdown">
-                                        <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
-                                        <div className="dropdown-menu m-0 bg-secondary rounded-0">
-                                            <Link to="/TeamPage" className="dropdown-item">Team</Link>
-                                            <Link to="/TerminalPage" className="dropdown-item">Testimonial</Link>
-                                            <Link to="/GaleryPage" className="dropdown-item">Gallery</Link>
-                                            <Link to="/AppointmentPage" className="dropdown-item">Appointment</Link>
-                                            <Link to="/ErrorPage" className="dropdown-item">404 page</Link>
-                                        </div>
-                                    </div>
+                                    
                                     <Link to="/ContactPage" className="nav-item nav-link">Contact Us</Link>
                                        {!userInfo ? (
                                         <a href="#" className="nav-item nav-link" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>

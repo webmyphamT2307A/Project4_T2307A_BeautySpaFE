@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Header from '../../shared/header';
@@ -45,6 +45,7 @@ const useAuth = () => {
 
 const ServiceDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { isAuthenticated, user, token } = useAuth();
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [editedContent, setEditedContent] = useState({ rating: 0, comment: '' });
@@ -364,7 +365,7 @@ const ServiceDetailPage = () => {
                       card.style.boxShadow = 'none';
                       card.style.borderColor = 'rgba(214, 51, 108, 0.1)';
                     }}
-                    onClick={() => window.location.href = `/ServicePage/${relatedService.id}`}
+                    onClick={() => navigate(`/ServicePage/${relatedService.id}`)}
                     >
                       {/* Gradient overlay */}
                       <div style={{
@@ -462,22 +463,24 @@ const ServiceDetailPage = () => {
               
               {/* View All Services Button - Enhanced */}
               <div style={{ marginTop: '25px' }}>
-                <a 
-                  href="/ServicePage" 
+                <button 
+                  onClick={() => navigate('/ServicePage')}
                   style={{
                     display: 'block',
+                    width: '100%',
                     textAlign: 'center',
                     padding: '15px',
                     background: 'linear-gradient(135deg, #d6336c, #f5576c)',
                     borderRadius: '25px',
                     color: 'white',
-                    textDecoration: 'none',
+                    border: 'none',
                     fontWeight: '700',
                     fontSize: '1rem',
                     transition: 'all 0.3s ease',
                     boxShadow: '0 5px 15px rgba(214, 51, 108, 0.3)',
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    cursor: 'pointer'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.transform = 'translateY(-2px)';
@@ -491,7 +494,7 @@ const ServiceDetailPage = () => {
                   <i className="fas fa-spa" style={{ marginRight: '8px' }}></i>
                   Xem tất cả dịch vụ
                   <i className="fas fa-arrow-right" style={{ marginLeft: '8px' }}></i>
-                </a>
+                </button>
               </div>
             </div>
           </div>
