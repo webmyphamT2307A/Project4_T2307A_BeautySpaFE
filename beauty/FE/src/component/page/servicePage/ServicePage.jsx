@@ -299,7 +299,7 @@ const ServicePage = () => {
                             <div className="col-4 d-flex align-items-center justify-content-center">
                               <div 
                                 className="services-img rounded service-image-clickable" 
-                                style={{ width: '100px', height: '100px', overflow: 'hidden' }}
+                                style={{ width: '180px', height: '180px', overflow: 'hidden' }}
                                 onClick={() => handleImageClick(service.id)}
                                 title="Click để xem chi tiết dịch vụ"
                               >
@@ -317,7 +317,7 @@ const ServicePage = () => {
                             <div className="col-4 d-flex align-items-center justify-content-center">
                               <div 
                                 className="services-img rounded service-image-clickable" 
-                                style={{ width: '100px', height: '100px', overflow: 'hidden' }}
+                                style={{ width: '180px', height: '180px', overflow: 'hidden' }}
                                 onClick={() => handleImageClick(service.id)}
                                 title="Click để xem chi tiết dịch vụ"
                               >

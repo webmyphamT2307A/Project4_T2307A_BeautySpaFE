@@ -97,7 +97,7 @@ const Service = () => {
                           src={service.imageUrl || service.image_url || '/default-image.jpg'} 
                           className="img-fluid rounded" 
                           alt={service.name}
-                          style={{ width: '100%', height: '100px', objectFit: 'cover' }}
+                          style={{ width: '100%', height: '180px', objectFit: 'cover' }}
                         />
                       </div>
                     </div>
@@ -115,7 +115,7 @@ const Service = () => {
                           src={service.imageUrl || service.image_url || '/default-image.jpg'} 
                           className="img-fluid rounded" 
                           alt={service.name}
-                          style={{ width: '100%', height: '100px', objectFit: 'cover' }}
+                          style={{ width: '100%', height: '180px', objectFit: 'cover' }}
                         />
                       </div>
                     </div>
