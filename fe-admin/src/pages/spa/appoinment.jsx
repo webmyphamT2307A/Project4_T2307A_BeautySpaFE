@@ -88,7 +88,7 @@ const AppointmentManagement = () => {
               price: item.price
             },
             branch: {
-              id: item.branchId, // Giả sử BE trả về branchId
+              id: item.branchId, 
               name: item.branchName
             },
             customer: {
