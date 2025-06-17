@@ -5,25 +5,31 @@ import {
   InputLabel, IconButton, TablePagination, Box, InputAdornment, Chip, MenuItem,
   Typography, Divider, Avatar, Tooltip
 } from '@mui/material';
-import Cookies from 'js-cookie';
 import {
   SearchOutlined,
   CloseOutlined,
   EyeOutlined,
-  EditOutlined,
+  EditOutlined, 
   CalendarOutlined,
   UserOutlined,
   CheckOutlined,
   ClockCircleOutlined,
-  FilterOutlined
+  FilterOutlined,
+  FormOutlined,
+  MailOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import Cookies from 'js-cookie';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
+const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
+const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confirmation';
 
 const AppointmentManagement = () => {
   // States
+  const [searchParams] = useSearchParams();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [userRole, setUserRole] = useState('');
@@ -40,6 +46,71 @@ const AppointmentManagement = () => {
     startDate: '',
     endDate: ''
   });
+
+  const [staffList, setStaffList] = useState([]);
+  const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
+  const [appointmentToEditDetails, setAppointmentToEditDetails] = useState(null);
+  const [selectedStaffId, setSelectedStaffId] = useState(null);
+  const [strictSkillMatching, setStrictSkillMatching] = useState(false);
+  const [emailConfirmationOpen, setEmailConfirmationOpen] = useState(false);
+  const [appointmentToSendEmail, setAppointmentToSendEmail] = useState(null);
+  const [emailSending, setEmailSending] = useState(false);
+
+  // Handlers cho Email
+  const handleOpenEmailConfirmation = (appointment) => {
+    setAppointmentToSendEmail(appointment);
+    setEmailConfirmationOpen(true);
+  };
+
+  const handleCloseEmailConfirmation = () => {
+    setEmailConfirmationOpen(false);
+    setAppointmentToSendEmail(null);
+  };
+
+  // Hàm gửi email xác nhận appointment
+  const handleSendConfirmationEmail = async () => {
+    if (!appointmentToSendEmail) return;
+    
+    setEmailSending(true);
+
+    try {
+      const emailPayload = {
+        appointmentId: appointmentToSendEmail.appointment_id,
+        customerEmail: appointmentToSendEmail.customer?.email || '',
+        customerName: appointmentToSendEmail.full_name,
+        serviceName: appointmentToSendEmail.service.name,
+        appointmentDate: appointmentToSendEmail.appointment_date,
+        appointmentTime: formatTime(appointmentToSendEmail.appointment_date),
+        endTime: formatTime(appointmentToSendEmail.end_time),
+        staffName: appointmentToSendEmail.user?.name || 'Staff will be assigned',
+        branchName: appointmentToSendEmail.branch.name,
+        price: appointmentToSendEmail.price,
+        notes: appointmentToSendEmail.notes || ''
+      };
+
+      const response = await fetch(EMAIL_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailPayload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'SUCCESS') {
+        toast.success('Confirmation email sent successfully!');
+        handleCloseEmailConfirmation();
+      } else {
+        toast.error(result.message || 'Failed to send confirmation email');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error('Error sending confirmation email');
+    } finally {
+      setEmailSending(false);
+    }
+  };
 
   const fetchAppointments = async () => {
     const token = Cookies.get('staff_token');
@@ -73,6 +144,7 @@ const AppointmentManagement = () => {
       }
 
       const data = await response.json();
+      console.log('🔍 Raw API Data:', data.data); // Debug log
       if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
         let mappedAppointments;
         if (role === 'ROLE_MANAGE') {
@@ -99,7 +171,7 @@ const AppointmentManagement = () => {
             customer: {
               name: item.customerName,
               image: item.customerImageUrl || item.customerImage || '',
-              email: item.customerEmail || ''
+              email: item.customerEmail || item.email || item.userEmail || ''
             },
             user: { name: item.userName, image: item.userImageUrl || '' },
             created_at: item.appointmentDate,
@@ -120,6 +192,7 @@ const AppointmentManagement = () => {
             customer: {
               name: item.customerName,
               image: item.customerImageUrl,
+              email: item.customerEmail || item.email || item.userEmail || ''
             },
             user: {
               name: item.userName,
@@ -127,6 +200,11 @@ const AppointmentManagement = () => {
             },
           }));
         }
+        console.log('📧 Mapped Appointments with emails:', mappedAppointments.map(a => ({ 
+          id: a.appointment_id, 
+          customerName: a.customer.name, 
+          customerEmail: a.customer.email 
+        }))); // Debug log
         setAppointments(mappedAppointments);
         setFilteredAppointments(mappedAppointments);
       } else {
@@ -600,7 +678,7 @@ const AppointmentManagement = () => {
                             }}
                           />
                         </TableCell>
-                        <TableCell>
+                                                <TableCell>
                           <Tooltip title="View Details">
                             <IconButton
                               onClick={() => handleViewOpen(appointment)}
@@ -611,17 +689,31 @@ const AppointmentManagement = () => {
                             </IconButton>
                           </Tooltip>
 
-                          {/* Chỉ hiện nút Update nếu chưa completed/cancelled và là manager */}
-                          {userRole === 'ROLE_MANAGE' && appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
-                            <Tooltip title="Update Status">
-                              <IconButton
-                                onClick={() => handleStatusDialogOpen(appointment)}
-                                color="primary"
-                                size="small"
-                              >
-                                <EditOutlined />
-                              </IconButton>
-                            </Tooltip>
+                          {/* Hiện nút Update cho cả STAFF và MANAGE nếu chưa completed/cancelled */}
+                          {(userRole === 'ROLE_MANAGE' || userRole === 'ROLE_STAFF') && appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
+                            <>
+                              <Tooltip title="Update Status">
+                                <IconButton
+                                  onClick={() => handleStatusDialogOpen(appointment)}
+                                  color="primary"
+                                  size="small"
+                                >
+                                  <EditOutlined />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={!appointment.customer?.email ? "No customer email available" : "Send Confirmation Email"}>
+                                <span>
+                                  <IconButton 
+                                    onClick={() => handleOpenEmailConfirmation(appointment)} 
+                                    color="success" 
+                                    size="small"
+                                    disabled={!appointment.customer?.email}
+                                  >
+                                    <MailOutlined />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            </>
                           )}
                         </TableCell>
                       </TableRow>
@@ -791,8 +883,8 @@ const AppointmentManagement = () => {
                       <Divider sx={{ my: 1 }} />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
 
-                        {/* --- BỌC NÚT UPDATE TRONG ĐIỀU KIỆN --- */}
-                        {userRole === 'ROLE_MANAGE' && (
+                        {/* --- BỌC NÚT UPDATE TRONG ĐIỀU KIỆN CHO CẢ STAFF VÀ MANAGE --- */}
+                        {(userRole === 'ROLE_MANAGE' || userRole === 'ROLE_STAFF') && (
                           <Button
                             variant="contained"
                             color="primary"
@@ -880,6 +972,118 @@ const AppointmentManagement = () => {
           <Button onClick={handleStatusDialogClose} color="inherit">Cancel</Button>
           <Button onClick={handleStatusChange} variant="contained" color="primary">
             Update Status
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Email Confirmation Dialog */}
+      <Dialog open={emailConfirmationOpen} onClose={handleCloseEmailConfirmation} maxWidth="md" fullWidth>
+        <DialogTitle>
+          Send Confirmation Email
+          <IconButton aria-label="close" onClick={handleCloseEmailConfirmation} sx={{ position: 'absolute', right: 8, top: 8 }}>
+            <CloseOutlined />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          {appointmentToSendEmail && (
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, mb: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    <MailOutlined style={{ marginRight: 8, color: '#1976d2' }} />
+                    Email Preview
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    This email will be sent to confirm the appointment details.
+                  </Typography>
+                </Box>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">To:</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {appointmentToSendEmail.customer?.email || 'No email available'}
+                </Typography>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Customer:</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {appointmentToSendEmail.full_name}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="h6" gutterBottom>Appointment Details</Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Service:</Typography>
+                <Typography variant="body1">{appointmentToSendEmail.service.name}</Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Price:</Typography>
+                <Typography variant="body1" color="primary" sx={{ fontWeight: 600 }}>
+                  ${appointmentToSendEmail.price?.toFixed(2)}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Date:</Typography>
+                <Typography variant="body1">{formatDate(appointmentToSendEmail.appointment_date)}</Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Time:</Typography>
+                <Typography variant="body1">
+                  {formatTime(appointmentToSendEmail.appointment_date)} - {formatTime(appointmentToSendEmail.end_time)}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Staff:</Typography>
+                <Typography variant="body1">
+                  {appointmentToSendEmail.user?.name || 'Staff will be assigned'}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Branch:</Typography>
+                <Typography variant="body1">{appointmentToSendEmail.branch.name}</Typography>
+              </Grid>
+
+              {appointmentToSendEmail.notes && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="textSecondary">Notes:</Typography>
+                  <Typography variant="body1">{appointmentToSendEmail.notes}</Typography>
+                </Grid>
+              )}
+
+              <Grid item xs={12}>
+                <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
+                  <Typography variant="body2" color="primary">
+                    📧 The customer will receive a professional email with all appointment details, 
+                    confirmation instructions, and contact information.
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEmailConfirmation} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSendConfirmationEmail} 
+            variant="contained" 
+            color="primary"
+            disabled={emailSending || !appointmentToSendEmail?.customer?.email}
+            startIcon={emailSending ? null : <MailOutlined />}
+          >
+            {emailSending ? 'Sending...' : 'Send Confirmation Email'}
           </Button>
         </DialogActions>
       </Dialog>

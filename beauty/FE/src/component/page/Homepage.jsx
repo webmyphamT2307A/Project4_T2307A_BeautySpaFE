@@ -79,9 +79,7 @@ const Homepage = () => {
       <AboutUs />
       <Appoinment />
       <Gallery />
-      <PricingSell/>
       <Team />
-      <Tesminoal/>
       <Contact/>
       <Footer />
     </div>
