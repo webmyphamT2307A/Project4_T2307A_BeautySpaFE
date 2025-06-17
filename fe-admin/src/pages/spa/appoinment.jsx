@@ -18,7 +18,7 @@ import {
   FilterOutlined,
   FormOutlined,
   MailOutlined,
-  ExpandMoreOutlined,
+    ExpandOutlined,
   BugOutlined,
   WarningOutlined,
   CheckCircleOutlined
@@ -703,7 +703,7 @@ const AppointmentManagement = () => {
         <Grid item xs={12} sx={{ mb: 2 }}>
           <Accordion>
             <AccordionSummary
-              expandIcon={<ExpandMoreOutlined />}
+              expandIcon={<  ExpandOutlined />}
               aria-controls="conflict-test-content"
               id="conflict-test-header"
               sx={{ backgroundColor: '#f5f5f5' }}

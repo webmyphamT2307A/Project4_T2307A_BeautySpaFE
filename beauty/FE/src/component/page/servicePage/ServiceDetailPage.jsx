@@ -715,6 +715,64 @@ const ServiceDetailPage = () => {
                       </div>
                       <p style={{ margin: '0 0 8px 0', color: '#333' }}>{r.comment}</p>
                       <small style={{ color: '#888' }}>{new Date(r.createdAt).toLocaleString('vi-VN')}</small>
+                      
+                      {/* HIỂN THỊ REPLY TỪ STAFF NẾU CÓ */}
+                      {r.reply && (
+                        <div style={{
+                          marginTop: '15px',
+                          marginLeft: '20px',
+                          padding: '15px',
+                          background: 'linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%)',
+                          borderLeft: '4px solid #007bff',
+                          borderRadius: '8px',
+                          position: 'relative'
+                        }}>
+                          <div style={{
+                            position: 'absolute',
+                            top: '-5px',
+                            left: '15px',
+                            background: '#007bff',
+                            color: 'white',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            fontSize: '0.75rem',
+                            fontWeight: '600'
+                          }}>
+                            Phản hồi từ Spa
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', marginTop: '5px' }}>
+                            <div style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '50%',
+                              background: 'linear-gradient(135deg, #007bff, #0056b3)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              marginRight: '10px'
+                            }}>
+                              <i className="fas fa-user-tie" style={{ color: 'white', fontSize: '0.8rem' }}></i>
+                            </div>
+                            <div>
+                              <strong style={{ color: '#007bff', fontSize: '0.9rem' }}>
+                                {r.reply.staffName || 'Nhân viên'}
+                              </strong>
+                              <small style={{ color: '#666', marginLeft: '8px', fontSize: '0.8rem' }}>
+                                {new Date(r.reply.createdAt).toLocaleString('vi-VN')}
+                              </small>
+                            </div>
+                          </div>
+                          <p style={{ 
+                            margin: 0, 
+                            color: '#333', 
+                            fontSize: '0.95rem',
+                            lineHeight: '1.5',
+                            fontStyle: 'italic'
+                          }}>
+                            {r.reply.comment}
+                          </p>
+                        </div>
+                      )}
                     </>
                   )}
 

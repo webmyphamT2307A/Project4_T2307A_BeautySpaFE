@@ -249,11 +249,59 @@ const Header = () => {
 
                                     
                                     <Link to="/ContactPage" className="nav-item nav-link">Contact Us</Link>
-                                       {!userInfo ? (
-                                        <a href="#" className="nav-item nav-link" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+                                      
+                                </div>
+                                <div className="d-flex align-items-center flex-nowrap pt-xl-0">
+                                    <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" onClick={() => setShowSearch(!showSearch)}>
+                                        <i className="fas fa-search" />
+                                    </button>
+                                    {!userInfo ? (
+                                        <button 
+                                            className="btn btn-outline-primary rounded-pill ms-3" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#loginModal"
+                                            style={{
+                                                padding: '10px 20px',
+                                                fontWeight: '600',
+                                                fontSize: '1rem',
+                                                border: '2px solid #0d6efd',
+                                                transition: 'all 0.3s ease',
+                                                minWidth: '100px'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.background = '#0d6efd';
+                                                e.target.style.color = 'white';
+                                                e.target.style.transform = 'translateY(-2px)';
+                                                e.target.style.boxShadow = '0 4px 12px rgba(13, 110, 253, 0.3)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.background = 'transparent';
+                                                e.target.style.color = '#0d6efd';
+                                                e.target.style.transform = 'translateY(0)';
+                                                e.target.style.boxShadow = 'none';
+                                            }}
+                                        >
+                                            <i className="fas fa-user me-2"></i>
+                                            Login
+                                        </button>
                                     ) : (
-                                        <div className="nav-item dropdown">
-                                            <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown" style={{ display: "flex", alignItems: "center" }}>
+                                        <div className="nav-item dropdown ms-3">
+                                            <a href="#" className="nav-link dropdown-toggle d-flex align-items-center p-2 rounded-pill" data-bs-toggle="dropdown" style={{ 
+                                                border: '2px solid #f8f9fa',
+                                                transition: 'all 0.3s ease',
+                                                background: 'rgba(13, 110, 253, 0.1)'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.background = 'rgba(13, 110, 253, 0.2)';
+                                                e.target.style.borderColor = '#0d6efd';
+                                                e.target.style.transform = 'translateY(-2px)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.background = 'rgba(13, 110, 253, 0.1)';
+                                                e.target.style.borderColor = '#f8f9fa';
+                                                e.target.style.transform = 'translateY(0)';
+                                            }}
+                                            >
                                                 <img
                                                     src={
                                                         userInfo.imageUrl
@@ -263,21 +311,27 @@ const Header = () => {
                                                             : "/assets/img/default-avatar.jpg"
                                                     }
                                                     alt="avatar"
-                                                    style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", marginRight: 8 }}
+                                                    style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", marginRight: 10, border: '2px solid white' }}
                                                 />
+                                                <span style={{ fontWeight: '600', color: '#0d6efd' }}>
+                                                    {userInfo.fullName?.split(' ').slice(-1)[0] || 'User'}
+                                                </span>
                                             </a>
-                                            <div className="dropdown-menu m-0 bg-secondary rounded-0">
-                                                <Link to="/CustomerDetail" className="dropdown-item">Thông tin cá nhân</Link>
-                                                <button onClick={handleLogout} className="dropdown-item">Đăng xuất</button>
+                                            <div className="dropdown-menu m-0 bg-white rounded-3 shadow-lg border-0" style={{ minWidth: '200px', marginTop: '10px !important' }}>
+                                                <Link to="/CustomerDetail" className="dropdown-item py-2 px-3 d-flex align-items-center" style={{ fontWeight: '500' }}>
+                                                    <i className="fas fa-user-circle me-2 text-primary"></i>
+                                                    Thông tin cá nhân
+                                                </Link>
+                                                <hr className="dropdown-divider my-1" />
+                                                <button onClick={handleLogout} className="dropdown-item py-2 px-3 d-flex align-items-center text-danger" style={{ fontWeight: '500' }}>
+                                                    <i className="fas fa-sign-out-alt me-2"></i>
+                                                    Đăng xuất
+                                                </button>
                                             </div>
                                         </div>
                                     )}
-                                </div>
-                                <div className="d-flex align-items-center flex-nowrap pt-xl-0">
-                                    <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" onClick={() => setShowSearch(!showSearch)}>
-                                        <i className="fas fa-search" />
-                                    </button>
-                                    <Link to="/AppointmentPage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-4 ms-4">Book Appointment</Link>
+
+                                    {/* <Link to="/AppointmentPage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-4 ms-4">Book Appointment</Link> */}
                                 </div>
                             </div>
                         </nav>
