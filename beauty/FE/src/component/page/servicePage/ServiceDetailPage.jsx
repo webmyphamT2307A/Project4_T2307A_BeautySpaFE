@@ -301,7 +301,17 @@ const ServiceDetailPage = () => {
               </p>
               <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
               <button 
-                onClick={() => navigate(`/AppointmentPage?serviceId=${service.id}`)}
+                onClick={() => {
+                  navigate('/');
+                  setTimeout(() => {
+                    const appointmentElement = document.getElementById('appointment');
+                    if (appointmentElement) {
+                      const rect = appointmentElement.getBoundingClientRect();
+                      const y = window.scrollY + rect.top - 100;
+                      window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+                  }, 1000);
+                }}
                 style={{
                   background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
                   color: 'white',
