@@ -5,27 +5,34 @@ import {
   InputLabel, IconButton, TablePagination, Box, InputAdornment, Chip, MenuItem,
   Typography, Divider, Avatar, Tooltip
 } from '@mui/material';
-import Cookies from 'js-cookie';
 import {
   SearchOutlined,
   CloseOutlined,
   EyeOutlined,
-  EditOutlined,
+  EditOutlined, 
   CalendarOutlined,
   UserOutlined,
   CheckOutlined,
   ClockCircleOutlined,
-  FilterOutlined
+  FilterOutlined,
+  FormOutlined,
+  MailOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import Cookies from 'js-cookie';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
+const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
+const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confirmation';
 
 const AppointmentManagement = () => {
   // States
+  const [searchParams] = useSearchParams();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
+  const [userRole, setUserRole] = useState('');
   const [loading, setLoading] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
@@ -40,63 +47,176 @@ const AppointmentManagement = () => {
     endDate: ''
   });
 
- const fetchAppointments = async () => {
-  const token = Cookies.get('staff_token');
-  const role = Cookies.get('staff_role');
+  const [staffList, setStaffList] = useState([]);
+  const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
+  const [appointmentToEditDetails, setAppointmentToEditDetails] = useState(null);
+  const [selectedStaffId, setSelectedStaffId] = useState(null);
+  const [strictSkillMatching, setStrictSkillMatching] = useState(false);
+  const [emailConfirmationOpen, setEmailConfirmationOpen] = useState(false);
+  const [appointmentToSendEmail, setAppointmentToSendEmail] = useState(null);
+  const [emailSending, setEmailSending] = useState(false);
 
-  if (!token || role !== 'ROLE_STAFF') {
-    console.error('Người dùng chưa đăng nhập hoặc không có quyền truy cập');
-    toast.error('Vui lòng đăng nhập lại.');
-    return;
-  }
+  // Handlers cho Email
+  const handleOpenEmailConfirmation = (appointment) => {
+    setAppointmentToSendEmail(appointment);
+    setEmailConfirmationOpen(true);
+  };
 
-  try {
-    const userId = Cookies.get('staff_userId');
-    const response = await fetch(`${API_URL}/byUser?userId=${userId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  const handleCloseEmailConfirmation = () => {
+    setEmailConfirmationOpen(false);
+    setAppointmentToSendEmail(null);
+  };
 
-    if (response.status === 401) {
-      throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
+  // Hàm gửi email xác nhận appointment
+  const handleSendConfirmationEmail = async () => {
+    if (!appointmentToSendEmail) return;
+    
+    setEmailSending(true);
+
+    try {
+      const emailPayload = {
+        appointmentId: appointmentToSendEmail.appointment_id,
+        customerEmail: appointmentToSendEmail.customer?.email || '',
+        customerName: appointmentToSendEmail.full_name,
+        serviceName: appointmentToSendEmail.service.name,
+        appointmentDate: appointmentToSendEmail.appointment_date,
+        appointmentTime: formatTime(appointmentToSendEmail.appointment_date),
+        endTime: formatTime(appointmentToSendEmail.end_time),
+        staffName: appointmentToSendEmail.user?.name || 'Staff will be assigned',
+        branchName: appointmentToSendEmail.branch.name,
+        price: appointmentToSendEmail.price,
+        notes: appointmentToSendEmail.notes || ''
+      };
+
+      const response = await fetch(EMAIL_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailPayload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'SUCCESS') {
+        toast.success('Confirmation email sent successfully!');
+        handleCloseEmailConfirmation();
+      } else {
+        toast.error(result.message || 'Failed to send confirmation email');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error('Error sending confirmation email');
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
+  const fetchAppointments = async () => {
+    const token = Cookies.get('staff_token');
+    const role = Cookies.get('staff_role');
+    setUserRole(role);
+
+    let url = API_URL;
+    if (role === 'ROLE_STAFF') {
+      const userId = Cookies.get('staff_userId');
+      url += `/byUser?userId=${userId}`;
+    } else if (role === 'ROLE_MANAGE') {
+      url;
     }
 
-    const data = await response.json();
-    if (data.status === 'SUCCESS') {
-      const mappedAppointments = data.data.map((item) => ({
-        appointment_id: item.id,
-        full_name: item.fullName,
-        phone_number: item.phoneNumber,
-        status: item.status,
-        slot: item.slot,
-        notes: item.notes,
-        appointment_date: item.appointmentDate,
-        end_time: item.endTime,
-        price: item.price,
-        service: { name: item.serviceName },
-        branch: { name: item.branchName },
-        customer: {
-          name: item.customerName,
-          image: item.customerImageUrl,
-        },
-        user: {
-          name: item.userName,
-          image: item.userImageUrl,
-        },
-      }));
-      setAppointments(mappedAppointments);
-    } else {
-      console.error('Lỗi khi lấy danh sách lịch hẹn:', data.message);
+    if (!token || (role !== 'ROLE_STAFF' && role !== 'ROLE_MANAGE')) {
+      console.error('Người dùng chưa đăng nhập hoặc không có quyền truy cập');
+      toast.error('Vui lòng đăng nhập lại.');
+      return;
     }
-  } catch (error) {
-    console.error('Lỗi khi gọi API:', error.message);
-    toast.error(error.message);
-    Cookies.remove('staff_token', { path: '/staff' });
-    Cookies.remove('staff_role', { path: '/staff' });
-    window.location.href = '/login';
-  }
-};
+
+    setLoading(true);
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
+      }
+
+      const data = await response.json();
+      console.log('🔍 Raw API Data:', data.data); // Debug log
+      if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
+        let mappedAppointments;
+        if (role === 'ROLE_MANAGE') {
+          mappedAppointments = data.data.map(item => ({
+            appointment_id: item.id,
+            full_name: item.fullName,
+            phone_number: item.phoneNumber,
+            status: item.status,
+            slot: item.slot,
+            notes: item.notes,
+            appointment_date: item.appointmentDate,
+            end_time: item.endTime,
+            price: item.price,
+            service: {
+              id: item.serviceId,
+              name: item.serviceName,
+              duration: item.serviceDuration || 60,
+              price: item.price
+            },
+            branch: {
+              id: item.branchId,
+              name: item.branchName
+            },
+            customer: {
+              name: item.customerName,
+              image: item.customerImageUrl || item.customerImage || '',
+              email: item.customerEmail || item.email || item.userEmail || ''
+            },
+            user: { name: item.userName, image: item.userImageUrl || '' },
+            created_at: item.appointmentDate,
+          }));
+        } else {
+          mappedAppointments = data.data.map(item => ({
+            appointment_id: item.id,
+            full_name: item.fullName,
+            phone_number: item.phoneNumber,
+            status: item.status,
+            slot: item.slot,
+            notes: item.notes,
+            appointment_date: item.appointmentDate,
+            end_time: item.endTime,
+            price: item.price,
+            service: { name: item.serviceName },
+            branch: { name: item.branchName },
+            customer: {
+              name: item.customerName,
+              image: item.customerImageUrl,
+              email: item.customerEmail || item.email || item.userEmail || ''
+            },
+            user: {
+              name: item.userName,
+              image: item.userImageUrl,
+            },
+          }));
+        }
+        console.log('📧 Mapped Appointments with emails:', mappedAppointments.map(a => ({ 
+          id: a.appointment_id, 
+          customerName: a.customer.name, 
+          customerEmail: a.customer.email 
+        }))); // Debug log
+        setAppointments(mappedAppointments);
+        setFilteredAppointments(mappedAppointments);
+      } else {
+        setAppointments([]);
+        setFilteredAppointments([]);
+        toast.error(data.message || 'Lỗi khi tải dữ liệu lịch hẹn');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Lỗi khi tải dữ liệu lịch hẹn');
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     fetchAppointments();
@@ -133,6 +253,11 @@ const AppointmentManagement = () => {
           appointment.service?.name?.toLowerCase().includes(query)
       );
     }
+
+    // Sort by appointment date (newest first - reverse order)
+    results = results.sort((a, b) =>
+      new Date(b.appointment_date) - new Date(a.appointment_date)
+    );
 
     setFilteredAppointments(results);
     setPage(0);
@@ -377,11 +502,7 @@ const AppointmentManagement = () => {
   //     appointments.push(appointment);
   //   }
 
-  //   // Sort by appointment date (newest first)
-  //   return appointments.sort((a, b) =>
-  //     new Date(b.appointment_date) - new Date(a.appointment_date)
-  //   );
-  // }
+
 
   // Get current page appointments
   const currentAppointments = filteredAppointments.slice(
@@ -558,7 +679,7 @@ const AppointmentManagement = () => {
                             }}
                           />
                         </TableCell>
-                        <TableCell>
+                                                <TableCell>
                           <Tooltip title="View Details">
                             <IconButton
                               onClick={() => handleViewOpen(appointment)}
@@ -568,15 +689,33 @@ const AppointmentManagement = () => {
                               <EyeOutlined />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Update Status">
-                            <IconButton
-                              onClick={() => handleStatusDialogOpen(appointment)}
-                              color="primary"
-                              size="small"
-                            >
-                              <EditOutlined />
-                            </IconButton>
-                          </Tooltip>
+
+                          {/* Hiện nút Update cho cả STAFF và MANAGE nếu chưa completed/cancelled */}
+                          {(userRole === 'ROLE_MANAGE' || userRole === 'ROLE_STAFF') && appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
+                            <>
+                              <Tooltip title="Update Status">
+                                <IconButton
+                                  onClick={() => handleStatusDialogOpen(appointment)}
+                                  color="primary"
+                                  size="small"
+                                >
+                                  <EditOutlined />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={!appointment.customer?.email ? "No customer email available" : "Send Confirmation Email"}>
+                                <span>
+                                  <IconButton 
+                                    onClick={() => handleOpenEmailConfirmation(appointment)} 
+                                    color="success" 
+                                    size="small"
+                                    disabled={!appointment.customer?.email}
+                                  >
+                                    <MailOutlined />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            </>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -744,13 +883,17 @@ const AppointmentManagement = () => {
                     <Grid item xs={12}>
                       <Divider sx={{ my: 1 }} />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() => handleStatusDialogOpen(currentAppointment)}
-                        >
-                          Update Status
-                        </Button>
+
+                        {/* --- BỌC NÚT UPDATE TRONG ĐIỀU KIỆN CHO CẢ STAFF VÀ MANAGE --- */}
+                        {(userRole === 'ROLE_MANAGE' || userRole === 'ROLE_STAFF') && (
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => handleStatusDialogOpen(currentAppointment)}
+                          >
+                            Update Status
+                          </Button>
+                        )}
                       </Box>
                     </Grid>
                   </Grid>
@@ -830,6 +973,118 @@ const AppointmentManagement = () => {
           <Button onClick={handleStatusDialogClose} color="inherit">Cancel</Button>
           <Button onClick={handleStatusChange} variant="contained" color="primary">
             Update Status
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Email Confirmation Dialog */}
+      <Dialog open={emailConfirmationOpen} onClose={handleCloseEmailConfirmation} maxWidth="md" fullWidth>
+        <DialogTitle>
+          Send Confirmation Email
+          <IconButton aria-label="close" onClick={handleCloseEmailConfirmation} sx={{ position: 'absolute', right: 8, top: 8 }}>
+            <CloseOutlined />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          {appointmentToSendEmail && (
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, mb: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    <MailOutlined style={{ marginRight: 8, color: '#1976d2' }} />
+                    Email Preview
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    This email will be sent to confirm the appointment details.
+                  </Typography>
+                </Box>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">To:</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {appointmentToSendEmail.customer?.email || 'No email available'}
+                </Typography>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Customer:</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {appointmentToSendEmail.full_name}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="h6" gutterBottom>Appointment Details</Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Service:</Typography>
+                <Typography variant="body1">{appointmentToSendEmail.service.name}</Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Price:</Typography>
+                <Typography variant="body1" color="primary" sx={{ fontWeight: 600 }}>
+                  ${appointmentToSendEmail.price?.toFixed(2)}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Date:</Typography>
+                <Typography variant="body1">{formatDate(appointmentToSendEmail.appointment_date)}</Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Time:</Typography>
+                <Typography variant="body1">
+                  {formatTime(appointmentToSendEmail.appointment_date)} - {formatTime(appointmentToSendEmail.end_time)}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Staff:</Typography>
+                <Typography variant="body1">
+                  {appointmentToSendEmail.user?.name || 'Staff will be assigned'}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Branch:</Typography>
+                <Typography variant="body1">{appointmentToSendEmail.branch.name}</Typography>
+              </Grid>
+
+              {appointmentToSendEmail.notes && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="textSecondary">Notes:</Typography>
+                  <Typography variant="body1">{appointmentToSendEmail.notes}</Typography>
+                </Grid>
+              )}
+
+              <Grid item xs={12}>
+                <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
+                  <Typography variant="body2" color="primary">
+                    📧 The customer will receive a professional email with all appointment details, 
+                    confirmation instructions, and contact information.
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEmailConfirmation} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSendConfirmationEmail} 
+            variant="contained" 
+            color="primary"
+            disabled={emailSending || !appointmentToSendEmail?.customer?.email}
+            startIcon={emailSending ? null : <MailOutlined />}
+          >
+            {emailSending ? 'Sending...' : 'Send Confirmation Email'}
           </Button>
         </DialogActions>
       </Dialog>

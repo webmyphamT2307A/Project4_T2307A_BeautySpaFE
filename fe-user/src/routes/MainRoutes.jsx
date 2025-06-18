@@ -9,6 +9,7 @@ import AppointmentManagement from '../pages/spa/appoinment';
 // import RoleManger from '../pages/role/service';
 import AttendancePage from '../pages/roll_call/attendancePage';
 import AttendanceHistoryPage from '../pages/roll_call/attendanceHistoryPage';
+import SalaryHistory from '../pages/salary/salary-history';
 import path from 'path';
 
 // render- Dashboard
@@ -73,6 +74,16 @@ const MainRoutes = {
         // }
       ]
     },
+    {
+      path: 'salary',
+      children: [
+        {
+          path: 'history',
+          element: <SalaryHistory />
+        }
+      ]
+    },
+   
     // {
     //   path: 'role',
     //   children: [

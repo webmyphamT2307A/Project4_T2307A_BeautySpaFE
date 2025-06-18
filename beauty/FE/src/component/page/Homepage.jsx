@@ -77,11 +77,11 @@ const Homepage = () => {
       </div>
       <Service />
       <AboutUs />
-      <Appoinment />
+      <div id="appointment">
+        <Appoinment />
+      </div>
       <Gallery />
-      <PricingSell/>
       <Team />
-      <Tesminoal/>
       <Contact/>
       <Footer />
     </div>

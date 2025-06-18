@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
     return (
@@ -9,22 +10,17 @@ const Footer = () => {
                         <div className="footer-item">
                             <h4 className="mb-4 text-white">Newsletter</h4>
                             <p className="text-white">Dolor amet sit justo amet elitr clita ipsum elitr est.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in tempor dui, non consectetur enim.</p>
-                            <div className="position-relative mx-auto rounded-pill">
-                                <input className="form-control rounded-pill border-0 w-100 py-3 ps-4 pe-5" type="text" placeholder="Enter your email" />
-                                <button type="button" className="btn btn-primary btn-primary-outline-0 rounded-pill position-absolute top-0 end-0 py-2 mt-2 me-2">SignUp</button>
-                            </div>
+                            
                         </div>
                     </div>
                     <div className="col-md-6 col-lg-6 col-xl-3">
                         <div className="footer-item d-flex flex-column">
-                            <h4 className="mb-4 text-white">Our Services</h4>
-                            <a href><i className="fas fa-angle-right me-2" /> Facials</a>
-                            <a href><i className="fas fa-angle-right me-2" /> Waxing</a>
-                            <a href><i className="fas fa-angle-right me-2" /> Message</a>
-                            <a href><i className="fas fa-angle-right me-2" /> Minarel baths</a>
-                            <a href><i className="fas fa-angle-right me-2" /> Body treatments</a>
-                            <a href><i className="fas fa-angle-right me-2" /> Aroma Therapy</a>
-                            <a href><i className="fas fa-angle-right me-2" /> Stone Spa</a>
+                            <h4 className="mb-4 text-white">Menu</h4>
+                            <Link to="/" className="nav-item nav-link text-white mb-2">Home</Link>
+                            <Link to="/AboutPage" className="nav-item nav-link text-white mb-2">About</Link>
+                            <Link to="/ServicePage" className="nav-item nav-link text-white mb-2">Services</Link>
+                            <Link to="/ContactPage" className="nav-item nav-link text-white mb-2">Contact Us</Link>
+                            
                         </div>
                     </div>
                     <div className="col-md-6 col-lg-6 col-xl-3">
@@ -40,9 +36,9 @@ const Footer = () => {
                     <div className="col-md-6 col-lg-6 col-xl-3">
                         <div className="footer-item d-flex flex-column">
                             <h4 className="mb-4 text-white">Follow Us</h4>
-                            <a href><i className="fas fa-angle-right me-2" /> Faceboock</a>
-                            <a href><i className="fas fa-angle-right me-2" /> Instagram</a>
-                            <a href><i className="fas fa-angle-right me-2" /> Twitter</a>
+                            <a href="#" className="text-white mb-2 text-decoration-none"><i className="fab fa-facebook-f me-2" /> Facebook</a>
+                            <a href="#" className="text-white mb-2 text-decoration-none"><i className="fab fa-instagram me-2" /> Instagram</a>
+                            <a href="#" className="text-white mb-2 text-decoration-none"><i className="fab fa-twitter me-2" /> Twitter</a>
                             <h4 className="my-4 text-white">Contact Us</h4>
                             <p className="mb-0"><i className="fas fa-envelope  me-2" /> info@example.com</p>
                             <p className="mb-0"><i className="fas fa-phone  me-2" /> (+012) 3456 7890 123</p>
