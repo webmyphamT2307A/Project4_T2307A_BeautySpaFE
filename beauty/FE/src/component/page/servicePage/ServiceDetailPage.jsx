@@ -359,20 +359,7 @@ const ServiceDetailPage = () => {
         borderRadius: '8px',
         position: 'relative'
       }}>
-        {/* Reply Type Badge */}
-        <div style={{
-          position: 'absolute',
-          top: '-5px',
-          left: '15px',
-          background: level % 2 === 0 ? '#007bff' : '#ff8c00',
-          color: 'white',
-          padding: '2px 8px',
-          borderRadius: '10px',
-          fontSize: '0.75rem',
-          fontWeight: '600'
-        }}>
-          {reply.replyType === 'STAFF_TO_CUSTOMER' ? 'Staff' : 'Customer'}
-        </div>
+       
 
         {/* Author Info */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', marginTop: '5px' }}>
