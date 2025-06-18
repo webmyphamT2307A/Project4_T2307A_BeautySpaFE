@@ -32,6 +32,11 @@ const Appointment = () => {
     const [staffSearchTerm, setStaffSearchTerm] = useState('');
     const [selectedStaffId, setSelectedStaffId] = useState(null); // To track visually selected staff
 
+    // Cancel appointment states
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
+    const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+
     // Validation states và patterns
     const [validationErrors, setValidationErrors] = useState({});
     const phoneRegex = /^\d{1,10}$/; // Tối đa 10 số
@@ -380,6 +385,65 @@ const Appointment = () => {
         setCurrentStep(prev => Math.max(prev - 1, 1));
     };
 
+    // Cancel appointment functions
+    const handleShowCancelModal = () => {
+        setShowCancelModal(true);
+        setCancelReason('');
+    };
+
+    const handleCloseCancelModal = () => {
+        setShowCancelModal(false);
+        setCancelReason('');
+        setIsSubmittingCancel(false);
+    };
+
+    const handleCancelAppointment = async () => {
+        if (!cancelReason.trim()) {
+            toast.warn('Vui lòng nhập lý do hủy đặt lịch.');
+            return;
+        }
+
+        if (cancelReason.length > 500) {
+            toast.warn('Lý do hủy không được vượt quá 500 ký tự.');
+            return;
+        }
+
+        setIsSubmittingCancel(true);
+
+        try {
+            // Here you can send the cancel reason to backend if needed
+            // await axios.post('http://localhost:8080/api/v1/appointment/cancel', { reason: cancelReason });
+            
+            toast.success(`Đã hủy đặt lịch thành công. Lý do: ${cancelReason}`);
+            
+            // Reset form
+            setFormData({
+                fullName: '',
+                phoneNumber: '',
+                appointmentDate: '',
+                serviceId: '',
+                notes: '',
+                customerId: '',
+                userId: '',
+                branchId: '',
+                timeSlotId: '',
+                slot: '',
+                price: '',
+                status: 'pending',
+            });
+            setSelectedStaffId(null);
+            setSlotInfo(null);
+            setStaffAvailabilities({});
+            setCurrentStep(1);
+            handleCloseCancelModal();
+            
+        } catch (error) {
+            toast.error('Có lỗi xảy ra khi hủy đặt lịch. Vui lòng thử lại.');
+        } finally {
+            setIsSubmittingCancel(false);
+        }
+    };
+
     // Step content rendering
     const renderStepContent = () => {
         switch (currentStep) {
@@ -617,7 +681,7 @@ const Appointment = () => {
                                                 fontSize: '0.75rem',
                                                 minHeight: '18px'
                                             }}>
-                                                {staff.skillsText || 'Spa Specialist'}
+                                                {staff.skillsText || 'Chuyên viên Spa'}
                                             </p>
 
                                             {/* Rating */}
@@ -639,6 +703,10 @@ const Appointment = () => {
                                                 }`}
                                                 style={{ fontSize: '0.75rem', padding: '6px 12px' }}
                                                 disabled={isBusy}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }}
                                             >
                                                 {isBusy ? (
                                                     <><i className="fas fa-ban me-1"></i>Không có</>
@@ -671,12 +739,16 @@ const Appointment = () => {
 
             <div className="row g-3">
                 <div className="col-12">
-                    <button
-                        type="button"
-                        onClick={handleUseAccountInfo}
-                        className="btn btn-outline-light w-100 mb-3"
-                        style={{ height: '45px' }}
-                    >
+                                            <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleUseAccountInfo();
+                            }}
+                            className="btn btn-outline-light w-100 mb-3"
+                            style={{ height: '45px' }}
+                        >
                         <i className="fas fa-user-circle me-2"></i>
                         Sử dụng thông tin tài khoản
                     </button>
@@ -836,6 +908,29 @@ const Appointment = () => {
                         </h5>
                         <h3 className="text-primary mb-0 fw-bold">{selectedService?.price}$</h3>
                     </div>
+
+                    {/* Cancel Appointment Button */}
+                    <div className="text-center mt-4">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleShowCancelModal();
+                            }}
+                            className="btn btn-outline-danger btn-sm"
+                            style={{
+                                borderRadius: '20px',
+                                padding: '8px 20px',
+                                fontWeight: '600',
+                                fontSize: '0.9rem',
+                                transition: 'all 0.3s ease'
+                            }}
+                        >
+                            <i className="fas fa-times me-2"></i>
+                            Hủy đặt lịch
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -848,8 +943,8 @@ const Appointment = () => {
             <div className="container py-5">
                 {/* Header */}
                 <div className="text-center mb-5">
-                    <p className="fs-4 text-uppercase text-primary">Get In Touch</p>
-                    <h1 className="display-5 display-lg-4 mb-3 text-white">Get Appointment</h1>
+                    <p className="fs-4 text-uppercase text-primary">Liên Hệ Với Chúng Tôi</p>
+                    <h1 className="display-5 display-lg-4 mb-3 text-white">Đặt Lịch Hẹn</h1>
                     <p className="text-white-50">Đặt lịch hẹn spa chỉ với 4 bước đơn giản</p>
                 </div>
 
@@ -897,7 +992,19 @@ const Appointment = () => {
                                 zIndex: 5
                             }}
                         >
-                            <form onSubmit={handleSubmit}>
+                            <form 
+                                onSubmit={handleSubmit}
+                                onKeyDown={(e) => {
+                                    // Ngăn form auto-submit khi nhấn Enter
+                                    if (e.key === 'Enter' && e.target.type !== 'submit') {
+                                        e.preventDefault();
+                                        // Nếu đang ở step cuối và nhấn Enter, mới cho submit
+                                        if (currentStep === totalSteps && e.target.type === 'submit') {
+                                            handleSubmit(e);
+                                        }
+                                    }
+                                }}
+                            >
                                 {/* Step Content */}
                                 {renderStepContent()}
 
@@ -908,7 +1015,11 @@ const Appointment = () => {
                                             <button 
                                                 type="button"
                                                 className="btn custom-btn prev-btn"
-                                                onClick={handlePrevStep}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    handlePrevStep();
+                                                }}
                                                 disabled={currentStep === 1}
                                                 style={{ minWidth: '120px' }}
                                             >
@@ -920,7 +1031,11 @@ const Appointment = () => {
                                                 <button 
                                                     type="button"
                                                     className="btn custom-btn next-btn"
-                                                    onClick={handleNextStep}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        handleNextStep();
+                                                    }}
                                                     disabled={!canProceedToStep(currentStep + 1)}
                                                     style={{ minWidth: '120px' }}
                                                 >
@@ -945,6 +1060,144 @@ const Appointment = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Cancel Appointment Modal */}
+            {showCancelModal && (
+                <div className="modal-overlay" style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999
+                }}>
+                    <div className="modal-content" style={{
+                        backgroundColor: 'white',
+                        borderRadius: '15px',
+                        padding: '30px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        maxHeight: '80vh',
+                        overflowY: 'auto',
+                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
+                    }}>
+                        <div className="modal-header text-center mb-4">
+                            <h4 className="text-danger mb-2">
+                                <i className="fas fa-exclamation-triangle me-2"></i>
+                                Hủy đặt lịch
+                            </h4>
+                            <p className="text-muted mb-0">Vui lòng cho chúng tôi biết lý do hủy đặt lịch</p>
+                        </div>
+
+                        <div className="modal-body">
+                            <div className="mb-3">
+                                <label className="form-label fw-bold">Lý do hủy đặt lịch *</label>
+                                <textarea
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                    className="form-control"
+                                    rows={4}
+                                    placeholder="Vui lòng nhập lý do hủy đặt lịch (tối đa 500 ký tự)..."
+                                    maxLength={500}
+                                    style={{
+                                        resize: 'vertical',
+                                        fontSize: '0.95rem'
+                                    }}
+                                />
+                                <div className="d-flex justify-content-between mt-1">
+                                    <small className="text-muted">* Bắt buộc</small>
+                                    <small className={`${cancelReason.length > 450 ? 'text-warning' : 'text-muted'}`}>
+                                        {cancelReason.length}/500 ký tự
+                                    </small>
+                                </div>
+                            </div>
+
+                            {/* Quick reason buttons */}
+                            <div className="mb-3">
+                                <label className="form-label fw-bold">Lý do thường gặp:</label>
+                                <div className="d-flex flex-wrap gap-2">
+                                    {[
+                                        'Thay đổi lịch trình',
+                                        'Vấn đề sức khỏe',
+                                        'Có việc đột xuất',
+                                        'Thay đổi ý định',
+                                        'Không phù hợp thời gian'
+                                    ].map((reason, index) => (
+                                        <button
+                                            key={index}
+                                            type="button"
+                                            className="btn btn-sm btn-outline-secondary"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setCancelReason(reason);
+                                            }}
+                                            style={{
+                                                borderRadius: '15px',
+                                                fontSize: '0.8rem'
+                                            }}
+                                        >
+                                            {reason}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer d-flex justify-content-center gap-3">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleCloseCancelModal();
+                                }}
+                                className="btn btn-secondary"
+                                style={{
+                                    borderRadius: '20px',
+                                    padding: '10px 25px',
+                                    fontWeight: '600'
+                                }}
+                                disabled={isSubmittingCancel}
+                            >
+                                <i className="fas fa-arrow-left me-2"></i>
+                                Quay lại
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleCancelAppointment();
+                                }}
+                                className="btn btn-danger"
+                                style={{
+                                    borderRadius: '20px',
+                                    padding: '10px 25px',
+                                    fontWeight: '600'
+                                }}
+                                disabled={isSubmittingCancel || !cancelReason.trim()}
+                            >
+                                {isSubmittingCancel ? (
+                                    <>
+                                        <i className="fas fa-spinner fa-spin me-2"></i>
+                                        Đang hủy...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="fas fa-check me-2"></i>
+                                        Xác nhận hủy
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Global CSS */}
             <style jsx global>{`
@@ -1290,6 +1543,57 @@ const Appointment = () => {
 
               .staff-directory-grid::-webkit-scrollbar-thumb:hover {
                 background: rgba(255,255,255,0.5);
+              }
+
+              /* Cancel Modal Animation */
+              .modal-overlay {
+                animation: fadeIn 0.3s ease-out;
+              }
+
+              .modal-content {
+                animation: slideInUp 0.3s ease-out;
+              }
+
+              @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+              }
+
+              @keyframes slideInUp {
+                from { 
+                  opacity: 0;
+                  transform: translateY(30px);
+                }
+                to { 
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+
+              /* Cancel reason buttons */
+              .btn-outline-secondary:hover {
+                background-color: #6c757d;
+                border-color: #6c757d;
+                color: white;
+              }
+
+              /* Mobile responsiveness for cancel modal */
+              @media (max-width: 767.98px) {
+                .modal-content {
+                  margin: 20px;
+                  padding: 20px;
+                  max-width: none;
+                  width: calc(100% - 40px);
+                }
+                
+                .modal-footer {
+                  flex-direction: column;
+                  gap: 10px;
+                }
+                
+                .modal-footer .btn {
+                  width: 100%;
+                }
               }
             `}</style>
         </div>
