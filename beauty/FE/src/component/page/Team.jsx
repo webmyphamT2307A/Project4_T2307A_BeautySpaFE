@@ -5,8 +5,8 @@ const Team = () => {
         <div className="container-fluid team py-5">
   <div className="container py-5">
     <div className="text-center mx-auto mb-5" style={{maxWidth: 800}}>
-      <p className="fs-4 text-uppercase text-primary">Spa Specialist</p>
-      <h1 className="display-4 mb-4">Spa &amp; Beauty Specialist</h1>
+      <p className="fs-4 text-uppercase text-primary">Chuyên viên Spa</p>
+      <h1 className="display-4 mb-4">Chuyên viên Spa &amp; Làm đẹp</h1>
     </div>
     <div className="row g-4">
       <div className="col-md-6 col-lg-6 col-xl-3">
@@ -16,7 +16,7 @@ const Team = () => {
           </div>
           <div className="team-text rounded-bottom text-center p-4">
             <h3 className="text-white">Oliva Mia</h3>
-            <p className="mb-0 text-white">Spa &amp; Beauty Expert</p>
+            <p className="mb-0 text-white">Chuyên gia Spa &amp; Làm đẹp</p>
           </div>
           <div className="team-social">
             <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
@@ -33,7 +33,7 @@ const Team = () => {
           </div>
           <div className="team-text rounded-bottom text-center p-4">
             <h3 className="text-white">Charlotte Ross</h3>
-            <p className="mb-0 text-white">Spa &amp; Beauty Expert</p>
+            <p className="mb-0 text-white">Chuyên gia Spa &amp; Làm đẹp</p>
           </div>
           <div className="team-social">
             <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
@@ -50,7 +50,7 @@ const Team = () => {
           </div>
           <div className="team-text rounded-bottom text-center p-4">
             <h3 className="text-white">Amelia Luna</h3>
-            <p className="mb-0 text-white">Spa &amp; Beauty Expert</p>
+            <p className="mb-0 text-white">Chuyên gia Spa &amp; Làm đẹp</p>
           </div>
           <div className="team-social">
             <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
@@ -67,7 +67,7 @@ const Team = () => {
           </div>
           <div className="team-text rounded-bottom text-center p-4">
             <h3 className="text-white">Isabella Evelyn</h3>
-            <p className="mb-0 text-white">Spa &amp; Beauty Expert</p>
+            <p className="mb-0 text-white">Chuyên gia Spa &amp; Làm đẹp</p>
           </div>
           <div className="team-social">
             <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>

@@ -25,6 +25,10 @@ const CustomerDetail = () => {
 
     const [serviceHistory, setServiceHistory] = useState([]);
     const [selectedHistory, setSelectedHistory] = useState(null);
+    
+    // Pagination states for service history
+    const [currentHistoryPage, setCurrentHistoryPage] = useState(1);
+    const historyPerPage = 5;
 
     const [message, setMessage] = useState({ type: '', content: '' });
 
@@ -175,6 +179,17 @@ const CustomerDetail = () => {
 
     const handleCloseDetails = () => {
         setSelectedHistory(null);
+    };
+
+    // Pagination calculations for service history
+    const totalHistoryPages = Math.ceil(serviceHistory.length / historyPerPage);
+    const startHistoryIndex = (currentHistoryPage - 1) * historyPerPage;
+    const endHistoryIndex = startHistoryIndex + historyPerPage;
+    const currentHistoryItems = serviceHistory.slice(startHistoryIndex, endHistoryIndex);
+
+    // Handle history page change
+    const handleHistoryPageChange = (pageNumber) => {
+        setCurrentHistoryPage(pageNumber);
     };
 
     if (loading) {
@@ -349,29 +364,81 @@ const CustomerDetail = () => {
                                         </form>
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="history">
-                                        <h4 className="mb-4">Lịch sử dịch vụ</h4>
+                                        <div className="d-flex justify-content-between align-items-center mb-4">
+                                            <h4 className="mb-0">Lịch sử dịch vụ</h4>
+                                            {totalHistoryPages > 1 && (
+                                                <small className="text-muted">
+                                                    Trang {currentHistoryPage} / {totalHistoryPages} (Hiển thị {currentHistoryItems.length} / {serviceHistory.length} dịch vụ)
+                                                </small>
+                                            )}
+                                        </div>
+                                        
                                         {serviceHistory.length === 0 ? (
                                             <p>Không có lịch sử dịch vụ nào.</p>
                                         ) : (
-                                            <div className="list-group">
-                                                {serviceHistory.map((history) => (
-                                                    <div key={history.id} className="list-group-item">
-                                                        <div className="d-flex justify-content-between align-items-center">
-                                                            <div>
-                                                                <h5>{history.serviceName}</h5>
-                                                                <p className="mb-1">Giá: {history.price}$</p>
-                                                                <p className="mb-1">Ngày hẹn: {new Date(history.appointmentDate).toLocaleDateString()}</p>
+                                            <>
+                                                <div className="list-group">
+                                                    {currentHistoryItems.map((history) => (
+                                                        <div key={history.id} className="list-group-item">
+                                                            <div className="d-flex justify-content-between align-items-center">
+                                                                <div>
+                                                                    <h5>{history.serviceName}</h5>
+                                                                    <p className="mb-1">Giá: {history.price}$</p>
+                                                                    <p className="mb-1">Ngày hẹn: {new Date(history.appointmentDate).toLocaleDateString()}</p>
+                                                                </div>
+                                                                <button
+                                                                    className="btn btn-primary"
+                                                                    onClick={() => handleViewDetails(history)}
+                                                                >
+                                                                    Xem chi tiết
+                                                                </button>
                                                             </div>
-                                                            <button
-                                                                className="btn btn-primary"
-                                                                onClick={() => handleViewDetails(history)}
-                                                            >
-                                                                Xem chi tiết
-                                                            </button>
                                                         </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Pagination for Service History */}
+                                                {totalHistoryPages > 1 && (
+                                                    <div className="d-flex justify-content-center align-items-center mt-4 gap-2">
+                                                        {/* Previous Button */}
+                                                        <button
+                                                            onClick={() => handleHistoryPageChange(currentHistoryPage - 1)}
+                                                            disabled={currentHistoryPage === 1}
+                                                            className={`btn btn-sm ${currentHistoryPage === 1 ? 'btn-secondary' : 'btn-outline-primary'}`}
+                                                            style={{ minWidth: '80px' }}
+                                                        >
+                                                            <i className="fas fa-chevron-left me-1"></i>
+                                                            Trước
+                                                        </button>
+
+                                                        {/* Page Numbers */}
+                                                        {Array.from({ length: totalHistoryPages }, (_, i) => i + 1).map((pageNum) => (
+                                                            <button
+                                                                key={pageNum}
+                                                                onClick={() => handleHistoryPageChange(pageNum)}
+                                                                className={`btn btn-sm ${pageNum === currentHistoryPage ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                                style={{ 
+                                                                    minWidth: '40px',
+                                                                    fontWeight: pageNum === currentHistoryPage ? 'bold' : 'normal'
+                                                                }}
+                                                            >
+                                                                {pageNum}
+                                                            </button>
+                                                        ))}
+
+                                                        {/* Next Button */}
+                                                        <button
+                                                            onClick={() => handleHistoryPageChange(currentHistoryPage + 1)}
+                                                            disabled={currentHistoryPage === totalHistoryPages}
+                                                            className={`btn btn-sm ${currentHistoryPage === totalHistoryPages ? 'btn-secondary' : 'btn-outline-primary'}`}
+                                                            style={{ minWidth: '80px' }}
+                                                        >
+                                                            Tiếp
+                                                            <i className="fas fa-chevron-right ms-1"></i>
+                                                        </button>
                                                     </div>
-                                                ))}
-                                            </div>
+                                                )}
+                                            </>
                                         )}
                                     </Tab.Pane>
                                 </Tab.Content>

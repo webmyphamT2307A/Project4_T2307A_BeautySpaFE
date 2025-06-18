@@ -117,11 +117,11 @@ const ServicePage = () => {
       <Header />
       <div className="container-fluid bg-breadcrumb py-5">
         <div className="container text-center py-5">
-          <h3 className="text-white display-3 mb-4">Our Services</h3>
+          <h3 className="text-white display-3 mb-4">Dịch Vụ Của Chúng Tôi</h3>
           <ol className="breadcrumb justify-content-center mb-0">
-            <li className="breadcrumb-item"><a href="/">Home</a></li>
-            <li className="breadcrumb-item"><a href="#">Pages</a></li>
-            <li className="breadcrumb-item active text-white">Service Page</li>
+            <li className="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li className="breadcrumb-item"><a href="#">Trang</a></li>
+            <li className="breadcrumb-item active text-white">Trang Dịch Vụ</li>
           </ol>
         </div>
       </div>
@@ -129,8 +129,8 @@ const ServicePage = () => {
       <div className="container-fluid services py-5">
         <div className="container py-5">
           <div className="mx-auto text-center mb-5" style={{ maxWidth: 800 }}>
-            <p className="fs-4 text-uppercase text-center text-primary">Our Service</p>
-            <h1 className="display-3">Spa &amp; Beauty Services</h1>
+            <p className="fs-4 text-uppercase text-center text-primary">Dịch Vụ Của Chúng Tôi</p>
+            <h1 className="display-3">Dịch Vụ Spa &amp; Làm Đẹp</h1>
             
             {/* Search Box */}
             <div className="position-relative mx-auto mt-4" style={{ maxWidth: 500 }}>
@@ -263,7 +263,7 @@ const ServicePage = () => {
           </div>
 
           {loading ? (
-            <div className="text-center">Loading...</div>
+            <div className="text-center">Đang tải...</div>
           ) : (
             <div className="row g-4">
               {displayedServices.map((service, index) => {
@@ -300,7 +300,7 @@ const ServicePage = () => {
                                   }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >
-                                  Make Order
+                                  Đặt Lịch
                                 </button>
                               </div>
                             </div>
@@ -362,7 +362,7 @@ const ServicePage = () => {
                                   }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >
-                                  Make Order
+                                  Đặt Lịch
                                 </button>
                               </div>
                             </div>

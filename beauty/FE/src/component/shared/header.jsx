@@ -213,9 +213,9 @@ const Header = () => {
                          <div className="row align-items-center">
                              <div className="col-lg-8">
                                  <div className="d-flex flex-wrap">
-                                     <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Find A Location</a>
+                                     <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Tìm Địa Điểm</a>
                                      <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+01234567890</a>
-                                     <a href="#"><i className="fas fa-envelope me-2" />Example@gmail.com</a>
+                                     <a href="#"><i className="fas fa-envelope me-2" />info@sparlex.com</a>
                                  </div>
                              </div>
                             <div className="col-lg-4">
@@ -241,15 +241,10 @@ const Header = () => {
                             </button>
                             <div className="collapse navbar-collapse bg-light py-3" id="navbarCollapse">
                                 <div className="navbar-nav mx-auto border-top">
-                                    <Link to="/" className="nav-item nav-link active">Home</Link>
-                                    <Link to="/AboutPage" className="nav-item nav-link">About</Link>
-                                    <Link to="/ServicePage" className="nav-item nav-link">Services</Link>
-
-                                 
-
-                                    
-                                    <Link to="/ContactPage" className="nav-item nav-link">Contact Us</Link>
-                                      
+                                    <Link to="/" className="nav-item nav-link active">Trang Chủ</Link>
+                                    <Link to="/AboutPage" className="nav-item nav-link">Về Chúng Tôi</Link>
+                                    <Link to="/ServicePage" className="nav-item nav-link">Dịch Vụ</Link>
+                                    <Link to="/ContactPage" className="nav-item nav-link">Liên Hệ</Link>
                                 </div>
                                 <div className="d-flex align-items-center flex-nowrap pt-xl-0">
                                     <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" onClick={() => setShowSearch(!showSearch)}>
@@ -282,7 +277,7 @@ const Header = () => {
                                             }}
                                         >
                                             <i className="fas fa-user me-2"></i>
-                                            Login
+                                            Đăng Nhập
                                         </button>
                                     ) : (
                                         <div className="nav-item dropdown ms-3">
@@ -330,8 +325,6 @@ const Header = () => {
                                             </div>
                                         </div>
                                     )}
-
-                                    {/* <Link to="/AppointmentPage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-4 ms-4">Book Appointment</Link> */}
                                 </div>
                             </div>
                         </nav>
@@ -339,7 +332,7 @@ const Header = () => {
                 </div>
             </div>
 
-            {/* Modals không thay đổi */}
+            {/* Search functionality */}
           {showSearch && (
                 <div ref={searchRef} className="search-bar-wrapper position-absolute w-100 d-flex justify-content-center" style={{ top: "170px", zIndex: 1050 }}>
                     <div className="position-relative" style={{ maxWidth: "600px", width: "100%" }}>
@@ -418,7 +411,7 @@ const Header = () => {
                                                         : service.description}
                                                 </div>
                                                 <div className="text-primary small fw-bold">
-                                                    {service.price ? `${service.price.toLocaleString()}$` : 'Liên hệ'}
+                                                    {service.price ? `${service.price.toLocaleString()}₫` : 'Liên hệ'}
                                                 </div>
                                             </div>
                                             <div className="ms-auto">
@@ -450,57 +443,55 @@ const Header = () => {
                 </div>
             )}
 
-
-
-
             {/* Login Modal */}
             <div className="modal fade" id="loginModal" tabIndex={-1} aria-labelledby="loginModalLabel" aria-hidden="true">
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title" id="loginModalLabel">Login</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+                            <h5 className="modal-title" id="loginModalLabel">Đăng Nhập</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Đóng" />
                         </div>
                         <div className="modal-body">
                             <form onSubmit={handleLogin}>
                                 <div className="mb-3">
-                                    <label className="form-label">Email address</label>
+                                    <label className="form-label">Địa chỉ Email</label>
                                     <input
                                         type="email"
                                         className="form-control"
-                                        placeholder="Enter email"
+                                        placeholder="Nhập email của bạn"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                     />
                                 </div>
                                 <div className="mb-3">
-                                    <label className="form-label">Password</label>
+                                    <label className="form-label">Mật khẩu</label>
                                     <input
                                         type="password"
                                         className="form-control"
-                                        placeholder="Password"
+                                        placeholder="Nhập mật khẩu"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                     />
                                 </div>
-                                <button type="submit" className="btn btn-primary w-100">Login</button>
+                                <button type="submit" className="btn btn-primary w-100">Đăng Nhập</button>
                             </form>
                         </div>
                         <div className="modal-footer justify-content-center">
                             <p className="text-center mb-0">
-                                Don't have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">Register</a>
+                                Chưa có tài khoản? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">Đăng ký ngay</a>
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
+            
             {/* Register Modal */}
             <div className="modal fade" id="registerModal" tabIndex={-1} aria-labelledby="registerModalLabel" aria-hidden="true">
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title" id="registerModalLabel">Register</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+                            <h5 className="modal-title" id="registerModalLabel">Đăng Ký Tài Khoản</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Đóng" />
                         </div>
                         <div className="modal-body">
                             {registerMessage && (
@@ -508,22 +499,24 @@ const Header = () => {
                             )}
                             <form onSubmit={handleRegister}>
                                 <div className="mb-3">
-                                    <label className="form-label">Họ tên</label>
+                                    <label className="form-label">Họ và tên</label>
                                     <input
                                         type="text"
                                         className="form-control"
                                         name="fullName"
+                                        placeholder="Nhập họ và tên của bạn"
                                         value={registerInfo.fullName}
                                         onChange={handleRegisterChange}
                                         required
                                     />
                                 </div>
                                 <div className="mb-3">
-                                    <label className="form-label">Email</label>
+                                    <label className="form-label">Địa chỉ Email</label>
                                     <input
                                         type="email"
                                         className="form-control"
                                         name="email"
+                                        placeholder="Nhập email của bạn"
                                         value={registerInfo.email}
                                         onChange={handleRegisterChange}
                                         required
@@ -535,13 +528,14 @@ const Header = () => {
                                         type="password"
                                         className="form-control"
                                         name="password"
+                                        placeholder="Tạo mật khẩu mới"
                                         value={registerInfo.password}
                                         onChange={handleRegisterChange}
                                         required
                                     />
                                 </div>
 
-                                <button type="submit" className="btn btn-primary w-100">Đăng ký</button>
+                                <button type="submit" className="btn btn-primary w-100">Đăng Ký Ngay</button>
                             </form>
                         </div>
                         <div className="modal-footer justify-content-center">
@@ -552,8 +546,6 @@ const Header = () => {
                     </div>
                 </div>
             </div>
-            <div className="modal fade" id="loginModal" tabIndex={-1}>{/* ... */}</div>
-            <div className="modal fade" id="registerModal" tabIndex={-1}>{/* ... */}</div>
             
             {/* CSS for Search Functionality */}
             <style jsx>{`

@@ -286,57 +286,59 @@ const ServiceDetailPage = () => {
 
   const handleSubmitReply = async () => {
     if (!replyContent.trim()) {
-      toast.warn('Vui lòng nhập nội dung phản hồi.');
-      return;
+        toast.warn('Vui lòng nhập nội dung phản hồi.');
+        return;
     }
 
     if (!isAuthenticated) {
-      toast.warn('Vui lòng đăng nhập để phản hồi.');
-      return;
+        toast.warn('Vui lòng đăng nhập để phản hồi.');
+        return;
     }
-
-    // Allow all authenticated users to reply
 
     setIsSubmitting(true);
 
     try {
-      const endpoint = replyingTo.type === 'review' 
-        ? `http://localhost:8080/api/v1/reviews/${replyingTo.id}/reply`
-        : `http://localhost:8080/api/v1/review-replies/${replyingTo.id}/reply`;
+        // ===== SỬA LỖI Ở ĐÂY =====
+        const endpoint = replyingTo.type === 'review'
+            ? `http://localhost:8080/api/v1/reviews/${replyingTo.id}/reply`
+            // Sửa lại URL cho đúng với Backend
+            : `http://localhost:8080/api/v1/reviews/replies/${replyingTo.id}/reply`;
+        // ===== KẾT THÚC SỬA LỖI =====
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          comment: replyContent,
-          parentReplyId: replyingTo.type === 'reply' ? replyingTo.id : null
-        })
-      });
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                comment: replyContent
+                // Backend của bạn xử lý parentReplyId từ URL hoặc không cần nó trong body
+                // nên chúng ta có thể giữ nguyên phần body này
+            })
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (response.ok && result.status === 'SUCCESS') {
-        toast.success('Gửi phản hồi thành công!');
-        // Refresh reviews to show new reply
-        const reviewsResponse = await fetch(`http://localhost:8080/api/v1/reviews/item/${id}?sort=createdAt,desc`);
-        const reviewsResult = await reviewsResponse.json();
-        if (reviewsResult.status === 'SUCCESS' && reviewsResult.data.content) {
-          setReviews(reviewsResult.data.content);
+        if (response.ok && result.status === 'SUCCESS') {
+            toast.success('Gửi phản hồi thành công!');
+            // Refresh lại toàn bộ reviews để hiển thị phản hồi mới
+            const reviewsResponse = await fetch(`http://localhost:8080/api/v1/reviews/item/${id}?sort=createdAt,desc`);
+            const reviewsResult = await reviewsResponse.json();
+            if (reviewsResult.status === 'SUCCESS' && reviewsResult.data.content) {
+                setReviews(reviewsResult.data.content);
+            }
+            handleCancelReply();
+        } else {
+            toast.error(`Gửi phản hồi thất bại: ${result.message}`);
         }
-        handleCancelReply();
-      } else {
-        toast.error(`Gửi phản hồi thất bại: ${result.message}`);
-      }
     } catch (error) {
-      console.error('Error submitting reply:', error);
-      toast.error('Đã xảy ra lỗi khi gửi phản hồi.');
+        console.error('Error submitting reply:', error);
+        toast.error('Đã xảy ra lỗi khi gửi phản hồi.');
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
-  };
+};
 
   // Component to render threaded replies
   const renderReplies = (replies, level = 0) => {
@@ -502,8 +504,8 @@ const ServiceDetailPage = () => {
     ));
   };
 
-  if (loading) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Loading...</div>;
-  if (!service) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Service not found</div>;
+  if (loading) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Đang tải...</div>;
+  if (!service) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Không tìm thấy dịch vụ</div>;
 
   return (
     <div>
@@ -514,7 +516,7 @@ const ServiceDetailPage = () => {
       <div className="container-fluid py-4" style={{ backgroundColor: '#fafafa', minHeight: '100vh' }}>
         <div className="container">
           <Link to="/ServicePage" style={{ marginBottom: 20, display: 'inline-block', border: '1px solid #f8a4c1', padding: '8px 16px', color: '#333', textDecoration: 'none', fontWeight: 'bold', transition: 'background-color 0.3s, color 0.3s', borderRadius: '999px' }}>
-            ← Back to Services
+            ← Quay lại Dịch vụ
           </Link>
 
           {/* PHẦN THÔNG TIN DỊCH VỤ - New Layout */}
@@ -535,7 +537,7 @@ const ServiceDetailPage = () => {
                 {service.name}
               </h2>
               <p>
-                <strong>Price:</strong>{' '}
+                <strong>Giá:</strong>{' '}
                 {service.price ? `${service.price.toLocaleString()}$` : 'N/A'}
               </p>
               <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
@@ -573,7 +575,7 @@ const ServiceDetailPage = () => {
                   e.target.style.boxShadow = 'none';
                 }}
               >
-                REGISTER NOW!
+                ĐĂNG KÝ NGAY!
               </button>
             </div>
 
@@ -778,7 +780,7 @@ const ServiceDetailPage = () => {
 
           {/* PHẦN REVIEWS */}
           <div id="reviews-section" style={{ marginTop: 60 }}>
-            <h3 style={{ fontWeight: 700, marginBottom: 25 }}>Reviews</h3>
+            <h3 style={{ fontWeight: 700, marginBottom: 25 }}>Đánh giá</h3>
 
             {/* PHẦN THỐNG KÊ REVIEW - Đầy đủ */}
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -787,7 +789,7 @@ const ServiceDetailPage = () => {
                 <div style={{ color: '#f5a623', fontSize: 20 }}>
                   {'★'.repeat(Math.round(Number(averageRating))) + '☆'.repeat(5 - Math.round(Number(averageRating)))}
                 </div>
-                <div style={{ color: '#888' }}>{reviews.length} reviews</div>
+                <div style={{ color: '#888' }}>{reviews.length} đánh giá</div>
               </div>
               <div style={{ flexGrow: 1, minWidth: '300px' }}>
                 {[5, 4, 3, 2, 1].map((star, i) => (
@@ -817,23 +819,23 @@ const ServiceDetailPage = () => {
 
             {/* PHẦN FORM REVIEW - Đã cập nhật */}
             <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
-              <h4 style={{ marginBottom: 15 }}>Share your review</h4>
+              <h4 style={{ marginBottom: 15 }}>Chia sẻ đánh giá của bạn</h4>
 
               {isAuthenticated ? (
                 <form onSubmit={handleReviewSubmit}>
                   <div style={{ padding: '10px 15px', background: '#e9ecef', borderLeft: '4px solid #d6336c', marginBottom: 15, borderRadius: 4 }}>
-                    <p style={{ margin: 0 }}>You are reviewing as: <strong>{user.fullName}</strong></p>
+                    <p style={{ margin: 0 }}>Bạn đang đánh giá với tư cách: <strong>{user.fullName}</strong></p>
                   </div>
-                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Your rating *</label>
+                                      <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Đánh giá của bạn *</label>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 15 }}>
                     {[1, 2, 3, 4, 5].map((star) => (
                       <span key={star} onClick={() => setNewReview({ ...newReview, rating: star })} style={{ fontSize: 30, cursor: 'pointer', color: star <= newReview.rating ? '#f60' : '#ccc', marginRight: 5, userSelect: 'none' }}>★</span>
                     ))}
-                    <span style={{ marginLeft: 10, fontSize: 14, color: '#555' }}>
-                      {newReview.rating === 0 ? 'Chưa chọn đánh giá' : { 1: 'Very Bad', 2: 'Not Satisfied', 3: 'Average', 4: 'Satisfied', 5: 'Very Satisfied' }[newReview.rating]}
-                    </span>
+                                          <span style={{ marginLeft: 10, fontSize: 14, color: '#555' }}>
+                        {newReview.rating === 0 ? 'Chưa chọn đánh giá' : { 1: 'Rất tệ', 2: 'Không hài lòng', 3: 'Trung bình', 4: 'Hài lòng', 5: 'Rất hài lòng' }[newReview.rating]}
+                      </span>
                   </div>
-                  <label style={{ fontWeight: 500 }}>Comment * (Tối đa 500 ký tự)</label>
+                                      <label style={{ fontWeight: 500 }}>Bình luận * (Tối đa 500 ký tự)</label>
                   <textarea
                     value={newReview.comment}
                     onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
@@ -847,14 +849,14 @@ const ServiceDetailPage = () => {
                       {newReview.comment.length}/500 ký tự
                     </small>
                   </div>
-                  <button type="submit" disabled={isSubmitting} style={{ backgroundColor: '#28a745', color: 'white', padding: '10px 20px', border: 'none', borderRadius: 5, fontWeight: 'bold', cursor: 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
-                    {isSubmitting ? 'Submitting...' : 'Submit Review'}
-                  </button>
+                                      <button type="submit" disabled={isSubmitting} style={{ backgroundColor: '#28a745', color: 'white', padding: '10px 20px', border: 'none', borderRadius: 5, fontWeight: 'bold', cursor: 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
+                      {isSubmitting ? 'Đang gửi...' : 'Gửi Đánh Giá'}
+                    </button>
                 </form>
               ) : (
                 <div style={{ padding: '20px', textAlign: 'center', background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 5 }}>
                   <p style={{ margin: 0 }}>
-                    Please <Link to="/login" style={{ fontWeight: 'bold', color: '#d6336c' }}>log in</Link> to leave a review.
+                    Vui lòng <Link to="/login" style={{ fontWeight: 'bold', color: '#d6336c' }}>đăng nhập</Link> để để lại đánh giá.
                   </p>
                 </div>
               )}
@@ -863,7 +865,7 @@ const ServiceDetailPage = () => {
 
           <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h4 style={{ marginBottom: 0 }}>All Reviews ({reviews.length})</h4>
+              <h4 style={{ marginBottom: 0 }}>Tất cả Đánh Giá ({reviews.length})</h4>
               {totalPages > 1 && (
                 <small style={{ color: '#666' }}>
                   Trang {currentPage} / {totalPages} (Hiển thị {currentReviews.length} / {reviews.length} đánh giá)
@@ -891,10 +893,10 @@ const ServiceDetailPage = () => {
                       />
                       <div>
                         <button onClick={() => handleUpdateSubmit(r.id)} disabled={isSubmitting} style={{ backgroundColor: '#007bff', color: 'white', padding: '8px 16px', border: 'none', borderRadius: 5, cursor: 'pointer', marginRight: 8 }}>
-                          {isSubmitting ? 'Saving...' : 'Save Changes'}
+                          {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                         </button>
                         <button onClick={handleCancelEdit} style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: 5, cursor: 'pointer', background: 'transparent' }}>
-                          Cancel
+                          Hủy
                         </button>
                       </div>
                     </div>
@@ -1082,7 +1084,7 @@ const ServiceDetailPage = () => {
                 </div>
               ))
             ) : (
-              <p>There are no reviews yet. Be the first one!</p>
+              <p>Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
             )}
 
             {/* Pagination UI */}
@@ -1123,7 +1125,7 @@ const ServiceDetailPage = () => {
                     }
                   }}
                 >
-                  <i className="fas fa-chevron-left"></i> Previous
+                  <i className="fas fa-chevron-left"></i> Trước
                 </button>
 
                 {/* Page Numbers */}
@@ -1186,7 +1188,7 @@ const ServiceDetailPage = () => {
                     }
                   }}
                 >
-                  Next <i className="fas fa-chevron-right"></i>
+                  Tiếp <i className="fas fa-chevron-right"></i>
                 </button>
               </div>
             )}

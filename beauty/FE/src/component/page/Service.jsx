@@ -37,7 +37,7 @@ const Service = () => {
                 <div className="container py-5">
                     <div className="text-center">
                         <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
+                            <span className="visually-hidden">Đang tải...</span>
                         </div>
                         <p className="mt-2">Đang tải dịch vụ...</p>
                     </div>
@@ -51,8 +51,8 @@ const Service = () => {
 <div className="container-fluid services py-5">
   <div className="container py-5">
     <div className="mx-auto text-center mb-5" style={{maxWidth: 800}}>
-      <p className="fs-4 text-uppercase text-center text-primary">Our Service</p>
-      <h1 className="display-3">Spa &amp; Beauty Services</h1>
+      <p className="fs-4 text-uppercase text-center text-primary">Dịch Vụ Của Chúng Tôi</p>
+      <h1 className="display-3">Dịch Vụ Spa &amp; Làm Đẹp</h1>
     </div>
     <div className="row g-4">
       {servicesData.map((service, index) => {
@@ -78,7 +78,7 @@ const Service = () => {
                         </p>
                         <div className="mb-2">
                           <span className="fw-bold text-primary">
-                            {service.price ? `${service.price.toLocaleString()}$` : 'Liên hệ'}
+                            {service.price ? `${service.price.toLocaleString()}₫` : 'Liên hệ'}
                           </span>
                         </div>
                         <button 
@@ -94,7 +94,7 @@ const Service = () => {
                           }}
                           className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4"
                         >
-                          Make Order
+                          Đặt Lịch Ngay
                         </button>
                       </div>
                     </div>
@@ -146,7 +146,7 @@ const Service = () => {
                         </p>
                         <div className="mb-2">
                           <span className="fw-bold text-primary">
-                            {service.price ? `${service.price.toLocaleString()}$` : 'Liên hệ'}
+                            {service.price ? `${service.price.toLocaleString()}₫` : 'Liên hệ'}
                           </span>
                         </div>
                         <button 
@@ -162,7 +162,7 @@ const Service = () => {
                           }}
                           className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4"
                         >
-                          Make Order
+                          Đặt Lịch Ngay
                         </button>
                       </div>
                     </div>
@@ -176,7 +176,7 @@ const Service = () => {
       <div className="col-12">
         <div className="services-btn text-center">
           <Link to="/ServicePage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5">
-            Service More
+            Xem Thêm Dịch Vụ
           </Link>
         </div>
       </div>
