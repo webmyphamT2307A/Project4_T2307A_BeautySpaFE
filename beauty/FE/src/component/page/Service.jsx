@@ -81,9 +81,21 @@ const Service = () => {
                             {service.price ? `${service.price.toLocaleString()}$` : 'Liên hệ'}
                           </span>
                         </div>
-                        <Link to={`/AppointmentPage?serviceId=${service.id}`} className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4">
+                        <button 
+                          onClick={() => {
+                            setTimeout(() => {
+                              const appointmentSection = document.getElementById('appointment');
+                              if (appointmentSection) {
+                                const yOffset = -50;
+                                const y = appointmentSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                                window.scrollTo({ top: y, behavior: 'smooth' });
+                              }
+                            }, 100);
+                          }}
+                          className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4"
+                        >
                           Make Order
-                        </Link>
+                        </button>
                       </div>
                     </div>
                     <div className="col-4">
@@ -97,7 +109,7 @@ const Service = () => {
                           src={service.imageUrl || service.image_url || '/default-image.jpg'} 
                           className="img-fluid rounded" 
                           alt={service.name}
-                          style={{ width: '100%', height: '100px', objectFit: 'cover' }}
+                          style={{ width: '100%', height: '180px', objectFit: 'cover' }}
                         />
                       </div>
                     </div>
@@ -115,7 +127,7 @@ const Service = () => {
                           src={service.imageUrl || service.image_url || '/default-image.jpg'} 
                           className="img-fluid rounded" 
                           alt={service.name}
-                          style={{ width: '100%', height: '100px', objectFit: 'cover' }}
+                          style={{ width: '100%', height: '180px', objectFit: 'cover' }}
                         />
                       </div>
                     </div>
@@ -137,9 +149,21 @@ const Service = () => {
                             {service.price ? `${service.price.toLocaleString()}$` : 'Liên hệ'}
                           </span>
                         </div>
-                        <Link to={`/AppointmentPage?serviceId=${service.id}`} className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4">
+                        <button 
+                          onClick={() => {
+                            setTimeout(() => {
+                              const appointmentSection = document.getElementById('appointment');
+                              if (appointmentSection) {
+                                const yOffset = -50;
+                                const y = appointmentSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                                window.scrollTo({ top: y, behavior: 'smooth' });
+                              }
+                            }, 100);
+                          }}
+                          className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4"
+                        >
                           Make Order
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </>

@@ -1016,10 +1016,10 @@ const Appointment = () => {
               }
               
               .step-circle.active {
-                background: linear-gradient(135deg, #0d6efd, #0056b3);
+                background: linear-gradient(135deg, #d81159, #b8004a);
                 color: white;
-                border-color: #0d6efd;
-                box-shadow: 0 0 25px rgba(13, 110, 253, 0.5), 0 4px 15px rgba(0, 0, 0, 0.3);
+                border-color: #d81159;
+                box-shadow: 0 0 25px rgba(216, 17, 89, 0.5), 0 4px 15px rgba(0, 0, 0, 0.3);
                 transform: scale(1.1);
               }
               

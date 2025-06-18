@@ -77,7 +77,9 @@ const Homepage = () => {
       </div>
       <Service />
       <AboutUs />
-      <Appoinment />
+      <div id="appointment">
+        <Appoinment />
+      </div>
       <Gallery />
       <Team />
       <Contact/>

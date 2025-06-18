@@ -159,7 +159,7 @@ const ServicePage = () => {
                     top: '50%',
                     transform: 'translateY(-50%)',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #007bff, #0056b3)',
+                    background: 'linear-gradient(135deg, #e91e63, #c2185b)',
                     color: 'white',
                     borderRadius: '50%',
                     width: '40px',
@@ -289,7 +289,15 @@ const ServicePage = () => {
                                   {service.description}
                                 </p>
                                 <button 
-                                  onClick={() => navigate(`/AppointmentPage?serviceId=${service.id}`)}
+                                  onClick={() => {
+                                    navigate('/', { replace: true });
+                                    setTimeout(() => {
+                                      const appointmentSection = document.getElementById('appointment');
+                                      if (appointmentSection) {
+                                        appointmentSection.scrollIntoView({ behavior: 'smooth' });
+                                      }
+                                    }, 100);
+                                  }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >
                                   Make Order
@@ -299,7 +307,7 @@ const ServicePage = () => {
                             <div className="col-4 d-flex align-items-center justify-content-center">
                               <div 
                                 className="services-img rounded service-image-clickable" 
-                                style={{ width: '100px', height: '100px', overflow: 'hidden' }}
+                                style={{ width: '180px', height: '180px', overflow: 'hidden' }}
                                 onClick={() => handleImageClick(service.id)}
                                 title="Click để xem chi tiết dịch vụ"
                               >
@@ -317,7 +325,7 @@ const ServicePage = () => {
                             <div className="col-4 d-flex align-items-center justify-content-center">
                               <div 
                                 className="services-img rounded service-image-clickable" 
-                                style={{ width: '100px', height: '100px', overflow: 'hidden' }}
+                                style={{ width: '180px', height: '180px', overflow: 'hidden' }}
                                 onClick={() => handleImageClick(service.id)}
                                 title="Click để xem chi tiết dịch vụ"
                               >
@@ -343,7 +351,15 @@ const ServicePage = () => {
                                   {service.description}
                                 </p>
                                 <button 
-                                  onClick={() => navigate(`/AppointmentPage?serviceId=${service.id}`)}
+                                  onClick={() => {
+                                    navigate('/', { replace: true });
+                                    setTimeout(() => {
+                                      const appointmentSection = document.getElementById('appointment');
+                                      if (appointmentSection) {
+                                        appointmentSection.scrollIntoView({ behavior: 'smooth' });
+                                      }
+                                    }, 100);
+                                  }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >
                                   Make Order

@@ -3,7 +3,8 @@ import {
   Grid, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, FormControl,
   InputLabel, IconButton, TablePagination, Box, InputAdornment, Chip, MenuItem,
-  Typography, Divider, Avatar, Tooltip
+  Typography, Divider, Avatar, Tooltip, Accordion, AccordionSummary, AccordionDetails,
+  Card, CardContent, List, ListItem, ListItemText, ListItemIcon
 } from '@mui/material';
 import {
   SearchOutlined,
@@ -16,7 +17,11 @@ import {
   ClockCircleOutlined,
   FilterOutlined,
   FormOutlined,
-  MailOutlined
+  MailOutlined,
+    ExpandOutlined,
+  BugOutlined,
+  WarningOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { useSearchParams } from 'react-router-dom';
@@ -287,7 +292,25 @@ const AppointmentManagement = () => {
     const end2 = new Date(appointment2.end_time);
     
     // Kiểm tra xem có overlap thời gian không
-    return start1 < end2 && start2 < end1;
+    const hasConflict = start1 < end2 && start2 < end1;
+    
+    // Debug logging để test
+    if (hasConflict) {
+      console.log('⚠️ TIME CONFLICT DETECTED:', {
+        appointment1: {
+          id: appointment1.appointment_id,
+          start: start1.toLocaleString(),
+          end: end1.toLocaleString()
+        },
+        appointment2: {
+          id: appointment2.appointment_id,
+          start: start2.toLocaleString(),
+          end: end2.toLocaleString()
+        }
+      });
+    }
+    
+    return hasConflict;
   };
 
   // Hàm kiểm tra xem nhân viên có bận trong thời gian appointment không
@@ -305,10 +328,34 @@ const AppointmentManagement = () => {
       app.status !== 'cancelled' // Không tính appointment đã cancel
     );
     
+    console.log(`🔍 Checking staff busy status:`, {
+      staffId,
+      checkDate,
+      appointmentToCheck: {
+        id: appointmentToCheck.appointment_id,
+        start: formatTime(appointmentToCheck.appointment_date),
+        end: formatTime(appointmentToCheck.end_time)
+      },
+      existingAppointments: staffAppointmentsOnSameDay.map(app => ({
+        id: app.appointment_id,
+        start: formatTime(app.appointment_date),
+        end: formatTime(app.end_time),
+        status: app.status
+      }))
+    });
+    
     // Kiểm tra xung đột thời gian
-    return staffAppointmentsOnSameDay.some(existingApp => 
+    const isBusy = staffAppointmentsOnSameDay.some(existingApp => 
       isTimeConflict(appointmentToCheck, existingApp)
     );
+    
+    if (isBusy) {
+      console.log(`❌ Staff is BUSY! Cannot assign to appointment ${appointmentToCheck.appointment_id}`);
+    } else {
+      console.log(`✅ Staff is AVAILABLE for appointment ${appointmentToCheck.appointment_id}`);
+    }
+    
+    return isBusy;
   };
 
   // Hàm kiểm tra xem nhân viên có skill phù hợp với service không
@@ -457,7 +504,24 @@ const AppointmentManagement = () => {
     
     // Kiểm tra xung đột lịch trước khi save
     if (selectedStaffId && isStaffBusy(selectedStaffId, appointmentToEditDetails)) {
-      toast.error('Cannot assign this staff member. They already have an appointment during this time slot.');
+      const selectedStaff = staffList.find(s => s.id === selectedStaffId);
+      const conflictingApps = appointments.filter(app => 
+        app.user?.id === selectedStaffId && 
+        app.appointment_id !== appointmentToEditDetails.appointment_id &&
+        new Date(app.appointment_date).toDateString() === new Date(appointmentToEditDetails.appointment_date).toDateString() &&
+        app.status !== 'cancelled'
+      ).filter(app => isTimeConflict(appointmentToEditDetails, app));
+      
+      const conflictDetails = conflictingApps.map(app => 
+        `${formatTime(app.appointment_date)}-${formatTime(app.end_time)} (${app.full_name})`
+      ).join(', ');
+      
+      toast.error(
+        `❌ CONFLICT DETECTED: ${selectedStaff?.fullName} is already busy during this time slot!\n\n` +
+        `Conflicting appointments: ${conflictDetails}\n\n` +
+        `Current appointment: ${formatTime(appointmentToEditDetails.appointment_date)}-${formatTime(appointmentToEditDetails.end_time)}`,
+        { autoClose: 8000 }
+      );
       return;
     }
     
@@ -545,6 +609,53 @@ const AppointmentManagement = () => {
 
   const currentAppointments = filteredAppointments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+  // Test function để tạo dữ liệu test cho time conflict
+  const createTestConflictData = () => {
+    const today = new Date();
+    const testAppointments = [
+      {
+        appointment_id: 9991,
+        full_name: "Test Customer 1",
+        phone_number: "0123456789",
+        status: "confirmed",
+        slot: "morning",
+        notes: "Test conflict appointment 1",
+        appointment_date: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0).toISOString(),
+        end_time: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0).toISOString(),
+        price: 100,
+        service: { id: 1, name: "Test Service", duration: 60 },
+        branch: { id: 1, name: "Test Branch" },
+        customer: { name: "Test Customer 1", image: "", email: "test1@example.com" },
+        user: { id: staffList[0]?.id, name: staffList[0]?.fullName, image: "" },
+        created_at: today.toISOString()
+      },
+      {
+        appointment_id: 9992,
+        full_name: "Test Customer 2",
+        phone_number: "0123456790",
+        status: "confirmed",
+        slot: "morning",
+        notes: "Test conflict appointment 2 - SHOULD CONFLICT",
+        appointment_date: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30).toISOString(),
+        end_time: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 30).toISOString(),
+        price: 120,
+        service: { id: 2, name: "Test Service 2", duration: 60 },
+        branch: { id: 1, name: "Test Branch" },
+        customer: { name: "Test Customer 2", image: "", email: "test2@example.com" },
+        user: null, // Chưa assign staff - để test conflict
+        created_at: today.toISOString()
+      }
+    ];
+    
+    if (staffList.length > 0) {
+      console.log('🧪 Adding test conflict data...', testAppointments);
+      setAppointments(prev => [...prev, ...testAppointments]);
+      toast.info('Test conflict data added! Check the appointments for today.');
+    } else {
+      toast.error('No staff available for test data');
+    }
+  };
+
   return (
     <MainCard title="Appointment Management">
       <Grid container spacing={3}>
@@ -586,6 +697,179 @@ const AppointmentManagement = () => {
               <IconButton size="small" onClick={clearDateFilter}><CloseOutlined style={{ fontSize: 14 }} /></IconButton>
             )}
           </Box>
+        </Grid>
+
+        {/* Time Conflict Test Panel */}
+        <Grid item xs={12} sx={{ mb: 2 }}>
+          <Accordion>
+            <AccordionSummary
+              expandIcon={<  ExpandOutlined />}
+              aria-controls="conflict-test-content"
+              id="conflict-test-header"
+              sx={{ backgroundColor: '#f5f5f5' }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <BugOutlined style={{ color: '#1976d2' }} />
+                <Typography variant="h6">Time Conflict Detection Test Panel</Typography>
+                <Chip 
+                  label="Testing Tool" 
+                  size="small" 
+                  color="primary" 
+                  variant="outlined"
+                  sx={{ ml: 1 }}
+                />
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>
+                {/* Staff Conflict Summary */}
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ borderRadius: 2 }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        <UserOutlined style={{ marginRight: 8 }} />
+                        Staff Availability Analysis
+                      </Typography>
+                      <List dense>
+                        {staffList.map(staff => {
+                          const staffAppointments = filteredAppointments.filter(app => 
+                            app.user?.id === staff.id && app.status !== 'cancelled'
+                          );
+                          const todayAppointments = staffAppointments.filter(app => {
+                            const appDate = new Date(app.appointment_date).toDateString();
+                            const today = new Date().toDateString();
+                            return appDate === today;
+                          });
+                          
+                          return (
+                            <ListItem key={staff.id} divider>
+                              <ListItemIcon>
+                                {todayAppointments.length > 1 ? (
+                                  <WarningOutlined style={{ color: '#ff9800' }} />
+                                ) : todayAppointments.length === 1 ? (
+                                  <ClockCircleOutlined style={{ color: '#2196f3' }} />
+                                ) : (
+                                  <CheckCircleOutlined style={{ color: '#4caf50' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={staff.fullName}
+                                secondary={
+                                  <Box>
+                                    <Typography variant="caption">
+                                      Today: {todayAppointments.length} appointments
+                                    </Typography>
+                                    <br />
+                                    <Typography variant="caption">
+                                      Total: {staffAppointments.length} appointments
+                                    </Typography>
+                                  </Box>
+                                }
+                              />
+                            </ListItem>
+                          );
+                        })}
+                      </List>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Time Conflict Detection Rules */}
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ borderRadius: 2 }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        <ClockCircleOutlined style={{ marginRight: 8 }} />
+                        Conflict Detection Rules
+                      </Typography>
+                      <List dense>
+                        <ListItem>
+                          <ListItemIcon>
+                            <CheckCircleOutlined style={{ color: '#4caf50' }} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Same Day Check"
+                            secondary="Only appointments on the same date are checked for conflicts"
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon>
+                            <CheckCircleOutlined style={{ color: '#4caf50' }} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Time Overlap Detection"
+                            secondary="Uses formula: start1 < end2 && start2 < end1"
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon>
+                            <CheckCircleOutlined style={{ color: '#4caf50' }} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Status Filtering"
+                            secondary="Cancelled appointments are excluded from conflict check"
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon>
+                            <CheckCircleOutlined style={{ color: '#4caf50' }} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Real-time Validation"
+                            secondary="Conflicts are checked before saving staff assignments"
+                          />
+                        </ListItem>
+                      </List>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Test Instructions */}
+                <Grid item xs={12}>
+                  <Card sx={{ borderRadius: 2, backgroundColor: '#e3f2fd' }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        <BugOutlined style={{ marginRight: 8 }} />
+                        How to Test Time Conflict Detection
+                      </Typography>
+                      <Typography variant="body2" paragraph>
+                        <strong>Step 1:</strong> Open browser console (F12) to see detailed logs
+                      </Typography>
+                      <Typography variant="body2" paragraph>
+                        <strong>Step 2:</strong> Try to assign the same staff to overlapping time slots:
+                      </Typography>
+                      <Typography variant="body2" component="div" sx={{ ml: 2 }}>
+                        • Click "Edit Details" on any appointment<br/>
+                        • Try to assign a staff member who already has an appointment at that time<br/>
+                        • The system should show "Busy" status and prevent assignment<br/>
+                        • Check console for detailed conflict detection logs
+                      </Typography>
+                      <Typography variant="body2" paragraph sx={{ mt: 2 }}>
+                        <strong>Expected Behavior:</strong> Staff marked as "Busy" cannot be assigned, and you'll see error message: "Cannot assign this staff member. They already have an appointment during this time slot."
+                      </Typography>
+                      
+                      <Divider sx={{ my: 2 }} />
+                      
+                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <Button
+                          variant="contained"
+                          color="warning"
+                          onClick={createTestConflictData}
+                          startIcon={<BugOutlined />}
+                          size="small"
+                        >
+                          Create Test Conflict Data
+                        </Button>
+                        <Typography variant="caption" color="textSecondary">
+                          This will add 2 test appointments for today with overlapping times (9:00-10:00 and 9:30-10:30)
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
         </Grid>
 
         {/* Appointments Table */}

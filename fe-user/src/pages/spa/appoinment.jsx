@@ -254,6 +254,11 @@ const AppointmentManagement = () => {
       );
     }
 
+    // Sort by appointment date (newest first - reverse order)
+    results = results.sort((a, b) =>
+      new Date(b.appointment_date) - new Date(a.appointment_date)
+    );
+
     setFilteredAppointments(results);
     setPage(0);
   }, [searchQuery, statusFilter, dateFilter, appointments]);
@@ -497,11 +502,7 @@ const AppointmentManagement = () => {
   //     appointments.push(appointment);
   //   }
 
-  //   // Sort by appointment date (newest first)
-  //   return appointments.sort((a, b) =>
-  //     new Date(b.appointment_date) - new Date(a.appointment_date)
-  //   );
-  // }
+
 
   // Get current page appointments
   const currentAppointments = filteredAppointments.slice(

@@ -47,6 +47,9 @@ const ServiceDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, user, token } = useAuth();
+  
+  // Debug removed - allowing all users to reply
+
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [editedContent, setEditedContent] = useState({ rating: 0, comment: '' });
 
@@ -59,6 +62,11 @@ const ServiceDetailPage = () => {
   // Pagination state for reviews
   const [currentPage, setCurrentPage] = useState(1);
   const reviewsPerPage = 5;
+  
+  // Reply system states
+  const [showReplyForm, setShowReplyForm] = useState(null); // reviewId or replyId
+  const [replyContent, setReplyContent] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null); // { type: 'review'|'reply', id: number, authorName: string }
 
   // State đã được đơn giản hóa, không còn thông tin khách
   const [newReview, setNewReview] = useState({
@@ -263,6 +271,237 @@ const ServiceDetailPage = () => {
     document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Reply handling functions
+  const handleShowReplyForm = (targetType, targetId, authorName) => {
+    setReplyingTo({ type: targetType, id: targetId, authorName });
+    setShowReplyForm(targetId);
+    setReplyContent('');
+  };
+
+  const handleCancelReply = () => {
+    setShowReplyForm(null);
+    setReplyContent('');
+    setReplyingTo(null);
+  };
+
+  const handleSubmitReply = async () => {
+    if (!replyContent.trim()) {
+      toast.warn('Vui lòng nhập nội dung phản hồi.');
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast.warn('Vui lòng đăng nhập để phản hồi.');
+      return;
+    }
+
+    // Allow all authenticated users to reply
+
+    setIsSubmitting(true);
+
+    try {
+      const endpoint = replyingTo.type === 'review' 
+        ? `http://localhost:8080/api/v1/reviews/${replyingTo.id}/reply`
+        : `http://localhost:8080/api/v1/review-replies/${replyingTo.id}/reply`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          comment: replyContent,
+          parentReplyId: replyingTo.type === 'reply' ? replyingTo.id : null
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'SUCCESS') {
+        toast.success('Gửi phản hồi thành công!');
+        // Refresh reviews to show new reply
+        const reviewsResponse = await fetch(`http://localhost:8080/api/v1/reviews/item/${id}?sort=createdAt,desc`);
+        const reviewsResult = await reviewsResponse.json();
+        if (reviewsResult.status === 'SUCCESS' && reviewsResult.data.content) {
+          setReviews(reviewsResult.data.content);
+        }
+        handleCancelReply();
+      } else {
+        toast.error(`Gửi phản hồi thất bại: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      toast.error('Đã xảy ra lỗi khi gửi phản hồi.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Component to render threaded replies
+  const renderReplies = (replies, level = 0) => {
+    if (!replies || replies.length === 0) return null;
+
+    const maxLevel = 3; // Maximum nesting level.
+    const indentSize = Math.min(level, maxLevel) * 30;
+
+    return replies.map((reply) => (
+      <div key={reply.id} style={{
+        marginLeft: `${indentSize}px`,
+        marginTop: '15px',
+        padding: '15px',
+        background: level % 2 === 0 
+          ? 'linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%)'
+          : 'linear-gradient(135deg, #fff8f0 0%, #ffeee6 100%)',
+        borderLeft: `4px solid ${level % 2 === 0 ? '#007bff' : '#ff8c00'}`,
+        borderRadius: '8px',
+        position: 'relative'
+      }}>
+        {/* Reply Type Badge */}
+        <div style={{
+          position: 'absolute',
+          top: '-5px',
+          left: '15px',
+          background: level % 2 === 0 ? '#007bff' : '#ff8c00',
+          color: 'white',
+          padding: '2px 8px',
+          borderRadius: '10px',
+          fontSize: '0.75rem',
+          fontWeight: '600'
+        }}>
+          {reply.replyType === 'STAFF_TO_CUSTOMER' ? 'Staff' : 'Customer'}
+        </div>
+
+        {/* Author Info */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', marginTop: '5px' }}>
+          <div style={{
+            width: '30px',
+            height: '30px',
+            borderRadius: '50%',
+            background: level % 2 === 0 
+              ? 'linear-gradient(135deg, #007bff, #0056b3)'
+              : 'linear-gradient(135deg, #ff8c00, #e67700)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: '10px'
+          }}>
+            <i className={`fas ${reply.replyType === 'STAFF_TO_CUSTOMER' ? 'fa-user-tie' : 'fa-user'}`} 
+               style={{ color: 'white', fontSize: '0.8rem' }}></i>
+          </div>
+          <div style={{ flex: 1 }}>
+            <strong style={{ 
+              color: level % 2 === 0 ? '#007bff' : '#ff8c00', 
+              fontSize: '0.9rem' 
+            }}>
+              {reply.authorName}
+            </strong>
+            <small style={{ color: '#666', marginLeft: '8px', fontSize: '0.8rem' }}>
+              {new Date(reply.createdAt).toLocaleString('vi-VN')}
+            </small>
+          </div>
+          
+          {/* Reply Button - For all authenticated users */}
+          {isAuthenticated && (
+            <button
+              onClick={() => handleShowReplyForm('reply', reply.id, reply.authorName)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: level % 2 === 0 ? '#007bff' : '#ff8c00',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                transition: 'background 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = level % 2 === 0 ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255, 140, 0, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'none';
+              }}
+            >
+              <i className="fas fa-reply me-1"></i>
+              Phản hồi
+            </button>
+          )}
+        </div>
+
+        {/* Reply Content */}
+        <p style={{ 
+          margin: 0, 
+          color: '#333', 
+          fontSize: '0.95rem',
+          lineHeight: '1.5',
+          fontStyle: level > 0 ? 'italic' : 'normal'
+        }}>
+          {reply.comment}
+        </p>
+
+        {/* Reply Form */}
+        {showReplyForm === reply.id && (
+          <div style={{ marginTop: '15px', padding: '15px', background: 'white', borderRadius: '8px', border: '1px solid #ddd' }}>
+            <div style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#666' }}>
+              <i className="fas fa-reply me-2"></i>
+              Phản hồi cho <strong>{replyingTo?.authorName}</strong>
+            </div>
+            <textarea
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              placeholder="Nhập phản hồi của bạn..."
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                resize: 'vertical',
+                fontSize: '0.9rem'
+              }}
+            />
+            <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+              <button
+                onClick={handleSubmitReply}
+                disabled={isSubmitting}
+                style={{
+                  background: level % 2 === 0 ? '#007bff' : '#ff8c00',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: '600'
+                }}
+              >
+                {isSubmitting ? 'Đang gửi...' : 'Gửi phản hồi'}
+              </button>
+              <button
+                onClick={handleCancelReply}
+                style={{
+                  background: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem'
+                }}
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Nested Replies */}
+        {reply.replies && renderReplies(reply.replies, level + 1)}
+      </div>
+    ));
+  };
+
   if (loading) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Loading...</div>;
   if (!service) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Service not found</div>;
 
@@ -301,7 +540,17 @@ const ServiceDetailPage = () => {
               </p>
               <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
               <button 
-                onClick={() => navigate(`/AppointmentPage?serviceId=${service.id}`)}
+                onClick={() => {
+                  navigate('/');
+                  setTimeout(() => {
+                    const appointmentElement = document.getElementById('appointment');
+                    if (appointmentElement) {
+                      const rect = appointmentElement.getBoundingClientRect();
+                      const y = window.scrollY + rect.top - 100;
+                      window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+                  }, 1000);
+                }}
                 style={{
                   background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
                   color: 'white',
@@ -658,53 +907,175 @@ const ServiceDetailPage = () => {
                           <span style={{ color: '#f5a623' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
                         </div>
 
-                        {/* HIỂN THỊ NÚT SỬA/XÓA NẾU ĐÚNG CHỦ REVIEW */}
-                        {isAuthenticated && user && user.id === r.customerId && (
-                          // Tính toán thời gian cho phép sửa (30 phút)
-                          (() => {
-                            const createdAt = new Date(r.createdAt);
-                            const now = new Date();
-                            const diffMinutes = (now - createdAt) / (1000 * 60);
-                            const canEdit = diffMinutes <= 30;
-                            return (
-                              <div>
-                                <button
-                                  onClick={() => canEdit && handleEditClick(r)}
-                                  style={{
-                                    marginRight: 8,
-                                    border: 'none',
-                                    background: 'none',
-                                    cursor: canEdit ? 'pointer' : 'not-allowed',
-                                    color: canEdit ? '#007bff' : '#aaa',
-                                    fontSize: 20,
-                                    verticalAlign: 'middle'
-                                  }}
-                                  title={canEdit ? "Edit" : "Chỉ được sửa trong 30 phút sau khi đăng"}
-                                  disabled={!canEdit}
-                                >
-                                  <i className="fas fa-edit"></i>
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteClick(r.id)}
-                                  style={{
-                                    border: 'none',
-                                    background: 'none',
-                                    cursor: 'pointer',
-                                    color: '#dc3545',
-                                    fontSize: 20,
-                                    verticalAlign: 'middle'
-                                  }}
-                                  title="Delete"
-                                >
-                                  <i className="fas fa-trash-alt"></i>
-                                </button>
-                              </div>
-                            );
-                          })()
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {/* REPLY BUTTON FOR ALL AUTHENTICATED USERS */}
+                          {isAuthenticated && (
+                            <button
+                              onClick={() => handleShowReplyForm('review', r.id, r.authorName)}
+                              style={{
+                                background: 'none',
+                                border: '1px solid #28a745',
+                                color: '#28a745',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                padding: '4px 12px',
+                                borderRadius: '15px',
+                                transition: 'all 0.3s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.background = '#28a745';
+                                e.target.style.color = 'white';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.background = 'none';
+                                e.target.style.color = '#28a745';
+                              }}
+                            >
+                              <i className="fas fa-reply me-1"></i>
+                              Phản hồi
+                            </button>
+                          )}
+
+                          {/* HIỂN THỊ NÚT SỬA/XÓA NẾU ĐÚNG CHỦ REVIEW */}
+                          {isAuthenticated && user && user.id === r.customerId && (
+                            // Tính toán thời gian cho phép sửa (30 phút)
+                            (() => {
+                              const createdAt = new Date(r.createdAt);
+                              const now = new Date();
+                              const diffMinutes = (now - createdAt) / (1000 * 60);
+                              const canEdit = diffMinutes <= 30;
+                              return (
+                                <>
+                                  <button
+                                    onClick={() => canEdit && handleEditClick(r)}
+                                    style={{
+                                      border: 'none',
+                                      background: 'none',
+                                      cursor: canEdit ? 'pointer' : 'not-allowed',
+                                      color: canEdit ? '#007bff' : '#aaa',
+                                      fontSize: 18,
+                                      verticalAlign: 'middle'
+                                    }}
+                                    title={canEdit ? "Edit" : "Chỉ được sửa trong 30 phút sau khi đăng"}
+                                    disabled={!canEdit}
+                                  >
+                                    <i className="fas fa-edit"></i>
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteClick(r.id)}
+                                    style={{
+                                      border: 'none',
+                                      background: 'none',
+                                      cursor: 'pointer',
+                                      color: '#dc3545',
+                                      fontSize: 18,
+                                      verticalAlign: 'middle'
+                                    }}
+                                    title="Delete"
+                                  >
+                                    <i className="fas fa-trash-alt"></i>
+                                  </button>
+                                </>
+                              );
+                            })()
+                          )}
+                        </div>
                       </div>
                       <p style={{ margin: '0 0 8px 0', color: '#333' }}>{r.comment}</p>
                       <small style={{ color: '#888' }}>{new Date(r.createdAt).toLocaleString('vi-VN')}</small>
+                      
+                      {/* REPLY FORM FOR THIS REVIEW */}
+                      {showReplyForm === r.id && (
+                        <div style={{ 
+                          marginTop: '15px', 
+                          padding: '15px', 
+                          background: 'white', 
+                          borderRadius: '8px', 
+                          border: '2px solid #28a745',
+                          boxShadow: '0 2px 8px rgba(40, 167, 69, 0.1)'
+                        }}>
+                          <div style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#666' }}>
+                            <i className="fas fa-reply me-2"></i>
+                            Phản hồi cho <strong style={{ color: '#d6336c' }}>{replyingTo?.authorName}</strong>
+                          </div>
+                          <textarea
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                            placeholder="Nhập phản hồi của bạn..."
+                            rows={3}
+                            style={{
+                              width: '100%',
+                              padding: '12px',
+                              border: '1px solid #ddd',
+                              borderRadius: '8px',
+                              resize: 'vertical',
+                              fontSize: '0.9rem',
+                              fontFamily: 'inherit'
+                            }}
+                          />
+                          <div style={{ marginTop: '12px', display: 'flex', gap: '10px' }}>
+                            <button
+                              onClick={handleSubmitReply}
+                              disabled={isSubmitting}
+                              style={{
+                                background: '#28a745',
+                                color: 'white',
+                                border: 'none',
+                                padding: '10px 20px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                transition: 'background 0.3s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isSubmitting) e.target.style.background = '#218838';
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSubmitting) e.target.style.background = '#28a745';
+                              }}
+                            >
+                              {isSubmitting ? (
+                                <>
+                                  <i className="fas fa-spinner fa-spin me-2"></i>
+                                  Đang gửi...
+                                </>
+                              ) : (
+                                <>
+                                  <i className="fas fa-paper-plane me-2"></i>
+                                  Gửi phản hồi
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={handleCancelReply}
+                              style={{
+                                background: '#6c757d',
+                                color: 'white',
+                                border: 'none',
+                                padding: '10px 20px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                transition: 'background 0.3s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.background = '#545b62';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.background = '#6c757d';
+                              }}
+                            >
+                              <i className="fas fa-times me-2"></i>
+                              Hủy
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* HIỂN THỊ TẤT CẢ REPLIES THEO CẤU TRÚC PHÂN CẤP */}
+                      {r.replies && renderReplies(r.replies)}
                     </>
                   )}
 
