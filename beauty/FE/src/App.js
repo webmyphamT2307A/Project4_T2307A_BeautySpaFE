@@ -13,6 +13,8 @@ import GaleryPage from './component/page/galeryPage/GaleryPage';
 import AppointmentPage from './component/page/appointmentPage/AppointmentPage';
 import ErrorPage from './component/page/404';
 import CustomerDetail from './component/page/authPage/CustomerDetail';
+import sessionManager from './utils/sessionManager';
+import ServiceHistoryPage from './component/page/ServiceHistoryPage';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,7 @@ function App() {
             <Route path="/AppointmentPage" element={<AppointmentPage />} />
             <Route path="/ErrorPage" element={<ErrorPage />} />
             <Route path="/CustomerDetail" element={<CustomerDetail />} />
+            <Route path="/service-history" element={<ServiceHistoryPage />} />
 
             <Route path="*" element={<ErrorPage />} />
           </Routes>

@@ -3,6 +3,7 @@ import { Tab, Nav } from 'react-bootstrap';
 import axios from 'axios';
 import Header from "../../shared/header";
 import Footer from "../../shared/footer";
+import sessionManager from '../../../utils/sessionManager';
 
 const CustomerDetail = () => {
     const [key, setKey] = useState('profile');
@@ -168,8 +169,8 @@ const CustomerDetail = () => {
         } catch (error) {
             console.error('Error during logout:', error);
         } finally {
-            localStorage.removeItem('userInfo');
-            window.location.href = '/';
+            // Sử dụng session manager để đăng xuất
+            sessionManager.onUserLogout();
         }
     };
 

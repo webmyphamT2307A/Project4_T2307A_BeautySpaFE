@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 // Import thêm Link và useNavigate từ react-router-dom
 import { Link, useNavigate } from 'react-router-dom';
+import sessionManager from '../../utils/sessionManager';
+import SessionTimer from './SessionTimer';
 
 const Header = () => {
     // Khởi tạo hook useNavigate
@@ -164,6 +166,9 @@ const Header = () => {
                 }));
                 localStorage.setItem('token', token);
                 
+                // Kích hoạt session manager khi đăng nhập thành công
+                sessionManager.onUserLogin();
+                
                 // Dùng window.location.href để tải lại toàn bộ trang, cập nhật trạng thái login
                 window.location.href = "/CustomerDetail";
 
@@ -198,11 +203,8 @@ const Header = () => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('userInfo');
-        localStorage.removeItem('token');
-        setUserInfo(null);
-        // Tải lại trang chủ để cập nhật trạng thái logout
-        window.location.href = "/";
+        // Sử dụng session manager để đăng xuất
+        sessionManager.onUserLogout();
     };
 
     return (
@@ -245,6 +247,7 @@ const Header = () => {
                                     <Link to="/AboutPage" className="nav-item nav-link">Về Chúng Tôi</Link>
                                     <Link to="/ServicePage" className="nav-item nav-link">Dịch Vụ</Link>
                                     <Link to="/ContactPage" className="nav-item nav-link">Liên Hệ</Link>
+                                    <Link to="/service-history" className="nav-item nav-link">Lịch Sử Dịch Vụ</Link>
                                 </div>
                                 <div className="d-flex align-items-center flex-nowrap pt-xl-0">
                                     <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" onClick={() => setShowSearch(!showSearch)}>
@@ -585,6 +588,9 @@ const Header = () => {
                     border-bottom: none !important;
                 }
             `}</style>
+            
+            {/* Session Timer - chỉ hiển thị khi user đăng nhập */}
+            {userInfo && <SessionTimer />}
         </div>
     );
 };

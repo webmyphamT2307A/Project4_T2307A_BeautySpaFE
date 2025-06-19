@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useState, useEffect } from 'react';
 import {
   Button,
@@ -22,7 +23,10 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  Chip,
+  Avatar,
+  Grid
 } from '@mui/material';
 import MainCard from 'components/MainCard';
 import {
@@ -30,7 +34,9 @@ import {
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
-  CloseOutlined
+  CloseOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 
@@ -39,18 +45,20 @@ const SCHEDULE_API_URL = `${API_BASE_URL}/users-schedules`;
 const USER_API_URL = `${API_BASE_URL}/admin/accounts/find-all`;
 const STAFF_ROLE_NAME = "STAFF";
 
-// Define status options based on your ENUM
+// Updated status options to match backend
 const statusOptions = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'confirmed', label: 'Confirmed' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-  // You can add other statuses if your ENUM is more extensive
-  // or if you want to allow other temporary client-side statuses
-  // that might be mapped to the ENUM on the backend or before saving.
-  // For now, we'll stick to the database ENUM.
-];
+  // DB trả về 'pending' -> Dịch thành 'Pending' (hoặc 'Chờ xác nhận')
+  { value: 'pending', label: 'Pending', color: 'warning' },
 
+  // DB trả về 'confirmed' -> Dịch thành 'Working' (hoặc 'Đang làm việc')
+  { value: 'confirmed', label: 'Working', color: 'primary' }, 
+
+  // DB trả về 'completed' -> Dịch thành 'Completed' (hoặc 'Đã hoàn thành')
+  { value: 'completed', label: 'Completed', color: 'success' },
+
+  // Giữ lại các trạng thái khác nếu bạn có dùng (ví dụ: cho admin set tay)
+  { value: 'cancelled', label: 'Cancelled', color: 'error' },
+];
 
 const UserScheduleManager = () => {
   const [schedules, setSchedules] = useState([]);
@@ -63,12 +71,17 @@ const UserScheduleManager = () => {
     workDate: '',
     checkInTime: '',
     checkOutTime: '',
-    status: 'pending', // Default to a valid ENUM value
+    status: 'pending',
     isLastTask: false,
     isActive: true
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [filterByUserId, setFilterByUserId] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterYear, setFilterYear] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -100,9 +113,13 @@ const UserScheduleManager = () => {
   const fetchSchedules = () => {
     let url = SCHEDULE_API_URL;
     const params = new URLSearchParams();
-    if (filterByUserId) {
-      params.append('userId', filterByUserId);
-    }
+    
+    if (filterByUserId) params.append('userId', filterByUserId);
+    if (filterStatus) params.append('status', filterStatus);
+    if (filterMonth) params.append('month', filterMonth);
+    if (filterYear) params.append('year', filterYear);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
 
     if (params.toString()) {
       url += `?${params.toString()}`;
@@ -125,7 +142,7 @@ const UserScheduleManager = () => {
 
   useEffect(() => {
     fetchSchedules();
-  }, [filterByUserId]);
+  }, [filterByUserId, filterStatus, filterMonth, filterYear, startDate, endDate]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -141,9 +158,40 @@ const UserScheduleManager = () => {
     setPage(0);
   };
 
-  const handleFilterUserIdChange = (event) => {
-    setFilterByUserId(event.target.value);
+  const handleFilterChange = (filterType, value) => {
+    switch(filterType) {
+      case 'userId':
+        setFilterByUserId(value);
+        break;
+      case 'status':
+        setFilterStatus(value);
+        break;
+      case 'month':
+        setFilterMonth(value);
+        break;
+      case 'year':
+        setFilterYear(value);
+        break;
+      case 'startDate':
+        setStartDate(value);
+        break;
+      case 'endDate':
+        setEndDate(value);
+        break;
+      default:
+        break;
+    }
     setPage(0);
+  };
+
+  const clearFilters = () => {
+    setFilterByUserId('');
+    setFilterStatus('');
+    setFilterMonth('');
+    setFilterYear('');
+    setStartDate('');
+    setEndDate('');
+    setSearchQuery('');
   };
 
   const handleOpenDialog = (schedule = null) => {
@@ -155,7 +203,7 @@ const UserScheduleManager = () => {
         workDate: schedule.workDate || '',
         checkInTime: schedule.checkInTime || '',
         checkOutTime: schedule.checkOutTime || '',
-        status: schedule.status || 'pending', // Ensure status is one of the ENUM values
+        status: schedule.status || 'pending',
         isLastTask: schedule.isLastTask || false,
         isActive: schedule.isActive === undefined ? true : schedule.isActive,
       });
@@ -167,7 +215,7 @@ const UserScheduleManager = () => {
         workDate: '',
         checkInTime: '',
         checkOutTime: '',
-        status: 'pending', // Default to 'pending'
+        status: 'pending',
         isLastTask: false,
         isActive: true
       });
@@ -196,7 +244,6 @@ const UserScheduleManager = () => {
         toast.error("Please select a valid status.");
         return;
     }
-
 
     const requestBody = {
         ...formData,
@@ -257,7 +304,7 @@ const UserScheduleManager = () => {
   const handleDeleteSchedule = (scheduleId) => {
     if (window.confirm('Are you sure you want to delete (deactivate) this schedule?')) {
       fetch(`${SCHEDULE_API_URL}/${scheduleId}`, {
-        method: 'DELETE',
+        method: 'PUT',
       })
         .then(res => res.json())
         .then(response => {
@@ -272,11 +319,70 @@ const UserScheduleManager = () => {
     }
   };
 
+  const handleCheckIn = (scheduleId) => {
+    if (window.confirm('Confirm check-in for this schedule?')) {
+      fetch(`${SCHEDULE_API_URL}/check-in/${scheduleId}`, {
+        method: 'PUT',
+      })
+        .then(res => res.json())
+        .then(response => {
+          if (response.status === 'SUCCESS') {
+            fetchSchedules();
+            toast.success(response.message || 'Check-in successful.');
+          } else {
+            toast.error(response.message || 'Failed to check-in.');
+          }
+        })
+        .catch(() => toast.error('Error during check-in.'));
+    }
+  };
+
+  const handleCheckOut = (scheduleId) => {
+    if (window.confirm('Confirm check-out for this schedule?')) {
+      fetch(`${SCHEDULE_API_URL}/check-out/${scheduleId}`, {
+        method: 'PUT',
+      })
+        .then(res => res.json())
+        .then(response => {
+          if (response.status === 'SUCCESS') {
+            fetchSchedules();
+            toast.success(response.message || 'Check-out successful.');
+          } else {
+            toast.error(response.message || 'Failed to check-out.');
+          }
+        })
+        .catch(() => toast.error('Error during check-out.'));
+    }
+  };
+
+  const getStatusChip = (status) => {
+    const statusOption = statusOptions.find(opt => opt.value === status);
+    if (!statusOption) return <Chip label={status} size="small" />;
+    
+    return (
+      <Chip 
+        label={statusOption.label} 
+        size="small" 
+        color={statusOption.color}
+        variant="outlined"
+      />
+    );
+  };
+
   const filteredSchedules = schedules.filter(schedule =>
     (schedule.userName && schedule.userName.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (schedule.shift && schedule.shift.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (schedule.status && schedule.status.toLowerCase().includes(searchQuery.toLowerCase()))
+    (schedule.status && schedule.status.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (schedule.roleName && schedule.roleName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (schedule.branchName && schedule.branchName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  // Generate year options (current year ± 2)
+  const currentYear = new Date().getFullYear();
+  const yearOptions = [];
+  for (let i = currentYear - 2; i <= currentYear + 2; i++) {
+    yearOptions.push(i);
+  }
 
   return (
     <MainCard title="User Schedule Management" secondary={
@@ -288,45 +394,131 @@ const UserScheduleManager = () => {
         Add Schedule
       </Button>
     }>
-      <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
-        <TextField
-          size="small"
-          placeholder="Search by Employee, Shift, Status..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchOutlined />
-              </InputAdornment>
-            ),
-            endAdornment: searchQuery ? (
-              <InputAdornment position="end">
-                <IconButton size="small" onClick={() => setSearchQuery('')}>
-                  <CloseOutlined style={{ fontSize: 16 }} />
-                </IconButton>
-              </InputAdornment>
-            ) : null
-          }}
-          sx={{ maxWidth: '40%' }}
-        />
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Filter by Employee (STAFF)</InputLabel>
-          <Select
-            value={filterByUserId}
-            label="Filter by Employee (STAFF)"
-            onChange={handleFilterUserIdChange}
-          >
-            <MenuItem value="">
-              <em>All Employees (STAFF)</em>
-            </MenuItem>
-            {users.map((user) => (
-              <MenuItem key={user.id} value={user.id}>
-                {user.fullName || user.username}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+      {/* Enhanced Filter Section */}
+      <Box sx={{ mb: 3 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={3}>
+            <TextField
+              size="small"
+              placeholder="Search by Employee, Shift, Status, Role, Branch..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchOutlined />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery ? (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setSearchQuery('')}>
+                      <CloseOutlined style={{ fontSize: 16 }} />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null
+              }}
+              fullWidth
+            />
+          </Grid>
+          
+          <Grid item xs={12} md={2}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Employee</InputLabel>
+              <Select
+                value={filterByUserId}
+                label="Employee"
+                onChange={(e) => handleFilterChange('userId', e.target.value)}
+              >
+                <MenuItem value="">All Employees</MenuItem>
+                {users.map((user) => (
+                  <MenuItem key={user.id} value={user.id}>
+                    {user.fullName || user.username}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} md={2}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filterStatus}
+                label="Status"
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+              >
+                <MenuItem value="">All Status</MenuItem>
+                {statusOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={6} md={1}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Month</InputLabel>
+              <Select
+                value={filterMonth}
+                label="Month"
+                onChange={(e) => handleFilterChange('month', e.target.value)}
+              >
+                <MenuItem value="">All</MenuItem>
+                {Array.from({length: 12}, (_, i) => (
+                  <MenuItem key={i+1} value={i+1}>{i+1}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={6} md={1}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Year</InputLabel>
+              <Select
+                value={filterYear}
+                label="Year"
+                onChange={(e) => handleFilterChange('year', e.target.value)}
+              >
+                <MenuItem value="">All</MenuItem>
+                {yearOptions.map((year) => (
+                  <MenuItem key={year} value={year}>{year}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={6} md={1.5}>
+            <TextField
+              size="small"
+              label="Start Date"
+              type="date"
+              value={startDate}
+              onChange={(e) => handleFilterChange('startDate', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+          </Grid>
+
+          <Grid item xs={6} md={1.5}>
+            <TextField
+              size="small"
+              label="End Date"
+              type="date"
+              value={endDate}
+              onChange={(e) => handleFilterChange('endDate', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+          </Grid>
+        </Grid>
+        
+        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button size="small" onClick={clearFilters} variant="outlined">
+            Clear Filters
+          </Button>
+        </Box>
       </Box>
 
       <TableContainer component={Paper} sx={{ boxShadow: 'none', borderRadius: '10px', maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>
@@ -335,7 +527,7 @@ const UserScheduleManager = () => {
             <TableRow>
               <TableCell>#</TableCell>
               <TableCell>Employee</TableCell>
-              <TableCell>Email</TableCell>
+              <TableCell>Role & Branch</TableCell>
               <TableCell>Work Date</TableCell>
               <TableCell>Shift</TableCell>
               <TableCell>Check-In</TableCell>
@@ -351,25 +543,86 @@ const UserScheduleManager = () => {
               .map((schedule, index) => (
                 <TableRow key={schedule.id}>
                   <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                  <TableCell>{schedule.userName}</TableCell>
-                  <TableCell>{schedule.userEmail}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Avatar 
+                        src={schedule.userImageUrl} 
+                        alt={schedule.userName}
+                        sx={{ width: 32, height: 32 }}
+                      >
+                        {schedule.userName?.charAt(0)}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" fontWeight="medium">
+                          {schedule.userName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {schedule.userEmail}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2" color="primary">
+                        {schedule.roleName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {schedule.branchName}
+                      </Typography>
+                    </Box>
+                  </TableCell>
                   <TableCell>{schedule.workDate}</TableCell>
                   <TableCell>{schedule.shift}</TableCell>
                   <TableCell>{schedule.checkInTime || '-'}</TableCell>
                   <TableCell>{schedule.checkOutTime || '-'}</TableCell>
-                  <TableCell>{schedule.status}</TableCell>
-                  <TableCell>{schedule.isActive ? 'Active' : 'Inactive'}</TableCell>
+                  <TableCell>{getStatusChip(schedule.status)}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      label={schedule.isActive ? 'Active' : 'Inactive'} 
+                      size="small"
+                      color={schedule.isActive ? 'success' : 'default'}
+                      variant="outlined"
+                    />
+                  </TableCell>
                   <TableCell align="center">
-                    <Tooltip title="Edit">
-                      <IconButton size="small" color="primary" onClick={() => handleOpenDialog(schedule)}>
-                        <EditOutlined />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete (Deactivate)">
-                      <IconButton size="small" color="error" onClick={() => handleDeleteSchedule(schedule.id)}>
-                        <DeleteOutlined />
-                      </IconButton>
-                    </Tooltip>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <Tooltip title="Edit">
+                        <IconButton size="small" color="primary" onClick={() => handleOpenDialog(schedule)}>
+                          <EditOutlined />
+                        </IconButton>
+                      </Tooltip>
+                      
+                      {!schedule.checkInTime && (
+                        <Tooltip title="Check In">
+                          <IconButton 
+                            size="small" 
+                            color="success" 
+                            onClick={() => handleCheckIn(schedule.id)}
+                          >
+                            <ClockCircleOutlined />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      
+                      {schedule.checkInTime && !schedule.checkOutTime && (
+                        <Tooltip title="Check Out">
+                          <IconButton 
+                            size="small" 
+                            color="warning" 
+                            onClick={() => handleCheckOut(schedule.id)}
+                          >
+                            <CheckCircleOutlined />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      
+                      <Tooltip title="Delete (Deactivate)">
+                        <IconButton size="small" color="error" onClick={() => handleDeleteSchedule(schedule.id)}>
+                          <DeleteOutlined />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
@@ -377,7 +630,7 @@ const UserScheduleManager = () => {
                 <TableRow>
                     <TableCell colSpan={10} align="center">
                         <Typography variant="subtitle1">
-                            {filterByUserId ? "No schedules found for this employee." : "No schedule data available."}
+                            No schedule data available.
                         </Typography>
                     </TableCell>
                 </TableRow>
@@ -422,7 +675,6 @@ const UserScheduleManager = () => {
           <TextField margin="dense" name="shift" label="Shift" type="text" fullWidth value={formData.shift} onChange={handleFormChange} required/>
           <TextField margin="dense" name="checkInTime" label="Check-In Time" type="time" fullWidth value={formData.checkInTime} onChange={handleFormChange} InputLabelProps={{ shrink: true }} />
           <TextField margin="dense" name="checkOutTime" label="Check-Out Time" type="time" fullWidth value={formData.checkOutTime} onChange={handleFormChange} InputLabelProps={{ shrink: true }} />
-          {/* Replace TextField for status with Select */}
           <FormControl fullWidth margin="dense" required>
             <InputLabel id="status-label">Status</InputLabel>
             <Select
