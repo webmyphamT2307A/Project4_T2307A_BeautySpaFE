@@ -55,9 +55,10 @@ const ServiceHistory = () => {
       const query = searchQuery.toLowerCase();
       results = results.filter(
         history =>
-          history.serviceName.toLowerCase().includes(query) ||
-          history.notes.toLowerCase().includes(query) ||
-          history.customerId.toString().includes(query)
+          (history.serviceName && history.serviceName.toLowerCase().includes(query)) ||
+          (history.userName && history.userName.toLowerCase().includes(query)) ||
+          (history.notes && history.notes.toLowerCase().includes(query)) ||
+          (history.customerId && history.customerId.toString().includes(query))
       );
     }
 
@@ -85,7 +86,7 @@ const ServiceHistory = () => {
         <TextField
           fullWidth
           size="small"
-          placeholder="Search by service name, notes, or customer ID..."
+          placeholder="Search by service name, employee name, notes, or customer ID..."
           value={searchQuery}
           onChange={handleSearchChange}
           InputProps={{
@@ -111,8 +112,9 @@ const ServiceHistory = () => {
             <TableRow>
               <TableCell>ID</TableCell>
               <TableCell>Service Name</TableCell>
+              <TableCell>Staff</TableCell>
               <TableCell>Price</TableCell>
-              <TableCell>Customer ID</TableCell>
+              <TableCell>Customer Name</TableCell>
               <TableCell>Appointment Date</TableCell>
               <TableCell>Notes</TableCell>
               <TableCell>Created At</TableCell>
@@ -124,8 +126,9 @@ const ServiceHistory = () => {
               <TableRow key={history.id}>
                 <TableCell>{history.id}</TableCell>
                 <TableCell>{history.serviceName}</TableCell>
+                <TableCell>{history.userName || 'N/A'}</TableCell>
                 <TableCell>{history.price}$</TableCell>
-                <TableCell>{history.customerId}</TableCell>
+                <TableCell>{history.customerName}</TableCell>
                 <TableCell>{new Date(history.appointmentDate).toLocaleString()}</TableCell>
                 <TableCell>{history.notes}</TableCell>
                 <TableCell>{new Date(history.createdAt).toLocaleString()}</TableCell>
