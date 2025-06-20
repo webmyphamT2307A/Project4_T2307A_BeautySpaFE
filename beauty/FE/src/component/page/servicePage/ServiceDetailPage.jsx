@@ -332,7 +332,7 @@ const ServiceDetailPage = () => {
                 fontSize: '0.7rem',
                 fontWeight: '600'
               }}>
-                {reply.replyType === 'STAFF_TO_CUSTOMER' ? 'Nhân viên' : 'Quản lý'}
+                
               </span>
               <small style={{ color: '#666', fontSize: '0.75rem', flexShrink: 0 }}>
                 {new Date(reply.createdAt).toLocaleString('vi-VN')}
