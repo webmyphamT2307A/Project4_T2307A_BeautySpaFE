@@ -3,6 +3,7 @@ import { Tab, Nav } from 'react-bootstrap';
 import axios from 'axios';
 import Header from "../../shared/header";
 import Footer from "../../shared/footer";
+import sessionManager from '../../../utils/sessionManager';
 
 const CustomerDetail = () => {
     const [key, setKey] = useState('profile');
@@ -168,8 +169,8 @@ const CustomerDetail = () => {
         } catch (error) {
             console.error('Error during logout:', error);
         } finally {
-            localStorage.removeItem('userInfo');
-            window.location.href = '/';
+            // Sử dụng session manager để đăng xuất
+            sessionManager.onUserLogout();
         }
     };
 
@@ -237,13 +238,7 @@ const CustomerDetail = () => {
                                 >
                                     Đổi mật khẩu
                                 </a>
-                                <a
-                                    href="#"
-                                    className={`list-group-item list-group-item-action ${key === 'history' ? 'active' : ''}`}
-                                    onClick={(e) => { e.preventDefault(); setKey('history') }}
-                                >
-                                    Lịch sử dịch vụ
-                                </a>
+                               
                                 <a
                                     href="#"
                                     className="list-group-item list-group-item-action"
@@ -363,84 +358,7 @@ const CustomerDetail = () => {
                                             <button type="submit" className="btn btn-primary">Đổi mật khẩu</button>
                                         </form>
                                     </Tab.Pane>
-                                    <Tab.Pane eventKey="history">
-                                        <div className="d-flex justify-content-between align-items-center mb-4">
-                                            <h4 className="mb-0">Lịch sử dịch vụ</h4>
-                                            {totalHistoryPages > 1 && (
-                                                <small className="text-muted">
-                                                    Trang {currentHistoryPage} / {totalHistoryPages} (Hiển thị {currentHistoryItems.length} / {serviceHistory.length} dịch vụ)
-                                                </small>
-                                            )}
-                                        </div>
-                                        
-                                        {serviceHistory.length === 0 ? (
-                                            <p>Không có lịch sử dịch vụ nào.</p>
-                                        ) : (
-                                            <>
-                                                <div className="list-group">
-                                                    {currentHistoryItems.map((history) => (
-                                                        <div key={history.id} className="list-group-item">
-                                                            <div className="d-flex justify-content-between align-items-center">
-                                                                <div>
-                                                                    <h5>{history.serviceName}</h5>
-                                                                    <p className="mb-1">Giá: {history.price}$</p>
-                                                                    <p className="mb-1">Ngày hẹn: {new Date(history.appointmentDate).toLocaleDateString()}</p>
-                                                                </div>
-                                                                <button
-                                                                    className="btn btn-primary"
-                                                                    onClick={() => handleViewDetails(history)}
-                                                                >
-                                                                    Xem chi tiết
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-
-                                                {/* Pagination for Service History */}
-                                                {totalHistoryPages > 1 && (
-                                                    <div className="d-flex justify-content-center align-items-center mt-4 gap-2">
-                                                        {/* Previous Button */}
-                                                        <button
-                                                            onClick={() => handleHistoryPageChange(currentHistoryPage - 1)}
-                                                            disabled={currentHistoryPage === 1}
-                                                            className={`btn btn-sm ${currentHistoryPage === 1 ? 'btn-secondary' : 'btn-outline-primary'}`}
-                                                            style={{ minWidth: '80px' }}
-                                                        >
-                                                            <i className="fas fa-chevron-left me-1"></i>
-                                                            Trước
-                                                        </button>
-
-                                                        {/* Page Numbers */}
-                                                        {Array.from({ length: totalHistoryPages }, (_, i) => i + 1).map((pageNum) => (
-                                                            <button
-                                                                key={pageNum}
-                                                                onClick={() => handleHistoryPageChange(pageNum)}
-                                                                className={`btn btn-sm ${pageNum === currentHistoryPage ? 'btn-primary' : 'btn-outline-primary'}`}
-                                                                style={{ 
-                                                                    minWidth: '40px',
-                                                                    fontWeight: pageNum === currentHistoryPage ? 'bold' : 'normal'
-                                                                }}
-                                                            >
-                                                                {pageNum}
-                                                            </button>
-                                                        ))}
-
-                                                        {/* Next Button */}
-                                                        <button
-                                                            onClick={() => handleHistoryPageChange(currentHistoryPage + 1)}
-                                                            disabled={currentHistoryPage === totalHistoryPages}
-                                                            className={`btn btn-sm ${currentHistoryPage === totalHistoryPages ? 'btn-secondary' : 'btn-outline-primary'}`}
-                                                            style={{ minWidth: '80px' }}
-                                                        >
-                                                            Tiếp
-                                                            <i className="fas fa-chevron-right ms-1"></i>
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-                                    </Tab.Pane>
+                                   
                                 </Tab.Content>
                             </Tab.Container>
                         </div>
@@ -448,30 +366,7 @@ const CustomerDetail = () => {
                 </div>
             </div>
 
-            {selectedHistory && (
-                <div className="modal show d-block" tabIndex="-1">
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Chi tiết dịch vụ</h5>
-                                <button type="button" className="btn-close" onClick={handleCloseDetails}></button>
-                            </div>
-                            <div className="modal-body">
-                                <p><b>Dịch vụ:</b> {selectedHistory.serviceName}</p>
-                                <p><b>Giá:</b> {selectedHistory.price}$</p>
-                                <p><b>Ngày hẹn:</b> {new Date(selectedHistory.appointmentDate).toLocaleDateString()}</p>
-                                <p><b>Ghi chú:</b> {selectedHistory.notes || 'Không có ghi chú'}</p>
-                                <p><b>Ngày tạo:</b> {new Date(selectedHistory.createdAt).toLocaleDateString()}</p>
-                                <p><b>Trạng thái:</b> {selectedHistory.isActive ? 'Hoạt động' : 'Không hoạt động'}</p>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={handleCloseDetails}>Đóng</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
+            
             <Footer />
         </>
     );
