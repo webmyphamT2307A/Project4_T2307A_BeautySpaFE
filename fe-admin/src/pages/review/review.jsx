@@ -47,7 +47,25 @@ const ReviewList = () => {
             });
             const data = await res.json();
             if (data.status === 'SUCCESS') {
-                setReviews(Array.isArray(data.data) ? data.data : []);
+                const reviewsData = Array.isArray(data.data) ? data.data : [];
+                // Fetch detailed info for each review to get replies
+                const reviewsWithDetails = await Promise.all(
+                    reviewsData.map(async (review) => {
+                        try {
+                            const detailRes = await fetch(`${API_BASE_URL}/reviews/${review.id}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            const detailData = await detailRes.json();
+                            if (detailData.status === 'SUCCESS' && detailData.data.replies) {
+                                return { ...review, replies: detailData.data.replies };
+                            }
+                            return { ...review, replies: [] };
+                        } catch {
+                            return { ...review, replies: [] };
+                        }
+                    })
+                );
+                setReviews(reviewsWithDetails);
             } else toast.error(data.message || 'Failed to load reviews');
         } catch {
             toast.error('Error loading reviews');
@@ -174,13 +192,13 @@ const ReviewList = () => {
                                     {/* // <<< THAY ĐỔI: Hiển thị comment và reply tại đây */}
                                     <Box>
                                         <Typography variant="body2">{r.comment}</Typography>
-                                        {r.reply && (
+                                        {r.replies && r.replies.length > 0 && (
                                             <Paper variant="outlined" sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', borderLeft: '3px solid #1890ff' }}>
                                                 <Typography variant="caption" component="div" sx={{ fontWeight: 'bold', color: '#1890ff' }}>
-                                                    Replied by: {r.reply.staffName}
+                                                    Replied by: {r.replies[0].authorName}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
-                                                    "{r.reply.comment}"
+                                                    "{r.replies[0].comment}"
                                                 </Typography>
                                             </Paper>
                                         )}
@@ -202,7 +220,7 @@ const ReviewList = () => {
                                             <IconButton
                                                 color="primary"
                                                 onClick={() => handleOpenReplyModal(r)}
-                                                disabled={!!r.reply} // Vô hiệu hóa nút nếu đã có reply
+                                                disabled={r.replies && r.replies.length > 0} // Vô hiệu hóa nút nếu đã có reply
                                             >
                                                 <ReadFilled />
                                             </IconButton>
