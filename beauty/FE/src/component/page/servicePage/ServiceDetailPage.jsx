@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import Swal from 'sweetalert2';
 import Header from '../../shared/header';
 import Footer from '../../shared/footer';
 
@@ -148,14 +147,31 @@ const ServiceDetailPage = () => {
       const result = await response.json();
 
       if (response.ok) {
-        toast.success('Cập nhật đánh giá thành công!');
+        Swal.fire({
+          title: 'Thành công!',
+          text: 'Cập nhật đánh giá thành công!',
+          icon: 'success',
+          confirmButtonColor: '#28a745',
+          timer: 2000,
+          timerProgressBar: true
+        });
         setReviews(reviews.map(r => r.id === reviewId ? result.data : r));
         handleCancelEdit();
       } else {
-        toast.error(`Lỗi: ${result.message}`);
+        Swal.fire({
+          title: 'Lỗi!',
+          text: `Lỗi: ${result.message}`,
+          icon: 'error',
+          confirmButtonColor: '#dc3545'
+        });
       }
     } catch (error) {
-      toast.error('Đã có lỗi xảy ra khi cập nhật.');
+      Swal.fire({
+        title: 'Lỗi!',
+        text: 'Đã có lỗi xảy ra khi cập nhật.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -166,7 +182,19 @@ const ServiceDetailPage = () => {
   };
   // Hàm gửi yêu cầu XÓA review
   const handleDeleteClick = async (reviewId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa đánh giá này không?')) {
+    const result = await Swal.fire({
+      title: 'Xác nhận xóa',
+      text: 'Bạn có chắc chắn muốn xóa đánh giá này không?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Xóa ngay',
+      cancelButtonText: 'Hủy',
+      reverseButtons: true
+    });
+
+    if (!result.isConfirmed) {
       return;
     }
 
@@ -177,14 +205,31 @@ const ServiceDetailPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Xóa đánh giá thành công!');
+        Swal.fire({
+          title: 'Thành công!',
+          text: 'Xóa đánh giá thành công!',
+          icon: 'success',
+          confirmButtonColor: '#28a745',
+          timer: 2000,
+          timerProgressBar: true
+        });
         setReviews(reviews.filter(r => r.id !== reviewId));
       } else {
         const result = await response.json();
-        toast.error(`Lỗi: ${result.message}`);
+        Swal.fire({
+          title: 'Lỗi!',
+          text: `Lỗi: ${result.message}`,
+          icon: 'error',
+          confirmButtonColor: '#dc3545'
+        });
       }
     } catch (error) {
-      toast.error('Đã có lỗi xảy ra khi xóa.');
+      Swal.fire({
+        title: 'Lỗi!',
+        text: 'Đã có lỗi xảy ra khi xóa.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545'
+      });
     }
   };
 
@@ -194,17 +239,32 @@ const ServiceDetailPage = () => {
     if (isSubmitting) return;
 
     if (newReview.rating === 0) {
-      toast.warn('Vui lòng chọn số sao đánh giá.');
+      Swal.fire({
+        title: 'Thiếu thông tin!',
+        text: 'Vui lòng chọn số sao đánh giá.',
+        icon: 'warning',
+        confirmButtonColor: '#ffc107'
+      });
       return;
     }
 
     if (!newReview.comment.trim()) {
-      toast.warn('Vui lòng nhập nội dung bình luận.');
+      Swal.fire({
+        title: 'Thiếu thông tin!',
+        text: 'Vui lòng nhập nội dung bình luận.',
+        icon: 'warning',
+        confirmButtonColor: '#ffc107'
+      });
       return;
     }
 
     if (newReview.comment.length > 500) {
-      toast.warn('Nội dung bình luận không được vượt quá 500 ký tự.');
+      Swal.fire({
+        title: 'Nội dung quá dài!',
+        text: 'Nội dung bình luận không được vượt quá 500 ký tự.',
+        icon: 'warning',
+        confirmButtonColor: '#ffc107'
+      });
       return;
     }
 
@@ -232,16 +292,33 @@ const ServiceDetailPage = () => {
       const result = await response.json();
 
       if (response.ok && result.status === 'SUCCESS') {
-        toast.success('Cảm ơn bạn đã gửi đánh giá!');
+        Swal.fire({
+          title: 'Cảm ơn bạn!',
+          text: 'Đánh giá của bạn đã được gửi thành công!',
+          icon: 'success',
+          confirmButtonColor: '#28a745',
+          timer: 3000,
+          timerProgressBar: true
+        });
         setReviews((prev) => [result.data, ...prev]);
         setNewReview({ rating: 0, comment: '' });
         setCurrentPage(1); // Reset to first page when new review is added
       } else {
-        toast.error(`Gửi đánh giá thất bại: ${result.message}`);
+        Swal.fire({
+          title: 'Gửi thất bại!',
+          text: `Gửi đánh giá thất bại: ${result.message}`,
+          icon: 'error',
+          confirmButtonColor: '#dc3545'
+        });
       }
     } catch (error) {
       console.error('Error submitting review:', error);
-      toast.error('Đã xảy ra lỗi. Vui lòng thử lại.');
+      Swal.fire({
+        title: 'Lỗi!',
+        text: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -386,7 +463,6 @@ const ServiceDetailPage = () => {
   return (
     <div>
       <Header />
-      <ToastContainer position="top-right" autoClose={2000} />
       
       {/* Main Content Container - Full Width */}
       <div className="container-fluid py-4" style={{ backgroundColor: '#fafafa', minHeight: '100vh' }}>
@@ -397,8 +473,8 @@ const ServiceDetailPage = () => {
 
           {/* PHẦN THÔNG TIN DỊCH VỤ - New Layout */}
           <div className="row">
-            {/* Bên trái: Ảnh dịch vụ và thông tin chính */}
-            <div className="col-md-6 mb-4">
+            {/* Bên trái: Ảnh dịch vụ và thông tin chính - Chiếm 7/12 phần */}
+            <div className="col-md-7 mb-4">
               <img
                 src={service.imageUrl || service.image_url || '/default-image.jpg'}
                 alt={service.name}
@@ -429,40 +505,45 @@ const ServiceDetailPage = () => {
                     }
                   }, 1000);
                 }}
-                style={{
-                  background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
-                  color: 'white',
-                  fontWeight: '700',
-                  borderRadius: 30,
-                  padding: '12px 40px',
-                  display: 'inline-block',
-                  marginTop: 20,
-                  textDecoration: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
+                                  style={{
+                    background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
+                    color: 'white',
+                    fontWeight: '700',
+                    borderRadius: 30,
+                    padding: '15px 45px',
+                    display: 'inline-block',
+                    marginTop: 20,
+                    textDecoration: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 8px 25px rgba(240, 147, 151, 0.4)',
+                    fontSize: '1.1rem',
+                    letterSpacing: '0.5px',
+                    position: 'relative',
+                    zIndex: 2
+                  }}
                 onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 8px 20px rgba(240, 147, 151, 0.4)';
+                  e.target.style.transform = 'translateY(-4px) scale(1.05)';
+                  e.target.style.boxShadow = '0 15px 35px rgba(240, 147, 151, 0.6)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.transform = 'translateY(0) scale(1)';
+                  e.target.style.boxShadow = '0 8px 25px rgba(240, 147, 151, 0.4)';
                 }}
               >
                 ĐĂNG KÝ NGAY!
               </button>
             </div>
 
-            {/* Bên phải: Gợi ý dịch vụ - Beautiful Design */}
-            <div className="col-md-6">
+            {/* Bên phải: Gợi ý dịch vụ - Beautiful Design - Chiếm 5/12 phần */}
+            <div className="col-md-5">
               <div style={{
-                background: 'linear-gradient(135deg, #fff5f8 0%, #ffeef2 100%)',
+                background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #ffecd2 100%)',
                 borderRadius: '20px',
                 padding: '25px',
-                boxShadow: '0 10px 30px rgba(214, 51, 108, 0.1)',
-                border: '1px solid rgba(214, 51, 108, 0.1)'
+                boxShadow: '0 15px 40px rgba(255, 154, 158, 0.3)',
+                border: '1px solid rgba(255, 154, 158, 0.2)'
               }}>
                 <h3 style={{ 
                   fontSize: '1.8rem', 
@@ -473,19 +554,21 @@ const ServiceDetailPage = () => {
                   position: 'relative'
                 }}>
                   <span style={{
-                    background: 'linear-gradient(135deg, #d6336c, #f5576c)',
+                    background: 'linear-gradient(135deg, #ffffff, #fff0f5)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
+                    backgroundClip: 'text',
+                    textShadow: '0 2px 8px rgba(255, 255, 255, 0.5)'
                   }}>
                     Dịch vụ gợi ý
                   </span>
                   <div style={{
                     width: '50px',
                     height: '3px',
-                    background: 'linear-gradient(90deg, #d6336c, #f5576c)',
+                    background: 'linear-gradient(90deg, #ffffff, #fff0f5)',
                     margin: '10px auto 0',
-                    borderRadius: '2px'
+                    borderRadius: '2px',
+                    boxShadow: '0 2px 8px rgba(255, 255, 255, 0.6)'
                   }}></div>
                 </h3>
                 
@@ -624,25 +707,25 @@ const ServiceDetailPage = () => {
                       width: '100%',
                       textAlign: 'center',
                       padding: '15px',
-                      background: 'linear-gradient(135deg, #d6336c, #f5576c)',
+                      background: 'linear-gradient(135deg, #ff9a9e, #fecfef)',
                       borderRadius: '25px',
                       color: 'white',
                       border: 'none',
                       fontWeight: '700',
                       fontSize: '1rem',
                       transition: 'all 0.3s ease',
-                      boxShadow: '0 5px 15px rgba(214, 51, 108, 0.3)',
+                      boxShadow: '0 5px 15px rgba(255, 154, 158, 0.4)',
                       position: 'relative',
                       overflow: 'hidden',
                       cursor: 'pointer'
                     }}
                     onMouseEnter={(e) => {
                       e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow = '0 8px 25px rgba(214, 51, 108, 0.4)';
+                      e.target.style.boxShadow = '0 8px 25px rgba(255, 154, 158, 0.5)';
                     }}
                     onMouseLeave={(e) => {
                       e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = '0 5px 15px rgba(214, 51, 108, 0.3)';
+                      e.target.style.boxShadow = '0 5px 15px rgba(255, 154, 158, 0.4)';
                     }}
                   >
                     <i className="fas fa-spa" style={{ marginRight: '8px' }}></i>
@@ -750,7 +833,7 @@ const ServiceDetailPage = () => {
               ) : (
                 <div style={{ padding: '20px', textAlign: 'center', background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 5 }}>
                   <p style={{ margin: 0 }}>
-                    Vui lòng <Link to="/login" style={{ fontWeight: 'bold', color: '#d6336c' }}>đăng nhập</Link> để để lại đánh giá.
+                    Vui lòng <Link to="/login" style={{ fontWeight: 'bold', color: '#d6336c' }}>đăng nhập</Link>  để lại đánh giá.
                   </p>
                 </div>
               )}

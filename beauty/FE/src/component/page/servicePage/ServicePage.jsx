@@ -159,7 +159,7 @@ const ServicePage = () => {
                     top: '50%',
                     transform: 'translateY(-50%)',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #e91e63, #c2185b)',
+                    background: '#FDB5B9',
                     color: 'white',
                     borderRadius: '50%',
                     width: '40px',
@@ -376,16 +376,122 @@ const ServicePage = () => {
             </div>
           )}
 
-          <div className="text-center mt-5">
+          <div className="text-center mt-5 d-flex justify-content-center align-items-center flex-wrap gap-2">
+            {/* Previous Button */}
+            <button
+              className="pagination-btn"
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              style={{
+                minWidth: '100px',
+                height: '50px',
+                borderRadius: '12px',
+                border: '2px solid #FDB5B9',
+                background: 'white',
+                color: currentPage === 1 ? '#ccc' : '#FDB5B9',
+                fontWeight: '600',
+                fontSize: '1rem',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease',
+                opacity: currentPage === 1 ? 0.5 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== 1) {
+                  e.target.style.background = '#FDB5B9';
+                  e.target.style.color = 'white';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 15px rgba(253, 181, 185, 0.3)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentPage !== 1) {
+                  e.target.style.background = 'white';
+                  e.target.style.color = '#FDB5B9';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }
+              }}
+            >
+              <i className="fas fa-chevron-left me-2"></i>Trước
+            </button>
+
+            {/* Page Numbers */}
             {[...Array(totalPages)].map((_, i) => (
               <button
                 key={i}
-                className={`btn btn-outline-primary mx-1 ${i + 1 === currentPage ? "active" : ""}`}
+                className="pagination-btn"
                 onClick={() => setCurrentPage(i + 1)}
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '12px',
+                  border: i + 1 === currentPage ? 'none' : '2px solid #FDB5B9',
+                  background: i + 1 === currentPage ? '#FDB5B9' : 'white',
+                  color: i + 1 === currentPage ? 'white' : '#FDB5B9',
+                  fontWeight: '700',
+                  fontSize: '1.1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: i + 1 === currentPage ? '0 4px 15px rgba(253, 181, 185, 0.4)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (i + 1 !== currentPage) {
+                    e.target.style.background = '#FDB5B9';
+                    e.target.style.color = 'white';
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 4px 15px rgba(253, 181, 185, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (i + 1 !== currentPage) {
+                    e.target.style.background = 'white';
+                    e.target.style.color = '#FDB5B9';
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                  }
+                }}
               >
                 {i + 1}
               </button>
             ))}
+
+            {/* Next Button */}
+            <button
+              className="pagination-btn"
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                minWidth: '100px',
+                height: '50px',
+                borderRadius: '12px',
+                border: '2px solid #FDB5B9',
+                background: 'white',
+                color: currentPage === totalPages ? '#ccc' : '#FDB5B9',
+                fontWeight: '600',
+                fontSize: '1rem',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease',
+                opacity: currentPage === totalPages ? 0.5 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== totalPages) {
+                  e.target.style.background = '#FDB5B9';
+                  e.target.style.color = 'white';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 15px rgba(253, 181, 185, 0.3)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentPage !== totalPages) {
+                  e.target.style.background = 'white';
+                  e.target.style.color = '#FDB5B9';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }
+              }}
+            >
+              Tiếp<i className="fas fa-chevron-right ms-2"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -408,26 +514,64 @@ const ServicePage = () => {
         }
 
         .service-image-clickable::after {
-          content: "👁️";
+          content: "\\f06e";
+          font-family: "Font Awesome 5 Free";
+          font-weight: 900;
           position: absolute;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          background: rgba(0, 0, 0, 0.7);
+          background: linear-gradient(135deg, rgba(0, 123, 255, 0.9), rgba(40, 167, 69, 0.9));
           color: white;
           border-radius: 50%;
-          width: 30px;
-          height: 30px;
+          width: 35px;
+          height: 35px;
           display: flex;
           align-items: center;
           justify-content: center;
           opacity: 0;
-          transition: opacity 0.3s ease-in-out;
-          font-size: 14px;
+          transition: all 0.3s ease-in-out;
+          font-size: 16px;
+          box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
         }
 
         .service-image-clickable:hover::after {
           opacity: 1;
+          transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        /* Add pulse animation to the view icon */
+        .service-image-clickable:hover::after {
+          animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+          }
+          50% {
+            box-shadow: 0 4px 20px rgba(0, 123, 255, 0.6);
+          }
+          100% {
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+          }
+        }
+
+        /* Enhanced "Đặt Lịch" button styling */
+        .btn-primary.rounded-pill {
+          box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3) !important;
+          font-weight: 600 !important;
+          font-size: 1rem !important;
+          letter-spacing: 0.3px !important;
+          transition: all 0.3s ease !important;
+          position: relative !important;
+          z-index: 2 !important;
+          padding: 10px 25px !important;
+        }
+
+        .btn-primary.rounded-pill:hover {
+          transform: translateY(-3px) scale(1.05) !important;
+          box-shadow: 0 12px 30px rgba(0, 123, 255, 0.4) !important;
         }
 
         /* Search input focus effect */

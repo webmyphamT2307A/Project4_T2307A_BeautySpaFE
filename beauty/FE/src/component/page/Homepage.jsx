@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Header from "../shared/header";
 import Footer from "../shared/footer";
 import Service from "./Service";
@@ -11,6 +11,50 @@ import Tesminoal from "./Tesminoal";
 import Contact from "./Contact";
 
 const Homepage = () => {
+  // Initialize Bootstrap carousel after component mounts
+  useEffect(() => {
+    // Wait for DOM to be ready
+    const initializeCarousel = () => {
+      const carouselElement = document.getElementById('carouselId');
+      if (carouselElement && window.bootstrap) {
+        // Dispose existing carousel instance if any
+        const existingCarousel = window.bootstrap.Carousel.getInstance(carouselElement);
+        if (existingCarousel) {
+          existingCarousel.dispose();
+        }
+        
+        // Initialize new carousel with auto-slide
+        const carousel = new window.bootstrap.Carousel(carouselElement, {
+          interval: 3000, // 3 seconds
+          ride: 'carousel',
+          pause: 'hover',
+          wrap: true
+        });
+        
+        console.log('🎠 Carousel initialized successfully');
+        return carousel;
+      } else {
+        console.warn('⚠️ Carousel element or Bootstrap not found');
+        return null;
+      }
+    };
+
+    // Delay initialization to ensure Bootstrap is loaded
+    const timer = setTimeout(initializeCarousel, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      // Clean up carousel on unmount
+      const carouselElement = document.getElementById('carouselId');
+      if (carouselElement && window.bootstrap) {
+        const existingCarousel = window.bootstrap.Carousel.getInstance(carouselElement);
+        if (existingCarousel) {
+          existingCarousel.dispose();
+        }
+      }
+    };
+  }, []);
+
   // Function to scroll to appointment section
   const scrollToAppointment = () => {
     const appointmentSection = document.getElementById('appointment');
@@ -26,7 +70,7 @@ const Homepage = () => {
     <div>
       <Header />
       <div className="container-fluid carousel-header px-0">
-      <div id="carouselId" className="carousel slide" data-bs-ride="carousel" data-bs-interval="2000">
+      <div id="carouselId" className="carousel slide">
           <ol className="carousel-indicators">
             <li data-bs-target="#carouselId" data-bs-slide-to={0} className="active" />
             <li data-bs-target="#carouselId" data-bs-slide-to={1} />

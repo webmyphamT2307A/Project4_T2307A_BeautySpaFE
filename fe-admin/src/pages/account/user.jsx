@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Grid,
   Button,
@@ -27,7 +27,8 @@ import {
   InputAdornment,
   Avatar,
   Typography,
-  Divider
+  Divider,
+  CircularProgress // Thêm CircularProgress để hiển thị loading
 } from '@mui/material';
 import {
   PlusOutlined,
@@ -40,20 +41,19 @@ import {
   UploadOutlined,
   UserOutlined
 } from '@ant-design/icons';
-
-// project imports
 import MainCard from 'components/MainCard';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const API_URL = 'http://localhost:8080/api/v1/customer';
+// REFACTOR: API URL đã được cập nhật để khớp với backend controller mới
+const API_URL = 'http://localhost:8080/api/v1/customers';
 
 // ==============================|| USER ACCOUNT PAGE ||============================== //
 
 const UserAccount = () => {
   const [users, setUsers] = useState([]);
-  const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -62,123 +62,112 @@ const UserAccount = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [imagePreview, setImagePreview] = useState(null);
+  
+  // REFACTOR: Tách state cho file và preview
+  const [avatarFile, setAvatarFile] = useState(null); // State để giữ File object
+  const [avatarPreview, setAvatarPreview] = useState(''); // State để giữ URL preview (base64 hoặc http link)
+
   const fileInputRef = useRef(null);
+
+  // REFACTOR: State formData giờ sử dụng camelCase để đồng bộ với backend DTO
   const [formData, setFormData] = useState({
-    full_name: '',
+    fullName: '',
     phone: '',
     email: '',
     password: '',
-    image_url: '',
     address: '',
-    is_active: true
+    isActive: true,
+    imageUrl: '' // Chỉ dùng để giữ URL ảnh cũ khi edit
   });
 
-  // Fetch users from BE
-  useEffect(() => {
+  // REFACTOR: Tạo hàm fetch tập trung để tránh lặp code
+  const fetchAndSetUsers = useCallback(async () => {
     setLoading(true);
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
-        const usersData = (data.data || []).map(u => ({
-          ...u,
-          customer_id: u.customer_id || u.id, // fallback if BE returns id
-          full_name: u.full_name || u.fullName,
-          image_url: u.image_url || u.imageUrl,
-          is_active:
-            u.is_active === true ||
-            u.is_active === 1 ||
-            u.is_active === 'true' ||
-            u.is_active === '1' ||
-            u.isActive === true ||
-            u.isActive === 1 ||
-            u.isActive === 'true' ||
-            u.isActive === '1'
-              ? true
-              : false,
-          created_at: u.created_at || u.createdAt || new Date().toISOString()
-        }));
-
-        // Sort by newest first
-        const sortedUsers = usersData.sort((a, b) =>
-          new Date(b.created_at) - new Date(a.created_at)
-        );
-
+    try {
+      const response = await fetch(API_URL);
+      const result = await response.json();
+      if (result.status === 'SUCCESS' && Array.isArray(result.data)) {
+        // Backend trả về camelCase, không cần map lại nhiều
+        const sortedUsers = result.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setUsers(sortedUsers);
-        setFilteredUsers(sortedUsers);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+        setFilteredUsers(sortedUsers); // Cập nhật cả filteredUsers
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      toast.error('Không thể tải danh sách khách hàng!');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Handle search and filter functionality
+  // Lần đầu tải component thì fetch dữ liệu
   useEffect(() => {
-    const delaySearch = setTimeout(() => {
-      let results = [...users];
+    fetchAndSetUsers();
+  }, [fetchAndSetUsers]);
+  
+  // Lọc và tìm kiếm
+  useEffect(() => {
+    let results = [...users];
 
-      // Apply status filter
-      if (statusFilter !== 'all') {
-        const isActive = statusFilter === 'active';
-        results = results.filter(user => user.is_active === isActive);
-      }
+    if (statusFilter !== 'all') {
+      const isActive = statusFilter === 'active';
+      results = results.filter(user => user.isActive === isActive);
+    }
 
-      // Apply search query
-      if (searchQuery) {
-        const lowercasedQuery = searchQuery.toLowerCase();
-        results = results.filter(
-          user =>
-            user.full_name.toLowerCase().includes(lowercasedQuery) ||
-            user.phone.toLowerCase().includes(lowercasedQuery) ||
-            (user.email && user.email.toLowerCase().includes(lowercasedQuery))
-        );
-      }
+    if (searchQuery) {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      results = results.filter(
+        user =>
+          user.fullName.toLowerCase().includes(lowercasedQuery) ||
+          user.phone.toLowerCase().includes(lowercasedQuery) ||
+          (user.email && user.email.toLowerCase().includes(lowercasedQuery))
+      );
+    }
 
-      // Maintain sort order (newest first)
-      results = results.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-      setFilteredUsers(results);
-      setPage(0);
-    }, 300);
-
-    return () => clearTimeout(delaySearch);
+    setFilteredUsers(results);
+    setPage(0); // Reset về trang đầu tiên khi filter
   }, [searchQuery, statusFilter, users]);
 
-  const handleClearField = (fieldName) => {
-    if (fieldName === 'image_url') {
-      setImagePreview(null);
-    }
-    setFormData({ ...formData, [fieldName]: '' });
-  };
 
   const handleOpen = (user = null) => {
+    setShowPassword(false);
+    setAvatarFile(null); // Reset file
+
     if (user) {
       setCurrentUser(user);
+      // Map dữ liệu từ user (camelCase) vào formData (camelCase)
       setFormData({
-        full_name: user.full_name,
-        phone: user.phone,
-        email: user.email,
-        password: '', // Don't show existing password
-        image_url: user.image_url || '',
+        fullName: user.fullName || '',
+        phone: user.phone || '',
+        email: user.email || '',
+        password: '', // Không hiển thị password cũ
         address: user.address || '',
-        is_active: user.is_active
+        isActive: user.isActive,
+        imageUrl: user.imageUrl || '' // Giữ lại URL ảnh cũ
       });
-      setImagePreview(user.image_url || null);
+      setAvatarPreview(user.imageUrl || ''); // Set preview cho ảnh cũ
     } else {
       setCurrentUser(null);
+      // Reset form cho việc tạo mới
       setFormData({
-        full_name: '',
+        fullName: '',
         phone: '',
         email: '',
         password: '',
-        image_url: '',
         address: '',
-        is_active: true
+        isActive: true,
+        imageUrl: ''
       });
-      setImagePreview(null);
+      setAvatarPreview('');
     }
     setOpen(true);
   };
 
+  const handleClose = () => {
+    setOpen(false);
+    setCurrentUser(null);
+  };
+  
   const handleViewOpen = (user) => {
     setCurrentUser(user);
     setViewOpen(true);
@@ -192,628 +181,331 @@ const UserAccount = () => {
     handleViewClose();
     handleOpen(currentUser);
   };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
+  
   const handleChange = (e) => {
-    const { name, value, checked } = e.target;
-    const newValue = name === 'is_active' ? checked : value;
-    setFormData({
-      ...formData,
-      [name]: newValue
-    });
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  // Image upload handler
+  // REFACTOR: Xử lý file ảnh, giữ lại File object và tạo URL preview
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target.result;
-        setFormData({
-          ...formData,
-          image_url: imageUrl
-        });
-        setImagePreview(imageUrl);
-      };
-      reader.readAsDataURL(file);
+      setAvatarFile(file); // Lưu File object để gửi đi
+      setAvatarPreview(URL.createObjectURL(file)); // Tạo URL tạm thời để xem trước
+    }
+  };
+  
+  const handleClearImage = () => {
+    setAvatarFile(null);
+    setAvatarPreview('');
+    setFormData(prev => ({ ...prev, imageUrl: '' }));
+    if(fileInputRef.current) {
+        fileInputRef.current.value = null;
     }
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current.click();
-  };
 
-  // Save (create or update) user
+  // REFACTOR: Hàm Save sử dụng FormData để upload file
   const handleSave = async () => {
+    const formPayload = new FormData();
+    
+    // 1. Chuẩn bị customer DTO
+    const customerDto = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        isActive: formData.isActive
+    };
+    
+    // Nếu là update, gửi cả imageUrl cũ (nếu không có ảnh mới)
+    if (currentUser) {
+        customerDto.imageUrl = formData.imageUrl;
+    }
+    // Chỉ thêm password nếu có giá trị (cho cả create và update)
+    if (formData.password) {
+        customerDto.password = formData.password;
+    }
+
+    // 2. Append DTO và file vào FormData
+    formPayload.append('customer', new Blob([JSON.stringify(customerDto)], { type: "application/json" }));
+    
+    if (avatarFile) {
+      formPayload.append('file', avatarFile);
+    }
+    
+    // 3. Gửi request
+    setLoading(true);
     try {
-      if (currentUser) {
-        // Update existing user
-        const updateBody = {
-          fullName: formData.full_name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          imageUrl: formData.image_url,
-          isActive: formData.is_active
-        };
-        if (formData.password && formData.password.trim() !== '') {
-          updateBody.password = formData.password;
-        }
-        await fetch(`${API_URL}/update/${currentUser.customer_id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updateBody)
-        });
-      } else {
-        // Create new user
-        await fetch(`${API_URL}/created`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fullName: formData.full_name,
-            password: formData.password,
-            email: formData.email,
-            phone: formData.phone,
-            address: formData.address,
-            imageUrl: formData.image_url
-          })
-        });
+      const url = currentUser ? `${API_URL}/${currentUser.id}` : API_URL;
+      const method = currentUser ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
+        body: formPayload
+        // KHÔNG set 'Content-Type', trình duyệt sẽ tự làm khi gửi FormData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to ${method === 'POST' ? 'create' : 'update'} customer.`);
       }
-      // Reload users
-      setLoading(true);
-      fetch(API_URL)
-        .then(res => res.json())
-        .then(data => {
-          const usersData = (data.data || []).map(u => ({
-            ...u,
-            customer_id: u.customer_id || u.id,
-            full_name: u.full_name || u.fullName,
-            image_url: u.image_url || u.imageUrl,
-            is_active:
-              u.is_active === true ||
-              u.is_active === 1 ||
-              u.is_active === 'true' ||
-              u.is_active === '1' ||
-              u.isActive === true ||
-              u.isActive === 1 ||
-              u.isActive === 'true' ||
-              u.isActive === '1'
-                ? true
-                : false,
-            created_at: u.created_at || u.createdAt || new Date().toISOString()
-          }));
 
-          // Sort by newest first
-          const sortedUsers = usersData.sort((a, b) =>
-            new Date(b.created_at) - new Date(a.created_at)
-          );
+      handleClose();
+      await fetchAndSetUsers(); // Tải lại dữ liệu
+      
+      // Hiển thị thông báo thành công
+      const action = currentUser ? 'cập nhật' : 'tạo';
+      toast.success(`${action} khách hàng thành công!`);
 
-          setUsers(sortedUsers);
-          setFilteredUsers(sortedUsers);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-      setOpen(false);
     } catch (error) {
       console.error("Error saving user:", error);
+      const action = currentUser ? 'cập nhật' : 'tạo';
+      toast.error(`Lỗi khi ${action} khách hàng: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // REFACTOR: Sử dụng method DELETE
   const handleDelete = async (id) => {
-    try {
-      await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
-      // Reload users
+    if (window.confirm('Are you sure you want to delete this customer?')) {
       setLoading(true);
-      fetch(API_URL)
-        .then(res => res.json())
-        .then(data => {
-          const usersData = (data.data || []).map(u => ({
-            ...u,
-            customer_id: u.customer_id || u.id,
-            full_name: u.full_name || u.fullName,
-            image_url: u.image_url || u.imageUrl,
-            is_active:
-              u.is_active === true ||
-              u.is_active === 1 ||
-              u.is_active === 'true' ||
-              u.is_active === '1' ||
-              u.isActive === true ||
-              u.isActive === 1 ||
-              u.isActive === 'true' ||
-              u.isActive === '1'
-                ? true
-                : false,
-            created_at: u.created_at || u.createdAt || new Date().toISOString()
-          }));
-
-          // Sort by newest first
-          const sortedUsers = usersData.sort((a, b) =>
-            new Date(b.created_at) - new Date(a.created_at)
-          );
-
-          setUsers(sortedUsers);
-          setFilteredUsers(sortedUsers);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    } catch (error) {
-      console.error("Error deleting user:", error);
+      try {
+        const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        if(!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to delete customer.');
+        }
+        await fetchAndSetUsers(); // Tải lại dữ liệu
+        toast.success('Xóa khách hàng thành công!');
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        toast.error(`Lỗi khi xóa khách hàng: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
+  const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleStatusFilterChange = (e) => {
-    setStatusFilter(e.target.value);
-  };
-
-  // Format date for display
+  const handleSearchChange = (e) => setSearchQuery(e.target.value);
+  const handleStatusFilterChange = (e) => setStatusFilter(e.target.value);
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleString('vi-VN', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
     });
   };
 
-  // Get current page users
   const currentUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <MainCard title="Customer Management">
-      <Grid container spacing={3}>
+    <>
+      <MainCard title="Quản lý Khách hàng">
+        <Grid container spacing={3}>
+        {/* Search and Filter */}
         <Grid item xs={12} display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <TextField
-              placeholder="Search by name, phone or email"
-              variant="outlined"
-              size="small"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              sx={{ width: '300px' }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchOutlined />
-                  </InputAdornment>
-                )
-              }}
-            />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel id="status-filter-label">Status</InputLabel>
-              <Select
-                labelId="status-filter-label"
-                id="status-filter"
-                value={statusFilter}
-                label="Status"
-                onChange={handleStatusFilterChange}
-              >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<PlusOutlined />}
-            onClick={() => handleOpen()}
-          >
-            Add Customer
-          </Button>
+            <Box display="flex" alignItems="center" gap={2}>
+                <TextField
+                placeholder="Tìm theo tên, SĐT, email..."
+                variant="outlined" size="small" value={searchQuery}
+                onChange={handleSearchChange} sx={{ width: '300px' }}
+                InputProps={{ startAdornment: (<InputAdornment position="start"><SearchOutlined /></InputAdornment>) }}
+                />
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <InputLabel>Trạng thái</InputLabel>
+                    <Select value={statusFilter} label="Trạng thái" onChange={handleStatusFilterChange}>
+                        <MenuItem value="all">Tất cả</MenuItem>
+                        <MenuItem value="active">Hoạt động</MenuItem>
+                        <MenuItem value="inactive">Tạm ngưng</MenuItem>
+                    </Select>
+                </FormControl>
+            </Box>
+            <Button variant="contained" color="primary" startIcon={<PlusOutlined />} onClick={() => handleOpen()}>
+                Thêm Khách hàng
+            </Button>
         </Grid>
+        
+        {/* Table */}
         <Grid item xs={12}>
-          <Box sx={{ width: '100%', overflow: 'hidden' }}>
-            <TableContainer
-              component={Paper}
-              sx={{
-                maxHeight: 440,
-                '& .MuiTableHead-root': {
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 10
-                }
-              }}
-            >
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell align={'left'} width="5%" sx={{ backgroundColor: '#f8f8f8' }}>STT</TableCell>
-                    <TableCell align={'left'} width="15%" sx={{ backgroundColor: '#f8f8f8' }}>Full Name</TableCell>
-                    <TableCell align={'left'} width="12%" sx={{ backgroundColor: '#f8f8f8' }}>Phone</TableCell>
-                    <TableCell align={'left'} width="15%" sx={{ backgroundColor: '#f8f8f8' }}>Email</TableCell>
-                    <TableCell align={'left'} width="18%" sx={{ backgroundColor: '#f8f8f8' }}>Address</TableCell>
-                    <TableCell align={'left'} width="10%" sx={{ backgroundColor: '#f8f8f8' }}>Status</TableCell>
-                    <TableCell width="15%" align="left" sx={{ backgroundColor: '#f8f8f8' }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {currentUsers.length > 0 ? (
-                    currentUsers.map((user, index) => (
-                      <TableRow key={user.customer_id} hover>
-                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar
-                              src={user.image_url}
-                              alt={user.full_name}
-                              sx={{ width: 32, height: 32 }}
-                            >
-                              {!user.image_url && <UserOutlined />}
-                            </Avatar>
-                            {user.full_name}
-                          </Box>
-                        </TableCell>
-                        <TableCell>{user.phone}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.address}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={user.is_active ? "Active" : "Inactive"}
-                            size="small"
-                            color={user.is_active ? "success" : "default"}
-                            sx={{
-                              borderRadius: '16px',
-                              fontWeight: 500,
-                              fontSize: '0.75rem',
-                              color: user.is_active ? '#fff' : '#555',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell >
-                          {/* Actions */}
-                          <IconButton onClick={() => handleViewOpen(user)} color="info" size="small">
-                            <EyeOutlined />
-                          </IconButton>
-                          <IconButton onClick={() => handleOpen(user)} color="primary" size="small">
-                            <EditOutlined />
-                          </IconButton>
-                          <IconButton onClick={() => handleDelete(user.customer_id)} color="error" size="small">
-                            <DeleteOutlined />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center">No customers found</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+            <TableContainer component={Paper} sx={{ maxHeight: 600 }}>
+              {loading && <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}><CircularProgress /></Box>}
+              {!loading && (
+                <>
+                    <Table stickyHeader>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell align={'left'} width="5%">#</TableCell>
+                                <TableCell align={'left'} width="25%">Name</TableCell>
+                                <TableCell align={'left'} width="15%">Number</TableCell>
+                                <TableCell align={'left'} width="20%">Email</TableCell>
+                                <TableCell align={'center'} width="10%">Status</TableCell>
+                                <TableCell width="15%" align="center">Action</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                        {currentUsers.length > 0 ? (
+                            currentUsers.map((user, index) => (
+                            <TableRow key={user.id} hover>
+                                <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                                <TableCell>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                    <Avatar src={user.imageUrl} alt={user.fullName}>
+                                        {!user.imageUrl && <UserOutlined />}
+                                    </Avatar>
+                                    {user.fullName}
+                                </Box>
+                                </TableCell>
+                                <TableCell>{user.phone}</TableCell>
+                                <TableCell>{user.email}</TableCell>
+                                <TableCell align="center">
+                                    <Chip
+                                        label={user.isActive ? "active" : "non active"}
+                                        size="small"
+                                        color={user.isActive ? "success" : "default"}
+                                    />
+                                </TableCell>
+                                <TableCell align="center">
+                                    <IconButton onClick={() => handleViewOpen(user)} color="info" size="small"><EyeOutlined /></IconButton>
+                                    <IconButton onClick={() => handleOpen(user)} color="primary" size="small"><EditOutlined /></IconButton>
+                                    <IconButton onClick={() => handleDelete(user.id)} color="error" size="small"><DeleteOutlined /></IconButton>
+                                </TableCell>
+                            </TableRow>
+                            ))
+                        ) : (
+                            <TableRow><TableCell colSpan={6} align="center">Không tìm thấy khách hàng nào</TableCell></TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
+                    <TablePagination
+                        rowsPerPageOptions={[10, 15, 20]}
+                        component="div"
+                        count={filteredUsers.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                    />
+                </>
+              )}
             </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[10, 15, 20]}
-              component="div"
-              count={filteredUsers.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-          </Box>
         </Grid>
       </Grid>
 
-      {/* Add/Edit Customer Dialog */}
+      {/* Add/Edit Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-          {currentUser ? 'Edit Customer' : 'Add Customer'}
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          {/* Image Upload Section */}
+        <DialogTitle>{currentUser ? 'Chỉnh sửa Khách hàng' : 'Thêm Khách hàng'}</DialogTitle>
+        <DialogContent dividers>
           <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {imagePreview ? (
-              <Box sx={{ position: 'relative', mb: 2 }}>
-                <Avatar
-                  src={imagePreview}
-                  alt="User Avatar"
-                  sx={{
-                    width: 100,
-                    height: 100,
-                    border: '1px solid #e0e0e0'
-                  }}
-                />
-                <IconButton
-                  size="small"
-                  sx={{
-                    position: 'absolute',
-                    top: -8,
-                    right: -8,
-                    backgroundColor: '#fff',
-                    border: '1px solid #e0e0e0',
-                    '&:hover': { backgroundColor: '#f5f5f5' }
-                  }}
-                  onClick={() => handleClearField('image_url')}
-                >
-                  <CloseOutlined style={{ fontSize: 14 }} />
-                </IconButton>
-              </Box>
-            ) : (
-              <Avatar
-                sx={{
-                  width: 100,
-                  height: 100,
-                  mb: 2,
-                  backgroundColor: '#f0f0f0'
-                }}
-              >
-                <UserOutlined style={{ fontSize: 50, color: '#bdbdbd' }} />
-              </Avatar>
-            )}
-            <input
-              type="file"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-            <Button
-              variant="outlined"
-              startIcon={<UploadOutlined />}
-              onClick={handleUploadClick}
-              size="small"
-            >
-              Upload Avatar
+            <Box sx={{ position: 'relative', mb: 2 }}>
+                <Avatar src={avatarPreview} sx={{ width: 100, height: 100, border: '1px solid #e0e0e0' }}>
+                    {!avatarPreview && <UserOutlined style={{ fontSize: 50 }} />}
+                </Avatar>
+                {avatarPreview && (
+                    <IconButton size="small" onClick={handleClearImage} sx={{ position: 'absolute', top: -8, right: -8, backgroundColor: 'white', border: '1px solid #e0e0e0' }}>
+                        <CloseOutlined style={{ fontSize: 14 }} />
+                    </IconButton>
+                )}
+            </Box>
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageChange} />
+            <Button variant="outlined" startIcon={<UploadOutlined />} onClick={() => fileInputRef.current.click()} size="small">
+              Tải ảnh lên
             </Button>
           </Box>
-
+          <TextField margin="dense" name="fullName" label="Họ và Tên" type="text" fullWidth value={formData.fullName} onChange={handleChange} />
+          <TextField margin="dense" name="phone" label="Số điện thoại" type="text" fullWidth value={formData.phone} onChange={handleChange} />
+          <TextField margin="dense" name="email" label="Email" type="email" fullWidth value={formData.email} onChange={handleChange} />
           <TextField
-            margin="dense"
-            name="full_name"
-            label="Full Name"
-            type="text"
-            fullWidth
-            value={formData.full_name}
-            onChange={handleChange}
+            margin="dense" name="password" label={currentUser ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu"}
+            type={showPassword ? "text" : "password"} fullWidth value={formData.password} onChange={handleChange}
             InputProps={{
-              endAdornment: formData.full_name ? (
+              endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('full_name')}
-                  >
-                    <CloseOutlined style={{ fontSize: 16 }} />
+                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                    {showPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                   </IconButton>
                 </InputAdornment>
-              ) : null
+              )
             }}
           />
-          <TextField
-            margin="dense"
-            name="phone"
-            label="Phone"
-            type="text"
-            fullWidth
-            value={formData.phone}
-            onChange={handleChange}
-            InputProps={{
-              endAdornment: formData.phone ? (
-                <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('phone')}
-                  >
-                    <CloseOutlined style={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : null
-            }}
-          />
-          <TextField
-            margin="dense"
-            name="email"
-            label="Email"
-            type="email"
-            fullWidth
-            value={formData.email}
-            onChange={handleChange}
-            InputProps={{
-              endAdornment: formData.email ? (
-                <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('email')}
-                  >
-                    <CloseOutlined style={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : null
-            }}
-          />
-          {!currentUser && (
-            <TextField
-              margin="dense"
-              name="password"
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              fullWidth
-              value={formData.password}
-              onChange={handleChange}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {formData.password && (
-                      <IconButton
-                        size="small"
-                        onClick={() => handleClearField('password')}
-                      >
-                        <CloseOutlined style={{ fontSize: 16 }} />
-                      </IconButton>
-                    )}
-                    <IconButton
-                      size="small"
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
-                      {showPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                    </IconButton>
-                  </InputAdornment>
-                )
-              }}
-            />
-          )}
-          <TextField
-            margin="dense"
-            name="address"
-            label="Address"
-            type="text"
-            fullWidth
-            multiline
-            rows={2}
-            value={formData.address}
-            onChange={handleChange}
-            InputProps={{
-              endAdornment: formData.address ? (
-                <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('address')}
-                  >
-                    <CloseOutlined style={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : null
-            }}
-          />
+          <TextField margin="dense" name="address" label="Địa chỉ" type="text" fullWidth multiline rows={2} value={formData.address} onChange={handleChange} />
           <FormControlLabel
-            control={
-              <Switch
-                checked={formData.is_active}
-                onChange={handleChange}
-                name="is_active"
-              />
-            }
-            label="Active"
-            margin="dense"
+            control={<Switch checked={formData.isActive} onChange={handleChange} name="isActive" />}
+            label="Hoạt động"
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-          <Button onClick={handleClose} variant="outlined" color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" color="primary">Save</Button>
+        <DialogActions>
+          <Button onClick={handleClose}>Hủy</Button>
+          <Button onClick={handleSave} variant="contained" disabled={loading}>
+            {loading ? <CircularProgress size={24} /> : 'Lưu'}
+          </Button>
         </DialogActions>
       </Dialog>
-
-      {/* View Customer Details Dialog */}
+      
+      {/* View Details Dialog */}
       <Dialog open={viewOpen} onClose={handleViewClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-          Customer Details
-          <IconButton
-            aria-label="close"
-            onClick={handleViewClose}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8
-            }}
-          >
+        <DialogTitle>
+          Chi tiết Khách hàng
+          <IconButton aria-label="close" onClick={handleViewClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
             <CloseOutlined />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
+        <DialogContent dividers>
           {currentUser && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {/* Avatar and basic info */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar
-                  src={currentUser.image_url}
-                  sx={{ width: 80, height: 80 }}
-                >
-                  {!currentUser.image_url && <UserOutlined style={{ fontSize: 40 }} />}
-                </Avatar>
+                <Avatar src={currentUser.imageUrl} sx={{ width: 80, height: 80 }}><UserOutlined style={{ fontSize: 40 }} /></Avatar>
                 <Box>
-                  <Typography variant="h5">{currentUser.full_name}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Customer
-                  </Typography>
-                  <Chip
-                    label={currentUser.is_active ? "Active" : "Inactive"}
-                    size="small"
-                    color={currentUser.is_active ? "success" : "default"}
-                    sx={{ mt: 0.5, borderRadius: '16px' }}
-                  />
+                  <Typography variant="h5">{currentUser.fullName}</Typography>
+                  <Chip label={currentUser.isActive ? "Active" : "No active"} size="small" color={currentUser.isActive ? "success" : "default"} sx={{ mt: 0.5 }} />
                 </Box>
               </Box>
-
               <Divider />
-
-              {/* Contact information */}
-              <Box>
-                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                  Contact Information
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Email</Typography>
-                    <Typography>{currentUser.email}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Phone</Typography>
-                    <Typography>{currentUser.phone || 'Not provided'}</Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary">Address</Typography>
-                    <Typography>{currentUser.address || 'Not provided'}</Typography>
-                  </Grid>
-                </Grid>
-              </Box>
-
-              <Divider />
-
-              {/* Other details */}
-              <Box>
-                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                  Additional Information
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Customer ID</Typography>
-                    <Typography>#{currentUser.customer_id}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Created On</Typography>
-                    <Typography>{formatDate(currentUser.created_at)}</Typography>
-                  </Grid>
-                </Grid>
-              </Box>
+              <Typography variant="subtitle1" fontWeight="bold">Thông tin liên hệ</Typography>
+              <Grid container spacing={1}>
+                <Grid item xs={4}><Typography variant="body2" color="text.secondary">Email:</Typography></Grid>
+                <Grid item xs={8}><Typography>{currentUser.email}</Typography></Grid>
+                <Grid item xs={4}><Typography variant="body2" color="text.secondary">Điện thoại:</Typography></Grid>
+                <Grid item xs={8}><Typography>{currentUser.phone}</Typography></Grid>
+                <Grid item xs={4}><Typography variant="body2" color="text.secondary">Địa chỉ:</Typography></Grid>
+                <Grid item xs={8}><Typography>{currentUser.address || 'Chưa cung cấp'}</Typography></Grid>
+                <Grid item xs={4}><Typography variant="body2" color="text.secondary">Ngày tạo:</Typography></Grid>
+                <Grid item xs={8}><Typography>{formatDate(currentUser.createdAt)}</Typography></Grid>
+              </Grid>
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-          <Button
-            onClick={handleOpenEditFromView}
-            startIcon={<EditOutlined />}
-            variant="contained"
-            color="primary"
-          >
-            Edit
-          </Button>
-          <Button onClick={handleViewClose} variant="outlined">
-            Close
-          </Button>
+        <DialogActions>
+          <Button onClick={handleViewClose}>Đóng</Button>
+          <Button onClick={handleOpenEditFromView} variant="contained" startIcon={<EditOutlined />}>Chỉnh sửa</Button>
         </DialogActions>
       </Dialog>
-    </MainCard>
+      </MainCard>
+      
+      {/* Toast Notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </>
   );
 };
 
