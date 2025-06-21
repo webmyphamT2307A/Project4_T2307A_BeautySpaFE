@@ -215,9 +215,7 @@ const ServiceHistoryPage = () => {
                                     }
                                 </span>
                                 <div className="small text-muted">
-                                    {item.price && 
-                                        `VND ${(item.price * 25000).toLocaleString('vi-VN')}`
-                                    }
+                                    
                                 </div>
                             </td>
                             <td className="py-3 align-middle">
