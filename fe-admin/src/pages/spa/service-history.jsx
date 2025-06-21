@@ -53,13 +53,14 @@ const ServiceHistory = () => {
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      results = results.filter(
-        history =>
-          (history.serviceName && history.serviceName.toLowerCase().includes(query)) ||
-          (history.userName && history.userName.toLowerCase().includes(query)) ||
-          (history.notes && history.notes.toLowerCase().includes(query)) ||
-          (history.customerId && history.customerId.toString().includes(query))
-      );
+              results = results.filter(
+          history =>
+            (history.serviceName && history.serviceName.toLowerCase().includes(query)) ||
+            (history.userName && history.userName.toLowerCase().includes(query)) ||
+            (history.customerName && history.customerName.toLowerCase().includes(query)) ||
+            (history.notes && history.notes.toLowerCase().includes(query)) ||
+            (history.customerId && history.customerId.toString().includes(query))
+        );
     }
 
     setFilteredHistories(results);
@@ -86,7 +87,7 @@ const ServiceHistory = () => {
         <TextField
           fullWidth
           size="small"
-          placeholder="Search by service name, employee name, notes, or customer ID..."
+          placeholder="Search by service name, staff name, customer name, notes, or customer ID..."
           value={searchQuery}
           onChange={handleSearchChange}
           InputProps={{
