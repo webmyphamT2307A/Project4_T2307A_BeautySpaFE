@@ -61,9 +61,7 @@ const Footer = () => {
                             </div>
                         </div>
                         <div className="col-md-4 text-center text-md-end text-white">
-                            {/*/*** This template is free as long as you keep the below author’s credit link/attribution link/backlink. *** /*/}
-                            {/*/*** If you'd like to use the template without the below author’s credit link/attribution link/backlink, *** /*/}
-                            {/*/*** you can purchase the Credit Removal License from "https://htmlcodex.com/credit-removal". *** /*/}
+                          
                             Thiết kế bởi <a className="border-bottom" href="https://htmlcodex.com">HTML Codex</a> Phân phối bởi <a className="border-bottom" href="https://themewagon.com">ThemeWagon</a>
                         </div>
                     </div>

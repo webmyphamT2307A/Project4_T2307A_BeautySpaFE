@@ -210,7 +210,7 @@ const ServiceHistoryPage = () => {
                             <td className="py-3 align-middle">
                                 <span className="fw-bold text-success" style={{ fontSize: '1.1rem' }}>
                                     {item.price ? 
-                                        `$${item.price.toFixed(2)}` : 
+                                        `${item.price.toFixed(2)} VND` : 
                                         'N/A'
                                     }
                                 </span>
@@ -276,7 +276,7 @@ const ServiceHistoryPage = () => {
                             </div>
                             <div>
                                 <div className="fw-bold text-success">
-                                    ${history.reduce((total, item) => total + (item.price || 0), 0).toFixed(2)}
+                                    {history.reduce((total, item) => total + (item.price || 0), 0).toFixed(2)} VND
                                 </div>
                                 <small className="text-muted">Tổng chi tiêu</small>
                             </div>
