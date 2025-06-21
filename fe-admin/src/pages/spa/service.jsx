@@ -402,7 +402,7 @@ const ServiceManagement = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                      ${service.price.toFixed(2)}
+                      {service.price.toFixed(2)} VND
                     </Typography>
                   </TableCell>
                   <TableCell>{service.duration} min</TableCell>
@@ -544,7 +544,7 @@ const ServiceManagement = () => {
             <TextField
               margin="dense"
               name="price"
-              label="Price ($)"
+              label="Price (VND)"
               type="number"
               fullWidth
               value={formData.price}
@@ -646,7 +646,7 @@ const ServiceManagement = () => {
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
                 <Box>
                   <Typography variant="overline" color="textSecondary">Price</Typography>
-                  <Typography variant="h6" color="primary">${currentService.price.toFixed(2)}</Typography>
+                  <Typography variant="h6" color="primary">{currentService.price.toFixed(2)}VND</Typography>
                 </Box>
                 <Box>
                   <Typography variant="overline" color="textSecondary">Duration</Typography>
