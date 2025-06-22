@@ -93,6 +93,11 @@ const ServiceHistoryPage = () => {
             // If user is logged in, fetch their service history immediately
             fetchHistoryByCustomerId(parsedUser.id);
         }
+        
+        // Cleanup function
+        return () => {
+            console.log('🧹 Cleaning up ServiceHistoryPage...');
+        };
     }, []);
 
     // Fetch appointment statuses when history changes
@@ -256,6 +261,15 @@ const ServiceHistoryPage = () => {
                 console.log('🔍 Individual records:');
                 filteredHistory.forEach((item, index) => {
                     console.log(`   ${index + 1}. Appointment ID: ${item.appointmentId}, Status: ${item.status}, Date: ${item.appointmentDate}`);
+                    
+                    // CHECK AND UPDATE CACHE: If backend returns cancelled status, update cache immediately
+                    if (item.status && String(item.status).toLowerCase().includes('cancel')) {
+                        console.log(`🚫 Found cancelled appointment ${item.appointmentId} from backend, updating cache...`);
+                        setAppointmentStatusCache(prev => ({
+                            ...prev,
+                            [item.appointmentId]: 'cancelled'
+                        }));
+                    }
                 });
                 setHistory(filteredHistory);
             } else {
@@ -335,6 +349,18 @@ const ServiceHistoryPage = () => {
                 // Đảm bảo data là array và xử lý multiple results
                 const historyData = Array.isArray(response.data.data) ? response.data.data : [response.data.data];
                 const filteredHistory = historyData.filter(item => item != null && item.isActive);
+                
+                // CHECK AND UPDATE CACHE: If backend returns cancelled status, update cache immediately
+                filteredHistory.forEach((item) => {
+                    if (item.status && String(item.status).toLowerCase().includes('cancel')) {
+                        console.log(`🚫 Found cancelled appointment ${item.appointmentId} from guest lookup, updating cache...`);
+                        setAppointmentStatusCache(prev => ({
+                            ...prev,
+                            [item.appointmentId]: 'cancelled'
+                        }));
+                    }
+                });
+                
                 setHistory(filteredHistory);
                 
                 if (filteredHistory.length === 0) {
@@ -468,12 +494,30 @@ const ServiceHistoryPage = () => {
                 
                 // Then refresh from backend for data consistency in background
                 console.log('🔄 Starting background data refresh...');
+                
+                // PRESERVE CANCELLED STATUS: Save current cancelled appointments before refresh
+                const preserveCancelledCache = { ...appointmentStatusCache };
+                
                 if (userInfo) {
                     console.log('👤 Refreshing for logged in user:', userInfo.id);
-                    fetchHistoryByCustomerId(userInfo.id).catch(console.error);
+                    fetchHistoryByCustomerId(userInfo.id).then(() => {
+                        // RESTORE CANCELLED STATUS after refresh
+                        console.log('🔄 Restoring cancelled appointments cache after refresh...');
+                        setAppointmentStatusCache(prevCache => ({
+                            ...prevCache,
+                            ...preserveCancelledCache // Merge back cancelled statuses
+                        }));
+                    }).catch(console.error);
                 } else if (lookupIdentifier) {
                     console.log('🔍 Refreshing for guest lookup:', lookupIdentifier);
-                    handleLookup({ preventDefault: () => {} }).catch(console.error);
+                    handleLookup({ preventDefault: () => {} }).then(() => {
+                        // RESTORE CANCELLED STATUS after refresh
+                        console.log('🔄 Restoring cancelled appointments cache after lookup refresh...');
+                        setAppointmentStatusCache(prevCache => ({
+                            ...prevCache,
+                            ...preserveCancelledCache // Merge back cancelled statuses
+                        }));
+                    }).catch(console.error);
                 }
                 
                 console.log('✅ Modal closed and background refresh started');
@@ -544,7 +588,7 @@ const ServiceHistoryPage = () => {
         });
         
         // Check for cancelled status in multiple variations
-        const cancelledVariations = ['cancelled', 'canceled', 'hủy', 'da_huy', 'đã hủy'];
+        const cancelledVariations = ['cancelled', 'canceled', 'hủy', 'da_huy', 'đã hủy', 'cancel', 'huy'];
         const statusString = String(effectiveStatus || '').toLowerCase().trim();
         
         if (effectiveStatus && cancelledVariations.some(variation => statusString.includes(variation))) {
