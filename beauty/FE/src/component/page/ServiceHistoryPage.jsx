@@ -222,8 +222,9 @@ const ServiceHistoryPage = () => {
             if (response.data.status === 'SUCCESS' && Array.isArray(response.data.data)) {
                 // Filter results by customer ID on frontend side
                 const customerHistory = response.data.data.filter(item => 
-                    item.customerId === customerId || 
-                    (item.customer && item.customer.id === customerId)
+                    (item.customerId === customerId || 
+                    (item.customer && item.customer.id === customerId)) &&
+                    item.isActive
                 );
                 setHistory(customerHistory);
                 console.log('Alternative fetch successful, found:', customerHistory.length, 'records');
@@ -249,7 +250,7 @@ const ServiceHistoryPage = () => {
             if (response.data.status === 'SUCCESS') {
                 // Đảm bảo data là array và xử lý multiple results
                 const historyData = Array.isArray(response.data.data) ? response.data.data : [response.data.data];
-                const filteredHistory = historyData.filter(item => item != null);
+                const filteredHistory = historyData.filter(item => item != null && item.isActive);
                 console.log('✅ Fetched history data:', filteredHistory);
                 console.log('📈 History count:', filteredHistory.length);
                 console.log('🔍 Individual records:');
@@ -333,7 +334,7 @@ const ServiceHistoryPage = () => {
             if (response.data.status === 'SUCCESS') {
                 // Đảm bảo data là array và xử lý multiple results
                 const historyData = Array.isArray(response.data.data) ? response.data.data : [response.data.data];
-                const filteredHistory = historyData.filter(item => item != null);
+                const filteredHistory = historyData.filter(item => item != null && item.isActive);
                 setHistory(filteredHistory);
                 
                 if (filteredHistory.length === 0) {
