@@ -186,13 +186,14 @@ const Service = () => {
 
 <style jsx>{`
   .service-image-clickable {
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
     position: relative;
-    overflow: hidden;
   }
 
   .service-image-clickable:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
   }
 
   .service-image-clickable:hover img {
@@ -200,26 +201,81 @@ const Service = () => {
   }
 
   .service-image-clickable::after {
-    content: "👁️";
+    content: "\\f06e";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.7);
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.9), rgba(40, 167, 69, 0.9));
     color: white;
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
+    width: 35px;
+    height: 35px;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    font-size: 14px;
+    transition: all 0.3s ease-in-out;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
   }
 
   .service-image-clickable:hover::after {
     opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    }
+    50% {
+      box-shadow: 0 4px 20px rgba(0, 123, 255, 0.6);
+    }
+    100% {
+      box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    }
+  }
+
+  /* Enhanced "Đặt Lịch Ngay" button styling */
+  .btn-primary.rounded-pill {
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2) !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.3px !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .btn-primary.rounded-pill:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3) !important;
+    background: linear-gradient(135deg, #0056b3, #007bff) !important;
+  }
+
+  .btn-primary.rounded-pill:active {
+    transform: translateY(0) !important;
+    transition: all 0.1s ease !important;
+  }
+
+  .btn-primary.rounded-pill::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn-primary.rounded-pill:hover::before {
+    left: 100%;
   }
 `}</style>
         </>

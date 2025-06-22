@@ -29,11 +29,28 @@ const ServicePage = () => {
     setSearchTerm(value);
     setSelectedSuggestionIndex(-1);
     
-    if (value.trim()) {
-      const filtered = servicesData.filter(service =>
-        service.name.toLowerCase().includes(value.toLowerCase()) ||
-        service.description.toLowerCase().includes(value.toLowerCase())
-      );
+    // Trim và loại bỏ khoảng trắng thừa, kiểm tra độ dài tối thiểu
+    const trimmedValue = value.trim().replace(/\s+/g, ' ');
+    
+    if (trimmedValue && trimmedValue.length >= 2) {
+      // Tách từ khóa và tìm kiếm theo từng từ
+      const keywords = trimmedValue.toLowerCase().split(' ').filter(keyword => keyword.length > 0);
+      
+      const filtered = servicesData.filter(service => {
+        const serviceName = service.name.toLowerCase();
+        const serviceDesc = service.description.toLowerCase();
+        
+        // Tìm kiếm chính xác: phải chứa ít nhất 1 từ khóa hoàn chỉnh
+        return keywords.some(keyword => {
+          // Tránh các ký tự đặc biệt gây nhiễu
+          if (keyword.length < 2 || /^[^a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ0-9]+$/.test(keyword)) {
+            return false;
+          }
+          
+          return serviceName.includes(keyword) || serviceDesc.includes(keyword);
+        });
+      });
+      
       setFilteredServices(filtered);
       setShowSuggestions(true);
     } else {
