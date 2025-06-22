@@ -419,59 +419,109 @@ const AppointmentManagement = () => {
       skills: staff.skills,
       skillsLength: staff.skills?.length,
       serviceId,
-      serviceName
+      serviceName,
+      staffStructure: {
+        userSkills: staff.userSkills,
+        skillsRaw: staff.skills
+      }
     });
 
+    // Xử lý trường hợp staff không có skills hoặc skills là empty
     if (!staff.skills || !Array.isArray(staff.skills) || staff.skills.length === 0) {
       console.log(`❌ Staff ${staff.fullName} has no skills - BLOCKING assignment`);
-      return false; // ĐỔI THÀNH FALSE để chỉ cho phép nhân viên có skill
+      return false; // Chỉ cho phép nhân viên có skill
     }
 
-    // Kiểm tra match theo nhiều cách:
-    // 1. Match exact service ID với skill ID
-    // 2. Match service name với skill name (case insensitive)
-    // 3. Match partial name (ví dụ: "Massage" skill có thể làm "Deep Tissue Massage" service)
+    // Debug: In chi tiết cấu trúc skills
+    staff.skills.forEach((skill, index) => {
+      console.log(`  Skill ${index + 1}:`, {
+        id: skill.id,
+        skillName: skill.skillName || skill.name,
+        serviceId: skill.serviceId || skill.service_id,
+        description: skill.description,
+        fullSkillObject: skill
+      });
+    });
 
+    // Kiểm tra match theo nhiều cách với độ ưu tiên từ cao xuống thấp:
     const hasMatch = staff.skills.some(skill => {
-      // Cách 1: Match theo ID
-      if (skill.serviceId === serviceId || skill.id === serviceId) {
-        console.log(`✅ ID Match: Staff ${staff.fullName} skill ${skill.skillName} matches service ID ${serviceId}`);
+      const skillName = skill.skillName || skill.name || '';
+      const skillServiceId = skill.serviceId || skill.service_id || skill.id;
+
+      console.log(`    Comparing skill:`, {
+        skillName,
+        skillServiceId,
+        withService: { serviceId, serviceName }
+      });
+
+      // Cách 1: Match exact service ID với skill service ID hoặc skill ID
+      if (skillServiceId && (skillServiceId === serviceId || skillServiceId === parseInt(serviceId))) {
+        console.log(`✅ Service ID Match: Staff ${staff.fullName} skill "${skillName}" (serviceId: ${skillServiceId}) matches service ID ${serviceId}`);
         return true;
       }
 
-      // Cách 2: Match theo tên chính xác (case insensitive)
-      if (skill.skillName && serviceName &&
-        skill.skillName.toLowerCase() === serviceName.toLowerCase()) {
-        console.log(`✅ Exact Name Match: Staff ${staff.fullName} skill "${skill.skillName}" matches service "${serviceName}"`);
-        return true;
-      }
+      // Cách 2: Match theo tên chính xác (case insensitive, bỏ spaces thừa)
+      if (skillName && serviceName) {
+        const cleanSkillName = skillName.toLowerCase().trim();
+        const cleanServiceName = serviceName.toLowerCase().trim();
+        
+        if (cleanSkillName === cleanServiceName) {
+          console.log(`✅ Exact Name Match: Staff ${staff.fullName} skill "${skillName}" matches service "${serviceName}"`);
+          return true;
+        }
 
-      // Cách 3: Match một phần tên (skill name chứa trong service name hoặc ngược lại)
-      if (skill.skillName && serviceName) {
-        const skillLower = skill.skillName.toLowerCase();
-        const serviceLower = serviceName.toLowerCase();
+        // Cách 3: Match partial name (skill name chứa trong service name hoặc ngược lại)
+        if (cleanSkillName.includes(cleanServiceName) || cleanServiceName.includes(cleanSkillName)) {
+          console.log(`✅ Partial Name Match: Staff ${staff.fullName} skill "${skillName}" partially matches service "${serviceName}"`);
+          return true;
+        }
 
-        // Kiểm tra các keyword phổ biến
-        const skillKeywords = skillLower.split(' ').filter(word => word.length > 2);
-        const serviceKeywords = serviceLower.split(' ').filter(word => word.length > 2);
+        // Cách 4: Match bằng keyword (ít nhất 2 từ khóa chung, độ dài >= 3 ký tự)
+        const skillKeywords = cleanSkillName.split(/\s+/).filter(word => word.length >= 3);
+        const serviceKeywords = cleanServiceName.split(/\s+/).filter(word => word.length >= 3);
 
-        const hasCommonKeyword = skillKeywords.some(skillWord =>
-          serviceKeywords.some(serviceWord =>
-            skillWord.includes(serviceWord) || serviceWord.includes(skillWord)
+        const commonKeywords = skillKeywords.filter(skillWord =>
+          serviceKeywords.some(serviceWord => 
+            skillWord === serviceWord || 
+            skillWord.includes(serviceWord) || 
+            serviceWord.includes(skillWord)
           )
         );
 
-        if (hasCommonKeyword) {
-          console.log(`✅ Keyword Match: Staff ${staff.fullName} skill "${skill.skillName}" has common keywords with service "${serviceName}"`);
+        if (commonKeywords.length >= 1 && skillKeywords.length > 0 && serviceKeywords.length > 0) {
+          console.log(`✅ Keyword Match: Staff ${staff.fullName} skill "${skillName}" has common keywords [${commonKeywords.join(', ')}] with service "${serviceName}"`);
           return true;
+        }
+
+        // Cách 5: Match theo danh mục dịch vụ phổ biến
+        const skillCategories = {
+          'massage': ['massage', 'body', 'relax', 'therapy', 'deep tissue', 'swedish', 'hot stone'],
+          'facial': ['facial', 'face', 'skin', 'cleansing', 'anti-aging', 'hydrating'],
+          'hair': ['hair', 'cut', 'style', 'color', 'perm', 'treatment'],
+          'nail': ['nail', 'manicure', 'pedicure', 'polish', 'gel'],
+          'beauty': ['beauty', 'makeup', 'eyebrow', 'eyelash', 'wax'],
+          'spa': ['spa', 'aromatherapy', 'sauna', 'steam', 'hydrotherapy']
+        };
+
+        for (const [category, keywords] of Object.entries(skillCategories)) {
+          const skillMatchesCategory = keywords.some(keyword => cleanSkillName.includes(keyword));
+          const serviceMatchesCategory = keywords.some(keyword => cleanServiceName.includes(keyword));
+          
+          if (skillMatchesCategory && serviceMatchesCategory) {
+            console.log(`✅ Category Match: Staff ${staff.fullName} skill "${skillName}" and service "${serviceName}" both match category "${category}"`);
+            return true;
+          }
         }
       }
 
+      console.log(`    ❌ No match for skill "${skillName}"`);
       return false;
     });
 
     if (!hasMatch) {
-      console.log(`❌ No Match: Staff ${staff.fullName} skills [${staff.skills.map(s => s.skillName).join(', ')}] don't match service "${serviceName}" (ID: ${serviceId})`);
+      console.log(`❌ FINAL RESULT: Staff ${staff.fullName} skills [${staff.skills.map(s => s.skillName || s.name).join(', ')}] don't match service "${serviceName}" (ID: ${serviceId})`);
+    } else {
+      console.log(`✅ FINAL RESULT: Staff ${staff.fullName} has matching skills for service "${serviceName}"`);
     }
 
     return hasMatch;
@@ -481,16 +531,63 @@ const AppointmentManagement = () => {
   const getAvailableStaff = () => {
     if (!appointmentToEditDetails) return staffList;
 
-    const filteredBySkill = staffList.filter(staff =>
-      hasMatchingSkill(staff, appointmentToEditDetails.service.id, appointmentToEditDetails.service.name)
-    );
-
-    // Debug log để kiểm tra việc lọc theo skill
-    console.log('Service cần match:', appointmentToEditDetails.service);
+    console.log('\n🎯 === SKILL MATCHING ANALYSIS ===');
+    console.log('Service cần match:', {
+      id: appointmentToEditDetails.service.id,
+      name: appointmentToEditDetails.service.name,
+      fullServiceObject: appointmentToEditDetails.service
+    });
     console.log('Tổng số nhân viên:', staffList.length);
-    console.log('Nhân viên có skill phù hợp:', filteredBySkill.length);
-    console.log('Chi tiết skills của nhân viên:', staffList.map(s => ({ id: s.id, name: s.fullName, skills: s.skills })));
 
+    // Debug: Hiển thị tất cả staff và skills của họ
+    console.log('\n📋 Danh sách tất cả nhân viên và skills:');
+    staffList.forEach((staff, index) => {
+      console.log(`  ${index + 1}. ${staff.fullName} (ID: ${staff.id}):`, {
+        skillsCount: staff.skills?.length || 0,
+        skills: staff.skills?.map(s => ({
+          id: s.id,
+          name: s.skillName || s.name,
+          serviceId: s.serviceId || s.service_id
+        })) || [],
+        rawSkills: staff.skills
+      });
+    });
+
+    // Áp dụng skill matching
+    const filteredBySkill = staffList.filter(staff => {
+      const isMatch = hasMatchingSkill(staff, appointmentToEditDetails.service.id, appointmentToEditDetails.service.name);
+      console.log(`${isMatch ? '✅' : '❌'} Staff ${staff.fullName}: ${isMatch ? 'MATCHED' : 'NO MATCH'}`);
+      return isMatch;
+    });
+
+    console.log('\n📊 KẾT QUẢ LỌC SKILLS:');
+    console.log(`  - Tổng nhân viên: ${staffList.length}`);
+    console.log(`  - Có skill phù hợp: ${filteredBySkill.length}`);
+    console.log(`  - Danh sách nhân viên phù hợp:`, filteredBySkill.map(s => s.fullName));
+
+    if (filteredBySkill.length === 0) {
+      console.log('\n⚠️ KHÔNG CÓ NHÂN VIÊN NÀO PHƯƠNG HỢP!');
+      console.log('Có thể do:');
+      console.log('1. Cấu trúc dữ liệu skills từ API khác với expected');
+      console.log('2. Service ID/name không khớp với skill data');
+      console.log('3. Logic matching quá strict');
+      console.log('4. Nhân viên chưa được gán skills phù hợp');
+      
+      // Thêm option để bypass skill matching (cho debug)
+      console.log('\n🔧 DEBUG: Trả về tất cả staff để kiểm tra...');
+      toast.warning(`Không tìm thấy nhân viên có skill phù hợp với "${appointmentToEditDetails.service.name}". Hiển thị tất cả nhân viên để debug.`);
+      
+      // Return all staff for debugging purposes
+      return staffList.map(staff => ({
+        ...staff,
+        isBusy: isStaffBusy(staff.id, appointmentToEditDetails),
+        isDebugMode: true // Flag để hiển thị thông báo
+      }));
+    }
+
+    console.log('=== END SKILL MATCHING ANALYSIS ===\n');
+
+    // Kiểm tra conflict và trả về kết quả
     return filteredBySkill.map(staff => ({
       ...staff,
       isBusy: isStaffBusy(staff.id, appointmentToEditDetails)
@@ -1230,6 +1327,7 @@ const AppointmentManagement = () => {
                           disabled={staff.isBusy}
                           sx={{
                             opacity: staff.isBusy ? 0.6 : 1,
+                            backgroundColor: staff.isDebugMode ? '#fff3e0' : 'inherit',
                             '&.Mui-disabled': {
                               opacity: 0.6
                             }
@@ -1239,15 +1337,34 @@ const AppointmentManagement = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Avatar src={staff.imageUrl} sx={{ width: 24, height: 24 }} />
                               {staff.fullName}
+                              {staff.isDebugMode && (
+                                <Chip
+                                  label="DEBUG"
+                                  size="small"
+                                  color="warning"
+                                  variant="outlined"
+                                  sx={{ fontSize: '0.6rem', height: '18px', ml: 1 }}
+                                />
+                              )}
                             </Box>
-                            {staff.isBusy && (
-                              <Chip
-                                label="Busy"
-                                size="small"
-                                color="error"
-                                sx={{ fontSize: '0.7rem', height: '20px' }}
-                              />
-                            )}
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              {staff.isBusy && (
+                                <Chip
+                                  label="Busy"
+                                  size="small"
+                                  color="error"
+                                  sx={{ fontSize: '0.7rem', height: '20px' }}
+                                />
+                              )}
+                              {staff.isDebugMode && (
+                                <Chip
+                                  label="No Skill Match"
+                                  size="small"
+                                  color="warning"
+                                  sx={{ fontSize: '0.6rem', height: '18px' }}
+                                />
+                              )}
+                            </Box>
                           </Box>
                         </MenuItem>
                       ))
@@ -1257,10 +1374,16 @@ const AppointmentManagement = () => {
                 {appointmentToEditDetails && (
                   <Box sx={{ mt: 1 }}>
                     <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                      * Only showing staff with skills matching "{appointmentToEditDetails.service.name}"
+                      * Lọc nhân viên có kỹ năng phù hợp với "{appointmentToEditDetails.service.name}"
                     </Typography>
                     <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                      * Staff marked as "Busy" already have appointments during this time slot
+                      * Nhân viên "Busy" đã có lịch hẹn trong thời gian này
+                    </Typography>
+                    <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
+                      ⚠️ Nếu hiển thị nhân viên có badge "DEBUG", nghĩa là đang ở chế độ debug vì không tìm thấy kỹ năng phù hợp
+                    </Typography>
+                    <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>
+                      🔍 Kiểm tra Browser Console (F12) để xem chi tiết quá trình matching skills
                     </Typography>
                   </Box>
                 )}

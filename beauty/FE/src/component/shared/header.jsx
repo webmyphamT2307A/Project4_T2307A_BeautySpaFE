@@ -324,14 +324,18 @@ const Header = () => {
                                             onMouseEnter={(e) => {
                                                 e.target.style.background = '#FDB5B9';
                                                 e.target.style.color = 'white';
-                                                e.target.style.transform = 'translateY(-2px)';
-                                                e.target.style.boxShadow = '0 4px 12px rgb(253, 181, 185)';
+                                                e.target.style.boxShadow = '0 2px 6px rgba(253, 181, 185, 0.3)';
+                                                // Đảm bảo icon hiển thị
+                                                const icon = e.target.querySelector('i');
+                                                if (icon) icon.style.color = 'white';
                                             }}
                                             onMouseLeave={(e) => {
                                                 e.target.style.background = 'transparent';
                                                 e.target.style.color = '#FDB5B9';
-                                                e.target.style.transform = 'translateY(0)';
                                                 e.target.style.boxShadow = 'none';
+                                                // Khôi phục màu icon
+                                                const icon = e.target.querySelector('i');
+                                                if (icon) icon.style.color = '#FDB5B9';
                                             }}
                                         >
                                             <i className="fas fa-user me-2"></i>
