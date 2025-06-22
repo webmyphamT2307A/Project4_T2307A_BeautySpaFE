@@ -19,17 +19,17 @@ const AboutUs = () => {
           </div>
         </div>
         <div className="col-lg-7">
-          <p className="fs-4 text-uppercase text-primary">About Us</p>
-          <h1 className="display-4 mb-4">Your Best Spa, Beauty &amp; Skin Care Center</h1>
-          <p className="mb-4">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled
+          <p className="fs-4 text-uppercase text-primary">Về Chúng Tôi</p>
+          <h1 className="display-4 mb-4">Trung Tâm Spa, Làm Đẹp &amp; Chăm Sóc Da Tốt Nhất</h1>
+          <p className="mb-4">Sparlex là điểm đến lý tưởng cho những ai muốn tìm kiếm sự thư giãn và làm đẹp hoàn hảo. Với đội ngũ chuyên gia giàu kinh nghiệm và các liệu pháp hiện đại, chúng tôi cam kết mang đến cho bạn trải nghiệm spa đẳng cấp nhất.
           </p>
           <div className="row g-4">
             <div className="col-md-6">
               <div className="d-flex align-items-center">
-                <i className="fab fa-gitkraken fa-3x text-primary" />
+                <i className="fas fa-spa fa-3x text-primary" />
                 <div className="ms-4">
-                  <h5 className="mb-2">Special Offers</h5>
-                  <p className="mb-0">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+                  <h5 className="mb-2">Dịch Vụ Chuyên Nghiệp</h5>
+                  <p className="mb-0">Đội ngũ chuyên gia với hơn 10 năm kinh nghiệm trong lĩnh vực spa và làm đẹp, luôn cập nhật các xu hướng mới nhất.</p>
                 </div>
               </div>
             </div>
@@ -37,17 +37,17 @@ const AboutUs = () => {
               <div className="d-flex align-items-center">
                 <i className="fas fa-gift fa-3x text-primary" />
                 <div className="ms-4">
-                  <h5 className="mb-2">Special Offers</h5>
-                  <p className="mb-0">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+                  <h5 className="mb-2">Ưu Đãi Đặc Biệt</h5>
+                  <p className="mb-0">Nhiều chương trình khuyến mãi hấp dẫn cho khách hàng thân thiết và gói combo tiết kiệm cho các dịch vụ.</p>
                 </div>
               </div>
             </div>
           </div>
-          <p className="my-4">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
+          <p className="my-4">Với không gian sang trọng, thiết bị hiện đại và sản phẩm chăm sóc cao cấp từ các thương hiệu uy tín quốc tế, Sparlex mang đến cho bạn những giây phút thư giãn tuyệt vời nhất.
           </p>
-          <p className="mb-4">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
+          <p className="mb-4">Chúng tôi cung cấp đa dạng các dịch vụ từ massage, chăm sóc da mặt, làm móng, tẩy lông đến các liệu pháp trị liệu chuyên sâu. Mỗi dịch vụ đều được thiết kế riêng biệt phù hợp với nhu cầu và mong muốn của từng khách hàng.
           </p>
-          <a href="#" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5">Explore More</a>
+          <a href="#" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5">Khám Phá Thêm</a>
         </div> 
       </div>
     </div>
@@ -57,8 +57,8 @@ const AboutUs = () => {
     <div className="modal-dialog">
       <div className="modal-content rounded-0">
         <div className="modal-header">
-          <h5 className="modal-title" id="exampleModalLabel">Youtube Video</h5>
-          <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+          <h5 className="modal-title" id="exampleModalLabel">Video Giới Thiệu</h5>
+          <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Đóng" />
         </div>
         <div className="modal-body">
           {/* 16:9 aspect ratio */}

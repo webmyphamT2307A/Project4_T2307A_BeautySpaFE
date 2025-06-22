@@ -32,6 +32,7 @@ const CustomerDetail = () => {
     const historyPerPage = 5;
 
     const [message, setMessage] = useState({ type: '', content: '' });
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('userInfo');
@@ -161,17 +162,35 @@ const CustomerDetail = () => {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await axios.post('http://localhost:8080/api/v1/customer/logout', {}, {
-                headers: { 'Authorization': `Bearer ${user.token}` }
-            });
-        } catch (error) {
-            console.error('Error during logout:', error);
-        } finally {
-            // Sử dụng session manager để đăng xuất
-            sessionManager.onUserLogout();
-        }
+    const handleLogout = () => {
+        if (isLoggingOut) return; // Prevent multiple clicks
+        
+        setIsLoggingOut(true);
+        
+        // IMMEDIATE logout - no waiting, no async
+        // Clear all user data instantly
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Redirect immediately
+        window.location.href = '/';
+        
+        // Call logout API in background after redirect (fire and forget)
+        setTimeout(() => {
+            if (user.token) {
+                fetch('http://localhost:8080/api/v1/customer/logout', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${user.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                }).catch(error => {
+                    console.error('Background logout API call failed:', error);
+                });
+            }
+        }, 100);
     };
 
     const handleViewDetails = (history) => {
@@ -241,10 +260,24 @@ const CustomerDetail = () => {
                                
                                 <a
                                     href="#"
-                                    className="list-group-item list-group-item-action"
+                                    className={`list-group-item list-group-item-action ${isLoggingOut ? 'disabled' : ''}`}
                                     onClick={(e) => { e.preventDefault(); handleLogout() }}
+                                    style={{ 
+                                        opacity: isLoggingOut ? 0.6 : 1,
+                                        cursor: isLoggingOut ? 'not-allowed' : 'pointer'
+                                    }}
                                 >
-                                    Đăng xuất
+                                    {isLoggingOut ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin me-2"></i>
+                                            Đang đăng xuất...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-sign-out-alt me-2"></i>
+                                            Đăng xuất
+                                        </>
+                                    )}
                                 </a>
                             </div>
                         </div>

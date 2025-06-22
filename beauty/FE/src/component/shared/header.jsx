@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-// Import thêm Link và useNavigate từ react-router-dom
-import { Link, useNavigate } from 'react-router-dom';
+// Import thêm Link, useNavigate và useLocation từ react-router-dom
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import sessionManager from '../../utils/sessionManager';
 import SessionTimer from './SessionTimer';
 
 const Header = () => {
-    // Khởi tạo hook useNavigate
+    // Khởi tạo hook useNavigate và useLocation
     const navigate = useNavigate(); 
+    const location = useLocation();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -83,20 +84,48 @@ const Header = () => {
         setSearchTerm(value);
         setSelectedSuggestionIndex(-1);
         
-        if (value.trim()) {
-            const filtered = servicesData.filter(service =>
-                service.name.toLowerCase().includes(value.toLowerCase()) ||
-                service.description.toLowerCase().includes(value.toLowerCase())
-            );
-            setFilteredServices(filtered);
-            setShowSuggestions(true);
-        } else {
+        // Clean and validate search term
+        const cleanedValue = value.trim();
+        
+        // Don't search if:
+        // 1. Empty after trim
+        // 2. Only special characters (dots, spaces, etc.)
+        // 3. Less than 2 meaningful characters
+        const meaningfulChars = cleanedValue.replace(/[^\w\sÀ-ỹ]/g, ''); // Keep only letters, numbers, spaces, Vietnamese
+        
+        if (!cleanedValue || meaningfulChars.length < 2) {
             setFilteredServices([]);
             setShowSuggestions(false);
+            return;
         }
+        
+        // Search with cleaned term
+        const filtered = servicesData.filter(service => {
+            const serviceName = service.name.toLowerCase().trim();
+            const serviceDesc = service.description.toLowerCase().trim();
+            const searchTermLower = cleanedValue.toLowerCase();
+            
+            // More precise matching - avoid partial matches with special chars
+            return serviceName.includes(searchTermLower) || 
+                   serviceDesc.includes(searchTermLower);
+        });
+        
+        // Limit results to prevent overwhelming UI
+        const limitedResults = filtered.slice(0, 6);
+        setFilteredServices(limitedResults);
+        setShowSuggestions(limitedResults.length > 0);
     };
 
     const handleSearchSubmit = (serviceId = null) => {
+        // Validate search term before submitting
+        const cleanedValue = searchTerm.trim();
+        const meaningfulChars = cleanedValue.replace(/[^\w\sÀ-ỹ]/g, '');
+        
+        if (!cleanedValue || meaningfulChars.length < 2) {
+            // Don't submit invalid search terms
+            return;
+        }
+        
         if (serviceId) {
             // Navigate to specific service
             navigate(`/ServicePage/${serviceId}`);
@@ -203,8 +232,34 @@ const Header = () => {
     };
 
     const handleLogout = () => {
-        // Sử dụng session manager để đăng xuất
-        sessionManager.onUserLogout();
+        // IMMEDIATE logout - no waiting, no delays
+        // Clear all user data instantly
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Update state immediately
+        setUserInfo(null);
+        
+        // Redirect immediately to home page
+        window.location.href = '/';
+        
+        // Call logout API in background after redirect (fire and forget)
+        setTimeout(() => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetch('http://localhost:8080/api/v1/customer/logout', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                }).catch(error => {
+                    console.error('Background logout API call failed:', error);
+                });
+            }
+        }, 100);
     };
 
     return (
@@ -243,11 +298,11 @@ const Header = () => {
                             </button>
                             <div className="collapse navbar-collapse bg-light py-3" id="navbarCollapse">
                                 <div className="navbar-nav mx-auto border-top">
-                                    <Link to="/" className="nav-item nav-link active">Trang Chủ</Link>
-                                    <Link to="/AboutPage" className="nav-item nav-link">Về Chúng Tôi</Link>
-                                    <Link to="/ServicePage" className="nav-item nav-link">Dịch Vụ</Link>
-                                    <Link to="/ContactPage" className="nav-item nav-link">Liên Hệ</Link>
-                                    <Link to="/service-history" className="nav-item nav-link">Lịch Sử Dịch Vụ</Link>
+                                    <Link to="/" className={`nav-item nav-link ${location.pathname === '/' ? 'active' : ''}`}>Trang Chủ</Link>
+                                    <Link to="/AboutPage" className={`nav-item nav-link ${location.pathname === '/AboutPage' ? 'active' : ''}`}>Về Chúng Tôi</Link>
+                                    <Link to="/ServicePage" className={`nav-item nav-link ${location.pathname === '/ServicePage' ? 'active' : ''}`}>Dịch Vụ</Link>
+                                    <Link to="/ContactPage" className={`nav-item nav-link ${location.pathname === '/ContactPage' ? 'active' : ''}`}>Liên Hệ</Link>
+                                    <Link to="/service-history" className={`nav-item nav-link ${location.pathname === '/service-history' ? 'active' : ''}`}>Lịch Sử Dịch Vụ</Link>
                                 </div>
                                 <div className="d-flex align-items-center flex-nowrap pt-xl-0">
                                     <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" onClick={() => setShowSearch(!showSearch)}>
@@ -262,19 +317,19 @@ const Header = () => {
                                                 padding: '10px 20px',
                                                 fontWeight: '600',
                                                 fontSize: '1rem',
-                                                border: '2px solid #0d6efd',
+                                                border: '2px solid #FDB5B9',
                                                 transition: 'all 0.3s ease',
                                                 minWidth: '100px'
                                             }}
                                             onMouseEnter={(e) => {
-                                                e.target.style.background = '#0d6efd';
+                                                e.target.style.background = '#FDB5B9';
                                                 e.target.style.color = 'white';
                                                 e.target.style.transform = 'translateY(-2px)';
-                                                e.target.style.boxShadow = '0 4px 12px rgba(13, 110, 253, 0.3)';
+                                                e.target.style.boxShadow = '0 4px 12px rgb(253, 181, 185)';
                                             }}
                                             onMouseLeave={(e) => {
                                                 e.target.style.background = 'transparent';
-                                                e.target.style.color = '#0d6efd';
+                                                e.target.style.color = '#FDB5B9';
                                                 e.target.style.transform = 'translateY(0)';
                                                 e.target.style.boxShadow = 'none';
                                             }}
@@ -433,15 +488,33 @@ const Header = () => {
                         )}
                         
                         {/* No results message */}
-                        {showSuggestions && searchTerm && filteredServices.length === 0 && (
-                            <div 
-                                className="position-absolute w-100 bg-white border rounded shadow-lg p-3 text-center text-muted mt-1"
-                                style={{ zIndex: 1051 }}
-                            >
-                                <i className="fas fa-search-minus mb-2"></i>
-                                <div>Không tìm thấy dịch vụ nào</div>
-                            </div>
-                        )}
+                        {showSuggestions && searchTerm && filteredServices.length === 0 && (() => {
+                            const cleanedValue = searchTerm.trim();
+                            const meaningfulChars = cleanedValue.replace(/[^\w\sÀ-ỹ]/g, '');
+                            
+                            // Don't show "no results" for invalid search terms
+                            if (!cleanedValue || meaningfulChars.length < 2) {
+                                return (
+                                    <div 
+                                        className="position-absolute w-100 bg-white border rounded shadow-lg p-3 text-center text-muted mt-1"
+                                        style={{ zIndex: 1051 }}
+                                    >
+                                        <i className="fas fa-info-circle mb-2"></i>
+                                        <div>Vui lòng nhập ít nhất 2 ký tự để tìm kiếm</div>
+                                    </div>
+                                );
+                            }
+                            
+                            return (
+                                <div 
+                                    className="position-absolute w-100 bg-white border rounded shadow-lg p-3 text-center text-muted mt-1"
+                                    style={{ zIndex: 1051 }}
+                                >
+                                    <i className="fas fa-search-minus mb-2"></i>
+                                    <div>Không tìm thấy dịch vụ nào cho "{cleanedValue}"</div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             )}

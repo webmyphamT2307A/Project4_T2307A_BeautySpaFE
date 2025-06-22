@@ -26,9 +26,9 @@ const Footer = () => {
                     <div className="col-md-6 col-lg-6 col-xl-3">
                         <div className="footer-item d-flex flex-column">
                             <h4 className="mb-4 text-white">Lịch làm việc</h4>
-                            <p className="text-muted mb-0">Thứ hai: <span className="text-white"> 09:00 sáng – 10:00 tối</span></p>
-                            <p className="text-muted mb-0">Thứ bảy: <span className="text-white"> 09:00 sáng – 08:00 tối</span></p>
-                            <p className="text-muted mb-0">Chủ nhật: <span className="text-white"> 09:00 sáng – 05:00 tối</span></p>
+                            <p className="text-muted mb-0">Buổi sáng: <span className="text-white"> 09:00 sáng – 11:00 sáng</span></p>
+                            <p className="text-muted mb-0">Buổi chiều: <span className="text-white"> 02:00 chiều  – 04:00 sáng</span></p>
+                            <p className="text-muted mb-0">Chủ nhật: <span className="text-white"> 06:00 tối  – 08:00 tối</span></p>
                             <h4 className="my-4 text-white">Địa chỉ</h4>
                             <p className="mb-0"><i className="fas fa-map-marker-alt  me-2" /> 123 đường Ranking, tòa nhà North, New York, USA</p>
                         </div>
@@ -62,7 +62,6 @@ const Footer = () => {
                         </div>
                         <div className="col-md-4 text-center text-md-end text-white">
                           
-                            Thiết kế bởi <a className="border-bottom" href="https://htmlcodex.com">HTML Codex</a> Phân phối bởi <a className="border-bottom" href="https://themewagon.com">ThemeWagon</a>
                         </div>
                     </div>
                 </div>
