@@ -81,6 +81,7 @@ const ServiceHistoryPage = () => {
     const [cancelAppointmentId, setCancelAppointmentId] = useState(null);
     const [cancelReason, setCancelReason] = useState('');
     const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+    const [cancellingAppointments, setCancellingAppointments] = useState(new Set()); // Track which appointments are being cancelled
 
     // Appointment status cache to avoid multiple API calls
     const [appointmentStatusCache, setAppointmentStatusCache] = useState({});
@@ -93,50 +94,33 @@ const ServiceHistoryPage = () => {
             // If user is logged in, fetch their service history immediately
             fetchHistoryByCustomerId(parsedUser.id);
         }
+        
+        // Cleanup function
+        return () => {
+            console.log('🧹 Cleaning up ServiceHistoryPage...');
+        };
     }, []);
 
-    // Fetch appointment statuses when history changes
+    // TEMPORARILY DISABLE appointment status fetching to avoid "all cancelled" issue
+    // Will use date-based logic only until backend repository is fixed
     useEffect(() => {
-        const fetchAllAppointmentStatuses = async () => {
-            if (history.length === 0) return;
-            
-            console.log('🔄 Fetching appointment statuses for all history items...');
-            const appointmentIds = history.map(item => item.appointmentId).filter(id => id && !appointmentStatusCache[id]);
-            
-            if (appointmentIds.length === 0) {
-                console.log('📦 All appointment statuses already cached');
-                return;
-            }
-            
-            console.log(`🎯 Fetching statuses for ${appointmentIds.length} appointments:`, appointmentIds);
-            
-            // Fetch statuses in parallel
-            const statusPromises = appointmentIds.map(async (appointmentId) => {
-                const status = await fetchAppointmentStatus(appointmentId);
-                return { appointmentId, status };
-            });
-            
-            try {
-                const results = await Promise.all(statusPromises);
-                console.log('✅ Fetched all appointment statuses:', results);
-                
-                // Force re-render to update status badges
-                setHistory(prevHistory => [...prevHistory]);
-            } catch (error) {
-                console.error('❌ Error fetching appointment statuses:', error);
-            }
-        };
+        console.log('📊 Using date-based status logic only (API fetching disabled)');
         
-        fetchAllAppointmentStatuses();
-    }, [history.length]); // Only trigger when history length changes
+        // Clear any existing cache that might show wrong status
+        setAppointmentStatusCache({});
+        
+        if (history.length > 0) {
+            console.log(`📋 History loaded: ${history.length} items`);
+            // Force re-render with clean cache
+            setHistory(prevHistory => [...prevHistory]);
+        }
+    }, [history.length]);
 
     // Function to fetch appointment status from appointment API
     const fetchAppointmentStatus = async (appointmentId) => {
-        // Check cache first
-        if (appointmentStatusCache[appointmentId]) {
-            console.log(`📦 Using cached status for appointment ${appointmentId}:`, appointmentStatusCache[appointmentId]);
-            return appointmentStatusCache[appointmentId];
-        }
+        // DISABLED: Return null to force date-based logic (fixes "all cancelled" issue)
+        console.log(`🚫 API status fetching disabled for appointment ${appointmentId} - using date logic`);
+        return null;
 
         try {
             console.log(`🔍 Fetching status for appointment ${appointmentId}...`);
@@ -166,7 +150,10 @@ const ServiceHistoryPage = () => {
             }
             
             if (!response) {
-                console.error(`❌ All endpoints failed for appointment ${appointmentId}`);
+                console.log(`🚫 All endpoints failed for appointment ${appointmentId} - Using default date-based logic`);
+                
+                // DON'T assume cancelled when API fails - let date logic handle it
+                // This prevents all appointments showing as "cancelled" when backend has issues
                 return null;
             }
             
@@ -199,6 +186,14 @@ const ServiceHistoryPage = () => {
                 return null;
             }
         } catch (error) {
+            console.log(`🚫 ERROR fetching appointment ${appointmentId}:`, error);
+            
+            // If 404 or similar error, use date-based logic instead of assuming cancelled
+            if (error.response?.status === 404 || error.response?.status === 400) {
+                console.log(`💡 Got 404/400 for appointment ${appointmentId} - using date-based logic`);
+                return null; // Let date logic handle the status
+            }
+            
             console.error(`❌ Error fetching appointment ${appointmentId} status:`, error);
             return null;
         }
@@ -209,7 +204,20 @@ const ServiceHistoryPage = () => {
         console.log(`🧪 MANUAL TEST: Fetching status for appointment ${appointmentId}`);
         const status = await fetchAppointmentStatus(appointmentId);
         console.log(`🧪 MANUAL TEST RESULT:`, status);
-        toast.info(`Test result for appointment ${appointmentId}: ${status || 'FAILED'}`);
+        
+        if (status === 'cancelled') {
+            toast.info(`🚫 Test result: Appointment ${appointmentId} is CANCELLED (possibly soft deleted)`, {
+                autoClose: 5000
+            });
+        } else if (status) {
+            toast.info(`📊 Test result: Appointment ${appointmentId} status = ${status}`, {
+                autoClose: 3000
+            });
+        } else {
+            toast.warning(`❓ Test result: Appointment ${appointmentId} status UNKNOWN`, {
+                autoClose: 4000
+            });
+        }
     };
 
     // Function to try alternative API call when encountering duplicate errors
@@ -256,6 +264,15 @@ const ServiceHistoryPage = () => {
                 console.log('🔍 Individual records:');
                 filteredHistory.forEach((item, index) => {
                     console.log(`   ${index + 1}. Appointment ID: ${item.appointmentId}, Status: ${item.status}, Date: ${item.appointmentDate}`);
+                    
+                    // CHECK AND UPDATE CACHE: If backend returns cancelled status, update cache immediately
+                    if (item.status && String(item.status).toLowerCase().includes('cancel')) {
+                        console.log(`🚫 Found cancelled appointment ${item.appointmentId} from backend, updating cache...`);
+                        setAppointmentStatusCache(prev => ({
+                            ...prev,
+                            [item.appointmentId]: 'cancelled'
+                        }));
+                    }
                 });
                 setHistory(filteredHistory);
             } else {
@@ -335,6 +352,18 @@ const ServiceHistoryPage = () => {
                 // Đảm bảo data là array và xử lý multiple results
                 const historyData = Array.isArray(response.data.data) ? response.data.data : [response.data.data];
                 const filteredHistory = historyData.filter(item => item != null && item.isActive);
+                
+                // CHECK AND UPDATE CACHE: If backend returns cancelled status, update cache immediately
+                filteredHistory.forEach((item) => {
+                    if (item.status && String(item.status).toLowerCase().includes('cancel')) {
+                        console.log(`🚫 Found cancelled appointment ${item.appointmentId} from guest lookup, updating cache...`);
+                        setAppointmentStatusCache(prev => ({
+                            ...prev,
+                            [item.appointmentId]: 'cancelled'
+                        }));
+                    }
+                });
+                
                 setHistory(filteredHistory);
                 
                 if (filteredHistory.length === 0) {
@@ -373,6 +402,12 @@ const ServiceHistoryPage = () => {
 
     // Cancel appointment functions
     const handleShowCancelModal = (appointmentId) => {
+        // Prevent opening modal if appointment is already being cancelled
+        if (cancellingAppointments.has(appointmentId)) {
+            toast.warn('Lịch hẹn này đang được xử lý hủy. Vui lòng đợi...');
+            return;
+        }
+        
         setCancelAppointmentId(appointmentId);
         setShowCancelModal(true);
         setCancelReason('');
@@ -401,7 +436,28 @@ const ServiceHistoryPage = () => {
             return;
         }
 
+        // DOUBLE CHECK: Verify appointment can still be cancelled before API call
+        const appointmentItem = history.find(item => item.appointmentId === cancelAppointmentId);
+        if (appointmentItem) {
+            const stillCanCancel = canCancelAppointment(appointmentItem.appointmentDate, appointmentItem.status, cancelAppointmentId, appointmentItem);
+            if (!stillCanCancel) {
+                console.warn('🚫 Appointment cannot be cancelled anymore:', {
+                    appointmentId: cancelAppointmentId,
+                    status: appointmentItem.status,
+                    cachedStatus: appointmentStatusCache[cancelAppointmentId],
+                    isCancelled: appointmentItem.isCancelled,
+                    appointmentStatus: appointmentItem.appointmentStatus
+                });
+                toast.error('Lịch hẹn này không thể hủy (đã bị hủy hoặc hoàn thành).');
+                handleCloseCancelModal();
+                return;
+            }
+        }
+
         setIsSubmittingCancel(true);
+        
+        // Mark this appointment as being cancelled
+        setCancellingAppointments(prev => new Set([...prev, cancelAppointmentId]));
 
         try {
             console.log('🚀 Starting cancel appointment request...');
@@ -428,12 +484,19 @@ const ServiceHistoryPage = () => {
                 
                 console.log('🔄 Starting data refresh...');
                 
-                // IMMEDIATE CACHE UPDATE: Update appointment status cache first
+                // IMMEDIATE CACHE UPDATE: Update appointment status cache first with multiple possible keys
                 console.log('🚀 Immediately updating appointment status cache...');
-                setAppointmentStatusCache(prev => ({
-                    ...prev,
-                    [cancelAppointmentId]: 'cancelled'
-                }));
+                const updateCache = (prev) => {
+                    const newCache = {
+                        ...prev,
+                        [cancelAppointmentId]: 'cancelled',
+                        [`${cancelAppointmentId}_status`]: 'cancelled',
+                        [`appointment_${cancelAppointmentId}`]: 'cancelled'
+                    };
+                    console.log('📦 Updated cache:', newCache);
+                    return newCache;
+                };
+                setAppointmentStatusCache(updateCache);
                 
                 // FORCE UPDATE: Immediately update the status in current history data
                 console.log('🚀 Force updating appointment status in current data...');
@@ -444,6 +507,8 @@ const ServiceHistoryPage = () => {
                             return {
                                 ...item,
                                 status: 'cancelled',
+                                appointmentStatus: 'cancelled',
+                                isCancelled: true,
                                 // Also add timestamp for when it was cancelled
                                 cancelledAt: new Date().toISOString()
                             };
@@ -454,12 +519,42 @@ const ServiceHistoryPage = () => {
                     return updatedHistory;
                 });
                 
-                // FORCE RE-RENDER: Trigger component re-render to update buttons
-                console.log('🔄 Forcing component re-render...');
+                // FORCE RE-RENDER: Multiple render triggers to ensure UI updates immediately
+                console.log('🔄 Forcing immediate component re-render...');
+                
+                // Force immediate re-render using state updater function
+                setHistory(prevHistory => {
+                    console.log('🔄 Immediate re-render triggered');
+                    return [...prevHistory];
+                });
+                
+                // Force cache update again to be sure
                 setTimeout(() => {
-                    // This will trigger re-evaluation of canCancel function with updated cache
+                    console.log('🔄 Secondary cache update...');
+                    setAppointmentStatusCache(prev => ({
+                        ...prev,
+                        [cancelAppointmentId]: 'cancelled'
+                    }));
+                    setHistory(prevHistory => [...prevHistory]);
+                }, 10);
+                
+                // Additional render after short delay to ensure cache is propagated
+                setTimeout(() => {
+                    console.log('🔄 Secondary re-render for cache propagation...');
                     setHistory(prevHistory => [...prevHistory]);
                 }, 100);
+                
+                // Final render to ensure everything is consistent
+                setTimeout(() => {
+                    console.log('🔄 Final re-render for consistency...');
+                    setHistory(prevHistory => [...prevHistory]);
+                    
+                    // Log final state for debugging
+                    console.log('🔍 Final state check:', {
+                        cacheHasAppointment: appointmentStatusCache[cancelAppointmentId],
+                        allCacheKeys: Object.keys(appointmentStatusCache)
+                    });
+                }, 300);
                 
                 console.log('✅ Immediate UI updates completed');
                 
@@ -468,12 +563,30 @@ const ServiceHistoryPage = () => {
                 
                 // Then refresh from backend for data consistency in background
                 console.log('🔄 Starting background data refresh...');
+                
+                // PRESERVE CANCELLED STATUS: Save current cancelled appointments before refresh
+                const preserveCancelledCache = { ...appointmentStatusCache };
+                
                 if (userInfo) {
                     console.log('👤 Refreshing for logged in user:', userInfo.id);
-                    fetchHistoryByCustomerId(userInfo.id).catch(console.error);
+                    fetchHistoryByCustomerId(userInfo.id).then(() => {
+                        // RESTORE CANCELLED STATUS after refresh
+                        console.log('🔄 Restoring cancelled appointments cache after refresh...');
+                        setAppointmentStatusCache(prevCache => ({
+                            ...prevCache,
+                            ...preserveCancelledCache // Merge back cancelled statuses
+                        }));
+                    }).catch(console.error);
                 } else if (lookupIdentifier) {
                     console.log('🔍 Refreshing for guest lookup:', lookupIdentifier);
-                    handleLookup({ preventDefault: () => {} }).catch(console.error);
+                    handleLookup({ preventDefault: () => {} }).then(() => {
+                        // RESTORE CANCELLED STATUS after refresh
+                        console.log('🔄 Restoring cancelled appointments cache after lookup refresh...');
+                        setAppointmentStatusCache(prevCache => ({
+                            ...prevCache,
+                            ...preserveCancelledCache // Merge back cancelled statuses
+                        }));
+                    }).catch(console.error);
                 }
                 
                 console.log('✅ Modal closed and background refresh started');
@@ -513,11 +626,17 @@ const ServiceHistoryPage = () => {
             }
         } finally {
             setIsSubmittingCancel(false);
+            // Remove appointment from cancelling set
+            setCancellingAppointments(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(cancelAppointmentId);
+                return newSet;
+            });
         }
     };
 
     // Helper function to determine appointment status
-    const getAppointmentStatus = (appointmentDate, status, appointmentId) => {
+    const getAppointmentStatus = (appointmentDate, status, appointmentId, historyItem = null) => {
         const today = new Date();
         const aptDate = new Date(appointmentDate);
         
@@ -525,57 +644,60 @@ const ServiceHistoryPage = () => {
         today.setHours(0, 0, 0, 0);
         aptDate.setHours(0, 0, 0, 0);
         
-        // First, try to use cached appointment status if available
-        const cachedStatus = appointmentStatusCache[appointmentId];
-        const effectiveStatus = cachedStatus || status;
+        // PRIORITY CHECK: Check multiple cache keys and item properties
+        const cachedStatus = appointmentStatusCache[appointmentId] || 
+                           appointmentStatusCache[`${appointmentId}_status`] || 
+                           appointmentStatusCache[`appointment_${appointmentId}`];
+        
+        // Check if item itself has cancelled flag
+        const itemCancelled = historyItem?.isCancelled || historyItem?.appointmentStatus === 'cancelled';
+        
+        const effectiveStatus = cachedStatus || historyItem?.appointmentStatus || status;
         
         // Debug: Log status information
-        console.log('🔍 Status Check Debug:', {
+        console.log('🔍 Status Check Debug (Enhanced):', {
             appointmentId,
             appointmentDate,
             originalStatus: status,
             cachedStatus: cachedStatus,
+            itemCancelled: itemCancelled,
+            historyItemStatus: historyItem?.appointmentStatus,
             effectiveStatus: effectiveStatus,
             statusType: typeof effectiveStatus,
             statusLowerCase: effectiveStatus?.toLowerCase(),
             statusString: String(effectiveStatus),
             today: today.toDateString(),
-            aptDate: aptDate.toDateString()
+            aptDate: aptDate.toDateString(),
+            cacheKeys: Object.keys(appointmentStatusCache).filter(key => key.includes(appointmentId.toString()))
         });
         
-        // Check for cancelled status in multiple variations
-        const cancelledVariations = ['cancelled', 'canceled', 'hủy', 'da_huy', 'đã hủy'];
-        const statusString = String(effectiveStatus || '').toLowerCase().trim();
-        
-        if (effectiveStatus && cancelledVariations.some(variation => statusString.includes(variation))) {
-            console.log('✅ Status detected as CANCELLED:', statusString);
+        // PRIORITY 1: Check cached status or item cancelled flag
+        if (itemCancelled || (cachedStatus && cachedStatus.toLowerCase().includes('cancel'))) {
+            console.log('✅ Status detected as CANCELLED (Priority 1):', { itemCancelled, cachedStatus });
             return { status: 'cancelled', text: 'Đã hủy', className: 'bg-danger' };
-        } 
-        
-        // Check for completed status variations
-        const completedVariations = ['completed', 'finished', 'done', 'hoàn thành', 'hoan_thanh'];
-        if (effectiveStatus && completedVariations.some(variation => statusString.includes(variation))) {
-            console.log('✅ Status detected as COMPLETED:', statusString);
-            return { status: 'completed', text: 'Đã hoàn thành', className: 'bg-success' };
         }
         
-        // Check for pending status
-        const pendingVariations = ['pending', 'waiting', 'chờ', 'cho', 'đang chờ'];
-        if (effectiveStatus && pendingVariations.some(variation => statusString.includes(variation))) {
-            // For pending status, use date-based logic
-            if (aptDate < today) {
-                console.log('📅 Pending appointment in past: COMPLETED');
+        // PRIORITY 1: Check if appointment is explicitly cancelled from backend data
+        if (effectiveStatus) {
+            const statusString = String(effectiveStatus).toLowerCase().trim();
+            console.log('🔍 Checking backend status:', statusString, 'for appointment', appointmentId);
+            
+            // Check for cancelled status variations
+            if (statusString.includes('cancel') || statusString.includes('hủy') || statusString === 'cancelled') {
+                console.log('✅ Status detected as CANCELLED from backend:', statusString);
+                return { status: 'cancelled', text: 'Đã hủy', className: 'bg-danger' };
+            }
+            
+            // Check for completed status
+            if (statusString.includes('completed') || statusString.includes('hoàn thành') || statusString === 'completed') {
+                console.log('✅ Status detected as COMPLETED from backend:', statusString);
                 return { status: 'completed', text: 'Đã hoàn thành', className: 'bg-success' };
-            } else if (aptDate.getTime() === today.getTime()) {
-                console.log('📅 Pending appointment today: TODAY');
-                return { status: 'today', text: 'Hôm nay', className: 'bg-warning text-dark' };
-            } else {
-                console.log('📅 Pending appointment future: UPCOMING');
-                return { status: 'upcoming', text: 'Sắp tới', className: 'bg-info' };
             }
         }
         
-        // Date-based logic for appointments without explicit status
+        // PRIORITY 2: Use date-based logic for appointments without explicit status
+        console.log('📅 Using date-based logic for appointment', appointmentId);
+        
         if (aptDate < today) {
             console.log('📅 Status based on DATE: COMPLETED (past date)');
             return { status: 'completed', text: 'Đã hoàn thành', className: 'bg-success' };
@@ -589,7 +711,7 @@ const ServiceHistoryPage = () => {
     };
 
     // Helper function to check if appointment can be cancelled
-    const canCancelAppointment = (appointmentDate, status, appointmentId) => {
+    const canCancelAppointment = (appointmentDate, status, appointmentId, historyItem = null) => {
         const today = new Date();
         const aptDate = new Date(appointmentDate);
         
@@ -597,27 +719,63 @@ const ServiceHistoryPage = () => {
         today.setHours(0, 0, 0, 0);
         aptDate.setHours(0, 0, 0, 0);
         
-        // Use cached status if available
-        const effectiveStatus = appointmentStatusCache[appointmentId] || status;
+        // PRIORITY CHECK: Check multiple cache keys and item properties
+        const cachedStatus = appointmentStatusCache[appointmentId] || 
+                           appointmentStatusCache[`${appointmentId}_status`] || 
+                           appointmentStatusCache[`appointment_${appointmentId}`];
         
-        // Can cancel if:
-        // 1. Not already cancelled
-        // 2. Appointment is today or in the future
-        // 3. Not already completed
-        const isNotCancelled = !effectiveStatus || !String(effectiveStatus).toLowerCase().includes('cancel');
-        const isNotPast = aptDate >= today;
-        const isNotCompleted = !effectiveStatus || !String(effectiveStatus).toLowerCase().includes('completed');
+        // Check if item itself has cancelled flag
+        const itemCancelled = historyItem?.isCancelled || historyItem?.appointmentStatus === 'cancelled';
         
-        console.log('🔍 Can Cancel Check:', {
+        const effectiveStatus = cachedStatus || historyItem?.appointmentStatus || status;
+        
+        // PRIORITY 1: Check if already cancelled via cache or item flag
+        if (itemCancelled || (cachedStatus && cachedStatus.toLowerCase().includes('cancel'))) {
+            console.log('🚫 Cannot cancel - already cancelled (Priority 1):', { itemCancelled, cachedStatus });
+            return false;
+        }
+        
+        // PRIORITY 2: Check backend status for cancellation
+        if (effectiveStatus) {
+            const statusString = String(effectiveStatus).toLowerCase().trim();
+            console.log('🔍 Checking can cancel - backend status:', statusString, 'for appointment', appointmentId);
+            
+            // Check if already cancelled
+            const isAlreadyCancelled = statusString.includes('cancel') || statusString.includes('hủy') || statusString === 'cancelled';
+            
+            // Check if completed  
+            const isCompleted = statusString.includes('completed') || statusString.includes('hoàn thành') || statusString === 'completed';
+            
+            if (isAlreadyCancelled) {
+                console.log('🚫 Cannot cancel - already cancelled from backend:', statusString);
+                return false;
+            }
+            
+            if (isCompleted) {
+                console.log('🚫 Cannot cancel - already completed from backend:', statusString);
+                return false;
+            }
+        }
+        
+        // Check if appointment is in the past
+        const isInPast = aptDate < today;
+        
+        // FINAL DECISION: Can cancel if NOT in the past (appointment is today or future)
+        const canCancel = !isInPast;
+        
+        console.log('🔍 Can Cancel Check (Simplified):', {
             appointmentId,
+            originalStatus: status,
+            cachedStatus: cachedStatus,
+            itemCancelled: itemCancelled,
             effectiveStatus,
-            isNotCancelled,
-            isNotPast,
-            isNotCompleted,
-            result: isNotCancelled && isNotPast && isNotCompleted
+            isInPast,
+            aptDate: aptDate.toDateString(),
+            today: today.toDateString(),
+            finalResult: canCancel
         });
         
-        return isNotCancelled && isNotPast && isNotCompleted;
+        return canCancel;
     };
 
     const renderHistoryTable = () => (
@@ -664,8 +822,8 @@ const ServiceHistoryPage = () => {
                             fullItem: item
                         });
                         
-                        const appointmentStatus = getAppointmentStatus(item.appointmentDate, item.status, item.appointmentId);
-                        const canCancel = canCancelAppointment(item.appointmentDate, item.status, item.appointmentId);
+                        const appointmentStatus = getAppointmentStatus(item.appointmentDate, item.status, item.appointmentId, item);
+                        const canCancel = canCancelAppointment(item.appointmentDate, item.status, item.appointmentId, item);
                         
                         console.log(`📊 Item ${index + 1} Final Status:`, {
                             appointmentId: item.appointmentId,
@@ -741,7 +899,7 @@ const ServiceHistoryPage = () => {
                                     </div>
                                 </td>
                                 <td className="py-3 align-middle">
-                                    {canCancel ? (
+                                    {canCancel && !cancellingAppointments.has(item.appointmentId) ? (
                                         <button
                                             type="button"
                                             className="btn btn-outline-danger btn-sm"
@@ -752,10 +910,16 @@ const ServiceHistoryPage = () => {
                                                 borderRadius: '6px',
                                                 fontWeight: '600'
                                             }}
+                                            disabled={cancellingAppointments.has(item.appointmentId)}
                                         >
                                             <i className="fas fa-times me-1"></i>
                                             Hủy Lịch
                                         </button>
+                                    ) : cancellingAppointments.has(item.appointmentId) ? (
+                                        <div className="text-warning small">
+                                            <i className="fas fa-spinner fa-spin me-1"></i>
+                                            Đang hủy...
+                                        </div>
                                     ) : (
                                         <span className="text-muted small">
                                             <i className="fas fa-info-circle me-1"></i>
@@ -825,7 +989,7 @@ const ServiceHistoryPage = () => {
                             <div>
                                 <div className="fw-bold text-warning">
                                     {history.filter(item => {
-                                        const status = getAppointmentStatus(item.appointmentDate, item.status, item.appointmentId);
+                                        const status = getAppointmentStatus(item.appointmentDate, item.status, item.appointmentId, item);
                                         return status.status === 'completed';
                                     }).length}
                                 </div>
@@ -872,6 +1036,8 @@ const ServiceHistoryPage = () => {
                                 <i className="fas fa-info-circle me-2"></i>
                                 <strong>Lưu ý:</strong> Bạn có thể hủy các lịch hẹn sắp tới bằng cách nhấn nút "Hủy Lịch" trong bảng bên dưới.
                                 Lịch hẹn chỉ có thể hủy trước ngày hẹn hoặc trong ngày hẹn.
+                                
+
                             </div>
                         )}
                     </div>
