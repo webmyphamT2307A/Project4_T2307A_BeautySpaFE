@@ -62,7 +62,7 @@ const AboutPage = () => {
                                 <p className="mb-4">Đến với chúng tôi, bạn không chỉ được trải nghiệm những liệu pháp chăm sóc đẳng cấp mà còn được tận hưởng không gian thư giãn tuyệt vời, giúp bạn lấy lại năng lượng và sự tự tin trong cuộc sống.
                                 </p>
                             </div>
-                            <a href="#" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5">Khám Phá Thêm</a>
+                            <a href="/ServicePage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5">Khám Phá Thêm</a>
                         </div>
                     </div>
                 </div>
