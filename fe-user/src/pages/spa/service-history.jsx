@@ -170,20 +170,20 @@ const ServiceHistory = () => {
   };
 
   return (
-    <MainCard title="Service History Management" secondary={
+    <MainCard title="Quản lý lịch sử dịch vụ" secondary={
       <Button
         variant="contained"
         startIcon={<PlusOutlined />}
         onClick={() => handleOpenDialog()}
       >
-        Add History
+        Thêm lịch sử
       </Button>
     }>
       <Box sx={{ mb: 3 }}>
         <TextField
           fullWidth
           size="small"
-          placeholder="Search by user, customer, or service..."
+          placeholder="Tìm kiếm theo người dùng, khách hàng hoặc dịch vụ..."
           value={searchQuery}
           onChange={handleSearchChange}
           InputProps={{
@@ -256,7 +256,7 @@ const ServiceHistory = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{currentHistory ? 'Edit History' : 'Add History'}</DialogTitle>
+        <DialogTitle>{currentHistory ? 'Chỉnh sửa lịch sử' : 'Thêm lịch sử'}</DialogTitle>
         <DialogContent>
           <TextField
             margin="dense"

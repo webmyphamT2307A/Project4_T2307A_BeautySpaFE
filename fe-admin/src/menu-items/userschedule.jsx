@@ -15,12 +15,12 @@ const icons = {
 
 const userschedule = {
   id: 'userschedule',
-  title: 'userschedule',
+  title: 'Lịch Trình Nhân Viên',
   type: 'group',
   children: [
     {
       id: 'userschedule-service',
-      title: 'schedule',
+      title: 'Lịch Trình',
       type: 'item',
       url: '/userschedule/schedule',
       icon: icons.CalendarFilled

@@ -143,7 +143,7 @@ const ServicePage = () => {
         </div>
       </div>
 
-      <div className="container-fluid services py-5">
+      <div id="services-section" className="container-fluid services py-5">
         <div className="container py-5">
           <div className="mx-auto text-center mb-5" style={{ maxWidth: 800 }}>
             <p className="fs-4 text-uppercase text-center text-primary">Dịch Vụ Của Chúng Tôi</p>
@@ -169,7 +169,7 @@ const ServicePage = () => {
                   }}
                 />
                 <button
-                  className="btn position-absolute"
+                  className="btn position-absolute search-btn"
                   onClick={() => handleSearchSubmit()}
                   style={{
                     right: '5px',
@@ -236,7 +236,7 @@ const ServicePage = () => {
                               marginRight: '12px'
                             }}
                           />
-                          <div>
+                          <div className="flex-grow-1 text-start">
                             <div className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>
                               {service.name}
                             </div>
@@ -397,7 +397,18 @@ const ServicePage = () => {
             {/* Previous Button */}
             <button
               className="pagination-btn"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              onClick={() => {
+                const prevPage = Math.max(1, currentPage - 1);
+                setCurrentPage(prevPage);
+                // Scroll to services section when changing page
+                const servicesSection = document.getElementById('services-section');
+                if (servicesSection) {
+                  servicesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  // Fallback: scroll to top of page
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
               disabled={currentPage === 1}
               style={{
                 minWidth: '100px',
@@ -429,7 +440,7 @@ const ServicePage = () => {
                 }
               }}
             >
-              <i className="fas fa-chevron-left me-2"></i>Trước
+              <i className="fas fa-chevron-left me-2"></i>
             </button>
 
             {/* Page Numbers */}
@@ -437,7 +448,17 @@ const ServicePage = () => {
               <button
                 key={i}
                 className="pagination-btn"
-                onClick={() => setCurrentPage(i + 1)}
+                onClick={() => {
+                  setCurrentPage(i + 1);
+                  // Scroll to services section when changing page
+                  const servicesSection = document.getElementById('services-section');
+                  if (servicesSection) {
+                    servicesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  } else {
+                    // Fallback: scroll to top of page
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
                 style={{
                   width: '50px',
                   height: '50px',
@@ -475,7 +496,18 @@ const ServicePage = () => {
             {/* Next Button */}
             <button
               className="pagination-btn"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              onClick={() => {
+                const nextPage = Math.min(totalPages, currentPage + 1);
+                setCurrentPage(nextPage);
+                // Scroll to services section when changing page
+                const servicesSection = document.getElementById('services-section');
+                if (servicesSection) {
+                  servicesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  // Fallback: scroll to top of page
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
               disabled={currentPage === totalPages}
               style={{
                 minWidth: '100px',
@@ -507,7 +539,7 @@ const ServicePage = () => {
                 }
               }}
             >
-              Tiếp<i className="fas fa-chevron-right ms-2"></i>
+              <i className="fas fa-chevron-right ms-2"></i>
             </button>
           </div>
         </div>
@@ -531,14 +563,14 @@ const ServicePage = () => {
         }
 
         .service-image-clickable::after {
-          content: "\\f06e";
+          content: "\\f35d";
           font-family: "Font Awesome 5 Free";
           font-weight: 900;
           position: absolute;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          background: linear-gradient(135deg, rgba(0, 123, 255, 0.9), rgba(40, 167, 69, 0.9));
+          background: linear-gradient(135deg, rgba(253, 181, 185, 0.9), rgba(247, 168, 184, 0.9));
           color: white;
           border-radius: 50%;
           width: 35px;
@@ -549,7 +581,7 @@ const ServicePage = () => {
           opacity: 0;
           transition: all 0.3s ease-in-out;
           font-size: 16px;
-          box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+          box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
         }
 
         .service-image-clickable:hover::after {
@@ -557,26 +589,28 @@ const ServicePage = () => {
           transform: translate(-50%, -50%) scale(1.1);
         }
 
-        /* Add pulse animation to the view icon */
+        /* Add pulse animation to the heart icon */
         .service-image-clickable:hover::after {
           animation: pulse 1.5s infinite;
         }
 
         @keyframes pulse {
           0% {
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
           }
           50% {
-            box-shadow: 0 4px 20px rgba(0, 123, 255, 0.6);
+            box-shadow: 0 4px 20px rgba(253, 181, 185, 0.7);
           }
           100% {
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
           }
         }
 
         /* Enhanced "Đặt Lịch" button styling */
         .btn-primary.rounded-pill {
-          box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3) !important;
+          background: linear-gradient(135deg, #FDB5B9, #f89ca0) !important;
+          border: none !important;
+          box-shadow: 0 6px 20px rgba(253, 181, 185, 0.3) !important;
           font-weight: 600 !important;
           font-size: 1rem !important;
           letter-spacing: 0.3px !important;
@@ -584,11 +618,14 @@ const ServicePage = () => {
           position: relative !important;
           z-index: 2 !important;
           padding: 10px 25px !important;
+          color: white !important;
         }
 
         .btn-primary.rounded-pill:hover {
+          background: linear-gradient(135deg, #F7A8B8, #E589A3) !important;
           transform: translateY(-3px) scale(1.05) !important;
-          box-shadow: 0 12px 30px rgba(0, 123, 255, 0.4) !important;
+          box-shadow: 0 12px 30px rgba(253, 181, 185, 0.5) !important;
+          color: white !important;
         }
 
         /* Search input focus effect */
@@ -597,10 +634,15 @@ const ServicePage = () => {
           box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
         }
 
-        /* Search button hover effect */
-        .btn:hover {
-          background: linear-gradient(135deg, #0056b3, #004085) !important;
-          transform: translateY(-50%) scale(1.05) !important;
+        /* Search button hover effect - Keep original position */
+        .search-btn:hover {
+          background: linear-gradient(135deg, #F7A8B8, #E589A3) !important;
+          transform: translateY(-50%) !important; /* Keep center position */
+        }
+        
+        /* Override general btn hover for other buttons */
+        .btn:hover:not(.search-btn) {
+          background: linear-gradient(135deg, #F7A8B8, #E589A3) !important;
         }
 
         /* Search suggestions scrollbar */

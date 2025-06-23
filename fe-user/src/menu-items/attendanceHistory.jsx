@@ -12,12 +12,12 @@ const icons = {
 
 const attendanceHistory = {
   id: 'attendanceHistory',
-  title: 'Roll-Call',
+  title: 'Điểm danh',
   type: 'group',
   children: [
     {
       id: 'attendance-history',
-      title: 'Attendance History',
+      title: 'Lịch sử chấm công',
       type: 'item',
       url: '/roll_call/attendanceHistoryPage',
       icon: icons.UnorderedListOutlined

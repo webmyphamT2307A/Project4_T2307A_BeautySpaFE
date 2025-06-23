@@ -256,7 +256,7 @@ const SalaryManager = () => {
   };
 
   const handleDeleteSalary = (salaryId) => {
-    if (window.confirm('Are you sure you want to deactivate this salary record?')) {
+    if (confirm('Bạn có chắc chắn muốn vô hiệu hóa bản ghi lương này?')) {
       setLoading(true);
       fetch(`${SALARY_API_URL}/${salaryId}`, { method: 'DELETE' })
         .then(res => res.json())
@@ -286,7 +286,7 @@ const SalaryManager = () => {
   );
 
   return (
-    <MainCard title="Salary Management" secondary={
+    <MainCard title="Quản Lý Tiền Lương" secondary={
       <Button
         variant="contained"
         color="primary"
@@ -294,7 +294,7 @@ const SalaryManager = () => {
         onClick={handleOpenCalculateDialog}
         sx={{ borderRadius: '8px' }}
       >
-        Calculate Salary
+        Tính Lương
       </Button>
     }>
       <Box sx={{ mb: 2 }}>
@@ -303,7 +303,7 @@ const SalaryManager = () => {
             <TextField
               fullWidth
               size="small"
-              placeholder="Search by Employee, Month, Year..."
+              placeholder="Tìm kiếm theo nhân viên, tháng, năm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               InputProps={{
@@ -315,21 +315,21 @@ const SalaryManager = () => {
           </Grid>
           <Grid item xs={12} sm={3}>
             <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}>
-              <InputLabel>Filter by Employee</InputLabel>
-              <Select name="userId" value={filterControls.userId} label="Filter by Employee" onChange={handleFilterChange}>
-                <MenuItem value=""><em>All Staff</em></MenuItem>
+              <InputLabel>Lọc Theo Nhân Viên</InputLabel>
+              <Select name="userId" value={filterControls.userId} label="Lọc Theo Nhân Viên" onChange={handleFilterChange}>
+                <MenuItem value=""><em>Tất Cả Nhân Viên</em></MenuItem>
                 {users.map(user => <MenuItem key={user.id} value={user.id}>{user.fullName || user.username}</MenuItem>)}
               </Select>
             </FormControl>
           </Grid>
           <Grid item xs={12} sm={2}>
-            <TextField fullWidth size="small" name="month" label="Filter by Month" type="number" value={filterControls.month} onChange={handleFilterChange} InputProps={{ sx: { borderRadius: '8px' } }}/>
+            <TextField fullWidth size="small" name="month" label="Lọc Theo Tháng" type="number" value={filterControls.month} onChange={handleFilterChange} InputProps={{ sx: { borderRadius: '8px' } }}/>
           </Grid>
           <Grid item xs={12} sm={2}>
-            <TextField fullWidth size="small" name="year" label="Filter by Year" type="number" value={filterControls.year} onChange={handleFilterChange} InputProps={{ sx: { borderRadius: '8px' } }}/>
+            <TextField fullWidth size="small" name="year" label="Lọc Theo Năm" type="number" value={filterControls.year} onChange={handleFilterChange} InputProps={{ sx: { borderRadius: '8px' } }}/>
           </Grid>
            <Grid item xs={12} sm={2}>
-            <Button fullWidth variant="outlined" onClick={fetchSalaries} sx={{ borderRadius: '8px' }}>Apply Filters</Button>
+            <Button fullWidth variant="outlined" onClick={fetchSalaries} sx={{ borderRadius: '8px' }}>Áp Dụng Bộ Lọc</Button>
           </Grid>
         </Grid>
       </Box>
@@ -341,15 +341,15 @@ const SalaryManager = () => {
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Employee</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Month/Year</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Base Salary</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Bonus</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Deductions</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Net Salary</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Payment Date</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Nhân Viên</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Tháng/Năm</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Lương Cơ Bản</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Thưởng</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Khấu Trừ</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Lương Thực Nhận</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Ngày Thanh Toán</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Trạng Thái</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Thao Tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -367,16 +367,16 @@ const SalaryManager = () => {
                   <TableCell>{salary.paymentDate}</TableCell>
                   <TableCell>
                     <Typography sx={{ color: salary.isActive ? 'success.main' : 'error.main', fontWeight: 'medium' }}>
-                      {salary.isActive ? 'Active' : 'Inactive'}
+                      {salary.isActive ? 'Hoạt Động' : 'Không Hoạt Động'}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
-                    <Tooltip title="Edit">
+                    <Tooltip title="Chỉnh Sửa">
                       <IconButton size="small" color="primary" onClick={() => handleOpenEditDialog(salary)}>
                         <EditOutlined />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Deactivate">
+                    <Tooltip title="Hủy Kích Hoạt">
                       <IconButton size="small" color="error" onClick={() => handleDeleteSalary(salary.id)}>
                         <DeleteOutlined />
                       </IconButton>
@@ -385,7 +385,7 @@ const SalaryManager = () => {
                 </TableRow>
               ))}
             {searchedSalaries.length === 0 && !loading && (
-                <TableRow><TableCell colSpan={10} align="center"><Typography sx={{p:2}}>No salary data found.</Typography></TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} align="center"><Typography sx={{p:2}}>Không tìm thấy dữ liệu lương.</Typography></TableCell></TableRow>
             )}
           </TableBody>
         </Table>

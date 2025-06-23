@@ -14,19 +14,19 @@ const icons = {
 
 const attendance = {
   id: 'attendance',
-  title: 'Roll-Call',
+  title: 'Điểm danh',
   type: 'group',
   children: [
     {
       id: 'employee-attendance',
-      title: 'Attendance',
+      title: 'Chấm công',
       type: 'item',
       url: '/roll_call/attendancePage',
       icon: icons.ClockCircleOutlined
     },
     {
       id: 'attendance-history',
-      title: 'Attendance History',
+      title: 'Lịch sử chấm công',
       type: 'item',
       url: '/roll_call/attendanceHistoryPage',
       icon: icons.UnorderedListOutlined

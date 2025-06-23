@@ -2,16 +2,14 @@
 import {
   ShopOutlined,
   ScissorOutlined,
-  CalendarOutlined,
-   HistoryOutlined,
+  CalendarOutlined
 } from '@ant-design/icons';
 
 // icons
 const icons = {
   ShopOutlined,
   ScissorOutlined,
-  CalendarOutlined,
-  HistoryOutlined,
+  CalendarOutlined
 };
 
 // ==============================|| MENU ITEMS - SPA ||============================== //
@@ -23,25 +21,18 @@ const spa = {
   children: [
     {
       id: 'spa-service',
-      title: 'Service',
+      title: 'Dịch Vụ',
       type: 'item',
       url: '/spa/service',
       icon: icons.ScissorOutlined
     },
     {
       id: 'appointments',
-      title: 'Appointments',
+      title: 'Lịch Hẹn',
       type: 'item',
       url: '/spa/appointments',
       icon: icons.CalendarOutlined
-    },
-    {
-      id: 'service-history',
-      title: 'Service History',
-      type: 'item',
-      url: '/spa/service-history',
-      icon: icons.HistoryOutlined
-    },
+    }
   ]
 };
 

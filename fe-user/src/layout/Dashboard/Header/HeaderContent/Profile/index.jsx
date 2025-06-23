@@ -70,7 +70,7 @@ export default function Profile() {
   // Nếu không có trong cookie thì lấy từ localStorage
   if (!token || !role) {
     const user = JSON.parse(localStorage.getItem('user'));
-    token = JSON.parse(localStorage.getItem('token'));
+    token = localStorage.getItem('token');
     role = user?.role?.name ? `ROLE_${user.role.name.toUpperCase()}` : null;
   }
 

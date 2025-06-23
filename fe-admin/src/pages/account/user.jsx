@@ -273,7 +273,7 @@ const UserAccount = () => {
 
   // REFACTOR: Sử dụng method DELETE
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this customer?')) {
+    if (confirm('Bạn có chắc chắn muốn xóa khách hàng này?')) {
       setLoading(true);
       try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });

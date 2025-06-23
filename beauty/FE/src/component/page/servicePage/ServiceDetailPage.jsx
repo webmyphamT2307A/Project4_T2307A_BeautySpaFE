@@ -354,13 +354,15 @@ const ServiceDetailPage = () => {
     return replies.map((reply) => (
       <div key={reply.id} className="reply-container" style={{
         marginLeft: '20px',
-        marginTop: '12px',
-        padding: '15px',
-        background: 'linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%)',
+        marginTop: '15px',
+        padding: '20px',
+        background: 'linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%)',
         borderLeft: '4px solid #28a745',
-        borderRadius: '8px',
+        borderRadius: '12px',
         position: 'relative',
-        wordWrap: 'break-word'
+        wordWrap: 'break-word',
+        boxShadow: '0 2px 8px rgba(40, 167, 69, 0.1)',
+        border: '1px solid rgba(40, 167, 69, 0.2)'
       }}>
         {/* Business Reply Badge */}
         <div style={{
@@ -379,10 +381,10 @@ const ServiceDetailPage = () => {
         </div>
 
         {/* Author Info */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', marginTop: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', marginTop: '8px' }}>
           <div style={{
-            width: '32px',
-            height: '32px',
+            width: '40px',
+            height: '40px',
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #28a745, #20c997)',
             display: 'flex',
@@ -391,13 +393,13 @@ const ServiceDetailPage = () => {
             marginRight: '12px',
             flexShrink: 0
           }}>
-            <i className="fas fa-user-tie" style={{ color: 'white', fontSize: '0.8rem' }}></i>
+            <i className="fas fa-user-tie" style={{ color: 'white', fontSize: '1rem' }}></i>
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '8px' }}>
               <strong style={{ 
                 color: '#28a745', 
-                fontSize: '0.9rem'
+                fontSize: '1.1rem'
               }}>
                 {reply.authorName}
               </strong>
@@ -406,12 +408,12 @@ const ServiceDetailPage = () => {
                 color: '#155724',
                 padding: '2px 8px',
                 borderRadius: '10px',
-                fontSize: '0.7rem',
+                fontSize: '0.8rem',
                 fontWeight: '600'
               }}>
-                
+                Nhân viên
               </span>
-              <small style={{ color: '#666', fontSize: '0.75rem', flexShrink: 0 }}>
+              <small style={{ color: '#666', fontSize: '0.9rem', flexShrink: 0 }}>
                 {new Date(reply.createdAt).toLocaleString('vi-VN')}
               </small>
             </div>
@@ -421,15 +423,16 @@ const ServiceDetailPage = () => {
         {/* Reply Content */}
         <div style={{
           background: 'white',
-          padding: '12px',
-          borderRadius: '6px',
-          border: '1px solid rgba(40, 167, 69, 0.2)'
+          padding: '15px',
+          borderRadius: '8px',
+          border: '1px solid rgba(40, 167, 69, 0.3)',
+          boxShadow: '0 1px 3px rgba(40, 167, 69, 0.1)'
         }}>
           <p style={{ 
             margin: 0, 
             color: '#333', 
-            fontSize: '0.9rem',
-            lineHeight: '1.5',
+            fontSize: '1rem',
+            lineHeight: '1.6',
             wordWrap: 'break-word',
             overflowWrap: 'break-word'
           }}>
@@ -439,17 +442,20 @@ const ServiceDetailPage = () => {
 
         {/* Helpful indicator */}
         <div style={{
-          marginTop: '8px',
+          marginTop: '10px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-end'
         }}>
           <span style={{
             color: '#28a745',
-            fontSize: '0.75rem',
-            fontStyle: 'italic'
+            fontSize: '0.9rem',
+            fontStyle: 'italic',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px'
           }}>
-            <i className="fas fa-heart" style={{ marginRight: '4px', fontSize: '0.7rem' }}></i>
+            <i className="fas fa-heart" style={{ fontSize: '0.8rem' }}></i>
             Cảm ơn bạn đã chia sẻ!
           </span>
         </div>
@@ -473,8 +479,8 @@ const ServiceDetailPage = () => {
 
           {/* PHẦN THÔNG TIN DỊCH VỤ - New Layout */}
           <div className="row">
-            {/* Bên trái: Ảnh dịch vụ và thông tin chính - Chiếm 7/12 phần */}
-            <div className="col-md-7 mb-4">
+            {/* Bên trái: Ảnh dịch vụ và thông tin chính - Chiếm 9/12 phần */}
+            <div className="col-md-9 mb-4">
               <img
                 src={service.imageUrl || service.image_url || '/default-image.jpg'}
                 alt={service.name}
@@ -536,8 +542,8 @@ const ServiceDetailPage = () => {
               </button>
             </div>
 
-            {/* Bên phải: Gợi ý dịch vụ - Beautiful Design - Chiếm 5/12 phần */}
-            <div className="col-md-5">
+            {/* Bên phải: Gợi ý dịch vụ - Beautiful Design - Chiếm 3/12 phần */}
+            <div className="col-md-3">
               <div style={{
                 background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #ffecd2 100%)',
                 borderRadius: '20px',
@@ -574,7 +580,7 @@ const ServiceDetailPage = () => {
                 
                 <div className="row g-2">
                   {relatedServices.map((relatedService, index) => (
-                    <div key={relatedService.id} className="col-4">
+                    <div key={relatedService.id} className="col-6">
                       <div className="related-service-card" style={{
                         background: 'white',
                         borderRadius: '12px',
@@ -648,31 +654,16 @@ const ServiceDetailPage = () => {
                           <p style={{ 
                             fontSize: '0.65rem', 
                             color: '#888', 
-                            margin: '0 0 8px 0',
-                            height: '24px',
+                            margin: '0',
+                            height: '36px',
                             overflow: 'hidden',
                             display: '-webkit-box',
-                            WebkitLineClamp: 2,
+                            WebkitLineClamp: 3,
                             WebkitBoxOrient: 'vertical',
                             lineHeight: '1.2'
                           }}>
                             {relatedService.description}
                           </p>
-                          
-                          <div style={{
-                            background: 'linear-gradient(135deg, #d6336c, #f5576c)',
-                            borderRadius: '15px',
-                            padding: '4px 10px',
-                            display: 'inline-block'
-                          }}>
-                            <span style={{ 
-                              fontSize: '0.7rem', 
-                              fontWeight: '700', 
-                              color: 'white'
-                            }}>
-                              {relatedService.price ? `${relatedService.price.toLocaleString()}$` : 'N/A'}
-                            </span>
-                          </div>
                         </div>
 
                         {/* Hover icon */}
@@ -851,7 +842,16 @@ const ServiceDetailPage = () => {
             </div>
             {currentReviews.length > 0 ? (
               currentReviews.map((r) => (
-                <div key={r.id} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
+                <div key={r.id} style={{ 
+                  borderBottom: '1px solid #f0f0f0', 
+                  paddingBottom: 20, 
+                  marginBottom: 20,
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                  border: '1px solid #f5f5f5'
+                }}>
 
                   {/* KIỂM TRA NẾU REVIEW NÀY ĐANG ĐƯỢC SỬA */}
                   {editingReviewId === r.id ? (
@@ -880,10 +880,36 @@ const ServiceDetailPage = () => {
                   ) : (
                     // GIAO DIỆN HIỂN THỊ BÌNH THƯỜNG
                     <>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <strong style={{ color: '#d6336c', marginRight: 10 }}>{r.authorName}</strong>
-                          <span style={{ color: '#f5a623' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #d6336c, #f5576c)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <i className="fas fa-user" style={{ color: 'white', fontSize: '1rem' }}></i>
+                          </div>
+                          <div>
+                            <strong style={{ color: '#d6336c', fontSize: '1.1rem', display: 'block' }}>{r.authorName}</strong>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                              <span style={{ color: '#f5a623', fontSize: '1.1rem' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                              <span style={{ 
+                                background: '#f5f5f5', 
+                                color: '#666', 
+                                padding: '2px 8px', 
+                                borderRadius: '10px', 
+                                fontSize: '0.8rem',
+                                fontWeight: '500'
+                              }}>
+                                Khách hàng
+                              </span>
+                            </div>
+                          </div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -934,8 +960,32 @@ const ServiceDetailPage = () => {
                           )}
                         </div>
                       </div>
-                      <p style={{ margin: '0 0 8px 0', color: '#333' }}>{r.comment}</p>
-                      <small style={{ color: '#888' }}>{new Date(r.createdAt).toLocaleString('vi-VN')}</small>
+                      <div style={{
+                        background: '#fafafa',
+                        padding: '15px',
+                        borderRadius: '8px',
+                        margin: '10px 0',
+                        border: '1px solid #f0f0f0'
+                      }}>
+                        <p style={{ 
+                          margin: 0, 
+                          color: '#333', 
+                          fontSize: '1rem',
+                          lineHeight: '1.6'
+                        }}>{r.comment}</p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                        <small style={{ 
+                          color: '#888', 
+                          fontSize: '0.9rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}>
+                          <i className="fas fa-clock" style={{ fontSize: '0.8rem' }}></i>
+                          {new Date(r.createdAt).toLocaleString('vi-VN')}
+                        </small>
+                      </div>
                       
                       {/* REPLY FORM REMOVED - Staff replies managed via admin panel */}
                       
@@ -1057,6 +1107,7 @@ const ServiceDetailPage = () => {
             )}
           </div>
         </div>
+
       </div>
       
       {/* Custom CSS for hover effects */}
@@ -1077,7 +1128,7 @@ const ServiceDetailPage = () => {
             min-height: 140px;
           }
           
-          .col-4 {
+          .col-6 {
             flex: 0 0 50% !important;
             max-width: 50% !important;
           }
@@ -1090,7 +1141,7 @@ const ServiceDetailPage = () => {
         }
         
         @media (max-width: 576px) {
-          .col-4 {
+          .col-6 {
             flex: 0 0 100% !important;
             max-width: 100% !important;
           }
@@ -1104,8 +1155,8 @@ const ServiceDetailPage = () => {
           }
         }
       `}</style>
-
       <Footer />
+
     </div>
   );
 };

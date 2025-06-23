@@ -43,6 +43,7 @@ import { toast } from 'react-toastify';
 const API_BASE_URL = 'http://localhost:8080/api/v1';
 const SCHEDULE_API_URL = `${API_BASE_URL}/users-schedules`;
 const USER_API_URL = `${API_BASE_URL}/admin/accounts/find-all`;
+const TIMESLOT_API_URL = `${API_BASE_URL}/timeslot`;
 const STAFF_ROLE_NAME = "STAFF";
 
 // Updated status options to match backend
@@ -63,14 +64,14 @@ const statusOptions = [
 const UserScheduleManager = () => {
   const [schedules, setSchedules] = useState([]);
   const [users, setUsers] = useState([]);
+  const [timeslots, setTimeslots] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [currentSchedule, setCurrentSchedule] = useState(null);
   const [formData, setFormData] = useState({
     userId: '',
     shift: '',
     workDate: '',
-    checkInTime: '',
-    checkOutTime: '',
+    timeSlotId: '',
     status: 'pending',
     isLastTask: false,
     isActive: true
@@ -107,6 +108,25 @@ const UserScheduleManager = () => {
         console.error("Error fetching users:", error);
         setUsers([]);
         toast.error("Connection error while loading user list.");
+      });
+  }, []);
+
+  // Fetch timeslots from API
+  useEffect(() => {
+    fetch(TIMESLOT_API_URL)
+      .then(res => res.json())
+      .then(response => {
+        if (response && response.status === 'SUCCESS' && Array.isArray(response.data)) {
+          setTimeslots(response.data);
+        } else {
+          console.error("Failed to load timeslots from API:", response);
+          setTimeslots([]);
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching timeslots:", error);
+        setTimeslots([]);
+        toast.error("Connection error while loading timeslot list.");
       });
   }, []);
 
@@ -201,8 +221,7 @@ const UserScheduleManager = () => {
         userId: schedule.userId || '',
         shift: schedule.shift || '',
         workDate: schedule.workDate || '',
-        checkInTime: schedule.checkInTime || '',
-        checkOutTime: schedule.checkOutTime || '',
+        timeSlotId: schedule.timeSlotId || '',
         status: schedule.status || 'pending',
         isLastTask: schedule.isLastTask || false,
         isActive: schedule.isActive === undefined ? true : schedule.isActive,
@@ -213,8 +232,7 @@ const UserScheduleManager = () => {
         userId: '',
         shift: '',
         workDate: '',
-        checkInTime: '',
-        checkOutTime: '',
+        timeSlotId: '',
         status: 'pending',
         isLastTask: false,
         isActive: true
@@ -235,23 +253,40 @@ const UserScheduleManager = () => {
     });
   };
 
+  // Get timeslot details by ID
+  const getTimeslotById = (timeSlotId) => {
+    return timeslots.find(slot => slot.slotId === timeSlotId);
+  };
+
+  // Format time from LocalTime to display format
+  const formatTime = (timeString) => {
+    if (!timeString) return '-';
+    // Convert from HH:mm:ss to HH:mm format
+    return timeString.substring(0, 5);
+  };
+
   const handleSaveSchedule = () => {
-    if (!formData.userId || !formData.workDate || !formData.shift) {
-        toast.error("Please enter Employee, Work Date, and Shift.");
+    if (!formData.userId || !formData.workDate || !formData.timeSlotId) {
+        toast.error("Vui lòng chọn Nhân viên, Ngày làm việc và Ca làm việc.");
         return;
     }
     if (!formData.status || !statusOptions.find(opt => opt.value === formData.status)) {
-        toast.error("Please select a valid status.");
+        toast.error("Vui lòng chọn trạng thái hợp lệ.");
         return;
     }
 
+    // Get selected timeslot details
+    const selectedTimeslot = getTimeslotById(parseInt(formData.timeSlotId));
+    
     const requestBody = {
         ...formData,
         userId: parseInt(formData.userId, 10),
+        timeSlotId: parseInt(formData.timeSlotId, 10),
+        shift: selectedTimeslot ? `${formatTime(selectedTimeslot.startTime)} - ${formatTime(selectedTimeslot.endTime)}` : formData.shift,
         isLastTask: formData.isLastTask || false,
         isActive: formData.isActive === undefined ? true : formData.isActive,
-        checkInTime: formData.checkInTime || null,
-        checkOutTime: formData.checkOutTime || null,
+        checkInTime: null, // Will be set by backend during check-in
+        checkOutTime: null, // Will be set by backend during check-out
     };
 
     if (currentSchedule) {
@@ -266,14 +301,14 @@ const UserScheduleManager = () => {
         .then(response => {
           if (response.status === 'SUCCESS') {
             fetchSchedules();
-            toast.success(response.message ||'Schedule updated successfully.');
+            toast.success(response.message ||'Cập nhật lịch trình thành công.');
           } else {
-            toast.error(response.message || 'Failed to update schedule.');
+            toast.error(response.message || 'Cập nhật lịch trình thất bại.');
           }
           setOpenDialog(false);
         })
         .catch(() => {
-          toast.error('Error updating schedule.');
+          toast.error('Lỗi khi cập nhật lịch trình.');
           setOpenDialog(false);
         });
     } else {
@@ -287,22 +322,22 @@ const UserScheduleManager = () => {
         .then(res => res.json())
         .then(response => {
           if (response.status === 'SUCCESS') {
-            toast.success(response.message || 'Schedule created successfully.');
+            toast.success(response.message || 'Tạo lịch trình thành công.');
             fetchSchedules();
           } else {
-            toast.error(response.message || 'Failed to create schedule.');
+            toast.error(response.message || 'Tạo lịch trình thất bại.');
           }
           setOpenDialog(false);
         })
         .catch(() => {
-          toast.error('Error creating schedule.');
+          toast.error('Lỗi khi tạo lịch trình.');
           setOpenDialog(false);
         });
     }
   };
 
   const handleDeleteSchedule = (scheduleId) => {
-    if (window.confirm('Are you sure you want to delete (deactivate) this schedule?')) {
+    toast.warning('Đang xóa lịch trình...', { autoClose: 1000 });
       fetch(`${SCHEDULE_API_URL}/${scheduleId}`, {
         method: 'PUT',
       })
@@ -310,17 +345,16 @@ const UserScheduleManager = () => {
         .then(response => {
           if (response.status === 'SUCCESS') {
             fetchSchedules();
-            toast.success(response.message || 'Schedule deleted successfully.');
+          toast.success(response.message || 'Đã xóa lịch trình thành công.');
           } else {
-            toast.error(response.message || 'Failed to delete schedule.');
+          toast.error(response.message || 'Xóa lịch trình thất bại.');
           }
         })
-        .catch(() => toast.error('Error deleting schedule.'));
-    }
+      .catch(() => toast.error('Lỗi khi xóa lịch trình.'));
   };
 
   const handleCheckIn = (scheduleId) => {
-    if (window.confirm('Confirm check-in for this schedule?')) {
+    toast.info('Đang thực hiện check-in...', { autoClose: 1000 });
       fetch(`${SCHEDULE_API_URL}/check-in/${scheduleId}`, {
         method: 'PUT',
       })
@@ -328,17 +362,16 @@ const UserScheduleManager = () => {
         .then(response => {
           if (response.status === 'SUCCESS') {
             fetchSchedules();
-            toast.success(response.message || 'Check-in successful.');
+          toast.success(response.message || 'Check-in thành công.');
           } else {
-            toast.error(response.message || 'Failed to check-in.');
+          toast.error(response.message || 'Check-in thất bại.');
           }
         })
-        .catch(() => toast.error('Error during check-in.'));
-    }
+      .catch(() => toast.error('Lỗi khi check-in.'));
   };
 
   const handleCheckOut = (scheduleId) => {
-    if (window.confirm('Confirm check-out for this schedule?')) {
+    toast.info('Đang thực hiện check-out...', { autoClose: 1000 });
       fetch(`${SCHEDULE_API_URL}/check-out/${scheduleId}`, {
         method: 'PUT',
       })
@@ -346,13 +379,12 @@ const UserScheduleManager = () => {
         .then(response => {
           if (response.status === 'SUCCESS') {
             fetchSchedules();
-            toast.success(response.message || 'Check-out successful.');
+          toast.success(response.message || 'Check-out thành công.');
           } else {
-            toast.error(response.message || 'Failed to check-out.');
+          toast.error(response.message || 'Check-out thất bại.');
           }
         })
-        .catch(() => toast.error('Error during check-out.'));
-    }
+      .catch(() => toast.error('Lỗi khi check-out.'));
   };
 
   const getStatusChip = (status) => {
@@ -373,8 +405,7 @@ const UserScheduleManager = () => {
     (schedule.userName && schedule.userName.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (schedule.shift && schedule.shift.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (schedule.status && schedule.status.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (schedule.roleName && schedule.roleName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (schedule.branchName && schedule.branchName.toLowerCase().includes(searchQuery.toLowerCase()))
+    (schedule.roleName && schedule.roleName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Generate year options (current year ± 2)
@@ -385,13 +416,13 @@ const UserScheduleManager = () => {
   }
 
   return (
-    <MainCard title="User Schedule Management" secondary={
+    <MainCard title="Quản Lý Lịch Trình Nhân Viên" secondary={
       <Button
         variant="contained"
         startIcon={<PlusOutlined />}
         onClick={() => handleOpenDialog()}
       >
-        Add Schedule
+        Thêm Lịch Trình
       </Button>
     }>
       {/* Enhanced Filter Section */}
@@ -400,7 +431,7 @@ const UserScheduleManager = () => {
           <Grid item xs={12} md={3}>
             <TextField
               size="small"
-              placeholder="Search by Employee, Shift, Status, Role, Branch..."
+              placeholder="Tìm kiếm theo nhân viên, ca làm, trạng thái, vai trò, chi nhánh..."
               value={searchQuery}
               onChange={handleSearchChange}
               InputProps={{
@@ -423,13 +454,13 @@ const UserScheduleManager = () => {
           
           <Grid item xs={12} md={2}>
             <FormControl size="small" fullWidth>
-              <InputLabel>Employee</InputLabel>
+              <InputLabel>Nhân Viên</InputLabel>
               <Select
                 value={filterByUserId}
-                label="Employee"
+                label="Nhân Viên"
                 onChange={(e) => handleFilterChange('userId', e.target.value)}
               >
-                <MenuItem value="">All Employees</MenuItem>
+                <MenuItem value="">Tất Cả Nhân Viên</MenuItem>
                 {users.map((user) => (
                   <MenuItem key={user.id} value={user.id}>
                     {user.fullName || user.username}
@@ -441,13 +472,13 @@ const UserScheduleManager = () => {
 
           <Grid item xs={12} md={2}>
             <FormControl size="small" fullWidth>
-              <InputLabel>Status</InputLabel>
+              <InputLabel>Trạng Thái</InputLabel>
               <Select
                 value={filterStatus}
-                label="Status"
+                label="Trạng Thái"
                 onChange={(e) => handleFilterChange('status', e.target.value)}
               >
-                <MenuItem value="">All Status</MenuItem>
+                <MenuItem value="">Tất Cả Trạng Thái</MenuItem>
                 {statusOptions.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
                     {option.label}
@@ -459,13 +490,13 @@ const UserScheduleManager = () => {
 
           <Grid item xs={6} md={1}>
             <FormControl size="small" fullWidth>
-              <InputLabel>Month</InputLabel>
+              <InputLabel>Tháng</InputLabel>
               <Select
                 value={filterMonth}
-                label="Month"
+                label="Tháng"
                 onChange={(e) => handleFilterChange('month', e.target.value)}
               >
-                <MenuItem value="">All</MenuItem>
+                <MenuItem value="">Tất Cả</MenuItem>
                 {Array.from({length: 12}, (_, i) => (
                   <MenuItem key={i+1} value={i+1}>{i+1}</MenuItem>
                 ))}
@@ -475,13 +506,13 @@ const UserScheduleManager = () => {
 
           <Grid item xs={6} md={1}>
             <FormControl size="small" fullWidth>
-              <InputLabel>Year</InputLabel>
+              <InputLabel>Năm</InputLabel>
               <Select
                 value={filterYear}
-                label="Year"
+                label="Năm"
                 onChange={(e) => handleFilterChange('year', e.target.value)}
               >
-                <MenuItem value="">All</MenuItem>
+                <MenuItem value="">Tất Cả</MenuItem>
                 {yearOptions.map((year) => (
                   <MenuItem key={year} value={year}>{year}</MenuItem>
                 ))}
@@ -492,7 +523,7 @@ const UserScheduleManager = () => {
           <Grid item xs={6} md={1.5}>
             <TextField
               size="small"
-              label="Start Date"
+              label="Ngày Bắt Đầu"
               type="date"
               value={startDate}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
@@ -504,7 +535,7 @@ const UserScheduleManager = () => {
           <Grid item xs={6} md={1.5}>
             <TextField
               size="small"
-              label="End Date"
+              label="Ngày Kết Thúc"
               type="date"
               value={endDate}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
@@ -516,7 +547,7 @@ const UserScheduleManager = () => {
         
         <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
           <Button size="small" onClick={clearFilters} variant="outlined">
-            Clear Filters
+            Xóa Bộ Lọc
           </Button>
         </Box>
       </Box>
@@ -526,15 +557,15 @@ const UserScheduleManager = () => {
           <TableHead>
             <TableRow>
               <TableCell>#</TableCell>
-              <TableCell>Employee</TableCell>
-              <TableCell>Role & Branch</TableCell>
-              <TableCell>Work Date</TableCell>
-              <TableCell>Shift</TableCell>
-              <TableCell>Check-In</TableCell>
-              <TableCell>Check-Out</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Active</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell>Nhân Viên</TableCell>
+              <TableCell>Vai Trò & Chi Nhánh</TableCell>
+              <TableCell>Ngày Làm Việc</TableCell>
+              <TableCell>Ca Làm Việc</TableCell>
+              <TableCell>Giờ Vào</TableCell>
+              <TableCell>Giờ Ra</TableCell>
+              <TableCell>Trạng Thái</TableCell>
+              <TableCell>Hoạt Động</TableCell>
+              <TableCell align="center">Thao Tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -567,27 +598,36 @@ const UserScheduleManager = () => {
                       <Typography variant="body2" color="primary">
                         {schedule.roleName}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {schedule.branchName}
-                      </Typography>
+
                     </Box>
                   </TableCell>
                   <TableCell>{schedule.workDate}</TableCell>
-                  <TableCell>{schedule.shift}</TableCell>
-                  <TableCell>{schedule.checkInTime || '-'}</TableCell>
-                  <TableCell>{schedule.checkOutTime || '-'}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {schedule.shift}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color={schedule.checkInTime ? 'success.main' : 'text.secondary'}>
+                      {formatTime(schedule.checkInTime) || '--:--'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color={schedule.checkOutTime ? 'success.main' : 'text.secondary'}>
+                      {formatTime(schedule.checkOutTime) || '--:--'}
+                    </Typography>
+                  </TableCell>
                   <TableCell>{getStatusChip(schedule.status)}</TableCell>
                   <TableCell>
                     <Chip 
-                      label={schedule.isActive ? 'Active' : 'Inactive'} 
+                      label={schedule.isActive ? 'Hoạt Động' : 'Không Hoạt Động'} 
                       size="small"
                       color={schedule.isActive ? 'success' : 'default'}
-                      variant="outlined"
                     />
                   </TableCell>
                   <TableCell align="center">
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      <Tooltip title="Edit">
+                      <Tooltip title="Chỉnh Sửa">
                         <IconButton size="small" color="primary" onClick={() => handleOpenDialog(schedule)}>
                           <EditOutlined />
                         </IconButton>
@@ -617,7 +657,7 @@ const UserScheduleManager = () => {
                         </Tooltip>
                       )}
                       
-                      <Tooltip title="Delete (Deactivate)">
+                      <Tooltip title="Xóa (Vô hiệu hóa)">
                         <IconButton size="small" color="error" onClick={() => handleDeleteSchedule(schedule.id)}>
                           <DeleteOutlined />
                         </IconButton>
@@ -630,7 +670,7 @@ const UserScheduleManager = () => {
                 <TableRow>
                     <TableCell colSpan={10} align="center">
                         <Typography variant="subtitle1">
-                            No schedule data available.
+                            Không có dữ liệu lịch trình.
                         </Typography>
                     </TableCell>
                 </TableRow>
@@ -651,50 +691,115 @@ const UserScheduleManager = () => {
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {currentSchedule ? 'Edit Schedule' : 'Add New Schedule'}
+          {currentSchedule ? 'Chỉnh Sửa Lịch Trình' : 'Thêm Lịch Trình Mới'}
         </DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="dense" required>
-            <InputLabel id="userId-label">Employee (STAFF)</InputLabel>
+            <InputLabel id="userId-label">Nhân Viên (STAFF)</InputLabel>
             <Select
               labelId="userId-label"
               name="userId"
               value={formData.userId}
-              label="Employee (STAFF)"
+              label="Nhân Viên (STAFF)"
               onChange={handleFormChange}
             >
-              <MenuItem value=""><em>Select Employee</em></MenuItem>
+              <MenuItem value=""><em>Chọn Nhân Viên</em></MenuItem>
               {users.map((user) => (
                 <MenuItem key={user.id} value={user.id}>
-                  {user.fullName || user.username}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Avatar src={user.imageUrl} sx={{ width: 24, height: 24 }}>
+                      {user.fullName?.charAt(0)}
+                    </Avatar>
+                    {user.fullName || user.username}
+                  </Box>
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-          <TextField margin="dense" name="workDate" label="Work Date" type="date" fullWidth value={formData.workDate} onChange={handleFormChange} InputLabelProps={{ shrink: true }} required/>
-          <TextField margin="dense" name="shift" label="Shift" type="text" fullWidth value={formData.shift} onChange={handleFormChange} required/>
-          <TextField margin="dense" name="checkInTime" label="Check-In Time" type="time" fullWidth value={formData.checkInTime} onChange={handleFormChange} InputLabelProps={{ shrink: true }} />
-          <TextField margin="dense" name="checkOutTime" label="Check-Out Time" type="time" fullWidth value={formData.checkOutTime} onChange={handleFormChange} InputLabelProps={{ shrink: true }} />
+          
+          <TextField 
+            margin="dense" 
+            name="workDate" 
+            label="Ngày Làm Việc" 
+            type="date" 
+            fullWidth 
+            value={formData.workDate} 
+            onChange={handleFormChange} 
+            InputLabelProps={{ shrink: true }} 
+            required
+          />
+          
           <FormControl fullWidth margin="dense" required>
-            <InputLabel id="status-label">Status</InputLabel>
+            <InputLabel id="timeSlot-label">Ca Làm Việc</InputLabel>
+            <Select
+              labelId="timeSlot-label"
+              name="timeSlotId"
+              value={formData.timeSlotId}
+              label="Ca Làm Việc"
+              onChange={handleFormChange}
+            >
+              <MenuItem value=""><em>Chọn Ca Làm Việc</em></MenuItem>
+              {timeslots.map((slot) => (
+                <MenuItem key={slot.slotId} value={slot.slotId}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ClockCircleOutlined style={{ color: '#1976d2' }} />
+                    <Typography>
+                      {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+                    </Typography>
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {formData.timeSlotId && (
+            <Box sx={{ mt: 1, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+              <Typography variant="body2" color="primary">
+                <ClockCircleOutlined style={{ marginRight: 8 }} />
+                Ca làm việc đã chọn: {(() => {
+                  const selectedSlot = getTimeslotById(parseInt(formData.timeSlotId));
+                  return selectedSlot ? `${formatTime(selectedSlot.startTime)} - ${formatTime(selectedSlot.endTime)}` : '';
+                })()}
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Nhân viên sẽ check-in/check-out trong khung giờ này
+              </Typography>
+            </Box>
+          )}
+          
+          <FormControl fullWidth margin="dense" required>
+            <InputLabel id="status-label">Trạng Thái</InputLabel>
             <Select
               labelId="status-label"
               name="status"
               value={formData.status}
-              label="Status"
+              label="Trạng Thái"
               onChange={handleFormChange}
             >
               {statusOptions.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip 
+                      label={option.label} 
+                      size="small" 
+                      color={option.color} 
+                      sx={{ minWidth: 80 }}
+                    />
+                    <Typography variant="body2">
+                      {option.value === 'pending' && 'Chờ xác nhận'}
+                      {option.value === 'confirmed' && 'Đang làm việc'}
+                      {option.value === 'completed' && 'Đã hoàn thành'}
+                      {option.value === 'cancelled' && 'Đã hủy'}
+                    </Typography>
+                  </Box>
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} variant="outlined" color="inherit">Cancel</Button>
-          <Button onClick={handleSaveSchedule} variant="contained" color="primary">Save</Button>
+          <Button onClick={handleCloseDialog} variant="outlined" color="inherit">Hủy</Button>
+          <Button onClick={handleSaveSchedule} variant="contained" color="primary">Lưu</Button>
         </DialogActions>
       </Dialog>
     </MainCard>

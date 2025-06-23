@@ -178,13 +178,42 @@ export default function DashboardDefault() {
 
   const getStatusChip = (status) => {
     let color = 'default';
-    if (status === 'On Time') color = 'success';
-    if (status === 'Late') color = 'warning';  
-    if (status === 'Working') color = 'primary';
-    if (status === 'Present') color = 'success';
-    if (status === 'Absent') color = 'error';
+    let translatedStatus = status;
     
-    return <Chip label={status || 'N/A'} color={color} size="small" sx={{ fontWeight: 600 }} />;
+    if (status === 'On Time') {
+      color = 'success';
+      translatedStatus = 'Đúng giờ';
+    }
+    if (status === 'Late') {
+      color = 'warning';
+      translatedStatus = 'Trễ';
+    }
+    if (status === 'Working') {
+      color = 'primary';
+      translatedStatus = 'Đang làm việc';
+    }
+    if (status === 'Present') {
+      color = 'success';
+      translatedStatus = 'Có mặt';
+    }
+    if (status === 'Absent') {
+      color = 'error';
+      translatedStatus = 'Vắng mặt';
+    }
+    if (status === 'pending') {
+      color = 'warning';
+      translatedStatus = 'Chờ xử lý';
+    }
+    if (status === 'confirmed') {
+      color = 'primary';
+      translatedStatus = 'Đã xác nhận';
+    }
+    if (status === 'completed') {
+      color = 'success';
+      translatedStatus = 'Hoàn thành';
+    }
+    
+    return <Chip label={translatedStatus || 'N/A'} color={color} size="small" sx={{ fontWeight: 600 }} />;
   };
 
   const parseTime = (timeStr) => {
@@ -207,7 +236,7 @@ export default function DashboardDefault() {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: 2 }}>
         <CircularProgress size={60} />
-        <Typography variant="h6" color="primary">Loading your dashboard...</Typography>
+        <Typography variant="h6" color="primary">Đang tải bảng điều khiển của bạn...</Typography>
       </Box>
     );
   }
@@ -216,33 +245,33 @@ export default function DashboardDefault() {
 
   const statCards = [
     { 
-      title: 'Waiting Customers', 
+      title: 'Khách hàng chờ', 
       count: dashboardSummary.waiting, 
-      extra: 'Today', 
+      extra: 'Hôm nay', 
       icon: <UserOutlined />, 
       color: '#2962ff', 
       bg: '#e3f2fd' 
     },
     { 
-      title: 'Served Customers', 
+      title: 'Khách hàng đã phục vụ', 
       count: dashboardSummary.served, 
-      extra: 'Today', 
+      extra: 'Hôm nay', 
       icon: <CheckCircleOutlined />, 
       color: '#2e7d32', 
       bg: '#e8f5e9' 
     },
     { 
-      title: 'Monthly Services', 
+      title: 'Dịch vụ tháng này', 
       count: dashboardSummary.monthlyServices, 
-      extra: 'This Month', 
+      extra: 'Tháng này', 
       icon: <BarChartOutlined />, 
       color: '#ed6c02', 
       bg: '#fff3e0' 
     },
     { 
-      title: 'Average Rating', 
+      title: 'Đánh giá trung bình', 
       count: `${displayAverageRating}/10`, 
-      extra: 'Your Rating', 
+      extra: 'Xếp hạng của bạn', 
       icon: <StarOutlined />, 
       color: '#f57c00', 
       bg: '#fff8e1' 
@@ -264,10 +293,10 @@ export default function DashboardDefault() {
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ position: 'relative', zIndex: 2 }}>
           <Box>
             <Typography variant="h4" fontWeight={700}>
-              👋 Hello, {userData?.fullName || 'Staff'}!
+              👋 Xin chào, {userData?.fullName || 'Staff'}!
             </Typography>
             <Typography sx={{ opacity: 0.9, fontWeight: 500 }}>
-              Welcome to your performance overview.
+              Chào mừng đến với tổng quan hiệu suất của bạn.
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'right' }}>
@@ -369,7 +398,7 @@ export default function DashboardDefault() {
                 <ClockCircleOutlined style={{ fontSize: '20px', color: '#2962ff' }} />
               </Box>
               <Typography variant="h6" fontWeight={700} color="#2962ff">
-                Today's Schedule
+                Lịch trình hôm nay
               </Typography>
             </Stack>
             
