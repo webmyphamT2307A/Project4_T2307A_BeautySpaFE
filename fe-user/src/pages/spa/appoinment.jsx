@@ -16,7 +16,8 @@ import {
   ClockCircleOutlined,
   FilterOutlined,
   FormOutlined,
-  MailOutlined
+  MailOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { useSearchParams } from 'react-router-dom';
@@ -548,6 +549,23 @@ const AppointmentManagement = () => {
               ) : null
             }}
           />
+
+          <Tooltip title="Tải lại dữ liệu">
+            <IconButton
+              onClick={() => fetchAppointments()}
+              disabled={loading}
+              sx={{
+                bgcolor: 'primary.lighter',
+                color: 'primary.main',
+                '&:hover': {
+                  bgcolor: 'primary.main',
+                  color: 'white'
+                }
+              }}
+            >
+              <ReloadOutlined />
+            </IconButton>
+          </Tooltip>
 
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel id="status-filter-label">Trạng thái</InputLabel>

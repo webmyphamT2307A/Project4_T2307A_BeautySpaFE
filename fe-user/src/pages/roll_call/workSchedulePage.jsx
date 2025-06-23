@@ -12,7 +12,7 @@ import { vi } from 'date-fns/locale';
 import {
   CalendarOutlined, ClockCircleOutlined, UserOutlined, CheckCircleOutlined,
   CloseCircleOutlined, EditOutlined, DeleteOutlined, PlusOutlined,
-  CheckOutlined, LoginOutlined, LogoutOutlined
+  CheckOutlined, LoginOutlined, LogoutOutlined, ReloadOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
@@ -284,6 +284,23 @@ const WorkSchedulePage = () => {
                     <MenuItem value="cancelled">Đã hủy</MenuItem>
                   </Select>
                 </FormControl>
+
+                <Tooltip title="Tải lại dữ liệu">
+                  <IconButton
+                    onClick={fetchSchedules}
+                    disabled={loading}
+                    sx={{
+                      bgcolor: 'primary.lighter',
+                      color: 'primary.main',
+                      '&:hover': {
+                        bgcolor: 'primary.main',
+                        color: 'white'
+                      }
+                    }}
+                  >
+                    <ReloadOutlined />
+                  </IconButton>
+                </Tooltip>
               </Stack>
             </CardContent>
           </Card>

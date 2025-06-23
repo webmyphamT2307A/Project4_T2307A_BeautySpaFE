@@ -531,7 +531,7 @@ const UserScheduleManager = () => {
           <Grid item xs={12} md={3}>
             <TextField
               size="small"
-              placeholder="Tìm kiếm theo nhân viên, ca làm, trạng thái, vai trò, chi nhánh..."
+              placeholder="Tìm kiếm theo nhân viên, ca làm, trạng thái, vai trò..."
               value={searchQuery}
               onChange={handleSearchChange}
               InputProps={{
@@ -661,7 +661,7 @@ const UserScheduleManager = () => {
             <TableRow>
               <TableCell>#</TableCell>
               <TableCell>Nhân Viên</TableCell>
-              <TableCell>Vai Trò & Chi Nhánh</TableCell>
+              <TableCell>Vai Trò</TableCell>
               <TableCell>Ngày Làm Việc</TableCell>
               <TableCell>Ca Làm Việc</TableCell>
               <TableCell>Giờ Vào</TableCell>
@@ -697,14 +697,9 @@ const UserScheduleManager = () => {
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Box>
-                      <Typography variant="body2" color="primary">
-                        {schedule.roleName}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {schedule.branchName || 'Không xác định'}
-                      </Typography>
-                    </Box>
+                    <Typography variant="body2" color="primary">
+                      {schedule.roleName}
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">

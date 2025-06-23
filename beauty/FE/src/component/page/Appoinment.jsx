@@ -1102,49 +1102,7 @@ const Appointment = () => {
                     </div>
                 </div>
                 <div className="col-12 col-md-6">
-                    <div className="d-flex flex-column align-items-md-end">  
-                        <div className="d-flex flex-wrap gap-2 mb-2">
-                            <button
-                                type="button"
-                                className={`btn btn-sm ${shiftFiltering ? 'btn-success' : 'btn-outline-light'}`}
-                                onClick={() => {
-                                    setShiftFiltering(!shiftFiltering);
-                                    // Show toast notification
-                                    if (!shiftFiltering) {
-                                        toast.info('✅ Đã bật lọc theo ca làm việc - Chỉ hiển thị nhân viên có ca phù hợp');
-                                    } else {
-                                        toast.info('❌ Đã tắt lọc theo ca làm việc - Hiển thị tất cả nhân viên có lịch làm việc');
-                                    }
-                                }}
-                                style={{ fontSize: '0.8rem' }}
-                                title={shiftFiltering ? "Tắt lọc theo ca làm việc" : "Bật lọc theo ca làm việc"}
-                            >
-                                <i className={`fas ${shiftFiltering ? 'fa-toggle-on' : 'fa-toggle-off'} me-1`}></i>
-                                Lọc theo ca làm việc
-                            </button>
-                            {/* Hiển thị ca làm việc hiện tại */}
-                            {formData.timeSlotId && (() => {
-                                const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
-                                if (selectedTimeSlot) {
-                                    const startHour = parseInt(selectedTimeSlot.startTime.split(':')[0]);
-                                    let currentShift = '';
-                                    if (startHour >= 6 && startHour < 12) {
-                                        currentShift = 'Sáng';
-                                    } else if (startHour >= 12 && startHour < 18) {
-                                        currentShift = 'Chiều';
-                                    } else {
-                                        currentShift = 'Tối';
-                                    }
-                                    return (
-                                        <span className="badge bg-info" style={{ fontSize: '0.75rem' }}>
-                                            <i className="fas fa-clock me-1"></i>
-                                            Ca {currentShift}
-                                        </span>
-                                    );
-                                }
-                                return null;
-                            })()}
-                        </div>                    
+                    <div className="d-flex flex-column align-items-md-end">                   
                         {(isCheckingAvailabilities || isLoadingSchedules) && (
                             <div className="text-info">
                                 <i className="fas fa-spinner fa-spin me-2"></i>
@@ -1207,11 +1165,7 @@ const Appointment = () => {
                                                 </ul>
                                             </div>
                                             <strong>Gợi ý:</strong> 
-                                            {shiftFiltering ? (
-                                                <span> Thử tắt "Lọc theo ca làm việc" hoặc chọn thời gian khác để xem thêm nhân viên.</span>
-                                            ) : (
-                                                <span> Thử chọn ngày khác hoặc dịch vụ khác nếu không tìm thấy nhân viên phù hợp.</span>
-                                            )}
+                                            <span> Thử chọn thời gian khác hoặc ngày khác để xem thêm nhân viên phù hợp.</span>
                                         </div>
                                         <small className="text-warning">
                                             <i className="fas fa-lightbulb me-1"></i>
