@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import DatLichButton from "../shared/DatLichButton";
 
 const Service = () => {
     const [servicesData, setServicesData] = useState([]);
@@ -37,7 +38,7 @@ const Service = () => {
                 <div className="container py-5">
                     <div className="text-center">
                         <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
+                            <span className="visually-hidden">Đang tải...</span>
                         </div>
                         <p className="mt-2">Đang tải dịch vụ...</p>
                     </div>
@@ -51,8 +52,8 @@ const Service = () => {
 <div className="container-fluid services py-5">
   <div className="container py-5">
     <div className="mx-auto text-center mb-5" style={{maxWidth: 800}}>
-      <p className="fs-4 text-uppercase text-center text-primary">Our Service</p>
-      <h1 className="display-3">Spa &amp; Beauty Services</h1>
+      <p className="fs-4 text-uppercase text-center text-primary">Dịch Vụ Của Chúng Tôi</p>
+      <h1 className="display-3">Dịch Vụ Spa &amp; Làm Đẹp</h1>
     </div>
     <div className="row g-4">
       {servicesData.map((service, index) => {
@@ -76,12 +77,8 @@ const Service = () => {
                         }}>
                           {service.description}
                         </p>
-                        <div className="mb-2">
-                          <span className="fw-bold text-primary">
-                            {service.price ? `${service.price.toLocaleString()}$` : 'Liên hệ'}
-                          </span>
-                        </div>
-                        <button 
+                        
+                        <DatLichButton 
                           onClick={() => {
                             setTimeout(() => {
                               const appointmentSection = document.getElementById('appointment');
@@ -92,10 +89,7 @@ const Service = () => {
                               }
                             }, 100);
                           }}
-                          className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4"
-                        >
-                          Make Order
-                        </button>
+                        />
                       </div>
                     </div>
                     <div className="col-4">
@@ -144,12 +138,8 @@ const Service = () => {
                         }}>
                           {service.description}
                         </p>
-                        <div className="mb-2">
-                          <span className="fw-bold text-primary">
-                            {service.price ? `${service.price.toLocaleString()}$` : 'Liên hệ'}
-                          </span>
-                        </div>
-                        <button 
+                       
+                        <DatLichButton 
                           onClick={() => {
                             setTimeout(() => {
                               const appointmentSection = document.getElementById('appointment');
@@ -160,10 +150,7 @@ const Service = () => {
                               }
                             }, 100);
                           }}
-                          className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4"
-                        >
-                          Make Order
-                        </button>
+                        />
                       </div>
                     </div>
                   </>
@@ -175,8 +162,34 @@ const Service = () => {
       })}
       <div className="col-12">
         <div className="services-btn text-center">
-          <Link to="/ServicePage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5">
-            Service More
+          <Link to="/ServicePage" 
+                style={{
+                  backgroundColor: '#FDB5B9',
+                  borderColor: '#FDB5B9',
+                  color: 'white',
+                  border: '1px solid #FDB5B9',
+                  borderRadius: '50px',
+                  padding: '12px 20px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#F7A8B8';
+                  e.target.style.borderColor = '#F7A8B8';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#FDB5B9';
+                  e.target.style.borderColor = '#FDB5B9';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }}
+          >
+            Xem Thêm Dịch Vụ
           </Link>
         </div>
       </div>
@@ -186,13 +199,14 @@ const Service = () => {
 
 <style jsx>{`
   .service-image-clickable {
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
     position: relative;
-    overflow: hidden;
   }
 
   .service-image-clickable:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(253, 181, 185, 0.3);
   }
 
   .service-image-clickable:hover img {
@@ -200,26 +214,81 @@ const Service = () => {
   }
 
   .service-image-clickable::after {
-    content: "👁️";
+    content: "\\f35d";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.7);
+    background: linear-gradient(135deg, rgba(253, 181, 185, 0.9), rgba(247, 168, 184, 0.9));
     color: white;
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
+    width: 35px;
+    height: 35px;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    font-size: 14px;
+    transition: all 0.3s ease-in-out;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
   }
 
   .service-image-clickable:hover::after {
     opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
+    }
+    50% {
+      box-shadow: 0 4px 20px rgba(253, 181, 185, 0.7);
+    }
+    100% {
+      box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
+    }
+  }
+
+  /* Enhanced "Đặt Lịch Ngay" button styling */
+  .btn-primary.rounded-pill {
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2) !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.3px !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .btn-primary.rounded-pill:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3) !important;
+    background: linear-gradient(135deg, #0056b3, #007bff) !important;
+  }
+
+  .btn-primary.rounded-pill:active {
+    transform: translateY(0) !important;
+    transition: all 0.1s ease !important;
+  }
+
+  .btn-primary.rounded-pill::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn-primary.rounded-pill:hover::before {
+    left: 100%;
   }
 `}</style>
         </>

@@ -7,12 +7,13 @@ import support from './support';
 import spa from './spa';
 // import role from './role';
 import attendance from './attendance';
+import review from './review';
 import salary from './salary';
 
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [dashboard, pages, attendance, salary, spa, utilities, support]
+  items: [dashboard, pages, attendance, salary, spa,review, utilities, support]
 };
 
 export default menuItems;

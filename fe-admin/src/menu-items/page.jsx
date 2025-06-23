@@ -11,13 +11,13 @@ const icons = {
 const isLoggedIn = Boolean(localStorage.getItem('token'));
 const pages = {
   id: 'authentication',
-  title: 'Authentication',
+  title: 'Xác Thực',
   type: 'group',
   children: !isLoggedIn
     ? [
         {
           id: 'login1',
-          title: 'Login',
+          title: 'Đăng Nhập',
           type: 'item',
           url: '/login',
           icon: icons.LoginOutlined,
@@ -25,7 +25,7 @@ const pages = {
         },
         {
           id: 'register1',
-          title: 'Register',
+          title: 'Đăng Ký',
           type: 'item',
           url: '/register',
           icon: icons.ProfileOutlined,

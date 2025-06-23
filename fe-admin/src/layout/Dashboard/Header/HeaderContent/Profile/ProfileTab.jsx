@@ -5,14 +5,16 @@ import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import { useNavigate } from 'react-router-dom';
+
 // assets
 import EditOutlined from '@ant-design/icons/EditOutlined';
 import ProfileOutlined from '@ant-design/icons/ProfileOutlined';
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
-import Cookies from 'js-cookie';
 import WalletOutlined from '@ant-design/icons/WalletOutlined';
+
+// utils
+import { useNavigate } from 'react-router-dom';
 
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
 
@@ -31,41 +33,47 @@ export default function ProfileTab() {
   localStorage.removeItem('token');
   navigate('/login');
   };
+
   return (
     <List component="nav" sx={{ p: 0, '& .MuiListItemIcon-root': { minWidth: 32 } }}>
       <ListItemButton>
         <ListItemIcon>
           <EditOutlined />
         </ListItemIcon>
-        <ListItemText primary="Edit Profile" />
+        <ListItemText primary="Chỉnh Sửa Hồ Sơ" />
       </ListItemButton>
+      
       <ListItemButton>
         <ListItemIcon>
           <UserOutlined />
         </ListItemIcon>
-        <ListItemText primary="View Profile" />
+        <ListItemText primary="Xem Hồ Sơ" />
       </ListItemButton>
 
       <ListItemButton>
         <ListItemIcon>
           <ProfileOutlined />
         </ListItemIcon>
-        <ListItemText primary="Social Profile" />
+        <ListItemText primary="Hồ Sơ Xã Hội" />
       </ListItemButton>
+      
       <ListItemButton>
         <ListItemIcon>
           <WalletOutlined />
         </ListItemIcon>
-        <ListItemText primary="Billing" />
+        <ListItemText primary="Thanh Toán" />
       </ListItemButton>
+      
       <ListItemButton onClick={handleLogout}>
         <ListItemIcon>
           <LogoutOutlined />
-        </ListItemIcon >
-        <ListItemText primary="Logout" />
+        </ListItemIcon>
+        <ListItemText primary="Đăng Xuất" />
       </ListItemButton>
     </List>
   );
 }
 
-ProfileTab.propTypes = { handleLogout: PropTypes.func };
+ProfileTab.propTypes = { 
+  handleLogout: PropTypes.func 
+};

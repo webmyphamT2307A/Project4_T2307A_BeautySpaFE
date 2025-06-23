@@ -1,0 +1,28 @@
+/* Spa Theme Button Styling for Đặt Lịch Ngay */
+.dat-lich-btn.btn.btn-primary {
+  background-color: #FDB5B9 !important;
+  border-color: #FDB5B9 !important;
+  color: white !important;
+  transition: all 0.3s ease !important;
+}
+
+.dat-lich-btn.btn.btn-primary:hover {
+  background-color: #F7A8B8 !important;
+  border-color: #F7A8B8 !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(253, 181, 185, 0.4) !important;
+}
+
+.dat-lich-btn.btn.btn-primary:active,
+.dat-lich-btn.btn.btn-primary:focus,
+.dat-lich-btn.btn.btn-primary.active {
+  background-color: #E589A3 !important;
+  border-color: #E589A3 !important;
+  color: white !important;
+  box-shadow: 0 2px 6px rgba(253, 181, 185, 0.3) !important;
+}
+
+.dat-lich-btn.btn.btn-primary:focus {
+  box-shadow: 0 0 0 0.2rem rgba(253, 181, 185, 0.5) !important;
+} 

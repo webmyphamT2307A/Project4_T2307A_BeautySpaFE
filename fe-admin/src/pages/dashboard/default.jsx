@@ -65,11 +65,11 @@ const CustomerCalendar = ({
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Box display="flex" alignItems="center">
               <CalendarOutlined style={{ marginRight: 8 }} />
-              <Typography variant="h5">Customer Calendar</Typography>
+              <Typography variant="h5">Lịch Khách Hàng</Typography>
             </Box>
             <Box>
               <IconButton onClick={prevMonth} size="small"><LeftOutlined /></IconButton>
-              <Button onClick={currentMonth} disabled={isCurrentMonth()} size="small" sx={{ mx: 1 }}>Today</Button>
+              <Button onClick={currentMonth} disabled={isCurrentMonth()} size="small" sx={{ mx: 1 }}>Hôm Nay</Button>
               <IconButton onClick={nextMonth} disabled={isCurrentMonth()} size="small"><RightOutlined /></IconButton>
             </Box>
           </Box>
@@ -80,7 +80,7 @@ const CustomerCalendar = ({
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                  {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((d) => (
                     <TableCell key={d} align="center">{d}</TableCell>
                   ))}
                 </TableRow>
@@ -154,21 +154,21 @@ const CustomerCalendar = ({
               {dialogView === 'stats' ? (
                 <>
                   <Box mb={3}>
-                    <Typography variant="h6" gutterBottom>Customer Statistics</Typography>
+                    <Typography variant="h6" gutterBottom>Thống Kê Khách Hàng</Typography>
                     <Typography variant="body1">
-                      Total customers: <Chip label={selectedDayStats.totalCustomers} color="primary" sx={{ fontWeight: 600 }} />
+                      Tổng khách hàng: <Chip label={selectedDayStats.totalCustomers} color="primary" sx={{ fontWeight: 600 }} />
                     </Typography>
                     <Typography variant="caption" color="textSecondary">
-                      {selectedDayStats.isWeekend ? 'Weekend day (typically busier)' : 'Weekday'}
+                      {selectedDayStats.isWeekend ? 'Cuối tuần (thường đông hơn)' : 'Ngày thường'}
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="h6" gutterBottom>Distribution by Shift</Typography>
+                    <Typography variant="h6" gutterBottom>Phân Bố Theo Ca</Typography>
                     {selectedDayStats.shifts.map(shift => (
                       <Box key={shift.name} sx={{ mb: 2 }}>
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                           <Typography variant="body1">{shift.name}</Typography>
-                          <Typography variant="body2" color="textSecondary">{shift.count} customers ({shift.percentage.toFixed(0)}%)</Typography>
+                          <Typography variant="body2" color="textSecondary">{shift.count} khách hàng ({shift.percentage.toFixed(0)}%)</Typography>
                         </Box>
                         <LinearProgress variant="determinate" value={shift.percentage} sx={{ height: 8, borderRadius: 2, mt: 0.5 }} />
                       </Box>
@@ -177,7 +177,7 @@ const CustomerCalendar = ({
                 </>
               ) : (
                 <>
-                  <Typography variant="h6" gutterBottom>Appointment List ({dayAppointments.length})</Typography>
+                  <Typography variant="h6" gutterBottom>Danh Sách Lịch Hẹn ({dayAppointments.length})</Typography>
                   <List sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
                     {dayAppointments.length > 0 ? dayAppointments.map((appointment, index) => (
                       <React.Fragment key={appointment.appointment_id}>
@@ -186,8 +186,8 @@ const CustomerCalendar = ({
                             primary={<Typography variant="body1" color="text.primary">{appointment.customer_name}</Typography>}
                             secondary={
                               <>
-                                <Typography component="span" variant="body2" color="text.secondary">{`Service: ${appointment.service_name}`}</Typography><br />
-                                <Typography component="span" variant="body2" color="text.secondary">{`Staff: ${appointment.staff_name}`}</Typography>
+                                <Typography component="span" variant="body2" color="text.secondary">{`Dịch vụ: ${appointment.service_name}`}</Typography><br />
+                                <Typography component="span" variant="body2" color="text.secondary">{`Nhân viên: ${appointment.staff_name}`}</Typography>
                               </>
                             }
                           />
@@ -198,7 +198,7 @@ const CustomerCalendar = ({
                         </ListItem>
                         {index < dayAppointments.length - 1 && <Divider component="li" />}
                       </React.Fragment>
-                    )) : <ListItem><ListItemText primary="No appointments found for this day." /></ListItem>}
+                    )) : <ListItem><ListItemText primary="Không tìm thấy lịch hẹn nào cho ngày này." /></ListItem>}
                   </List>
                 </>
               )}
@@ -206,13 +206,13 @@ const CustomerCalendar = ({
             <DialogActions sx={{ p: 2 }}>
               {dialogView === 'stats' ? (
                 <>
-                  <Button onClick={handleNavigateToAppointments} variant="contained">View Details</Button>
-                  <Button onClick={handleCloseModal} sx={{ ml: 1 }}>Close</Button>
+                  <Button onClick={handleNavigateToAppointments} variant="contained">Xem Chi Tiết</Button>
+                  <Button onClick={handleCloseModal} sx={{ ml: 1 }}>Đóng</Button>
                 </>
               ) : (
                 <>
-                  <Button onClick={() => setDialogView('stats')}>Back to Stats</Button>
-                  <Button onClick={handleCloseModal} sx={{ ml: 1 }}>Close</Button>
+                  <Button onClick={() => setDialogView('stats')}>Quay Lại Thống Kê</Button>
+                  <Button onClick={handleCloseModal} sx={{ ml: 1 }}>Đóng</Button>
                 </>
               )}
             </DialogActions>
@@ -223,8 +223,8 @@ const CustomerCalendar = ({
   );
 };
 
-const RevenueChart = ({ revenueTimeFrame, setRevenueTimeFrame, totalMonthlyRevenue, revenueGrowth, revenueLoading, revenueChartData }) => ( <MainCard title={ <Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <DollarOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Revenue Trends</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={revenueTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('month')}>Monthly</Button> <Button variant={revenueTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('year')}>Yearly</Button> </ButtonGroup> </Box> } > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {revenueTimeFrame === 'month' ? `Monthly revenue breakdown for ${new Date().getFullYear()}` : 'Revenue comparison for the last 5 years'} </Typography> <Typography variant="h4" mb={2}> {revenueTimeFrame === 'month' ? `$${(totalMonthlyRevenue / 1000).toFixed(1)}K` : `${revenueGrowth} year-over-year growth`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {revenueLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <ReportAreaChart timeFrame={revenueTimeFrame} chartData={revenueChartData} /> </Box> </Box> </MainCard> );
-const CustomerChart = ({ customerTimeFrame, setCustomerTimeFrame, totalMonthlyCustomers, customerGrowth, customerLoading, customerChartData }) => ( <MainCard title={ <Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <TeamOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Customer Trends</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={customerTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('month')}>Monthly</Button> <Button variant={customerTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('year')}>Yearly</Button> </ButtonGroup> </Box> } > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {customerTimeFrame === 'month' ? `Monthly customer count for ${new Date().getFullYear()}` : 'Customer growth over the last 5 years'} </Typography> <Typography variant="h4" mb={2}> {customerTimeFrame === 'month' ? `${totalMonthlyCustomers.toLocaleString()} customers` : `${customerGrowth} year-over-year growth`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {customerLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <MonthlyBarChart timeFrame={customerTimeFrame} chartData={customerChartData} /> </Box> </Box> </MainCard> );
+const RevenueChart = ({ revenueTimeFrame, setRevenueTimeFrame, totalMonthlyRevenue, revenueGrowth, revenueLoading, revenueChartData }) => ( <MainCard title={ <Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <DollarOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Doanh Thu</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={revenueTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('month')}>Theo Tháng</Button> <Button variant={revenueTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box> } > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {revenueTimeFrame === 'month' ? `Phân tích doanh thu hàng tháng năm ${new Date().getFullYear()}` : 'So sánh doanh thu trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {revenueTimeFrame === 'month' ? `$${(totalMonthlyRevenue / 1000).toFixed(1)}K` : `${revenueGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {revenueLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <ReportAreaChart timeFrame={revenueTimeFrame} chartData={revenueChartData} /> </Box> </Box> </MainCard> );
+const CustomerChart = ({ customerTimeFrame, setCustomerTimeFrame, totalMonthlyCustomers, customerGrowth, customerLoading, customerChartData }) => ( <MainCard title={ <Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <TeamOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Khách Hàng</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={customerTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('month')}>Theo Tháng</Button> <Button variant={customerTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box> } > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {customerTimeFrame === 'month' ? `Số lượng khách hàng hàng tháng năm ${new Date().getFullYear()}` : 'Tăng trưởng khách hàng trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {customerTimeFrame === 'month' ? `${totalMonthlyCustomers.toLocaleString()} khách hàng` : `${customerGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {customerLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <MonthlyBarChart timeFrame={customerTimeFrame} chartData={customerChartData} /> </Box> </Box> </MainCard> );
 
 // =================================================================
 // COMPONENT CHÍNH
@@ -311,12 +311,12 @@ const DashboardDefault = () => {
       const schedules = await apiCall(`/users-schedules?startDate=${dateStr}&endDate=${dateStr}`, `Failed to fetch schedule for ${dateStr}`);
       if (schedules && schedules.length > 0) {
         dataFound = true;
-        setScheduleTitle(`Staff Schedule (${i === 0 ? 'Today' : format(dateToFetch, 'MMM d')})`);
+        setScheduleTitle(`Lịch Trình Nhân Viên (${i === 0 ? 'Hôm Nay' : format(dateToFetch, 'MMM d')})`);
         const mappedSchedules = schedules.map(item => ({
           user_id: item.userId,
           full_name: item.userName,
           role_name: item.roleName || 'N/A',
-          branch: item.branchName || 'N/A',
+  
           check_in_time: item.checkInTime,
           status: item.status || 'On Time',
           shift: item.shift,
@@ -442,11 +442,13 @@ const DashboardDefault = () => {
 
   const getStatusChip = (status) => {
     const config = { 'On Time': { color: 'success' }, 'Late': { color: 'warning' }, 'Working': { color: 'info' } };
-    return <Chip size="small" label={status || 'Unknown'} color={config[status]?.color || 'default'} />;
+    const statusTranslations = { 'On Time': 'Đúng Giờ', 'Late': 'Trễ', 'Working': 'Đang Làm Việc', 'Unknown': 'Không Rõ' };
+    const translatedStatus = statusTranslations[status] || status || 'Không Rõ';
+    return <Chip size="small" label={translatedStatus} color={config[status]?.color || 'default'} />;
   };
 
   const getAppointmentStatusChip = (status) => {
-    const config = { 'pending': { label: 'Pending', color: 'warning' }, 'confirmed': { label: 'Confirmed', color: 'primary' }, 'completed': { label: 'Completed', color: 'success' }, 'cancelled': { label: 'Cancelled', color: 'error' } };
+    const config = { 'pending': { label: 'Chờ Xử Lý', color: 'warning' }, 'confirmed': { label: 'Đã Xác Nhận', color: 'primary' }, 'completed': { label: 'Hoàn Thành', color: 'success' }, 'cancelled': { label: 'Đã Hủy', color: 'error' } };
     const { label = status, color = 'default' } = config[status] || {};
     return <Chip size="small" label={label} color={color} />;
   };
@@ -503,14 +505,14 @@ const DashboardDefault = () => {
           </Box>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Waiting Customers" count={waitingCustomers} extra={`${servedCustomers} served today`} color="warning" icon={<UserOutlined />} /></Grid>
-        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Services This Month" count={totalServices} extra="Completed" icon={<ShopOutlined />} /></Grid>
-        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Average Rating" count={overallAverageRating} extra="Overall staff rating" color="success" icon={<StarOutlined />} /></Grid>
-        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Today's Revenue" count={todayRevenue} extra="From completed services" color="primary" icon={<DollarOutlined />} /></Grid>
+        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Khách Chờ" count={waitingCustomers} extra={`${servedCustomers} đã phục vụ hôm nay`} color="warning" icon={<UserOutlined />} /></Grid>
+        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Dịch Vụ Tháng Này" count={totalServices} extra="Đã hoàn thành" icon={<ShopOutlined />} /></Grid>
+        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Đánh Giá Trung Bình" count={overallAverageRating} extra="Đánh giá tổng thể nhân viên" color="success" icon={<StarOutlined />} /></Grid>
+        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Doanh Thu Hôm Nay" count={todayRevenue} extra="Từ các dịch vụ đã hoàn thành" color="primary" icon={<DollarOutlined />} /></Grid>
 
         <Grid item xs={12} md={8}>
           <Grid container spacing={3}>
-            <Grid item xs={12}><MainCard title={<Box display="flex" alignItems="center"><ScheduleOutlined style={{ marginRight: 8 }} /><Typography variant="h5">{scheduleTitle}</Typography> </Box>}><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Staff</TableCell><TableCell>Role</TableCell><TableCell>Check In</TableCell><TableCell>Branch</TableCell><TableCell>Status</TableCell></TableRow></TableHead><TableBody>{scheduleData.map((staff) => (<TableRow key={staff.user_id}><TableCell><Box display="flex" alignItems="center"><Avatar src={staff.image_url} sx={{ width: 28, height: 28, mr: 1 }} />{staff.full_name}</Box></TableCell><TableCell>{staff.role_name}</TableCell><TableCell>{staff.check_in_time}</TableCell><TableCell>{staff.branch}</TableCell><TableCell>{getStatusChip(staff.status)}</TableCell></TableRow>))}</TableBody></Table></TableContainer></MainCard></Grid>
+            <Grid item xs={12}><MainCard title={<Box display="flex" alignItems="center"><ScheduleOutlined style={{ marginRight: 8 }} /><Typography variant="h5">{scheduleTitle}</Typography> </Box>}><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Nhân Viên</TableCell><TableCell>Vai Trò</TableCell><TableCell>Giờ Vào</TableCell><TableCell>Chi Nhánh</TableCell><TableCell>Trạng Thái</TableCell></TableRow></TableHead><TableBody>{scheduleData.map((staff) => (<TableRow key={staff.user_id}><TableCell><Box display="flex" alignItems="center"><Avatar src={staff.image_url} sx={{ width: 28, height: 28, mr: 1 }} />{staff.full_name}</Box></TableCell><TableCell>{staff.role_name}</TableCell><TableCell>{staff.check_in_time}</TableCell><TableCell>{staff.branch}</TableCell><TableCell>{getStatusChip(staff.status)}</TableCell></TableRow>))}</TableBody></Table></TableContainer></MainCard></Grid>
             <Grid item xs={12}><RevenueChart {...{ revenueTimeFrame, setRevenueTimeFrame, totalMonthlyRevenue, revenueGrowth, revenueLoading, revenueChartData }} /></Grid>
             <Grid item xs={12}><CustomerChart {...{ customerTimeFrame, setCustomerTimeFrame, totalMonthlyCustomers, customerGrowth, customerLoading, customerChartData }} /></Grid>
           </Grid>
@@ -537,8 +539,8 @@ const DashboardDefault = () => {
                 handleNavigateToAppointments={handleNavigateToAppointments}
               />
             </Grid>
-            <Grid item xs={12}><MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"><Box display="flex" alignItems="center"><StarOutlined style={{ marginRight: 8 }} /><Typography variant="h5">Staff Rating</Typography></Box><ButtonGroup variant="outlined" size="small"><Button variant={ratingPeriod === 0 ? 'contained' : 'outlined'} onClick={() => setRatingPeriod(0)}>This Month</Button><Button variant={ratingPeriod === 1 ? 'contained' : 'outlined'} onClick={() => setRatingPeriod(1)}>Last Month</Button></ButtonGroup></Box>}><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Role</TableCell><TableCell>Rating</TableCell><TableCell align="right">Reviews</TableCell></TableRow></TableHead><TableBody>{ratingData.map((item) => (<TableRow key={item.role_id}><TableCell>{item.role_name}</TableCell><TableCell><Box display="flex" alignItems="center" fontWeight="600">{item.average_rating}<LinearProgress variant="determinate" value={parseFloat(item.average_rating) * 10} sx={{ width: '50px', ml: 1, height: 6, borderRadius: 2 }} /></Box></TableCell><TableCell align="right">{item.total_reviews}</TableCell></TableRow>))}</TableBody></Table></TableContainer></MainCard></Grid>
-            <Grid item xs={12}><MainCard title={<Box display="flex" alignItems="center"><CalendarOutlined style={{ marginRight: 8 }} /><Typography variant="h5">Today's Appointments</Typography></Box>}><List>{todayAppointments.map((appointment, index) => (<React.Fragment key={appointment.appointment_id}><ListItem><ListItemText primary={appointment.customer_name} secondary={`${appointment.service_name} • ${appointment.staff_name}`} /><Typography variant="body2" color="textSecondary">{formatTime(appointment.appointment_time)}</Typography><Box ml={2}>{getAppointmentStatusChip(appointment.status)}</Box></ListItem>{index < todayAppointments.length - 1 && <Divider />}</React.Fragment>))}</List></MainCard></Grid>
+            <Grid item xs={12}><MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"><Box display="flex" alignItems="center"><StarOutlined style={{ marginRight: 8 }} /><Typography variant="h5">Đánh Giá Nhân Viên</Typography></Box><ButtonGroup variant="outlined" size="small"><Button variant={ratingPeriod === 0 ? 'contained' : 'outlined'} onClick={() => setRatingPeriod(0)}>Tháng Này</Button><Button variant={ratingPeriod === 1 ? 'contained' : 'outlined'} onClick={() => setRatingPeriod(1)}>Tháng Trước</Button></ButtonGroup></Box>}><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Vai Trò</TableCell><TableCell>Đánh Giá</TableCell><TableCell align="right">Lượt Đánh Giá</TableCell></TableRow></TableHead><TableBody>{ratingData.map((item) => (<TableRow key={item.role_id}><TableCell>{item.role_name}</TableCell><TableCell><Box display="flex" alignItems="center" fontWeight="600">{item.average_rating}<LinearProgress variant="determinate" value={parseFloat(item.average_rating) * 10} sx={{ width: '50px', ml: 1, height: 6, borderRadius: 2 }} /></Box></TableCell><TableCell align="right">{item.total_reviews}</TableCell></TableRow>))}</TableBody></Table></TableContainer></MainCard></Grid>
+              <Grid item xs={12}><MainCard title={<Box display="flex" alignItems="center"><CalendarOutlined style={{ marginRight: 8 }} /><Typography variant="h5">Lịch Hẹn Hôm Nay</Typography></Box>}><List>{todayAppointments.map((appointment, index) => (<React.Fragment key={appointment.appointment_id}><ListItem><ListItemText primary={appointment.customer_name} secondary={`${appointment.service_name} • ${appointment.staff_name}`} /><Typography variant="body2" color="textSecondary">{formatTime(appointment.appointment_time)}</Typography><Box ml={2}>{getAppointmentStatusChip(appointment.status)}</Box></ListItem>{index < todayAppointments.length - 1 && <Divider />}</React.Fragment>))}</List></MainCard></Grid>
           </Grid>
         </Grid>
       </Grid>

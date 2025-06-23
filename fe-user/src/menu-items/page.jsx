@@ -12,13 +12,13 @@ const icons = {
 const isLoggedIn = Boolean(Cookies.get('admin_token') || Cookies.get('staff_token')); // Kiểm tra token trong cookie
 const pages = {
   id: 'authentication',
-  title: 'Authentication',
+  title: 'Xác thực',
   type: 'group',
   children: !isLoggedIn
     ? [
         {
           id: 'login1',
-          title: 'Login',
+          title: 'Đăng nhập',
           type: 'item',
           url: '/login',
           icon: icons.LoginOutlined,
@@ -26,7 +26,7 @@ const pages = {
         },
         {
           id: 'register1',
-          title: 'Register',
+          title: 'Đăng ký',
           type: 'item',
           url: '/register',
           icon: icons.ProfileOutlined,

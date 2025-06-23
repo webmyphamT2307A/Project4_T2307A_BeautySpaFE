@@ -5,12 +5,10 @@ import Loadable from 'components/Loadable';
 import DashboardLayout from 'layout/Dashboard';
 import ServiceManagement from '../pages/spa/service';
 import AppointmentManagement from '../pages/spa/appoinment';
-import ServiceHistory from '../pages/spa/service-history';
 import RoleManger from '../pages/role/service';
 import UserScheduleManager from '../pages/userschedule/schedule';
 import usePrivateRoute from './../hooks/usePrivateRoute';
 import SalaryManagement from '../pages/salary/salary';
-import BranchManager from '../pages/branch/service';
 import ReviewList from '../pages/review/review';
 import path from 'path';
 
@@ -62,10 +60,6 @@ const MainRoutes = {
         {
           path: 'appointments',
           element: <ProtectedRoute element={<AppointmentManagement />} />
-        },
-        {
-          path: 'service-history',
-          element: <ProtectedRoute element={<ServiceHistory />} />
         }
       ]
     },
@@ -94,17 +88,6 @@ const MainRoutes = {
       {
         path: 'salary',
         element: <ProtectedRoute element={<SalaryManagement />} />
-      }
-    ]
-
-  },
-    {
-    path: 'branch',
-    children: [
-      
-      {
-        path: 'service',
-        element: <ProtectedRoute element={<BranchManager />} />
       }
     ]
 

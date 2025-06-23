@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import Swal from 'sweetalert2';
 import Header from '../../shared/header';
 import Footer from '../../shared/footer';
 
@@ -63,10 +62,7 @@ const ServiceDetailPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const reviewsPerPage = 5;
   
-  // Reply system states
-  const [showReplyForm, setShowReplyForm] = useState(null); // reviewId or replyId
-  const [replyContent, setReplyContent] = useState('');
-  const [replyingTo, setReplyingTo] = useState(null); // { type: 'review'|'reply', id: number, authorName: string }
+  // Reply system states - REMOVED: Staff replies managed via admin panel
 
   // State đã được đơn giản hóa, không còn thông tin khách
   const [newReview, setNewReview] = useState({
@@ -151,14 +147,31 @@ const ServiceDetailPage = () => {
       const result = await response.json();
 
       if (response.ok) {
-        toast.success('Cập nhật đánh giá thành công!');
+        Swal.fire({
+          title: 'Thành công!',
+          text: 'Cập nhật đánh giá thành công!',
+          icon: 'success',
+          confirmButtonColor: '#28a745',
+          timer: 2000,
+          timerProgressBar: true
+        });
         setReviews(reviews.map(r => r.id === reviewId ? result.data : r));
         handleCancelEdit();
       } else {
-        toast.error(`Lỗi: ${result.message}`);
+        Swal.fire({
+          title: 'Lỗi!',
+          text: `Lỗi: ${result.message}`,
+          icon: 'error',
+          confirmButtonColor: '#dc3545'
+        });
       }
     } catch (error) {
-      toast.error('Đã có lỗi xảy ra khi cập nhật.');
+      Swal.fire({
+        title: 'Lỗi!',
+        text: 'Đã có lỗi xảy ra khi cập nhật.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -169,7 +182,19 @@ const ServiceDetailPage = () => {
   };
   // Hàm gửi yêu cầu XÓA review
   const handleDeleteClick = async (reviewId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa đánh giá này không?')) {
+    const result = await Swal.fire({
+      title: 'Xác nhận xóa',
+      text: 'Bạn có chắc chắn muốn xóa đánh giá này không?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Xóa ngay',
+      cancelButtonText: 'Hủy',
+      reverseButtons: true
+    });
+
+    if (!result.isConfirmed) {
       return;
     }
 
@@ -180,14 +205,31 @@ const ServiceDetailPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Xóa đánh giá thành công!');
+        Swal.fire({
+          title: 'Thành công!',
+          text: 'Xóa đánh giá thành công!',
+          icon: 'success',
+          confirmButtonColor: '#28a745',
+          timer: 2000,
+          timerProgressBar: true
+        });
         setReviews(reviews.filter(r => r.id !== reviewId));
       } else {
         const result = await response.json();
-        toast.error(`Lỗi: ${result.message}`);
+        Swal.fire({
+          title: 'Lỗi!',
+          text: `Lỗi: ${result.message}`,
+          icon: 'error',
+          confirmButtonColor: '#dc3545'
+        });
       }
     } catch (error) {
-      toast.error('Đã có lỗi xảy ra khi xóa.');
+      Swal.fire({
+        title: 'Lỗi!',
+        text: 'Đã có lỗi xảy ra khi xóa.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545'
+      });
     }
   };
 
@@ -197,17 +239,32 @@ const ServiceDetailPage = () => {
     if (isSubmitting) return;
 
     if (newReview.rating === 0) {
-      toast.warn('Vui lòng chọn số sao đánh giá.');
+      Swal.fire({
+        title: 'Thiếu thông tin!',
+        text: 'Vui lòng chọn số sao đánh giá.',
+        icon: 'warning',
+        confirmButtonColor: '#ffc107'
+      });
       return;
     }
 
     if (!newReview.comment.trim()) {
-      toast.warn('Vui lòng nhập nội dung bình luận.');
+      Swal.fire({
+        title: 'Thiếu thông tin!',
+        text: 'Vui lòng nhập nội dung bình luận.',
+        icon: 'warning',
+        confirmButtonColor: '#ffc107'
+      });
       return;
     }
 
     if (newReview.comment.length > 500) {
-      toast.warn('Nội dung bình luận không được vượt quá 500 ký tự.');
+      Swal.fire({
+        title: 'Nội dung quá dài!',
+        text: 'Nội dung bình luận không được vượt quá 500 ký tự.',
+        icon: 'warning',
+        confirmButtonColor: '#ffc107'
+      });
       return;
     }
 
@@ -235,16 +292,33 @@ const ServiceDetailPage = () => {
       const result = await response.json();
 
       if (response.ok && result.status === 'SUCCESS') {
-        toast.success('Cảm ơn bạn đã gửi đánh giá!');
+        Swal.fire({
+          title: 'Cảm ơn bạn!',
+          text: 'Đánh giá của bạn đã được gửi thành công!',
+          icon: 'success',
+          confirmButtonColor: '#28a745',
+          timer: 3000,
+          timerProgressBar: true
+        });
         setReviews((prev) => [result.data, ...prev]);
         setNewReview({ rating: 0, comment: '' });
         setCurrentPage(1); // Reset to first page when new review is added
       } else {
-        toast.error(`Gửi đánh giá thất bại: ${result.message}`);
+        Swal.fire({
+          title: 'Gửi thất bại!',
+          text: `Gửi đánh giá thất bại: ${result.message}`,
+          icon: 'error',
+          confirmButtonColor: '#dc3545'
+        });
       }
     } catch (error) {
       console.error('Error submitting review:', error);
-      toast.error('Đã xảy ra lỗi. Vui lòng thử lại.');
+      Swal.fire({
+        title: 'Lỗi!',
+        text: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -271,256 +345,142 @@ const ServiceDetailPage = () => {
     document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Reply handling functions
-  const handleShowReplyForm = (targetType, targetId, authorName) => {
-    setReplyingTo({ type: targetType, id: targetId, authorName });
-    setShowReplyForm(targetId);
-    setReplyContent('');
-  };
+  // Reply handling functions - REMOVED: Staff replies managed via admin panel
 
-  const handleCancelReply = () => {
-    setShowReplyForm(null);
-    setReplyContent('');
-    setReplyingTo(null);
-  };
-
-  const handleSubmitReply = async () => {
-    if (!replyContent.trim()) {
-      toast.warn('Vui lòng nhập nội dung phản hồi.');
-      return;
-    }
-
-    if (!isAuthenticated) {
-      toast.warn('Vui lòng đăng nhập để phản hồi.');
-      return;
-    }
-
-    // Allow all authenticated users to reply
-
-    setIsSubmitting(true);
-
-    try {
-      const endpoint = replyingTo.type === 'review' 
-        ? `http://localhost:8080/api/v1/reviews/${replyingTo.id}/reply`
-        : `http://localhost:8080/api/v1/review-replies/${replyingTo.id}/reply`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          comment: replyContent,
-          parentReplyId: replyingTo.type === 'reply' ? replyingTo.id : null
-        })
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.status === 'SUCCESS') {
-        toast.success('Gửi phản hồi thành công!');
-        // Refresh reviews to show new reply
-        const reviewsResponse = await fetch(`http://localhost:8080/api/v1/reviews/item/${id}?sort=createdAt,desc`);
-        const reviewsResult = await reviewsResponse.json();
-        if (reviewsResult.status === 'SUCCESS' && reviewsResult.data.content) {
-          setReviews(reviewsResult.data.content);
-        }
-        handleCancelReply();
-      } else {
-        toast.error(`Gửi phản hồi thất bại: ${result.message}`);
-      }
-    } catch (error) {
-      console.error('Error submitting reply:', error);
-      toast.error('Đã xảy ra lỗi khi gửi phản hồi.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Component to render threaded replies
-  const renderReplies = (replies, level = 0) => {
+  // Component to render simple replies (no threading)
+  const renderReplies = (replies) => {
     if (!replies || replies.length === 0) return null;
 
-    const maxLevel = 3; // Maximum nesting level.
-    const indentSize = Math.min(level, maxLevel) * 30;
-
     return replies.map((reply) => (
-      <div key={reply.id} style={{
-        marginLeft: `${indentSize}px`,
+      <div key={reply.id} className="reply-container" style={{
+        marginLeft: '20px',
         marginTop: '15px',
-        padding: '15px',
-        background: level % 2 === 0 
-          ? 'linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%)'
-          : 'linear-gradient(135deg, #fff8f0 0%, #ffeee6 100%)',
-        borderLeft: `4px solid ${level % 2 === 0 ? '#007bff' : '#ff8c00'}`,
-        borderRadius: '8px',
-        position: 'relative'
+        padding: '20px',
+        background: 'linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%)',
+        borderLeft: '4px solid #28a745',
+        borderRadius: '12px',
+        position: 'relative',
+        wordWrap: 'break-word',
+        boxShadow: '0 2px 8px rgba(40, 167, 69, 0.1)',
+        border: '1px solid rgba(40, 167, 69, 0.2)'
       }}>
-        {/* Reply Type Badge */}
+        {/* Business Reply Badge */}
         <div style={{
           position: 'absolute',
-          top: '-5px',
+          top: '-8px',
           left: '15px',
-          background: level % 2 === 0 ? '#007bff' : '#ff8c00',
+          background: '#28a745',
           color: 'white',
-          padding: '2px 8px',
-          borderRadius: '10px',
-          fontSize: '0.75rem',
+          padding: '4px 12px',
+          borderRadius: '12px',
+          fontSize: '0.7rem',
           fontWeight: '600'
         }}>
-          {reply.replyType === 'STAFF_TO_CUSTOMER' ? 'Staff' : 'Customer'}
+          <i className="fas fa-check-circle" style={{ marginRight: '4px' }}></i>
+          Phản hồi từ spa
         </div>
 
         {/* Author Info */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', marginTop: '5px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', marginTop: '8px' }}>
           <div style={{
-            width: '30px',
-            height: '30px',
+            width: '40px',
+            height: '40px',
             borderRadius: '50%',
-            background: level % 2 === 0 
-              ? 'linear-gradient(135deg, #007bff, #0056b3)'
-              : 'linear-gradient(135deg, #ff8c00, #e67700)',
+            background: 'linear-gradient(135deg, #28a745, #20c997)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: '10px'
+            marginRight: '12px',
+            flexShrink: 0
           }}>
-            <i className={`fas ${reply.replyType === 'STAFF_TO_CUSTOMER' ? 'fa-user-tie' : 'fa-user'}`} 
-               style={{ color: 'white', fontSize: '0.8rem' }}></i>
+            <i className="fas fa-user-tie" style={{ color: 'white', fontSize: '1rem' }}></i>
           </div>
           <div style={{ flex: 1 }}>
-            <strong style={{ 
-              color: level % 2 === 0 ? '#007bff' : '#ff8c00', 
-              fontSize: '0.9rem' 
-            }}>
-              {reply.authorName}
-            </strong>
-            <small style={{ color: '#666', marginLeft: '8px', fontSize: '0.8rem' }}>
-              {new Date(reply.createdAt).toLocaleString('vi-VN')}
-            </small>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '8px' }}>
+              <strong style={{ 
+                color: '#28a745', 
+                fontSize: '1.1rem'
+              }}>
+                {reply.authorName}
+              </strong>
+              <span style={{
+                background: '#e8f5e8',
+                color: '#155724',
+                padding: '2px 8px',
+                borderRadius: '10px',
+                fontSize: '0.8rem',
+                fontWeight: '600'
+              }}>
+                Nhân viên
+              </span>
+              <small style={{ color: '#666', fontSize: '0.9rem', flexShrink: 0 }}>
+                {new Date(reply.createdAt).toLocaleString('vi-VN')}
+              </small>
+            </div>
           </div>
-          
-          {/* Reply Button - For all authenticated users */}
-          {isAuthenticated && (
-            <button
-              onClick={() => handleShowReplyForm('reply', reply.id, reply.authorName)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: level % 2 === 0 ? '#007bff' : '#ff8c00',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                transition: 'background 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = level % 2 === 0 ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255, 140, 0, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'none';
-              }}
-            >
-              <i className="fas fa-reply me-1"></i>
-              Phản hồi
-            </button>
-          )}
         </div>
 
         {/* Reply Content */}
-        <p style={{ 
-          margin: 0, 
-          color: '#333', 
-          fontSize: '0.95rem',
-          lineHeight: '1.5',
-          fontStyle: level > 0 ? 'italic' : 'normal'
+        <div style={{
+          background: 'white',
+          padding: '15px',
+          borderRadius: '8px',
+          border: '1px solid rgba(40, 167, 69, 0.3)',
+          boxShadow: '0 1px 3px rgba(40, 167, 69, 0.1)'
         }}>
-          {reply.comment}
-        </p>
+          <p style={{ 
+            margin: 0, 
+            color: '#333', 
+            fontSize: '1rem',
+            lineHeight: '1.6',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word'
+          }}>
+            {reply.comment}
+          </p>
+        </div>
 
-        {/* Reply Form */}
-        {showReplyForm === reply.id && (
-          <div style={{ marginTop: '15px', padding: '15px', background: 'white', borderRadius: '8px', border: '1px solid #ddd' }}>
-            <div style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#666' }}>
-              <i className="fas fa-reply me-2"></i>
-              Phản hồi cho <strong>{replyingTo?.authorName}</strong>
-            </div>
-            <textarea
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              placeholder="Nhập phản hồi của bạn..."
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                resize: 'vertical',
-                fontSize: '0.9rem'
-              }}
-            />
-            <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-              <button
-                onClick={handleSubmitReply}
-                disabled={isSubmitting}
-                style={{
-                  background: level % 2 === 0 ? '#007bff' : '#ff8c00',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: '600'
-                }}
-              >
-                {isSubmitting ? 'Đang gửi...' : 'Gửi phản hồi'}
-              </button>
-              <button
-                onClick={handleCancelReply}
-                style={{
-                  background: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem'
-                }}
-              >
-                Hủy
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Nested Replies */}
-        {reply.replies && renderReplies(reply.replies, level + 1)}
+        {/* Helpful indicator */}
+        <div style={{
+          marginTop: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end'
+        }}>
+          <span style={{
+            color: '#28a745',
+            fontSize: '0.9rem',
+            fontStyle: 'italic',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px'
+          }}>
+            <i className="fas fa-heart" style={{ fontSize: '0.8rem' }}></i>
+            Cảm ơn bạn đã chia sẻ!
+          </span>
+        </div>
       </div>
     ));
   };
 
-  if (loading) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Loading...</div>;
-  if (!service) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Service not found</div>;
+  if (loading) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Đang tải...</div>;
+  if (!service) return <div style={{ textAlign: 'center', marginTop: 40, fontSize: '1.2rem' }}>Không tìm thấy dịch vụ</div>;
 
   return (
     <div>
       <Header />
-      <ToastContainer position="top-right" autoClose={2000} />
       
       {/* Main Content Container - Full Width */}
       <div className="container-fluid py-4" style={{ backgroundColor: '#fafafa', minHeight: '100vh' }}>
         <div className="container">
           <Link to="/ServicePage" style={{ marginBottom: 20, display: 'inline-block', border: '1px solid #f8a4c1', padding: '8px 16px', color: '#333', textDecoration: 'none', fontWeight: 'bold', transition: 'background-color 0.3s, color 0.3s', borderRadius: '999px' }}>
-            ← Back to Services
+            ← Quay lại Dịch vụ
           </Link>
 
           {/* PHẦN THÔNG TIN DỊCH VỤ - New Layout */}
           <div className="row">
-            {/* Bên trái: Ảnh dịch vụ và thông tin chính */}
-            <div className="col-md-6 mb-4">
+            {/* Bên trái: Ảnh dịch vụ và thông tin chính - Chiếm 9/12 phần */}
+            <div className="col-md-9 mb-4">
               <img
                 src={service.imageUrl || service.image_url || '/default-image.jpg'}
                 alt={service.name}
@@ -535,7 +495,7 @@ const ServiceDetailPage = () => {
                 {service.name}
               </h2>
               <p>
-                <strong>Price:</strong>{' '}
+                <strong>Giá:</strong>{' '}
                 {service.price ? `${service.price.toLocaleString()}$` : 'N/A'}
               </p>
               <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
@@ -551,40 +511,45 @@ const ServiceDetailPage = () => {
                     }
                   }, 1000);
                 }}
-                style={{
-                  background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
-                  color: 'white',
-                  fontWeight: '700',
-                  borderRadius: 30,
-                  padding: '12px 40px',
-                  display: 'inline-block',
-                  marginTop: 20,
-                  textDecoration: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
+                                  style={{
+                    background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
+                    color: 'white',
+                    fontWeight: '700',
+                    borderRadius: 30,
+                    padding: '15px 45px',
+                    display: 'inline-block',
+                    marginTop: 20,
+                    textDecoration: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 8px 25px rgba(240, 147, 151, 0.4)',
+                    fontSize: '1.1rem',
+                    letterSpacing: '0.5px',
+                    position: 'relative',
+                    zIndex: 2
+                  }}
                 onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 8px 20px rgba(240, 147, 151, 0.4)';
+                  e.target.style.transform = 'translateY(-4px) scale(1.05)';
+                  e.target.style.boxShadow = '0 15px 35px rgba(240, 147, 151, 0.6)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.transform = 'translateY(0) scale(1)';
+                  e.target.style.boxShadow = '0 8px 25px rgba(240, 147, 151, 0.4)';
                 }}
               >
-                REGISTER NOW!
+                ĐĂNG KÝ NGAY!
               </button>
             </div>
 
-            {/* Bên phải: Gợi ý dịch vụ - Beautiful Design */}
-            <div className="col-md-6">
+            {/* Bên phải: Gợi ý dịch vụ - Beautiful Design - Chiếm 3/12 phần */}
+            <div className="col-md-3">
               <div style={{
-                background: 'linear-gradient(135deg, #fff5f8 0%, #ffeef2 100%)',
+                background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #ffecd2 100%)',
                 borderRadius: '20px',
                 padding: '25px',
-                boxShadow: '0 10px 30px rgba(214, 51, 108, 0.1)',
-                border: '1px solid rgba(214, 51, 108, 0.1)'
+                boxShadow: '0 15px 40px rgba(255, 154, 158, 0.3)',
+                border: '1px solid rgba(255, 154, 158, 0.2)'
               }}>
                 <h3 style={{ 
                   fontSize: '1.8rem', 
@@ -595,25 +560,27 @@ const ServiceDetailPage = () => {
                   position: 'relative'
                 }}>
                   <span style={{
-                    background: 'linear-gradient(135deg, #d6336c, #f5576c)',
+                    background: 'linear-gradient(135deg, #ffffff, #fff0f5)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
+                    backgroundClip: 'text',
+                    textShadow: '0 2px 8px rgba(255, 255, 255, 0.5)'
                   }}>
                     Dịch vụ gợi ý
                   </span>
                   <div style={{
                     width: '50px',
                     height: '3px',
-                    background: 'linear-gradient(90deg, #d6336c, #f5576c)',
+                    background: 'linear-gradient(90deg, #ffffff, #fff0f5)',
                     margin: '10px auto 0',
-                    borderRadius: '2px'
+                    borderRadius: '2px',
+                    boxShadow: '0 2px 8px rgba(255, 255, 255, 0.6)'
                   }}></div>
                 </h3>
                 
                 <div className="row g-2">
                   {relatedServices.map((relatedService, index) => (
-                    <div key={relatedService.id} className="col-4">
+                    <div key={relatedService.id} className="col-6">
                       <div className="related-service-card" style={{
                         background: 'white',
                         borderRadius: '12px',
@@ -687,31 +654,16 @@ const ServiceDetailPage = () => {
                           <p style={{ 
                             fontSize: '0.65rem', 
                             color: '#888', 
-                            margin: '0 0 8px 0',
-                            height: '24px',
+                            margin: '0',
+                            height: '36px',
                             overflow: 'hidden',
                             display: '-webkit-box',
-                            WebkitLineClamp: 2,
+                            WebkitLineClamp: 3,
                             WebkitBoxOrient: 'vertical',
                             lineHeight: '1.2'
                           }}>
                             {relatedService.description}
                           </p>
-                          
-                          <div style={{
-                            background: 'linear-gradient(135deg, #d6336c, #f5576c)',
-                            borderRadius: '15px',
-                            padding: '4px 10px',
-                            display: 'inline-block'
-                          }}>
-                            <span style={{ 
-                              fontSize: '0.7rem', 
-                              fontWeight: '700', 
-                              color: 'white'
-                            }}>
-                              {relatedService.price ? `${relatedService.price.toLocaleString()}$` : 'N/A'}
-                            </span>
-                          </div>
                         </div>
 
                         {/* Hover icon */}
@@ -746,25 +698,25 @@ const ServiceDetailPage = () => {
                       width: '100%',
                       textAlign: 'center',
                       padding: '15px',
-                      background: 'linear-gradient(135deg, #d6336c, #f5576c)',
+                      background: 'linear-gradient(135deg, #ff9a9e, #fecfef)',
                       borderRadius: '25px',
                       color: 'white',
                       border: 'none',
                       fontWeight: '700',
                       fontSize: '1rem',
                       transition: 'all 0.3s ease',
-                      boxShadow: '0 5px 15px rgba(214, 51, 108, 0.3)',
+                      boxShadow: '0 5px 15px rgba(255, 154, 158, 0.4)',
                       position: 'relative',
                       overflow: 'hidden',
                       cursor: 'pointer'
                     }}
                     onMouseEnter={(e) => {
                       e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow = '0 8px 25px rgba(214, 51, 108, 0.4)';
+                      e.target.style.boxShadow = '0 8px 25px rgba(255, 154, 158, 0.5)';
                     }}
                     onMouseLeave={(e) => {
                       e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = '0 5px 15px rgba(214, 51, 108, 0.3)';
+                      e.target.style.boxShadow = '0 5px 15px rgba(255, 154, 158, 0.4)';
                     }}
                   >
                     <i className="fas fa-spa" style={{ marginRight: '8px' }}></i>
@@ -778,7 +730,7 @@ const ServiceDetailPage = () => {
 
           {/* PHẦN REVIEWS */}
           <div id="reviews-section" style={{ marginTop: 60 }}>
-            <h3 style={{ fontWeight: 700, marginBottom: 25 }}>Reviews</h3>
+            <h3 style={{ fontWeight: 700, marginBottom: 25 }}>Đánh giá</h3>
 
             {/* PHẦN THỐNG KÊ REVIEW - Đầy đủ */}
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -787,7 +739,7 @@ const ServiceDetailPage = () => {
                 <div style={{ color: '#f5a623', fontSize: 20 }}>
                   {'★'.repeat(Math.round(Number(averageRating))) + '☆'.repeat(5 - Math.round(Number(averageRating)))}
                 </div>
-                <div style={{ color: '#888' }}>{reviews.length} reviews</div>
+                <div style={{ color: '#888' }}>{reviews.length} đánh giá</div>
               </div>
               <div style={{ flexGrow: 1, minWidth: '300px' }}>
                 {[5, 4, 3, 2, 1].map((star, i) => (
@@ -817,23 +769,41 @@ const ServiceDetailPage = () => {
 
             {/* PHẦN FORM REVIEW - Đã cập nhật */}
             <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
-              <h4 style={{ marginBottom: 15 }}>Share your review</h4>
+              <h4 style={{ marginBottom: 15 }}>Chia sẻ đánh giá của bạn</h4>
+              
+              {/* Thông báo về chính sách phản hồi */}
+              <div style={{
+                background: 'linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%)',
+                border: '1px solid #28a745',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <i className="fas fa-info-circle" style={{ color: '#28a745', fontSize: '1.1rem' }}></i>
+                <div style={{ fontSize: '0.9rem', color: '#155724' }}>
+                  <strong>Chính sách phản hồi:</strong> Đội ngũ chăm sóc khách hàng của chúng tôi sẽ phản hồi các đánh giá quan trọng. 
+                  Mọi phản hồi từ spa đều được xem xét kỹ lưỡng để đảm bảo chất lượng dịch vụ tốt nhất.
+                </div>
+              </div>
 
               {isAuthenticated ? (
                 <form onSubmit={handleReviewSubmit}>
                   <div style={{ padding: '10px 15px', background: '#e9ecef', borderLeft: '4px solid #d6336c', marginBottom: 15, borderRadius: 4 }}>
-                    <p style={{ margin: 0 }}>You are reviewing as: <strong>{user.fullName}</strong></p>
+                    <p style={{ margin: 0 }}>Bạn đang đánh giá với tư cách: <strong>{user.fullName}</strong></p>
                   </div>
-                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Your rating *</label>
+                                      <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Đánh giá của bạn *</label>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 15 }}>
                     {[1, 2, 3, 4, 5].map((star) => (
                       <span key={star} onClick={() => setNewReview({ ...newReview, rating: star })} style={{ fontSize: 30, cursor: 'pointer', color: star <= newReview.rating ? '#f60' : '#ccc', marginRight: 5, userSelect: 'none' }}>★</span>
                     ))}
-                    <span style={{ marginLeft: 10, fontSize: 14, color: '#555' }}>
-                      {newReview.rating === 0 ? 'Chưa chọn đánh giá' : { 1: 'Very Bad', 2: 'Not Satisfied', 3: 'Average', 4: 'Satisfied', 5: 'Very Satisfied' }[newReview.rating]}
-                    </span>
+                                          <span style={{ marginLeft: 10, fontSize: 14, color: '#555' }}>
+                        {newReview.rating === 0 ? 'Chưa chọn đánh giá' : { 1: 'Rất tệ', 2: 'Không hài lòng', 3: 'Trung bình', 4: 'Hài lòng', 5: 'Rất hài lòng' }[newReview.rating]}
+                      </span>
                   </div>
-                  <label style={{ fontWeight: 500 }}>Comment * (Tối đa 500 ký tự)</label>
+                                      <label style={{ fontWeight: 500 }}>Bình luận * (Tối đa 500 ký tự)</label>
                   <textarea
                     value={newReview.comment}
                     onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
@@ -847,14 +817,14 @@ const ServiceDetailPage = () => {
                       {newReview.comment.length}/500 ký tự
                     </small>
                   </div>
-                  <button type="submit" disabled={isSubmitting} style={{ backgroundColor: '#28a745', color: 'white', padding: '10px 20px', border: 'none', borderRadius: 5, fontWeight: 'bold', cursor: 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
-                    {isSubmitting ? 'Submitting...' : 'Submit Review'}
-                  </button>
+                                      <button type="submit" disabled={isSubmitting} style={{ backgroundColor: '#28a745', color: 'white', padding: '10px 20px', border: 'none', borderRadius: 5, fontWeight: 'bold', cursor: 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
+                      {isSubmitting ? 'Đang gửi...' : 'Gửi Đánh Giá'}
+                    </button>
                 </form>
               ) : (
                 <div style={{ padding: '20px', textAlign: 'center', background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 5 }}>
                   <p style={{ margin: 0 }}>
-                    Please <Link to="/login" style={{ fontWeight: 'bold', color: '#d6336c' }}>log in</Link> to leave a review.
+                    Vui lòng <Link to="/login" style={{ fontWeight: 'bold', color: '#d6336c' }}>đăng nhập</Link>  để lại đánh giá.
                   </p>
                 </div>
               )}
@@ -863,7 +833,7 @@ const ServiceDetailPage = () => {
 
           <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h4 style={{ marginBottom: 0 }}>All Reviews ({reviews.length})</h4>
+              <h4 style={{ marginBottom: 0 }}>Tất cả Đánh Giá ({reviews.length})</h4>
               {totalPages > 1 && (
                 <small style={{ color: '#666' }}>
                   Trang {currentPage} / {totalPages} (Hiển thị {currentReviews.length} / {reviews.length} đánh giá)
@@ -872,7 +842,16 @@ const ServiceDetailPage = () => {
             </div>
             {currentReviews.length > 0 ? (
               currentReviews.map((r) => (
-                <div key={r.id} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
+                <div key={r.id} style={{ 
+                  borderBottom: '1px solid #f0f0f0', 
+                  paddingBottom: 20, 
+                  marginBottom: 20,
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                  border: '1px solid #f5f5f5'
+                }}>
 
                   {/* KIỂM TRA NẾU REVIEW NÀY ĐANG ĐƯỢC SỬA */}
                   {editingReviewId === r.id ? (
@@ -891,51 +870,50 @@ const ServiceDetailPage = () => {
                       />
                       <div>
                         <button onClick={() => handleUpdateSubmit(r.id)} disabled={isSubmitting} style={{ backgroundColor: '#007bff', color: 'white', padding: '8px 16px', border: 'none', borderRadius: 5, cursor: 'pointer', marginRight: 8 }}>
-                          {isSubmitting ? 'Saving...' : 'Save Changes'}
+                          {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                         </button>
                         <button onClick={handleCancelEdit} style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: 5, cursor: 'pointer', background: 'transparent' }}>
-                          Cancel
+                          Hủy
                         </button>
                       </div>
                     </div>
                   ) : (
                     // GIAO DIỆN HIỂN THỊ BÌNH THƯỜNG
                     <>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <strong style={{ color: '#d6336c', marginRight: 10 }}>{r.authorName}</strong>
-                          <span style={{ color: '#f5a623' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #d6336c, #f5576c)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <i className="fas fa-user" style={{ color: 'white', fontSize: '1rem' }}></i>
+                          </div>
+                          <div>
+                            <strong style={{ color: '#d6336c', fontSize: '1.1rem', display: 'block' }}>{r.authorName}</strong>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                              <span style={{ color: '#f5a623', fontSize: '1.1rem' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                              <span style={{ 
+                                background: '#f5f5f5', 
+                                color: '#666', 
+                                padding: '2px 8px', 
+                                borderRadius: '10px', 
+                                fontSize: '0.8rem',
+                                fontWeight: '500'
+                              }}>
+                                Khách hàng
+                              </span>
+                            </div>
+                          </div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {/* REPLY BUTTON FOR ALL AUTHENTICATED USERS */}
-                          {isAuthenticated && (
-                            <button
-                              onClick={() => handleShowReplyForm('review', r.id, r.authorName)}
-                              style={{
-                                background: 'none',
-                                border: '1px solid #28a745',
-                                color: '#28a745',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: '600',
-                                padding: '4px 12px',
-                                borderRadius: '15px',
-                                transition: 'all 0.3s ease'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.target.style.background = '#28a745';
-                                e.target.style.color = 'white';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.target.style.background = 'none';
-                                e.target.style.color = '#28a745';
-                              }}
-                            >
-                              <i className="fas fa-reply me-1"></i>
-                              Phản hồi
-                            </button>
-                          )}
+                          {/* REPLY BUTTON - REMOVED: Only staff/admin can reply via admin panel */}
 
                           {/* HIỂN THỊ NÚT SỬA/XÓA NẾU ĐÚNG CHỦ REVIEW */}
                           {isAuthenticated && user && user.id === r.customerId && (
@@ -982,99 +960,36 @@ const ServiceDetailPage = () => {
                           )}
                         </div>
                       </div>
-                      <p style={{ margin: '0 0 8px 0', color: '#333' }}>{r.comment}</p>
-                      <small style={{ color: '#888' }}>{new Date(r.createdAt).toLocaleString('vi-VN')}</small>
-                      
-                      {/* REPLY FORM FOR THIS REVIEW */}
-                      {showReplyForm === r.id && (
-                        <div style={{ 
-                          marginTop: '15px', 
-                          padding: '15px', 
-                          background: 'white', 
-                          borderRadius: '8px', 
-                          border: '2px solid #28a745',
-                          boxShadow: '0 2px 8px rgba(40, 167, 69, 0.1)'
+                      <div style={{
+                        background: '#fafafa',
+                        padding: '15px',
+                        borderRadius: '8px',
+                        margin: '10px 0',
+                        border: '1px solid #f0f0f0'
+                      }}>
+                        <p style={{ 
+                          margin: 0, 
+                          color: '#333', 
+                          fontSize: '1rem',
+                          lineHeight: '1.6'
+                        }}>{r.comment}</p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                        <small style={{ 
+                          color: '#888', 
+                          fontSize: '0.9rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
                         }}>
-                          <div style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#666' }}>
-                            <i className="fas fa-reply me-2"></i>
-                            Phản hồi cho <strong style={{ color: '#d6336c' }}>{replyingTo?.authorName}</strong>
-                          </div>
-                          <textarea
-                            value={replyContent}
-                            onChange={(e) => setReplyContent(e.target.value)}
-                            placeholder="Nhập phản hồi của bạn..."
-                            rows={3}
-                            style={{
-                              width: '100%',
-                              padding: '12px',
-                              border: '1px solid #ddd',
-                              borderRadius: '8px',
-                              resize: 'vertical',
-                              fontSize: '0.9rem',
-                              fontFamily: 'inherit'
-                            }}
-                          />
-                          <div style={{ marginTop: '12px', display: 'flex', gap: '10px' }}>
-                            <button
-                              onClick={handleSubmitReply}
-                              disabled={isSubmitting}
-                              style={{
-                                background: '#28a745',
-                                color: 'white',
-                                border: 'none',
-                                padding: '10px 20px',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: '600',
-                                transition: 'background 0.3s ease'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!isSubmitting) e.target.style.background = '#218838';
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!isSubmitting) e.target.style.background = '#28a745';
-                              }}
-                            >
-                              {isSubmitting ? (
-                                <>
-                                  <i className="fas fa-spinner fa-spin me-2"></i>
-                                  Đang gửi...
-                                </>
-                              ) : (
-                                <>
-                                  <i className="fas fa-paper-plane me-2"></i>
-                                  Gửi phản hồi
-                                </>
-                              )}
-                            </button>
-                            <button
-                              onClick={handleCancelReply}
-                              style={{
-                                background: '#6c757d',
-                                color: 'white',
-                                border: 'none',
-                                padding: '10px 20px',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                transition: 'background 0.3s ease'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.target.style.background = '#545b62';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.target.style.background = '#6c757d';
-                              }}
-                            >
-                              <i className="fas fa-times me-2"></i>
-                              Hủy
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                          <i className="fas fa-clock" style={{ fontSize: '0.8rem' }}></i>
+                          {new Date(r.createdAt).toLocaleString('vi-VN')}
+                        </small>
+                      </div>
                       
-                      {/* HIỂN THỊ TẤT CẢ REPLIES THEO CẤU TRÚC PHÂN CẤP */}
+                      {/* REPLY FORM REMOVED - Staff replies managed via admin panel */}
+                      
+                      {/* HIỂN THỊ TẤT CẢ BUSINESS REPLIES */}
                       {r.replies && renderReplies(r.replies)}
                     </>
                   )}
@@ -1082,7 +997,7 @@ const ServiceDetailPage = () => {
                 </div>
               ))
             ) : (
-              <p>There are no reviews yet. Be the first one!</p>
+              <p>Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
             )}
 
             {/* Pagination UI */}
@@ -1123,7 +1038,7 @@ const ServiceDetailPage = () => {
                     }
                   }}
                 >
-                  <i className="fas fa-chevron-left"></i> Previous
+                  <i className="fas fa-chevron-left"></i> Trước
                 </button>
 
                 {/* Page Numbers */}
@@ -1186,12 +1101,13 @@ const ServiceDetailPage = () => {
                     }
                   }}
                 >
-                  Next <i className="fas fa-chevron-right"></i>
+                  Tiếp <i className="fas fa-chevron-right"></i>
                 </button>
               </div>
             )}
           </div>
         </div>
+
       </div>
       
       {/* Custom CSS for hover effects */}
@@ -1205,27 +1121,42 @@ const ServiceDetailPage = () => {
           border-color: #d6336c !important;
         }
         
+        /* Business reply responsive */
         @media (max-width: 768px) {
           .related-service-card {
             height: auto !important;
             min-height: 140px;
           }
           
-          .col-4 {
+          .col-6 {
             flex: 0 0 50% !important;
             max-width: 50% !important;
+          }
+          
+          /* Responsive cho business replies */
+          .reply-container {
+            margin-left: 10px !important;
+            max-width: calc(100% - 15px) !important;
           }
         }
         
         @media (max-width: 576px) {
-          .col-4 {
+          .col-6 {
             flex: 0 0 100% !important;
             max-width: 100% !important;
           }
+          
+          /* Mobile: điều chỉnh business replies */
+          .reply-container {
+            margin-left: 5px !important;
+            max-width: calc(100% - 10px) !important;
+            padding: 12px !important;
+            font-size: 0.85rem !important;
+          }
         }
       `}</style>
-
       <Footer />
+
     </div>
   );
 };

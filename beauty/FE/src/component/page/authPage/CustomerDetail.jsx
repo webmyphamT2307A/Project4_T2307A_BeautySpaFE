@@ -3,6 +3,7 @@ import { Tab, Nav } from 'react-bootstrap';
 import axios from 'axios';
 import Header from "../../shared/header";
 import Footer from "../../shared/footer";
+import sessionManager from '../../../utils/sessionManager';
 
 const CustomerDetail = () => {
     const [key, setKey] = useState('profile');
@@ -25,8 +26,13 @@ const CustomerDetail = () => {
 
     const [serviceHistory, setServiceHistory] = useState([]);
     const [selectedHistory, setSelectedHistory] = useState(null);
+    
+    // Pagination states for service history
+    const [currentHistoryPage, setCurrentHistoryPage] = useState(1);
+    const historyPerPage = 5;
 
     const [message, setMessage] = useState({ type: '', content: '' });
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('userInfo');
@@ -48,6 +54,13 @@ const CustomerDetail = () => {
         } else {
             window.location.href = '/';
         }
+        
+        // Cleanup function to revoke preview URLs
+        return () => {
+            if (userInfo.imagePreview) {
+                URL.revokeObjectURL(userInfo.imagePreview);
+            }
+        };
     }, []);
 
     const fetchUserDetails = async (userId, token) => {
@@ -87,7 +100,12 @@ const CustomerDetail = () => {
     const handleProfileChange = (e) => {
         const { name, value, files } = e.target;
         if (name === "imageFile") {
-            setUserInfo({ ...userInfo, imageFile: files[0] });
+            const file = files[0];
+            if (file) {
+                // Create preview URL for immediate display
+                const previewUrl = URL.createObjectURL(file);
+                setUserInfo({ ...userInfo, imageFile: file, imagePreview: previewUrl });
+            }
         } else {
             setUserInfo({ ...userInfo, [name]: value });
         }
@@ -120,8 +138,16 @@ const CustomerDetail = () => {
                 { headers: { 'Authorization': `Bearer ${user.token}` } }
             );
             if (response.data && response.data.status === 'SUCCESS') {
-                localStorage.setItem('userInfo', JSON.stringify({ ...user, ...userInfo }));
+                const updatedUserInfo = { ...user, ...userInfo, imageUrl: response.data.data.imageUrl || userInfo.imageUrl };
+                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
+                
+                // Dispatch custom event to notify Header component
+                window.dispatchEvent(new CustomEvent('userInfoUpdated'));
+                
                 setMessage({ type: 'success', content: 'Cập nhật thông tin thành công!' });
+                
+                // Update local state to show new image immediately
+                setUserInfo(prev => ({ ...prev, imageUrl: response.data.data.imageUrl || prev.imageUrl }));
             } else {
                 setMessage({ type: 'danger', content: 'Có lỗi xảy ra!' });
             }
@@ -156,17 +182,35 @@ const CustomerDetail = () => {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await axios.post('http://localhost:8080/api/v1/customer/logout', {}, {
-                headers: { 'Authorization': `Bearer ${user.token}` }
-            });
-        } catch (error) {
-            console.error('Error during logout:', error);
-        } finally {
-            localStorage.removeItem('userInfo');
-            window.location.href = '/';
-        }
+    const handleLogout = () => {
+        if (isLoggingOut) return; // Prevent multiple clicks
+        
+        setIsLoggingOut(true);
+        
+        // IMMEDIATE logout - no waiting, no async
+        // Clear all user data instantly
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Redirect immediately
+        window.location.href = '/';
+        
+        // Call logout API in background after redirect (fire and forget)
+        setTimeout(() => {
+            if (user.token) {
+                fetch('http://localhost:8080/api/v1/customer/logout', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${user.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                }).catch(error => {
+                    console.error('Background logout API call failed:', error);
+                });
+            }
+        }, 100);
     };
 
     const handleViewDetails = (history) => {
@@ -175,6 +219,17 @@ const CustomerDetail = () => {
 
     const handleCloseDetails = () => {
         setSelectedHistory(null);
+    };
+
+    // Pagination calculations for service history
+    const totalHistoryPages = Math.ceil(serviceHistory.length / historyPerPage);
+    const startHistoryIndex = (currentHistoryPage - 1) * historyPerPage;
+    const endHistoryIndex = startHistoryIndex + historyPerPage;
+    const currentHistoryItems = serviceHistory.slice(startHistoryIndex, endHistoryIndex);
+
+    // Handle history page change
+    const handleHistoryPageChange = (pageNumber) => {
+        setCurrentHistoryPage(pageNumber);
     };
 
     if (loading) {
@@ -200,7 +255,15 @@ const CustomerDetail = () => {
                         <div className="bg-light p-4 rounded">
                             <div className="text-center mb-4">
                                 <img
-                                    src={userInfo.imageUrl || "/assets/img/default-avatar.jpg"}
+                                    src={
+                                        userInfo.imagePreview || (
+                                            userInfo.imageUrl
+                                                ? userInfo.imageUrl.startsWith('http')
+                                                    ? userInfo.imageUrl
+                                                    : `http://localhost:8080/${userInfo.imageUrl.replace(/^\/?/, '')}`
+                                                : "/assets/img/default-avatar.jpg"
+                                        )
+                                    }
                                     alt="Ảnh đại diện"
                                     className="img-fluid rounded-circle"
                                     style={{ width: "150px", height: "150px", objectFit: "cover" }}
@@ -222,19 +285,27 @@ const CustomerDetail = () => {
                                 >
                                     Đổi mật khẩu
                                 </a>
+                               
                                 <a
                                     href="#"
-                                    className={`list-group-item list-group-item-action ${key === 'history' ? 'active' : ''}`}
-                                    onClick={(e) => { e.preventDefault(); setKey('history') }}
-                                >
-                                    Lịch sử dịch vụ
-                                </a>
-                                <a
-                                    href="#"
-                                    className="list-group-item list-group-item-action"
+                                    className={`list-group-item list-group-item-action ${isLoggingOut ? 'disabled' : ''}`}
                                     onClick={(e) => { e.preventDefault(); handleLogout() }}
+                                    style={{ 
+                                        opacity: isLoggingOut ? 0.6 : 1,
+                                        cursor: isLoggingOut ? 'not-allowed' : 'pointer'
+                                    }}
                                 >
-                                    Đăng xuất
+                                    {isLoggingOut ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin me-2"></i>
+                                            Đang đăng xuất...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-sign-out-alt me-2"></i>
+                                            Đăng xuất
+                                        </>
+                                    )}
                                 </a>
                             </div>
                         </div>
@@ -348,32 +419,7 @@ const CustomerDetail = () => {
                                             <button type="submit" className="btn btn-primary">Đổi mật khẩu</button>
                                         </form>
                                     </Tab.Pane>
-                                    <Tab.Pane eventKey="history">
-                                        <h4 className="mb-4">Lịch sử dịch vụ</h4>
-                                        {serviceHistory.length === 0 ? (
-                                            <p>Không có lịch sử dịch vụ nào.</p>
-                                        ) : (
-                                            <div className="list-group">
-                                                {serviceHistory.map((history) => (
-                                                    <div key={history.id} className="list-group-item">
-                                                        <div className="d-flex justify-content-between align-items-center">
-                                                            <div>
-                                                                <h5>{history.serviceName}</h5>
-                                                                <p className="mb-1">Giá: {history.price}$</p>
-                                                                <p className="mb-1">Ngày hẹn: {new Date(history.appointmentDate).toLocaleDateString()}</p>
-                                                            </div>
-                                                            <button
-                                                                className="btn btn-primary"
-                                                                onClick={() => handleViewDetails(history)}
-                                                            >
-                                                                Xem chi tiết
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </Tab.Pane>
+                                   
                                 </Tab.Content>
                             </Tab.Container>
                         </div>
@@ -381,30 +427,7 @@ const CustomerDetail = () => {
                 </div>
             </div>
 
-            {selectedHistory && (
-                <div className="modal show d-block" tabIndex="-1">
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Chi tiết dịch vụ</h5>
-                                <button type="button" className="btn-close" onClick={handleCloseDetails}></button>
-                            </div>
-                            <div className="modal-body">
-                                <p><b>Dịch vụ:</b> {selectedHistory.serviceName}</p>
-                                <p><b>Giá:</b> {selectedHistory.price}$</p>
-                                <p><b>Ngày hẹn:</b> {new Date(selectedHistory.appointmentDate).toLocaleDateString()}</p>
-                                <p><b>Ghi chú:</b> {selectedHistory.notes || 'Không có ghi chú'}</p>
-                                <p><b>Ngày tạo:</b> {new Date(selectedHistory.createdAt).toLocaleDateString()}</p>
-                                <p><b>Trạng thái:</b> {selectedHistory.isActive ? 'Hoạt động' : 'Không hoạt động'}</p>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={handleCloseDetails}>Đóng</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
+            
             <Footer />
         </>
     );

@@ -4,7 +4,7 @@ import {
     IconButton, Tooltip, CircularProgress, FormControl, InputLabel, Select, MenuItem, Box,
     Modal, Typography, TextField, Button, Paper
 } from '@mui/material';
-import { DeleteOutlined, ReadFilled } from '@ant-design/icons'; // <<< THAY ĐỔI: Dùng ReadFilled cho trực quan
+import { DeleteOutlined, ReadFilled } from '@ant-design/icons'; 
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
 
@@ -123,10 +123,7 @@ const ReviewList = () => {
 
     // Xóa review (soft-delete)
     const handleDelete = async (id) => {
-        if (!confirm('Bạn có chắc chắn muốn thay đổi trạng thái đánh giá này?')) {
-      toast.info('Đã hủy thay đổi trạng thái.');
-      return;
-    }
+        if (!window.confirm('Bạn có chắc chắn muốn thay đổi trạng thái của đánh giá này?')) return;
         setLoading(true);
         const token = localStorage.getItem('token');
         try {
@@ -138,11 +135,11 @@ const ReviewList = () => {
             });
             const data = await res.json();
             if (data.status === 'SUCCESS') {
-                toast.success('Review status changed!');
+                toast.success('Trạng thái đánh giá đã được thay đổi!');
                 fetchReviews();
-            } else toast.error(data.message || 'Failed');
+            } else toast.error(data.message || 'Thất bại');
         } catch {
-            toast.error('Error');
+            toast.error('Lỗi');
         }
         setLoading(false);
     };
@@ -155,18 +152,18 @@ const ReviewList = () => {
     });
 
     return (
-        <MainCard title="Tất Cả Đánh Giá">
+        <MainCard title="Tất cả đánh giá">
             <Box mb={2} display="flex" justifyContent="flex-end">
                 <FormControl size="small" sx={{ minWidth: 160 }}>
-                    <InputLabel>Trạng Thái</InputLabel>
+                    <InputLabel>Trạng thái</InputLabel>
                     <Select
                         value={statusFilter}
-                        label="Trạng Thái"
+                        label="Trạng thái"
                         onChange={e => setStatusFilter(e.target.value)}
                     >
-                        <MenuItem value="all">Tất Cả</MenuItem>
-                        <MenuItem value="active">Hoạt Động</MenuItem>
-                        <MenuItem value="inactive">Không Hoạt Động</MenuItem>
+                        <MenuItem value="all">Tất cả</MenuItem>
+                        <MenuItem value="active">Hoạt động</MenuItem>
+                        <MenuItem value="inactive">Không hoạt động</MenuItem>
                     </Select>
                 </FormControl>
             </Box>
@@ -176,13 +173,13 @@ const ReviewList = () => {
                     <TableHead>
                         <TableRow>
                             <TableCell>ID</TableCell>
-                            <TableCell>Tác Giả</TableCell>
+                            <TableCell>Tác giả</TableCell>
                             <TableCell>Loại</TableCell>
-                            <TableCell>Bình Luận / Phản Hồi</TableCell>
-                            <TableCell>Đánh Giá</TableCell>
-                            <TableCell>Ngày Tạo</TableCell>
-                            <TableCell>Trạng Thái</TableCell>
-                            <TableCell align="center">Thao Tác</TableCell>
+                            <TableCell>Bình luận / Phản hồi</TableCell>
+                            <TableCell>Đánh giá</TableCell>
+                            <TableCell>Ngày tạo</TableCell>
+                            <TableCell>Trạng thái</TableCell>
+                            <TableCell align="center">Thao tác</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -198,7 +195,7 @@ const ReviewList = () => {
                                         {r.replies && r.replies.length > 0 && (
                                             <Paper variant="outlined" sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', borderLeft: '3px solid #1890ff' }}>
                                                 <Typography variant="caption" component="div" sx={{ fontWeight: 'bold', color: '#1890ff' }}>
-                                                    Phản hồi bởi: {r.replies[0].authorName}
+                                                    Trả lời bởi: {r.replies[0].authorName}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
                                                     "{r.replies[0].comment}"
@@ -211,14 +208,14 @@ const ReviewList = () => {
                                 <TableCell>{r.createdAt?.slice(0, 10)}</TableCell>
                                 <TableCell>
                                     {r.active === false || r.active === 0 ? (
-                                        <span style={{ color: 'red' }}>Không Hoạt Động</span>
+                                        <span style={{ color: 'red' }}>Inactive</span>
                                     ) : (
-                                        <span style={{ color: 'green' }}>Hoạt Động</span>
+                                        <span style={{ color: 'green' }}>Active</span>
                                     )}
                                 </TableCell>
                                 <TableCell align="center">
                                     {/* // <<< THAY ĐỔI: Thêm nút Reply */}
-                                    <Tooltip title="Phản Hồi">
+                                    <Tooltip title="Reply">
                                         <span> {/* Bọc trong span để tooltip hoạt động khi button bị disabled */}
                                             <IconButton
                                                 color="primary"
@@ -229,7 +226,7 @@ const ReviewList = () => {
                                             </IconButton>
                                         </span>
                                     </Tooltip>
-                                    <Tooltip title="Thay Đổi Trạng Thái">
+                                    <Tooltip title="Change Status">
                                         <IconButton color="error" onClick={() => handleDelete(r.id)}>
                                             <DeleteOutlined />
                                         </IconButton>
@@ -237,7 +234,7 @@ const ReviewList = () => {
                                 </TableCell>
                             </TableRow>
                         ))}
-                        {filteredReviews.length === 0 && !loading && <TableRow><TableCell colSpan={9} align="center">Không tìm thấy đánh giá nào.</TableCell></TableRow>}
+                        {filteredReviews.length === 0 && !loading && <TableRow><TableCell colSpan={9} align="center">No reviews found.</TableCell></TableRow>}
                     </TableBody>
                 </Table>
             </TableContainer>
@@ -250,25 +247,25 @@ const ReviewList = () => {
             >
                 <Box sx={modalStyle}>
                     <Typography id="reply-modal-title" variant="h6" component="h2">
-                        Phản Hồi Đánh Giá Của {selectedReview?.authorName}
+                        Reply to Review by {selectedReview?.authorName}
                     </Typography>
                     <TextField
                         fullWidth
                         multiline
                         rows={4}
                         margin="normal"
-                        label="Phản Hồi Của Bạn"
+                        label="Your Reply"
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
                     />
                     <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button onClick={handleCloseReplyModal} sx={{ mr: 1 }}>Hủy</Button>
+                        <Button onClick={handleCloseReplyModal} sx={{ mr: 1 }}>Cancel</Button>
                         <Button
                             variant="contained"
                             onClick={handleSubmitReply}
                             disabled={isSubmittingReply}
                         >
-                            {isSubmittingReply ? <CircularProgress size={24} /> : 'Gửi Phản Hồi'}
+                            {isSubmittingReply ? <CircularProgress size={24} /> : 'Submit Reply'}
                         </Button>
                     </Box>
                 </Box>

@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-// Import thêm Link và useNavigate từ react-router-dom
-import { Link, useNavigate } from 'react-router-dom';
+// Import thêm Link, useNavigate và useLocation từ react-router-dom
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import sessionManager from '../../utils/sessionManager';
+import SessionTimer from './SessionTimer';
 
 const Header = () => {
-    // Khởi tạo hook useNavigate
+    // Khởi tạo hook useNavigate và useLocation
     const navigate = useNavigate(); 
+    const location = useLocation();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -27,6 +30,33 @@ const Header = () => {
         
         // Fetch services data for search
         fetchServicesData();
+        
+        // Listen for localStorage changes to update userInfo immediately
+        const handleStorageChange = (e) => {
+            if (e.key === 'userInfo') {
+                if (e.newValue) {
+                    setUserInfo(JSON.parse(e.newValue));
+                } else {
+                    setUserInfo(null);
+                }
+            }
+        };
+        
+        // Listen for custom userInfo update events
+        const handleUserInfoUpdate = (e) => {
+            const updatedUser = localStorage.getItem('userInfo');
+            if (updatedUser) {
+                setUserInfo(JSON.parse(updatedUser));
+            }
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('userInfoUpdated', handleUserInfoUpdate);
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('userInfoUpdated', handleUserInfoUpdate);
+        };
     }, []);
 
     // Fetch services data
@@ -81,20 +111,48 @@ const Header = () => {
         setSearchTerm(value);
         setSelectedSuggestionIndex(-1);
         
-        if (value.trim()) {
-            const filtered = servicesData.filter(service =>
-                service.name.toLowerCase().includes(value.toLowerCase()) ||
-                service.description.toLowerCase().includes(value.toLowerCase())
-            );
-            setFilteredServices(filtered);
-            setShowSuggestions(true);
-        } else {
+        // Clean and validate search term
+        const cleanedValue = value.trim();
+        
+        // Don't search if:
+        // 1. Empty after trim
+        // 2. Only special characters (dots, spaces, etc.)
+        // 3. Less than 2 meaningful characters
+        const meaningfulChars = cleanedValue.replace(/[^\w\sÀ-ỹ]/g, ''); // Keep only letters, numbers, spaces, Vietnamese
+        
+        if (!cleanedValue || meaningfulChars.length < 2) {
             setFilteredServices([]);
             setShowSuggestions(false);
+            return;
         }
+        
+        // Search with cleaned term
+        const filtered = servicesData.filter(service => {
+            const serviceName = service.name.toLowerCase().trim();
+            const serviceDesc = service.description.toLowerCase().trim();
+            const searchTermLower = cleanedValue.toLowerCase();
+            
+            // More precise matching - avoid partial matches with special chars
+            return serviceName.includes(searchTermLower) || 
+                   serviceDesc.includes(searchTermLower);
+        });
+        
+        // Limit results to prevent overwhelming UI
+        const limitedResults = filtered.slice(0, 6);
+        setFilteredServices(limitedResults);
+        setShowSuggestions(limitedResults.length > 0);
     };
 
     const handleSearchSubmit = (serviceId = null) => {
+        // Validate search term before submitting
+        const cleanedValue = searchTerm.trim();
+        const meaningfulChars = cleanedValue.replace(/[^\w\sÀ-ỹ]/g, '');
+        
+        if (!cleanedValue || meaningfulChars.length < 2) {
+            // Don't submit invalid search terms
+            return;
+        }
+        
         if (serviceId) {
             // Navigate to specific service
             navigate(`/ServicePage/${serviceId}`);
@@ -164,6 +222,9 @@ const Header = () => {
                 }));
                 localStorage.setItem('token', token);
                 
+                // Kích hoạt session manager khi đăng nhập thành công
+                sessionManager.onUserLogin();
+                
                 // Dùng window.location.href để tải lại toàn bộ trang, cập nhật trạng thái login
                 window.location.href = "/CustomerDetail";
 
@@ -198,11 +259,34 @@ const Header = () => {
     };
 
     const handleLogout = () => {
+        // IMMEDIATE logout - no waiting, no delays
+        // Clear all user data instantly
         localStorage.removeItem('userInfo');
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Update state immediately
         setUserInfo(null);
-        // Tải lại trang chủ để cập nhật trạng thái logout
-        window.location.href = "/";
+        
+        // Redirect immediately to home page
+        window.location.href = '/';
+        
+        // Call logout API in background after redirect (fire and forget)
+        setTimeout(() => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetch('http://localhost:8080/api/v1/customer/logout', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                }).catch(error => {
+                    console.error('Background logout API call failed:', error);
+                });
+            }
+        }, 100);
     };
 
     return (
@@ -213,9 +297,9 @@ const Header = () => {
                          <div className="row align-items-center">
                              <div className="col-lg-8">
                                  <div className="d-flex flex-wrap">
-                                     <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Find A Location</a>
+                                     <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Tìm Địa Điểm</a>
                                      <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+01234567890</a>
-                                     <a href="#"><i className="fas fa-envelope me-2" />Example@gmail.com</a>
+                                     <a href="#"><i className="fas fa-envelope me-2" />info@sparlex.com</a>
                                  </div>
                              </div>
                             <div className="col-lg-4">
@@ -241,15 +325,11 @@ const Header = () => {
                             </button>
                             <div className="collapse navbar-collapse bg-light py-3" id="navbarCollapse">
                                 <div className="navbar-nav mx-auto border-top">
-                                    <Link to="/" className="nav-item nav-link active">Home</Link>
-                                    <Link to="/AboutPage" className="nav-item nav-link">About</Link>
-                                    <Link to="/ServicePage" className="nav-item nav-link">Services</Link>
-
-                                 
-
-                                    
-                                    <Link to="/ContactPage" className="nav-item nav-link">Contact Us</Link>
-                                      
+                                    <Link to="/" className={`nav-item nav-link ${location.pathname === '/' ? 'active' : ''}`}>Trang Chủ</Link>
+                                    <Link to="/AboutPage" className={`nav-item nav-link ${location.pathname === '/AboutPage' ? 'active' : ''}`}>Về Chúng Tôi</Link>
+                                    <Link to="/ServicePage" className={`nav-item nav-link ${location.pathname === '/ServicePage' ? 'active' : ''}`}>Dịch Vụ</Link>
+                                    <Link to="/ContactPage" className={`nav-item nav-link ${location.pathname === '/ContactPage' ? 'active' : ''}`}>Liên Hệ</Link>
+                                    <Link to="/service-history" className={`nav-item nav-link ${location.pathname === '/service-history' ? 'active' : ''}`}>Lịch Sử Dịch Vụ</Link>
                                 </div>
                                 <div className="d-flex align-items-center flex-nowrap pt-xl-0">
                                     <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" onClick={() => setShowSearch(!showSearch)}>
@@ -264,42 +344,48 @@ const Header = () => {
                                                 padding: '10px 20px',
                                                 fontWeight: '600',
                                                 fontSize: '1rem',
-                                                border: '2px solid #0d6efd',
+                                                border: '2px solid #FDB5B9',
                                                 transition: 'all 0.3s ease',
                                                 minWidth: '100px'
                                             }}
                                             onMouseEnter={(e) => {
-                                                e.target.style.background = '#0d6efd';
+                                                e.target.style.background = '#FDB5B9';
                                                 e.target.style.color = 'white';
-                                                e.target.style.transform = 'translateY(-2px)';
-                                                e.target.style.boxShadow = '0 4px 12px rgba(13, 110, 253, 0.3)';
+                                                e.target.style.boxShadow = '0 2px 6px rgba(253, 181, 185, 0.3)';
+                                                // Đảm bảo icon hiển thị
+                                                const icon = e.target.querySelector('i');
+                                                if (icon) icon.style.color = 'white';
                                             }}
                                             onMouseLeave={(e) => {
                                                 e.target.style.background = 'transparent';
-                                                e.target.style.color = '#0d6efd';
-                                                e.target.style.transform = 'translateY(0)';
+                                                e.target.style.color = '#FDB5B9';
                                                 e.target.style.boxShadow = 'none';
+                                                // Khôi phục màu icon
+                                                const icon = e.target.querySelector('i');
+                                                if (icon) icon.style.color = '#FDB5B9';
                                             }}
                                         >
                                             <i className="fas fa-user me-2"></i>
-                                            Login
+                                            Đăng Nhập
                                         </button>
                                     ) : (
                                         <div className="nav-item dropdown ms-3">
                                             <a href="#" className="nav-link dropdown-toggle d-flex align-items-center p-2 rounded-pill" data-bs-toggle="dropdown" style={{ 
-                                                border: '2px solid #f8f9fa',
+                                                border: '2px solid #FDB5B9',
                                                 transition: 'all 0.3s ease',
-                                                background: 'rgba(13, 110, 253, 0.1)'
+                                                background: 'rgba(253, 181, 185, 0.1)'
                                             }}
                                             onMouseEnter={(e) => {
-                                                e.target.style.background = 'rgba(13, 110, 253, 0.2)';
-                                                e.target.style.borderColor = '#0d6efd';
+                                                e.target.style.background = 'rgba(253, 181, 185, 0.2)';
+                                                e.target.style.borderColor = '#F7A8B8';
                                                 e.target.style.transform = 'translateY(-2px)';
+                                                e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.3)';
                                             }}
                                             onMouseLeave={(e) => {
-                                                e.target.style.background = 'rgba(13, 110, 253, 0.1)';
-                                                e.target.style.borderColor = '#f8f9fa';
+                                                e.target.style.background = 'rgba(253, 181, 185, 0.1)';
+                                                e.target.style.borderColor = '#FDB5B9';
                                                 e.target.style.transform = 'translateY(0)';
+                                                e.target.style.boxShadow = 'none';
                                             }}
                                             >
                                                 <img
@@ -313,25 +399,23 @@ const Header = () => {
                                                     alt="avatar"
                                                     style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", marginRight: 10, border: '2px solid white' }}
                                                 />
-                                                <span style={{ fontWeight: '600', color: '#0d6efd' }}>
+                                                <span style={{ fontWeight: '600', color: '#d6336c' }}>
                                                     {userInfo.fullName?.split(' ').slice(-1)[0] || 'User'}
                                                 </span>
                                             </a>
                                             <div className="dropdown-menu m-0 bg-white rounded-3 shadow-lg border-0" style={{ minWidth: '200px', marginTop: '10px !important' }}>
                                                 <Link to="/CustomerDetail" className="dropdown-item py-2 px-3 d-flex align-items-center" style={{ fontWeight: '500' }}>
-                                                    <i className="fas fa-user-circle me-2 text-primary"></i>
+                                                    <i className="fas fa-user-circle me-2" style={{ color: '#FDB5B9' }}></i>
                                                     Thông tin cá nhân
                                                 </Link>
                                                 <hr className="dropdown-divider my-1" />
-                                                <button onClick={handleLogout} className="dropdown-item py-2 px-3 d-flex align-items-center text-danger" style={{ fontWeight: '500' }}>
-                                                    <i className="fas fa-sign-out-alt me-2"></i>
+                                                <button onClick={handleLogout} className="dropdown-item py-2 px-3 d-flex align-items-center" style={{ fontWeight: '500', color: '#e74c3c' }}>
+                                                    <i className="fas fa-sign-out-alt me-2" style={{ color: '#e74c3c' }}></i>
                                                     Đăng xuất
                                                 </button>
                                             </div>
                                         </div>
                                     )}
-
-                                    {/* <Link to="/AppointmentPage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-4 ms-4">Book Appointment</Link> */}
                                 </div>
                             </div>
                         </nav>
@@ -339,7 +423,7 @@ const Header = () => {
                 </div>
             </div>
 
-            {/* Modals không thay đổi */}
+            {/* Search functionality */}
           {showSearch && (
                 <div ref={searchRef} className="search-bar-wrapper position-absolute w-100 d-flex justify-content-center" style={{ top: "170px", zIndex: 1050 }}>
                     <div className="position-relative" style={{ maxWidth: "600px", width: "100%" }}>
@@ -418,7 +502,7 @@ const Header = () => {
                                                         : service.description}
                                                 </div>
                                                 <div className="text-primary small fw-bold">
-                                                    {service.price ? `${service.price.toLocaleString()}$` : 'Liên hệ'}
+                                                    {service.price ? `${service.price.toLocaleString()}₫` : 'Liên hệ'}
                                                 </div>
                                             </div>
                                             <div className="ms-auto">
@@ -437,70 +521,86 @@ const Header = () => {
                         )}
                         
                         {/* No results message */}
-                        {showSuggestions && searchTerm && filteredServices.length === 0 && (
-                            <div 
-                                className="position-absolute w-100 bg-white border rounded shadow-lg p-3 text-center text-muted mt-1"
-                                style={{ zIndex: 1051 }}
-                            >
-                                <i className="fas fa-search-minus mb-2"></i>
-                                <div>Không tìm thấy dịch vụ nào</div>
-                            </div>
-                        )}
+                        {showSuggestions && searchTerm && filteredServices.length === 0 && (() => {
+                            const cleanedValue = searchTerm.trim();
+                            const meaningfulChars = cleanedValue.replace(/[^\w\sÀ-ỹ]/g, '');
+                            
+                            // Don't show "no results" for invalid search terms
+                            if (!cleanedValue || meaningfulChars.length < 2) {
+                                return (
+                                    <div 
+                                        className="position-absolute w-100 bg-white border rounded shadow-lg p-3 text-center text-muted mt-1"
+                                        style={{ zIndex: 1051 }}
+                                    >
+                                        <i className="fas fa-info-circle mb-2"></i>
+                                        <div>Vui lòng nhập ít nhất 2 ký tự để tìm kiếm</div>
+                                    </div>
+                                );
+                            }
+                            
+                            return (
+                                <div 
+                                    className="position-absolute w-100 bg-white border rounded shadow-lg p-3 text-center text-muted mt-1"
+                                    style={{ zIndex: 1051 }}
+                                >
+                                    <i className="fas fa-search-minus mb-2"></i>
+                                    <div>Không tìm thấy dịch vụ nào cho "{cleanedValue}"</div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             )}
-
-
-
 
             {/* Login Modal */}
             <div className="modal fade" id="loginModal" tabIndex={-1} aria-labelledby="loginModalLabel" aria-hidden="true">
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title" id="loginModalLabel">Login</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+                            <h5 className="modal-title" id="loginModalLabel">Đăng Nhập</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Đóng" />
                         </div>
                         <div className="modal-body">
                             <form onSubmit={handleLogin}>
                                 <div className="mb-3">
-                                    <label className="form-label">Email address</label>
+                                    <label className="form-label">Địa chỉ Email</label>
                                     <input
                                         type="email"
                                         className="form-control"
-                                        placeholder="Enter email"
+                                        placeholder="Nhập email của bạn"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                     />
                                 </div>
                                 <div className="mb-3">
-                                    <label className="form-label">Password</label>
+                                    <label className="form-label">Mật khẩu</label>
                                     <input
                                         type="password"
                                         className="form-control"
-                                        placeholder="Password"
+                                        placeholder="Nhập mật khẩu"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                     />
                                 </div>
-                                <button type="submit" className="btn btn-primary w-100">Login</button>
+                                <button type="submit" className="btn btn-primary w-100">Đăng Nhập</button>
                             </form>
                         </div>
                         <div className="modal-footer justify-content-center">
                             <p className="text-center mb-0">
-                                Don't have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">Register</a>
+                                Chưa có tài khoản? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">Đăng ký ngay</a>
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
+            
             {/* Register Modal */}
             <div className="modal fade" id="registerModal" tabIndex={-1} aria-labelledby="registerModalLabel" aria-hidden="true">
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title" id="registerModalLabel">Register</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+                            <h5 className="modal-title" id="registerModalLabel">Đăng Ký Tài Khoản</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Đóng" />
                         </div>
                         <div className="modal-body">
                             {registerMessage && (
@@ -508,22 +608,24 @@ const Header = () => {
                             )}
                             <form onSubmit={handleRegister}>
                                 <div className="mb-3">
-                                    <label className="form-label">Họ tên</label>
+                                    <label className="form-label">Họ và tên</label>
                                     <input
                                         type="text"
                                         className="form-control"
                                         name="fullName"
+                                        placeholder="Nhập họ và tên của bạn"
                                         value={registerInfo.fullName}
                                         onChange={handleRegisterChange}
                                         required
                                     />
                                 </div>
                                 <div className="mb-3">
-                                    <label className="form-label">Email</label>
+                                    <label className="form-label">Địa chỉ Email</label>
                                     <input
                                         type="email"
                                         className="form-control"
                                         name="email"
+                                        placeholder="Nhập email của bạn"
                                         value={registerInfo.email}
                                         onChange={handleRegisterChange}
                                         required
@@ -535,13 +637,14 @@ const Header = () => {
                                         type="password"
                                         className="form-control"
                                         name="password"
+                                        placeholder="Tạo mật khẩu mới"
                                         value={registerInfo.password}
                                         onChange={handleRegisterChange}
                                         required
                                     />
                                 </div>
 
-                                <button type="submit" className="btn btn-primary w-100">Đăng ký</button>
+                                <button type="submit" className="btn btn-primary w-100">Đăng Ký Ngay</button>
                             </form>
                         </div>
                         <div className="modal-footer justify-content-center">
@@ -552,8 +655,6 @@ const Header = () => {
                     </div>
                 </div>
             </div>
-            <div className="modal fade" id="loginModal" tabIndex={-1}>{/* ... */}</div>
-            <div className="modal fade" id="registerModal" tabIndex={-1}>{/* ... */}</div>
             
             {/* CSS for Search Functionality */}
             <style jsx>{`
@@ -593,6 +694,9 @@ const Header = () => {
                     border-bottom: none !important;
                 }
             `}</style>
+            
+            {/* Session Timer - chỉ hiển thị khi user đăng nhập */}
+            {userInfo && <SessionTimer />}
         </div>
     );
 };

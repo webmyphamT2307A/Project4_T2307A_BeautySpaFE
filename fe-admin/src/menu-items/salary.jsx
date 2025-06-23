@@ -16,12 +16,12 @@ const icons = {
 
 const salary = {
   id: 'salary',
-  title: 'salary',
+  title: 'Tiền Lương',
   type: 'group',
   children: [
     {
       id: 'salary-service',
-      title: 'salary',
+      title: 'Tiền Lương',
       type: 'item',
       url: '/salary/salary',
       icon: icons.DollarOutlined

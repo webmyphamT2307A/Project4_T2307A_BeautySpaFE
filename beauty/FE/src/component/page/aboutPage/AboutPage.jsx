@@ -8,11 +8,11 @@ const AboutPage = () => {
             <Header />
             <div className="container-fluid bg-breadcrumb py-5">
                 <div className="container text-center py-5">
-                    <h3 className="text-white display-3 mb-4">About Us</h3>
+                    <h3 className="text-white display-3 mb-4">Về Chúng Tôi</h3>
                     <ol className="breadcrumb justify-content-center mb-0">
-                        <li className="breadcrumb-item"><a href="/">Home</a></li>
-                        <li className="breadcrumb-item"><a href="#">Pages</a></li>
-                        <li className="breadcrumb-item active text-white">About Us</li>
+                        <li className="breadcrumb-item"><a href="/">Trang Chủ</a></li>
+                        <li className="breadcrumb-item"><a href="#">Trang</a></li>
+                        <li className="breadcrumb-item active text-white">Về Chúng Tôi</li>
                     </ol>
                 </div>
             </div>
@@ -33,17 +33,17 @@ const AboutPage = () => {
                         </div>
                         <div className="col-lg-7">
                             <div>
-                                <p className="fs-4 text-uppercase text-primary">About Us</p>
-                                <h1 className="display-4 mb-4">Your Best Spa, Beauty &amp; Skin Care Center</h1>
-                                <p className="mb-4">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled
+                                <p className="fs-4 text-uppercase text-primary">Về Chúng Tôi</p>
+                                <h1 className="display-4 mb-4">Trung Tâm Spa, Làm Đẹp &amp; Chăm Sóc Da Tốt Nhất</h1>
+                                <p className="mb-4">Chúng tôi là trung tâm spa hàng đầu với đội ngũ chuyên gia giàu kinh nghiệm, cam kết mang đến cho bạn những dịch vụ chăm sóc sức khỏe và sắc đẹp tốt nhất với công nghệ hiện đại nhất.
                                 </p>
                                 <div className="row g-4">
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center">
                                             <i className="fab fa-gitkraken fa-3x text-primary" />
                                             <div className="ms-4">
-                                                <h5 className="mb-2">Special Offers</h5>
-                                                <p className="mb-0">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+                                                <h5 className="mb-2">Ưu Đãi Đặc Biệt</h5>
+                                                <p className="mb-0">Chúng tôi luôn có những chương trình khuyến mãi hấp dẫn và ưu đãi đặc biệt dành cho khách hàng thân thiết.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -51,18 +51,53 @@ const AboutPage = () => {
                                         <div className="d-flex align-items-center">
                                             <i className="fas fa-gift fa-3x text-primary" />
                                             <div className="ms-4">
-                                                <h5 className="mb-2">Special Offers</h5>
-                                                <p className="mb-0">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+                                                <h5 className="mb-2">Quà Tặng Đặc Biệt</h5>
+                                                <p className="mb-0">Nhận những món quà tặng giá trị và bất ngờ khi sử dụng dịch vụ tại trung tâm của chúng tôi.</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <p className="my-4">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
+                                <p className="my-4">Với không gian sang trọng, trang thiết bị hiện đại và quy trình dịch vụ chuyên nghiệp, chúng tôi tự hào là địa chỉ tin cậy cho mọi nhu cầu làm đẹp của bạn.
                                 </p>
-                                <p className="mb-4">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
+                                <p className="mb-4">Đến với chúng tôi, bạn không chỉ được trải nghiệm những liệu pháp chăm sóc đẳng cấp mà còn được tận hưởng không gian thư giãn tuyệt vời, giúp bạn lấy lại năng lượng và sự tự tin trong cuộc sống.
                                 </p>
                             </div>
-                            <a href="#" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5">Explore More</a>
+                            <a href="/ServicePage" 
+                               className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5"
+                               style={{
+                                 background: 'linear-gradient(135deg, #FDB5B9, #f89ca0) !important',
+                                 border: 'none !important',
+                                 boxShadow: '0 6px 20px rgba(253, 181, 185, 0.3)',
+                                 color: 'white !important',
+                                 fontWeight: '600',
+                                 fontSize: '1rem',
+                                 letterSpacing: '0.3px',
+                                 transition: 'all 0.3s ease',
+                                 textDecoration: 'none',
+                                 position: 'relative',
+                                 overflow: 'hidden'
+                               }}
+                               onMouseEnter={(e) => {
+                                 e.target.style.setProperty('background', 'linear-gradient(135deg, #F7A8B8, #E589A3)', 'important');
+                                 e.target.style.setProperty('border', 'none', 'important');
+                                 e.target.style.transform = 'translateY(-3px) scale(1.05)';
+                                 e.target.style.boxShadow = '0 12px 30px rgba(253, 181, 185, 0.5)';
+                               }}
+                               onMouseLeave={(e) => {
+                                 e.target.style.setProperty('background', 'linear-gradient(135deg, #FDB5B9, #f89ca0)', 'important');
+                                 e.target.style.setProperty('border', 'none', 'important');
+                                 e.target.style.transform = 'translateY(0) scale(1)';
+                                 e.target.style.boxShadow = '0 6px 20px rgba(253, 181, 185, 0.3)';
+                               }}
+                               onMouseDown={(e) => {
+                                 e.target.style.transform = 'translateY(-1px) scale(1.02)';
+                               }}
+                               onMouseUp={(e) => {
+                                 e.target.style.transform = 'translateY(-3px) scale(1.05)';
+                               }}
+                            >
+                              Khám Phá Thêm
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -72,8 +107,8 @@ const AboutPage = () => {
                 <div className="modal-dialog">
                     <div className="modal-content rounded-0">
                         <div className="modal-header">
-                            <h5 className="modal-title" id="exampleModalLabel">Youtube Video</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+                            <h5 className="modal-title" id="exampleModalLabel">Video Giới Thiệu</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Đóng" />
                         </div>
                         <div className="modal-body">
                             {/* 16:9 aspect ratio */}

@@ -29,11 +29,28 @@ const ServicePage = () => {
     setSearchTerm(value);
     setSelectedSuggestionIndex(-1);
     
-    if (value.trim()) {
-      const filtered = servicesData.filter(service =>
-        service.name.toLowerCase().includes(value.toLowerCase()) ||
-        service.description.toLowerCase().includes(value.toLowerCase())
-      );
+    // Trim và loại bỏ khoảng trắng thừa, kiểm tra độ dài tối thiểu
+    const trimmedValue = value.trim().replace(/\s+/g, ' ');
+    
+    if (trimmedValue && trimmedValue.length >= 2) {
+      // Tách từ khóa và tìm kiếm theo từng từ
+      const keywords = trimmedValue.toLowerCase().split(' ').filter(keyword => keyword.length > 0);
+      
+      const filtered = servicesData.filter(service => {
+        const serviceName = service.name.toLowerCase();
+        const serviceDesc = service.description.toLowerCase();
+        
+        // Tìm kiếm chính xác: phải chứa ít nhất 1 từ khóa hoàn chỉnh
+        return keywords.some(keyword => {
+          // Tránh các ký tự đặc biệt gây nhiễu
+          if (keyword.length < 2 || /^[^a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ0-9]+$/.test(keyword)) {
+            return false;
+          }
+          
+          return serviceName.includes(keyword) || serviceDesc.includes(keyword);
+        });
+      });
+      
       setFilteredServices(filtered);
       setShowSuggestions(true);
     } else {
@@ -117,20 +134,20 @@ const ServicePage = () => {
       <Header />
       <div className="container-fluid bg-breadcrumb py-5">
         <div className="container text-center py-5">
-          <h3 className="text-white display-3 mb-4">Our Services</h3>
+          <h3 className="text-white display-3 mb-4">Dịch Vụ Của Chúng Tôi</h3>
           <ol className="breadcrumb justify-content-center mb-0">
-            <li className="breadcrumb-item"><a href="/">Home</a></li>
-            <li className="breadcrumb-item"><a href="#">Pages</a></li>
-            <li className="breadcrumb-item active text-white">Service Page</li>
+            <li className="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li className="breadcrumb-item"><a href="#">Trang</a></li>
+            <li className="breadcrumb-item active text-white">Trang Dịch Vụ</li>
           </ol>
         </div>
       </div>
 
-      <div className="container-fluid services py-5">
+      <div id="services-section" className="container-fluid services py-5">
         <div className="container py-5">
           <div className="mx-auto text-center mb-5" style={{ maxWidth: 800 }}>
-            <p className="fs-4 text-uppercase text-center text-primary">Our Service</p>
-            <h1 className="display-3">Spa &amp; Beauty Services</h1>
+            <p className="fs-4 text-uppercase text-center text-primary">Dịch Vụ Của Chúng Tôi</p>
+            <h1 className="display-3">Dịch Vụ Spa &amp; Làm Đẹp</h1>
             
             {/* Search Box */}
             <div className="position-relative mx-auto mt-4" style={{ maxWidth: 500 }}>
@@ -152,14 +169,14 @@ const ServicePage = () => {
                   }}
                 />
                 <button
-                  className="btn position-absolute"
+                  className="btn position-absolute search-btn"
                   onClick={() => handleSearchSubmit()}
                   style={{
                     right: '5px',
                     top: '50%',
                     transform: 'translateY(-50%)',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #e91e63, #c2185b)',
+                    background: '#FDB5B9',
                     color: 'white',
                     borderRadius: '50%',
                     width: '40px',
@@ -219,7 +236,7 @@ const ServicePage = () => {
                               marginRight: '12px'
                             }}
                           />
-                          <div>
+                          <div className="flex-grow-1 text-start">
                             <div className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>
                               {service.name}
                             </div>
@@ -263,7 +280,7 @@ const ServicePage = () => {
           </div>
 
           {loading ? (
-            <div className="text-center">Loading...</div>
+            <div className="text-center">Đang tải...</div>
           ) : (
             <div className="row g-4">
               {displayedServices.map((service, index) => {
@@ -300,7 +317,7 @@ const ServicePage = () => {
                                   }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >
-                                  Make Order
+                                  Đặt Lịch
                                 </button>
                               </div>
                             </div>
@@ -362,7 +379,7 @@ const ServicePage = () => {
                                   }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >
-                                  Make Order
+                                  Đặt Lịch
                                 </button>
                               </div>
                             </div>
@@ -376,16 +393,154 @@ const ServicePage = () => {
             </div>
           )}
 
-          <div className="text-center mt-5">
+          <div className="text-center mt-5 d-flex justify-content-center align-items-center flex-wrap gap-2">
+            {/* Previous Button */}
+            <button
+              className="pagination-btn"
+              onClick={() => {
+                const prevPage = Math.max(1, currentPage - 1);
+                setCurrentPage(prevPage);
+                // Scroll to services section when changing page
+                const servicesSection = document.getElementById('services-section');
+                if (servicesSection) {
+                  servicesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  // Fallback: scroll to top of page
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+              disabled={currentPage === 1}
+              style={{
+                minWidth: '100px',
+                height: '50px',
+                borderRadius: '12px',
+                border: '2px solid #FDB5B9',
+                background: 'white',
+                color: currentPage === 1 ? '#ccc' : '#FDB5B9',
+                fontWeight: '600',
+                fontSize: '1rem',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease',
+                opacity: currentPage === 1 ? 0.5 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== 1) {
+                  e.target.style.background = '#FDB5B9';
+                  e.target.style.color = 'white';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 15px rgba(253, 181, 185, 0.3)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentPage !== 1) {
+                  e.target.style.background = 'white';
+                  e.target.style.color = '#FDB5B9';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }
+              }}
+            >
+              <i className="fas fa-chevron-left me-2"></i>
+            </button>
+
+            {/* Page Numbers */}
             {[...Array(totalPages)].map((_, i) => (
               <button
                 key={i}
-                className={`btn btn-outline-primary mx-1 ${i + 1 === currentPage ? "active" : ""}`}
-                onClick={() => setCurrentPage(i + 1)}
+                className="pagination-btn"
+                onClick={() => {
+                  setCurrentPage(i + 1);
+                  // Scroll to services section when changing page
+                  const servicesSection = document.getElementById('services-section');
+                  if (servicesSection) {
+                    servicesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  } else {
+                    // Fallback: scroll to top of page
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '12px',
+                  border: i + 1 === currentPage ? 'none' : '2px solid #FDB5B9',
+                  background: i + 1 === currentPage ? '#FDB5B9' : 'white',
+                  color: i + 1 === currentPage ? 'white' : '#FDB5B9',
+                  fontWeight: '700',
+                  fontSize: '1.1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: i + 1 === currentPage ? '0 4px 15px rgba(253, 181, 185, 0.4)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (i + 1 !== currentPage) {
+                    e.target.style.background = '#FDB5B9';
+                    e.target.style.color = 'white';
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 4px 15px rgba(253, 181, 185, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (i + 1 !== currentPage) {
+                    e.target.style.background = 'white';
+                    e.target.style.color = '#FDB5B9';
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                  }
+                }}
               >
                 {i + 1}
               </button>
             ))}
+
+            {/* Next Button */}
+            <button
+              className="pagination-btn"
+              onClick={() => {
+                const nextPage = Math.min(totalPages, currentPage + 1);
+                setCurrentPage(nextPage);
+                // Scroll to services section when changing page
+                const servicesSection = document.getElementById('services-section');
+                if (servicesSection) {
+                  servicesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  // Fallback: scroll to top of page
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+              disabled={currentPage === totalPages}
+              style={{
+                minWidth: '100px',
+                height: '50px',
+                borderRadius: '12px',
+                border: '2px solid #FDB5B9',
+                background: 'white',
+                color: currentPage === totalPages ? '#ccc' : '#FDB5B9',
+                fontWeight: '600',
+                fontSize: '1rem',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease',
+                opacity: currentPage === totalPages ? 0.5 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== totalPages) {
+                  e.target.style.background = '#FDB5B9';
+                  e.target.style.color = 'white';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 15px rgba(253, 181, 185, 0.3)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentPage !== totalPages) {
+                  e.target.style.background = 'white';
+                  e.target.style.color = '#FDB5B9';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }
+              }}
+            >
+              <i className="fas fa-chevron-right ms-2"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -408,26 +563,69 @@ const ServicePage = () => {
         }
 
         .service-image-clickable::after {
-          content: "👁️";
+          content: "\\f35d";
+          font-family: "Font Awesome 5 Free";
+          font-weight: 900;
           position: absolute;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          background: rgba(0, 0, 0, 0.7);
+          background: linear-gradient(135deg, rgba(253, 181, 185, 0.9), rgba(247, 168, 184, 0.9));
           color: white;
           border-radius: 50%;
-          width: 30px;
-          height: 30px;
+          width: 35px;
+          height: 35px;
           display: flex;
           align-items: center;
           justify-content: center;
           opacity: 0;
-          transition: opacity 0.3s ease-in-out;
-          font-size: 14px;
+          transition: all 0.3s ease-in-out;
+          font-size: 16px;
+          box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
         }
 
         .service-image-clickable:hover::after {
           opacity: 1;
+          transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        /* Add pulse animation to the heart icon */
+        .service-image-clickable:hover::after {
+          animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
+          }
+          50% {
+            box-shadow: 0 4px 20px rgba(253, 181, 185, 0.7);
+          }
+          100% {
+            box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
+          }
+        }
+
+        /* Enhanced "Đặt Lịch" button styling */
+        .btn-primary.rounded-pill {
+          background: linear-gradient(135deg, #FDB5B9, #f89ca0) !important;
+          border: none !important;
+          box-shadow: 0 6px 20px rgba(253, 181, 185, 0.3) !important;
+          font-weight: 600 !important;
+          font-size: 1rem !important;
+          letter-spacing: 0.3px !important;
+          transition: all 0.3s ease !important;
+          position: relative !important;
+          z-index: 2 !important;
+          padding: 10px 25px !important;
+          color: white !important;
+        }
+
+        .btn-primary.rounded-pill:hover {
+          background: linear-gradient(135deg, #F7A8B8, #E589A3) !important;
+          transform: translateY(-3px) scale(1.05) !important;
+          box-shadow: 0 12px 30px rgba(253, 181, 185, 0.5) !important;
+          color: white !important;
         }
 
         /* Search input focus effect */
@@ -436,10 +634,15 @@ const ServicePage = () => {
           box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
         }
 
-        /* Search button hover effect */
-        .btn:hover {
-          background: linear-gradient(135deg, #0056b3, #004085) !important;
-          transform: translateY(-50%) scale(1.05) !important;
+        /* Search button hover effect - Keep original position */
+        .search-btn:hover {
+          background: linear-gradient(135deg, #F7A8B8, #E589A3) !important;
+          transform: translateY(-50%) !important; /* Keep center position */
+        }
+        
+        /* Override general btn hover for other buttons */
+        .btn:hover:not(.search-btn) {
+          background: linear-gradient(135deg, #F7A8B8, #E589A3) !important;
         }
 
         /* Search suggestions scrollbar */

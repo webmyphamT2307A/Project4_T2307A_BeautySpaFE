@@ -22,26 +22,26 @@ const icons = {
 
 const utilities = {
   id: 'utilities',
-  title: 'Utilities',
+  title: 'Tiện ích',
   type: 'group',
   children: [
     {
       id: 'util-typography',
-      title: 'Typography',
+      title: 'Kiểu chữ',
       type: 'item',
       url: '/typography',
       icon: icons.FontSizeOutlined
     },
     {
       id: 'util-color',
-      title: 'Color',
+      title: 'Màu sắc',
       type: 'item',
       url: '/color',
       icon: icons.BgColorsOutlined
     },
     {
       id: 'util-shadow',
-      title: 'Shadow',
+      title: 'Bóng đổ',
       type: 'item',
       url: '/shadow',
       icon: icons.BarcodeOutlined

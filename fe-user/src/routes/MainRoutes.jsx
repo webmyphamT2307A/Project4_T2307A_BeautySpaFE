@@ -10,6 +10,7 @@ import AppointmentManagement from '../pages/spa/appoinment';
 import AttendancePage from '../pages/roll_call/attendancePage';
 import AttendanceHistoryPage from '../pages/roll_call/attendanceHistoryPage';
 import SalaryHistory from '../pages/salary/salary-history';
+import ReviewList from '../pages/review/review';
 import path from 'path';
 
 // render- Dashboard
@@ -84,15 +85,16 @@ const MainRoutes = {
       ]
     },
    
-    // {
-    //   path: 'role',
-    //   children: [
-    //     {
-    //       path: 'service',
-    //       element: <RoleManger />
-    //     }
-    //   ]
-    // },
+    {
+    path: 'review',
+    children:[
+      {
+        path: 'review',
+        element: <ReviewList />
+      }
+    ]
+
+  },
     {
       path: 'typography',
       element: <Typography />
