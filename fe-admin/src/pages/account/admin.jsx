@@ -22,7 +22,6 @@ import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/accounts';
 const ROLE_URL = 'http://localhost:8080/api/v1/roles';
-const BRANCH_URL = 'http://localhost:8080/api/v1/branch';
 const SKILL_URL = 'http://localhost:8080/api/v1/user/accounts/skill';
 
 const AdminAccount = () => {
@@ -39,7 +38,6 @@ const AdminAccount = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [showPassword, setShowPassword] = useState(false);
   const [roles, setRoles] = useState([]);
-  const [branches, setBranches] = useState([]);
   const [skills, setSkills] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
@@ -51,9 +49,8 @@ const AdminAccount = () => {
     imageUrl: '',
     address: '',
     role: null,
-    branch: null,
     skills: [],
-    isActive: 1 // <-- SỬA ĐỔI: Giá trị mặc định là 1 (Active)
+    isActive: 1
   });
 
   const fetchUsers = () => {
@@ -76,10 +73,10 @@ const AdminAccount = () => {
 
   useEffect(() => {
     fetch(`${ROLE_URL}`).then(res => res.json()).then(data => setRoles(data.data || []));
-    fetch(`${BRANCH_URL}`).then(res => res.json()).then(data => setBranches(data.data || []));
     fetch(`${SKILL_URL}`).then(res => res.json()).then(data => setSkills(data.data || []));
     fetchUsers(); 
   }, []);
+
 useEffect(() => {
   setLoading(true);
 
@@ -131,7 +128,6 @@ useEffect(() => {
   const handleOpen = (user = null) => {
     if (user) {
       const selectedRole = roles.find(r => r.id === (user.role?.id || user.roleId));
-      const selectedBranch = branches.find(b => b.id === (user.branch?.id || user.branchId));
       setCurrentUser(user);
       setFormData({
         fullName: user.fullName || '',
@@ -141,7 +137,6 @@ useEffect(() => {
         imageUrl: user.imageUrl || '',
         address: user.address || '',
         role: selectedRole || null,
-        branch: selectedBranch || null,
         skills: user.skills || [],
         isActive: user.isActive 
       });
@@ -151,9 +146,8 @@ useEffect(() => {
       setFormData({
         fullName: '', phone: '', email: '', password: '', imageUrl: '', address: '',
         role: roles.length > 0 ? roles[0] : null,
-        branch: branches.length > 0 ? branches[0] : null,
         skills: [],
-        isActive: 1 // <-- SỬA ĐỔI: Mặc định là 1 (Active)
+        isActive: 1
       });
       setImagePreview(null);
     }
@@ -177,13 +171,10 @@ useEffect(() => {
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
     if (name === 'isActive') {
-      setFormData({ ...formData, isActive: checked ? 1 : 0 }); // <-- SỬA ĐỔI: Cập nhật thành 1 hoặc 0
+      setFormData({ ...formData, isActive: checked ? 1 : 0 });
     } else if (name === 'role') {
       const roleObj = roles.find(r => r.id === Number(value));
       setFormData({ ...formData, role: roleObj });
-    } else if (name === 'branch') {
-      const branchObj = branches.find(b => b.id === Number(value));
-      setFormData({ ...formData, branch: branchObj });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -232,7 +223,6 @@ const handleImageChange = async (event) => {
     phone: formData.phone,
     address: formData.address,
     roleId: formData.role?.id,
-    branchId: formData.branch?.id,
     imageUrl: formData.imageUrl,
     skills: formData.skills,
   };
@@ -276,7 +266,6 @@ const handleImageChange = async (event) => {
           console.log('Manager cookie set:', Cookies.get('manager_token'), Cookies.get('manager_role'), Cookies.get('manager_userId'));
         }
       }
-      // --- end ---
     } else {
       toast.error(result.message || (isUpdate ? 'Cập nhật thất bại!' : 'Tạo mới thất bại!'));
     }
@@ -285,9 +274,11 @@ const handleImageChange = async (event) => {
   }
 };
   
-  // <-- TỐI ƯU: Xóa user và cập nhật UI ngay lập tức
   const handleDelete = async (id) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
+      toast.info('Đã hủy xóa tài khoản.');
+      return;
+    }
 
     try {
       const res = await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
@@ -325,22 +316,18 @@ const handleImageChange = async (event) => {
     return found ? found.name : 'N/A';
   };
   
-  const getBranchName = (user) => {
-    if (user.branch?.name) return user.branch.name;
-    const found = branches.find(b => b.id === (user.branch?.id || user.branchId));
-    return found ? found.name : '-';
-  };
+
 
   const currentUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
 
   return (
-    <MainCard title="Admin Management">
+    <MainCard title="Quản Lý Admin">
       <Grid container spacing={3}>
         <Grid item xs={12} display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Box display="flex" alignItems="center" gap={2}>
             <TextField
-              placeholder="Search by ID, name, phone or email"
+              placeholder="Tìm kiếm theo ID, tên, số điện thoại hoặc email"
               variant="outlined"
               size="small"
               value={searchQuery}
@@ -355,30 +342,30 @@ const handleImageChange = async (event) => {
               }}
             />
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel id="status-filter-label">Status</InputLabel>
+              <InputLabel id="status-filter-label">Trạng Thái</InputLabel>
               <Select
                 labelId="status-filter-label"
                 id="status-filter"
                 value={statusFilter}
-                label="Status"
+                label="Trạng Thái"
                 onChange={handleStatusFilterChange}
               >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value={1}>Active</MenuItem>
-                <MenuItem value={0}>Inactive</MenuItem>
-                <MenuItem value={-1}>Deleted</MenuItem> 
+                <MenuItem value="all">Tất Cả Trạng Thái</MenuItem>
+                <MenuItem value={1}>Hoạt Động</MenuItem>
+                <MenuItem value={0}>Không Hoạt Động</MenuItem>
+                <MenuItem value={-1}>Đã Xóa</MenuItem> 
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel id="role-filter-label">Role</InputLabel>
+              <InputLabel id="role-filter-label">Vai Trò</InputLabel>
               <Select
                 labelId="role-filter-label"
                 id="role-filter"
                 value={roleFilter}
-                label="Role"
+                label="Vai Trò"
                 onChange={handleRoleFilterChange}
               >
-                <MenuItem value="all">All Roles</MenuItem>
+                <MenuItem value="all">Tất Cả Vai Trò</MenuItem>
                 {roles.map(role => (
                   <MenuItem key={role.id} value={role.id}>
                     {role.name}
@@ -393,7 +380,7 @@ const handleImageChange = async (event) => {
             startIcon={<PlusOutlined />}
             onClick={() => handleOpen()}
           >
-            Add Admin
+            Thêm Admin
           </Button>
         </Grid>
         <Grid item xs={12}>
@@ -403,13 +390,12 @@ const handleImageChange = async (event) => {
                 <TableHead>
                   <TableRow>
                     <TableCell align={'left'}>STT</TableCell>
-                    <TableCell align={'left'}>Full Name</TableCell>
-                    <TableCell align={'left'}>Phone</TableCell>
+                    <TableCell align={'left'}>Họ Tên</TableCell>
+                    <TableCell align={'left'}>Số Điện Thoại</TableCell>
                     <TableCell align={'left'}>Email</TableCell>
-                    <TableCell align={'left'}>Role</TableCell>
-                    <TableCell align={'left'}>Branch</TableCell>
-                    <TableCell align={'left'}>Status</TableCell>
-                    <TableCell align={'left'}>Actions</TableCell>
+                    <TableCell align={'left'}>Vai Trò</TableCell>
+                    <TableCell align={'left'}>Trạng Thái</TableCell>
+                    <TableCell align={'left'}>Thao Tác</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -440,13 +426,12 @@ const handleImageChange = async (event) => {
                             sx={{ borderRadius: '16px' }}
                           />
                         </TableCell>
-                        <TableCell>{getBranchName(user)}</TableCell>
                         <TableCell>
                           <Chip
                             label={
-                              user.isActive === 1   ? "Active" :
-                              user.isActive === 0   ? "Inactive" :
-                              user.isActive === -1  ? "Deleted" :
+                              user.isActive === 1   ? "Hoạt Động" :
+                              user.isActive === 0   ? "Không Hoạt Động" :
+                              user.isActive === -1  ? "Đã Xóa" :
                               ""
                             }
                             size="small"
@@ -465,17 +450,17 @@ const handleImageChange = async (event) => {
                           />
                         </TableCell>
                         <TableCell>
-                          <Tooltip title="View Details">
+                          <Tooltip title="Xem Chi Tiết">
                             <IconButton onClick={() => handleViewOpen(user)} color="info" size="small">
                               <EyeOutlined />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Edit">
+                          <Tooltip title="Chỉnh Sửa">
                             <IconButton onClick={() => handleOpen(user)} color="primary" size="small">
                               <EditOutlined />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Delete">
+                          <Tooltip title="Xóa">
                             <IconButton onClick={() => handleDelete(user.id)} color="error" size="small">
                               <DeleteOutlined />
                             </IconButton>
@@ -486,7 +471,7 @@ const handleImageChange = async (event) => {
                   ) :
                    (
                     <TableRow>
-                      <TableCell colSpan={9} align="center">No admins found</TableCell>
+                      <TableCell colSpan={7} align="center">Không tìm thấy admin nào</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -505,13 +490,11 @@ const handleImageChange = async (event) => {
         </Grid>
       </Grid>
 
-      {/* Add/Edit Admin Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-          {currentUser ? 'Edit Admin' : 'Add Admin'}
+          {currentUser ? 'Chỉnh Sửa Admin' : 'Thêm Admin'}
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
-          {/* Image Upload Section */}
           <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             {imagePreview ? (
               <Box sx={{ position: 'relative', mb: 2 }}>
@@ -554,14 +537,14 @@ const handleImageChange = async (event) => {
               startIcon={<UploadOutlined />}
               onClick={handleUploadClick}
             >
-              Upload Avatar
+              Tải Ảnh Đại Diện
             </Button>
           </Box>
 
           <TextField
             margin="dense"
             name="fullName"
-            label="Full Name"
+            label="Họ Tên"
             type="text"
             fullWidth
             value={formData.fullName}
@@ -579,7 +562,7 @@ const handleImageChange = async (event) => {
           <TextField
             margin="dense"
             name="phone"
-            label="Phone"
+            label="Số Điện Thoại"
             type="text"
             fullWidth
             value={formData.phone}
@@ -611,13 +594,11 @@ const handleImageChange = async (event) => {
                 </InputAdornment>
               ) : null
             }}
-            disabled={!!currentUser}
           />
-          {!currentUser && (
             <TextField
               margin="dense"
               name="password"
-              label="Password"
+            label={currentUser ? "Mật Khẩu Mới (để trống nếu không thay đổi)" : "Mật Khẩu"}
               type={showPassword ? "text" : "password"}
               fullWidth
               value={formData.password}
@@ -630,20 +611,22 @@ const handleImageChange = async (event) => {
                         <CloseOutlined style={{ fontSize: 16 }} />
                       </IconButton>
                     )}
-                    <IconButton size="small" onClick={() => setShowPassword(!showPassword)} edge="end">
-                      {showPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
                     </IconButton>
                   </InputAdornment>
                 )
               }}
             />
-          )}
           <FormControl fullWidth margin="dense">
-            <InputLabel>Role</InputLabel>
+            <InputLabel>Vai Trò</InputLabel>
             <Select
               name="role"
               value={formData.role?.id || ''}
-              label="Role"
+              label="Vai Trò"
               onChange={handleChange}
             >
               {roles.map(role => (
@@ -653,26 +636,11 @@ const handleImageChange = async (event) => {
               ))}
             </Select>
           </FormControl>
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Branch</InputLabel>
-            <Select
-              name="branch"
-              value={formData.branch?.id || ''}
-              label="Branch"
-              onChange={handleChange}
-            >
-              {branches.map(branch => (
-                <MenuItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
 
           <TextField
             margin="dense"
             name="address"
-            label="Address"
+            label="Địa Chỉ"
             type="text"
             fullWidth
             multiline
@@ -697,20 +665,19 @@ const handleImageChange = async (event) => {
                 name="isActive"
               />
             }
-            label="Active"
+            label="Hoạt Động"
             margin="dense"
           />
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-          <Button onClick={handleClose} variant="outlined" color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" color="primary">Save</Button>
+          <Button onClick={handleClose} variant="outlined" color="inherit">Hủy</Button>
+          <Button onClick={handleSave} variant="contained" color="primary">Lưu</Button>
         </DialogActions>
       </Dialog>
 
-      {/* View Admin Details Dialog */}
       <Dialog open={viewOpen} onClose={handleViewClose} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-          Admin Details
+          Chi Tiết Admin
           <IconButton
             aria-label="close"
             onClick={handleViewClose}
@@ -726,7 +693,6 @@ const handleImageChange = async (event) => {
         <DialogContent sx={{ pt: 3 }}>
           {currentUser && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {/* Avatar and basic info */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Avatar
                   src={currentUser.imageUrl}
@@ -741,9 +707,9 @@ const handleImageChange = async (event) => {
                   </Typography>
                   <Chip
                     label={
-                      currentUser.isActive === 1   ? "Active" :
-                      currentUser.isActive === 0   ? "Inactive" :
-                      currentUser.isActive === -1  ? "Deleted" :
+                      currentUser.isActive === 1   ? "Hoạt Động" :
+                      currentUser.isActive === 0   ? "Không Hoạt Động" :
+                      currentUser.isActive === -1  ? "Đã Xóa" :
                       ""
                     }
                     size="small"
@@ -760,10 +726,9 @@ const handleImageChange = async (event) => {
 
               <Divider />
 
-              {/* Contact information */}
               <Box>
                 <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                  Contact Information
+                  Thông Tin Liên Hệ
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
@@ -771,22 +736,21 @@ const handleImageChange = async (event) => {
                     <Typography>{currentUser.email}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Phone</Typography>
-                    <Typography>{currentUser.phone || 'Not provided'}</Typography>
+                    <Typography variant="caption" color="text.secondary">Số Điện Thoại</Typography>
+                    <Typography>{currentUser.phone || 'Chưa cung cấp'}</Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary">Address</Typography>
-                    <Typography>{currentUser.address || 'Not provided'}</Typography>
+                    <Typography variant="caption" color="text.secondary">Địa Chỉ</Typography>
+                    <Typography>{currentUser.address || 'Chưa cung cấp'}</Typography>
                   </Grid>
                 </Grid>
               </Box>
 
               <Divider />
 
-              {/* Skills */}
               <Box>
                 <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                  Skills
+                  Kỹ Năng
                 </Typography>
                 {currentUser.skills && currentUser.skills.length > 0 ? (
                   <TableContainer component={Paper}>
@@ -794,8 +758,8 @@ const handleImageChange = async (event) => {
                       <TableHead>
                         <TableRow>
                           <TableCell align="left">#</TableCell>
-                          <TableCell align="left">Skill Name</TableCell>
-                          <TableCell align="left">Description</TableCell>
+                          <TableCell align="left">Tên Kỹ Năng</TableCell>
+                          <TableCell align="left">Mô Tả</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -803,7 +767,7 @@ const handleImageChange = async (event) => {
                           <TableRow key={skill.id}>
                             <TableCell>{index + 1}</TableCell>
                             <TableCell>{skill.skillName}</TableCell>
-                            <TableCell>{skill.description || 'No description'}</TableCell>
+                            <TableCell>{skill.description || 'Không có mô tả'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -811,33 +775,28 @@ const handleImageChange = async (event) => {
                   </TableContainer>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
-                    No skills assigned
+                    Chưa có kỹ năng được gán
                   </Typography>
                 )}
               </Box>
 
               <Divider />
 
-              {/* Other details */}
               <Box>
                 <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                  Additional Information
+                  Thông Tin Bổ Sung
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Branch</Typography>
-                    <Typography>{getBranchName(currentUser)}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Role</Typography>
-                    <Typography>{getRoleName(currentUser)}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">User ID</Typography>
+                    <Typography variant="caption" color="text.secondary">ID Người Dùng</Typography>
                     <Typography>#{currentUser.id}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Created On</Typography>
+                    <Typography variant="caption" color="text.secondary">Vai Trò</Typography>
+                    <Typography>{getRoleName(currentUser)}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">Ngày Tạo</Typography>
                     <Typography>{formatDate(currentUser.createdAt || currentUser.created_at)}</Typography>
                   </Grid>
                 </Grid>
@@ -852,10 +811,10 @@ const handleImageChange = async (event) => {
             variant="contained"
             color="primary"
           >
-            Edit
+            Chỉnh Sửa
           </Button>
           <Button onClick={handleViewClose} variant="outlined">
-            Close
+            Đóng
           </Button>
         </DialogActions>
       </Dialog>

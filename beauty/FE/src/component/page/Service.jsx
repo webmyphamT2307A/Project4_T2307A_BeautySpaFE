@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import DatLichButton from "../shared/DatLichButton";
 
 const Service = () => {
     const [servicesData, setServicesData] = useState([]);
@@ -76,12 +77,8 @@ const Service = () => {
                         }}>
                           {service.description}
                         </p>
-                        <div className="mb-2">
-                          <span className="fw-bold text-primary">
-                            {service.price ? `${service.price.toLocaleString()}₫` : 'Liên hệ'}
-                          </span>
-                        </div>
-                        <button 
+                        
+                        <DatLichButton 
                           onClick={() => {
                             setTimeout(() => {
                               const appointmentSection = document.getElementById('appointment');
@@ -92,10 +89,7 @@ const Service = () => {
                               }
                             }, 100);
                           }}
-                          className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4"
-                        >
-                          Đặt Lịch Ngay
-                        </button>
+                        />
                       </div>
                     </div>
                     <div className="col-4">
@@ -144,12 +138,8 @@ const Service = () => {
                         }}>
                           {service.description}
                         </p>
-                        <div className="mb-2">
-                          <span className="fw-bold text-primary">
-                            {service.price ? `${service.price.toLocaleString()}₫` : 'Liên hệ'}
-                          </span>
-                        </div>
-                        <button 
+                       
+                        <DatLichButton 
                           onClick={() => {
                             setTimeout(() => {
                               const appointmentSection = document.getElementById('appointment');
@@ -160,10 +150,7 @@ const Service = () => {
                               }
                             }, 100);
                           }}
-                          className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4"
-                        >
-                          Đặt Lịch Ngay
-                        </button>
+                        />
                       </div>
                     </div>
                   </>
@@ -175,7 +162,33 @@ const Service = () => {
       })}
       <div className="col-12">
         <div className="services-btn text-center">
-          <Link to="/ServicePage" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5">
+          <Link to="/ServicePage" 
+                style={{
+                  backgroundColor: '#FDB5B9',
+                  borderColor: '#FDB5B9',
+                  color: 'white',
+                  border: '1px solid #FDB5B9',
+                  borderRadius: '50px',
+                  padding: '12px 20px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#F7A8B8';
+                  e.target.style.borderColor = '#F7A8B8';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#FDB5B9';
+                  e.target.style.borderColor = '#FDB5B9';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }}
+          >
             Xem Thêm Dịch Vụ
           </Link>
         </div>
@@ -193,7 +206,7 @@ const Service = () => {
 
   .service-image-clickable:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
+    box-shadow: 0 8px 25px rgba(253, 181, 185, 0.3);
   }
 
   .service-image-clickable:hover img {
@@ -201,14 +214,14 @@ const Service = () => {
   }
 
   .service-image-clickable::after {
-    content: "\\f06e";
+    content: "\\f35d";
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: linear-gradient(135deg, rgba(0, 123, 255, 0.9), rgba(40, 167, 69, 0.9));
+    background: linear-gradient(135deg, rgba(253, 181, 185, 0.9), rgba(247, 168, 184, 0.9));
     color: white;
     border-radius: 50%;
     width: 35px;
@@ -219,7 +232,7 @@ const Service = () => {
     opacity: 0;
     transition: all 0.3s ease-in-out;
     font-size: 16px;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
   }
 
   .service-image-clickable:hover::after {
@@ -230,13 +243,13 @@ const Service = () => {
 
   @keyframes pulse {
     0% {
-      box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+      box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
     }
     50% {
-      box-shadow: 0 4px 20px rgba(0, 123, 255, 0.6);
+      box-shadow: 0 4px 20px rgba(253, 181, 185, 0.7);
     }
     100% {
-      box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+      box-shadow: 0 4px 15px rgba(253, 181, 185, 0.4);
     }
   }
 

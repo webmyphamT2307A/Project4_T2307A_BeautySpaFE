@@ -47,7 +47,42 @@ const AboutUs = () => {
           </p>
           <p className="mb-4">Chúng tôi cung cấp đa dạng các dịch vụ từ massage, chăm sóc da mặt, làm móng, tẩy lông đến các liệu pháp trị liệu chuyên sâu. Mỗi dịch vụ đều được thiết kế riêng biệt phù hợp với nhu cầu và mong muốn của từng khách hàng.
           </p>
-          <a href="#" className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5">Khám Phá Thêm</a>
+          <a href="#" 
+             className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5"
+             style={{
+               background: 'linear-gradient(135deg, #FDB5B9, #f89ca0) !important',
+               border: 'none !important',
+               boxShadow: '0 6px 20px rgba(253, 181, 185, 0.3)',
+               color: 'white !important',
+               fontWeight: '600',
+               fontSize: '1rem',
+               letterSpacing: '0.3px',
+               transition: 'all 0.3s ease',
+               textDecoration: 'none',
+               position: 'relative',
+               overflow: 'hidden'
+             }}
+             onMouseEnter={(e) => {
+               e.target.style.setProperty('background', 'linear-gradient(135deg, #F7A8B8, #E589A3)', 'important');
+               e.target.style.setProperty('border', 'none', 'important');
+               e.target.style.transform = 'translateY(-3px) scale(1.05)';
+               e.target.style.boxShadow = '0 12px 30px rgba(253, 181, 185, 0.5)';
+             }}
+             onMouseLeave={(e) => {
+               e.target.style.setProperty('background', 'linear-gradient(135deg, #FDB5B9, #f89ca0)', 'important');
+               e.target.style.setProperty('border', 'none', 'important');
+               e.target.style.transform = 'translateY(0) scale(1)';
+               e.target.style.boxShadow = '0 6px 20px rgba(253, 181, 185, 0.3)';
+             }}
+             onMouseDown={(e) => {
+               e.target.style.transform = 'translateY(-1px) scale(1.02)';
+             }}
+             onMouseUp={(e) => {
+               e.target.style.transform = 'translateY(-3px) scale(1.05)';
+             }}
+          >
+            Khám Phá Thêm
+          </a>
         </div> 
       </div>
     </div>

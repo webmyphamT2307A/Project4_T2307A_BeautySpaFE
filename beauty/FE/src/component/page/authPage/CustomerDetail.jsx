@@ -54,6 +54,13 @@ const CustomerDetail = () => {
         } else {
             window.location.href = '/';
         }
+        
+        // Cleanup function to revoke preview URLs
+        return () => {
+            if (userInfo.imagePreview) {
+                URL.revokeObjectURL(userInfo.imagePreview);
+            }
+        };
     }, []);
 
     const fetchUserDetails = async (userId, token) => {
@@ -93,7 +100,12 @@ const CustomerDetail = () => {
     const handleProfileChange = (e) => {
         const { name, value, files } = e.target;
         if (name === "imageFile") {
-            setUserInfo({ ...userInfo, imageFile: files[0] });
+            const file = files[0];
+            if (file) {
+                // Create preview URL for immediate display
+                const previewUrl = URL.createObjectURL(file);
+                setUserInfo({ ...userInfo, imageFile: file, imagePreview: previewUrl });
+            }
         } else {
             setUserInfo({ ...userInfo, [name]: value });
         }
@@ -126,8 +138,16 @@ const CustomerDetail = () => {
                 { headers: { 'Authorization': `Bearer ${user.token}` } }
             );
             if (response.data && response.data.status === 'SUCCESS') {
-                localStorage.setItem('userInfo', JSON.stringify({ ...user, ...userInfo }));
+                const updatedUserInfo = { ...user, ...userInfo, imageUrl: response.data.data.imageUrl || userInfo.imageUrl };
+                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
+                
+                // Dispatch custom event to notify Header component
+                window.dispatchEvent(new CustomEvent('userInfoUpdated'));
+                
                 setMessage({ type: 'success', content: 'Cập nhật thông tin thành công!' });
+                
+                // Update local state to show new image immediately
+                setUserInfo(prev => ({ ...prev, imageUrl: response.data.data.imageUrl || prev.imageUrl }));
             } else {
                 setMessage({ type: 'danger', content: 'Có lỗi xảy ra!' });
             }
@@ -235,7 +255,15 @@ const CustomerDetail = () => {
                         <div className="bg-light p-4 rounded">
                             <div className="text-center mb-4">
                                 <img
-                                    src={userInfo.imageUrl || "/assets/img/default-avatar.jpg"}
+                                    src={
+                                        userInfo.imagePreview || (
+                                            userInfo.imageUrl
+                                                ? userInfo.imageUrl.startsWith('http')
+                                                    ? userInfo.imageUrl
+                                                    : `http://localhost:8080/${userInfo.imageUrl.replace(/^\/?/, '')}`
+                                                : "/assets/img/default-avatar.jpg"
+                                        )
+                                    }
                                     alt="Ảnh đại diện"
                                     className="img-fluid rounded-circle"
                                     style={{ width: "150px", height: "150px", objectFit: "cover" }}

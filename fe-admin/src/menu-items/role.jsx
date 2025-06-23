@@ -14,12 +14,12 @@ const icons = {
 
 const role = {
   id: 'role',
-  title: 'role',
+  title: 'Vai Trò',
   type: 'group',
   children: [
     {
       id: 'role-service',
-      title: 'Service',
+      title: 'Quản Lý Vai Trò',
       type: 'item',
       url: '/role/service',
       icon: icons.UserOutlined

@@ -123,7 +123,7 @@ const ReviewList = () => {
 
     // Xóa review (soft-delete)
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to change the status of this review?')) return;
+        if (!window.confirm('Bạn có chắc chắn muốn thay đổi trạng thái của đánh giá này?')) return;
         setLoading(true);
         const token = localStorage.getItem('token');
         try {
@@ -135,11 +135,11 @@ const ReviewList = () => {
             });
             const data = await res.json();
             if (data.status === 'SUCCESS') {
-                toast.success('Review status changed!');
+                toast.success('Trạng thái đánh giá đã được thay đổi!');
                 fetchReviews();
-            } else toast.error(data.message || 'Failed');
+            } else toast.error(data.message || 'Thất bại');
         } catch {
-            toast.error('Error');
+            toast.error('Lỗi');
         }
         setLoading(false);
     };
@@ -152,18 +152,18 @@ const ReviewList = () => {
     });
 
     return (
-        <MainCard title="All Reviews">
+        <MainCard title="Tất cả đánh giá">
             <Box mb={2} display="flex" justifyContent="flex-end">
                 <FormControl size="small" sx={{ minWidth: 160 }}>
-                    <InputLabel>Status</InputLabel>
+                    <InputLabel>Trạng thái</InputLabel>
                     <Select
                         value={statusFilter}
-                        label="Status"
+                        label="Trạng thái"
                         onChange={e => setStatusFilter(e.target.value)}
                     >
-                        <MenuItem value="all">All</MenuItem>
-                        <MenuItem value="active">Active</MenuItem>
-                        <MenuItem value="inactive">Inactive</MenuItem>
+                        <MenuItem value="all">Tất cả</MenuItem>
+                        <MenuItem value="active">Hoạt động</MenuItem>
+                        <MenuItem value="inactive">Không hoạt động</MenuItem>
                     </Select>
                 </FormControl>
             </Box>
@@ -173,13 +173,13 @@ const ReviewList = () => {
                     <TableHead>
                         <TableRow>
                             <TableCell>ID</TableCell>
-                            <TableCell>Author</TableCell>
-                            <TableCell>Type</TableCell>
-                            <TableCell>Comment / Reply</TableCell>
-                            <TableCell>Rating</TableCell>
-                            <TableCell>Created At</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell align="center">Actions</TableCell>
+                            <TableCell>Tác giả</TableCell>
+                            <TableCell>Loại</TableCell>
+                            <TableCell>Bình luận / Phản hồi</TableCell>
+                            <TableCell>Đánh giá</TableCell>
+                            <TableCell>Ngày tạo</TableCell>
+                            <TableCell>Trạng thái</TableCell>
+                            <TableCell align="center">Thao tác</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -195,7 +195,7 @@ const ReviewList = () => {
                                         {r.replies && r.replies.length > 0 && (
                                             <Paper variant="outlined" sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', borderLeft: '3px solid #1890ff' }}>
                                                 <Typography variant="caption" component="div" sx={{ fontWeight: 'bold', color: '#1890ff' }}>
-                                                    Replied by: {r.replies[0].authorName}
+                                                    Trả lời bởi: {r.replies[0].authorName}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
                                                     "{r.replies[0].comment}"

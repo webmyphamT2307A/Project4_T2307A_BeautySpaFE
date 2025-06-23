@@ -145,7 +145,7 @@ const RoleManager = () => {
   };
 
   const handleDelete = (roleId) => {
-    if (window.confirm('Are you sure you want to delete this role?')) {
+    if (confirm('Bạn có chắc chắn muốn xóa vai trò này?')) {
       fetch(`${API_URL}/delete?roleId=${roleId}`, {
         method: 'PUT'
       })

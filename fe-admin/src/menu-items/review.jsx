@@ -14,12 +14,12 @@ const icons = {
 
 const review = {
   id: 'review',
-  title: 'review',
+  title: 'Đánh Giá',
   type: 'group',
   children: [
     {
       id: 'review-service',
-      title: 'review',
+      title: 'Đánh Giá',
       type: 'item',
       url: '/review/review',
       icon: icons.StarOutlined 

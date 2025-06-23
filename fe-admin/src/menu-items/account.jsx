@@ -18,19 +18,19 @@ const icons = {
 
 const account = {
   id: 'account',
-  title: 'Account',
+  title: 'Tài Khoản',
   type: 'group',
   children: [
     {
       id: 'account-user',
-      title: 'User',
+      title: 'Người Dùng',
       type: 'item',
       url: '/account/user',
       icon: icons.UserOutlined
     },
     {
       id: 'account-admin',
-      title: 'Admin',
+      title: 'Quản Trị Viên',
       type: 'item',
       url: '/account/admin',
       icon: icons.LockOutlined

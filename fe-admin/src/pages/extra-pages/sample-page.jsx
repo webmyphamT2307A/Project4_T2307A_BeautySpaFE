@@ -8,12 +8,11 @@ import MainCard from 'components/MainCard';
 
 export default function SamplePage() {
   return (
-    <MainCard title="Sample Card">
+    <MainCard title="Trang Mẫu">
       <Typography variant="body2">
-        Lorem ipsum dolor sit amen, consenter nipissing eli, sed do elusion tempos incident ut laborers et doolie magna alissa. Ut enif ad
-        minim venice, quin nostrum exercitation illampu laborings nisi ut liquid ex ea commons construal. Duos aube grue dolor in
-        reprehended in voltage veil esse colum doolie eu fujian bulla parian. Exceptive sin ocean cuspidate non president, sunk in culpa qui
-        officiate descent molls anim id est labours.
+        Đây là nội dung mẫu của trang. Bạn có thể chỉnh sửa nội dung này để phù hợp với yêu cầu của dự án. 
+        Trang này được tạo ra để minh họa cách sử dụng các component cơ bản trong ứng dụng spa beauty.
+        Bạn có thể thêm các chức năng mới hoặc tùy chỉnh giao diện theo ý muốn.
       </Typography>
     </MainCard>
   );

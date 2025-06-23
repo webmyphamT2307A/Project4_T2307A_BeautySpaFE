@@ -30,7 +30,7 @@ const spa = {
     // },
     {
       id: 'appointments',
-      title: 'Appointments',
+      title: 'Lịch hẹn',
       type: 'item',
       url: '/spa/appointments',
       icon: icons.CalendarOutlined

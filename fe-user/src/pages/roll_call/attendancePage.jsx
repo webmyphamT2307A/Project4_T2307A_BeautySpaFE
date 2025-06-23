@@ -84,9 +84,9 @@ const AttendancePage = () => {
     const json = await response.json();
 
     if (json.status === 'SUCCESS') {
-      setStatusMessage(`✅ Check-out thành công lúc: ${new Date(now).toLocaleString()}`);
+      setStatusMessage(`✅ Kết thúc ca thành công lúc: ${new Date(now).toLocaleString()}`);
     } else {
-      throw new Error(json.message || 'Check-out thất bại');
+      throw new Error(json.message || 'Kết thúc ca thất bại');
     }
   } catch (err) {
     setStatusMessage(`❌ Lỗi: ${err.message}`);
@@ -109,7 +109,7 @@ const AttendancePage = () => {
           onClick={handleCheckIn}
           disabled={loading}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : 'Check-in'}
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Vào ca'}
         </Button>
         <Button
           variant="contained"
@@ -117,7 +117,7 @@ const AttendancePage = () => {
           onClick={handleCheckOut}
           disabled={loading}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : 'Check-out'}
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Kết thúc ca'}
         </Button>
       </Box>
 

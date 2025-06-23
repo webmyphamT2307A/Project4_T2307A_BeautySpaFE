@@ -30,6 +30,33 @@ const Header = () => {
         
         // Fetch services data for search
         fetchServicesData();
+        
+        // Listen for localStorage changes to update userInfo immediately
+        const handleStorageChange = (e) => {
+            if (e.key === 'userInfo') {
+                if (e.newValue) {
+                    setUserInfo(JSON.parse(e.newValue));
+                } else {
+                    setUserInfo(null);
+                }
+            }
+        };
+        
+        // Listen for custom userInfo update events
+        const handleUserInfoUpdate = (e) => {
+            const updatedUser = localStorage.getItem('userInfo');
+            if (updatedUser) {
+                setUserInfo(JSON.parse(updatedUser));
+            }
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('userInfoUpdated', handleUserInfoUpdate);
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('userInfoUpdated', handleUserInfoUpdate);
+        };
     }, []);
 
     // Fetch services data
@@ -344,19 +371,21 @@ const Header = () => {
                                     ) : (
                                         <div className="nav-item dropdown ms-3">
                                             <a href="#" className="nav-link dropdown-toggle d-flex align-items-center p-2 rounded-pill" data-bs-toggle="dropdown" style={{ 
-                                                border: '2px solid #f8f9fa',
+                                                border: '2px solid #FDB5B9',
                                                 transition: 'all 0.3s ease',
-                                                background: 'rgba(13, 110, 253, 0.1)'
+                                                background: 'rgba(253, 181, 185, 0.1)'
                                             }}
                                             onMouseEnter={(e) => {
-                                                e.target.style.background = 'rgba(13, 110, 253, 0.2)';
-                                                e.target.style.borderColor = '#0d6efd';
+                                                e.target.style.background = 'rgba(253, 181, 185, 0.2)';
+                                                e.target.style.borderColor = '#F7A8B8';
                                                 e.target.style.transform = 'translateY(-2px)';
+                                                e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.3)';
                                             }}
                                             onMouseLeave={(e) => {
-                                                e.target.style.background = 'rgba(13, 110, 253, 0.1)';
-                                                e.target.style.borderColor = '#f8f9fa';
+                                                e.target.style.background = 'rgba(253, 181, 185, 0.1)';
+                                                e.target.style.borderColor = '#FDB5B9';
                                                 e.target.style.transform = 'translateY(0)';
+                                                e.target.style.boxShadow = 'none';
                                             }}
                                             >
                                                 <img
@@ -370,18 +399,18 @@ const Header = () => {
                                                     alt="avatar"
                                                     style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", marginRight: 10, border: '2px solid white' }}
                                                 />
-                                                <span style={{ fontWeight: '600', color: '#0d6efd' }}>
+                                                <span style={{ fontWeight: '600', color: '#d6336c' }}>
                                                     {userInfo.fullName?.split(' ').slice(-1)[0] || 'User'}
                                                 </span>
                                             </a>
                                             <div className="dropdown-menu m-0 bg-white rounded-3 shadow-lg border-0" style={{ minWidth: '200px', marginTop: '10px !important' }}>
                                                 <Link to="/CustomerDetail" className="dropdown-item py-2 px-3 d-flex align-items-center" style={{ fontWeight: '500' }}>
-                                                    <i className="fas fa-user-circle me-2 text-primary"></i>
+                                                    <i className="fas fa-user-circle me-2" style={{ color: '#FDB5B9' }}></i>
                                                     Thông tin cá nhân
                                                 </Link>
                                                 <hr className="dropdown-divider my-1" />
-                                                <button onClick={handleLogout} className="dropdown-item py-2 px-3 d-flex align-items-center text-danger" style={{ fontWeight: '500' }}>
-                                                    <i className="fas fa-sign-out-alt me-2"></i>
+                                                <button onClick={handleLogout} className="dropdown-item py-2 px-3 d-flex align-items-center" style={{ fontWeight: '500', color: '#e74c3c' }}>
+                                                    <i className="fas fa-sign-out-alt me-2" style={{ color: '#e74c3c' }}></i>
                                                     Đăng xuất
                                                 </button>
                                             </div>

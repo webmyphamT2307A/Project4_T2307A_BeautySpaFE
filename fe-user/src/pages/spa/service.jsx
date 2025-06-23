@@ -218,7 +218,7 @@ const ServiceManagement = () => {
 
   // Xóa mềm dịch vụ
   const handleDelete = (serviceId) => {
-    if (window.confirm('Are you sure you want to delete this service?')) {
+    if (window.confirm('Bạn có chắc chắn muốn xóa dịch vụ này không?')) {
       fetch(`${API_URL}/delete/${serviceId}`, {
         method: 'PUT'
       })
@@ -269,20 +269,20 @@ const ServiceManagement = () => {
   );
 
   return (
-    <MainCard title="Service Management" secondary={
+    <MainCard title="Quản lý dịch vụ" secondary={
       <Button
         variant="contained"
         startIcon={<PlusOutlined />}
         onClick={() => handleOpen()}
       >
-        Add Service
+        Thêm dịch vụ
       </Button>
     }>
       <Box sx={{ mb: 3 }}>
         <TextField
           fullWidth
           size="small"
-          placeholder="Search services by name or description..."
+          placeholder="Tìm kiếm dịch vụ theo tên hoặc mô tả..."
           value={searchQuery}
           onChange={handleSearchChange}
           InputProps={{
@@ -319,13 +319,13 @@ const ServiceManagement = () => {
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
               <TableCell sx={{ fontWeight: 600 }}>STT</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Image</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Price</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Duration</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Created</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Hình ảnh</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Tên</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Giá</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Thời gian</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Ngày tạo</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 600 }}>Thao tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -357,13 +357,13 @@ const ServiceManagement = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                      ${service.price.toFixed(2)}
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(service.price * 10000)}
                     </Typography>
                   </TableCell>
-                  <TableCell>{service.duration} min</TableCell>
+                  <TableCell>{service.duration} phút</TableCell>
                   <TableCell>
                     <Chip
-                      label={service.is_active ? 'Active' : 'Inactive'}
+                      label={service.is_active ? 'Hoạt động' : 'Không hoạt động'}
                       size="small"
                       color={service.is_active ? 'success' : 'default'}
                       icon={service.is_active ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
@@ -375,17 +375,17 @@ const ServiceManagement = () => {
                     {service.created_at ? new Date(service.created_at).toLocaleDateString() : ''}
                   </TableCell>
                   <TableCell align="center">
-                    <Tooltip title="View Details">
+                    <Tooltip title="Xem chi tiết">
                       <IconButton size="small" color="info" onClick={() => handleViewOpen(service)}>
                         <EyeOutlined />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Edit">
+                    <Tooltip title="Chỉnh sửa">
                       <IconButton size="small" color="primary" onClick={() => handleOpen(service)}>
                         <EditOutlined />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete">
+                    <Tooltip title="Xóa">
                       <IconButton size="small" color="error" onClick={() => handleDelete(service.service_id)}>
                         <DeleteOutlined />
                       </IconButton>
@@ -411,7 +411,7 @@ const ServiceManagement = () => {
       {/* Add/Edit Service Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-          {currentService ? 'Edit Service' : 'Add Service'}
+          {currentService ? 'Chỉnh sửa dịch vụ' : 'Thêm dịch vụ'}
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Box sx={{ mt: 2, mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -431,7 +431,7 @@ const ServiceManagement = () => {
               startIcon={<UploadOutlined />}
               sx={{ borderRadius: '4px' }}
             >
-              {imagePreview ? 'Change Image' : 'Upload Image'}
+              {imagePreview ? 'Thay đổi hình ảnh' : 'Tải lên hình ảnh'}
               <input
                 type="file"
                 hidden
@@ -446,14 +446,14 @@ const ServiceManagement = () => {
                 onClick={() => handleClearField('image_url')}
                 sx={{ mt: 1 }}
               >
-                Remove Image
+                Xóa hình ảnh
               </Button>
             )}
           </Box>
           <TextField
             margin="dense"
             name="name"
-            label="Service Name"
+            label="Tên dịch vụ"
             type="text"
             fullWidth
             value={formData.name}
@@ -475,7 +475,7 @@ const ServiceManagement = () => {
           <TextField
             margin="dense"
             name="description"
-            label="Description"
+            label="Mô tả"
             type="text"
             fullWidth
             multiline
@@ -499,7 +499,7 @@ const ServiceManagement = () => {
             <TextField
               margin="dense"
               name="price"
-              label="Price ($)"
+              label="Giá (VND)"
               type="number"
               fullWidth
               value={formData.price}
@@ -521,7 +521,7 @@ const ServiceManagement = () => {
             <TextField
               margin="dense"
               name="duration"
-              label="Duration (minutes)"
+              label="Thời gian (phút)"
               type="number"
               fullWidth
               value={formData.duration}
@@ -550,20 +550,20 @@ const ServiceManagement = () => {
                 color="primary"
               />
             }
-            label="Service Active"
+            label="Dịch vụ hoạt động"
             sx={{ mt: 1 }}
           />
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-          <Button onClick={handleClose} variant="outlined" color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" color="primary">Save</Button>
+          <Button onClick={handleClose} variant="outlined" color="inherit">Hủy</Button>
+          <Button onClick={handleSave} variant="contained" color="primary">Lưu</Button>
         </DialogActions>
       </Dialog>
 
       {/* View Service Dialog */}
       <Dialog open={viewOpen} onClose={handleViewClose} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-          Service Details
+          Chi tiết dịch vụ
           <IconButton
             aria-label="close"
             onClick={handleViewClose}
@@ -589,32 +589,32 @@ const ServiceManagement = () => {
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography variant="overline" color="textSecondary">Service Name</Typography>
+                <Typography variant="overline" color="textSecondary">Tên dịch vụ</Typography>
                 <Typography variant="h6">{currentService.name}</Typography>
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography variant="overline" color="textSecondary">Description</Typography>
+                <Typography variant="overline" color="textSecondary">Mô tả</Typography>
                 <Typography variant="body2">{currentService.description}</Typography>
               </Box>
 
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
                 <Box>
-                  <Typography variant="overline" color="textSecondary">Price</Typography>
-                  <Typography variant="h6" color="primary">${currentService.price.toFixed(2)}</Typography>
+                  <Typography variant="overline" color="textSecondary">Giá</Typography>
+                  <Typography variant="h6" color="primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentService.price * 10000)}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="overline" color="textSecondary">Duration</Typography>
-                  <Typography variant="h6">{currentService.duration} minutes</Typography>
+                  <Typography variant="overline" color="textSecondary">Thời gian</Typography>
+                  <Typography variant="h6">{currentService.duration} phút</Typography>
                 </Box>
               </Box>
 
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
                 <Box>
-                  <Typography variant="overline" color="textSecondary">Status</Typography>
+                  <Typography variant="overline" color="textSecondary">Trạng thái</Typography>
                   <Box sx={{ mt: 0.5 }}>
                     <Chip
-                      label={currentService.is_active ? 'Active' : 'Inactive'}
+                      label={currentService.is_active ? 'Hoạt động' : 'Không hoạt động'}
                       size="small"
                       color={currentService.is_active ? 'success' : 'default'}
                       icon={currentService.is_active ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
@@ -622,7 +622,7 @@ const ServiceManagement = () => {
                   </Box>
                 </Box>
                 <Box>
-                  <Typography variant="overline" color="textSecondary">Created</Typography>
+                  <Typography variant="overline" color="textSecondary">Ngày tạo</Typography>
                   <Typography variant="body2">
                     {currentService.created_at ? new Date(currentService.created_at).toLocaleDateString() : ''}
                   </Typography>

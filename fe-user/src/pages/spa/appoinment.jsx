@@ -511,12 +511,12 @@ const AppointmentManagement = () => {
   );
 
   return (
-    <MainCard title="Appointment Management">
+    <MainCard title="Quản lý lịch hẹn">
       <Grid container spacing={3}>
         {/* Search and Filter Controls */}
         <Grid item xs={12} display="flex" flexWrap="wrap" gap={2} alignItems="center" mb={2}>
           <TextField
-            placeholder="Search by name, phone or service"
+            placeholder="Tìm kiếm theo tên, số điện thoại hoặc dịch vụ"
             variant="outlined"
             size="small"
             value={searchQuery}
@@ -539,26 +539,26 @@ const AppointmentManagement = () => {
           />
 
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel id="status-filter-label">Status</InputLabel>
+            <InputLabel id="status-filter-label">Trạng thái</InputLabel>
             <Select
               labelId="status-filter-label"
               id="status-filter"
               value={statusFilter}
-              label="Status"
+              label="Trạng thái"
               onChange={handleStatusFilterChange}
             >
-              <MenuItem value="all">All Status</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="confirmed">Confirmed</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
+              <MenuItem value="all">Tất cả trạng thái</MenuItem>
+              <MenuItem value="pending">Chờ xử lý</MenuItem>
+              <MenuItem value="confirmed">Đã xác nhận</MenuItem>
+              <MenuItem value="completed">Hoàn thành</MenuItem>
+              <MenuItem value="cancelled">Đã hủy</MenuItem>
             </Select>
           </FormControl>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <TextField
-                label="From Date"
+                label="Từ ngày"
                 type="date"
                 size="small"
                 name="startDate"
@@ -567,9 +567,9 @@ const AppointmentManagement = () => {
                 InputLabelProps={{ shrink: true }}
                 sx={{ width: 150 }}
               />
-              <Typography variant="body2">to</Typography>
+              <Typography variant="body2">đến</Typography>
               <TextField
-                label="To Date"
+                label="Đến ngày"
                 type="date"
                 size="small"
                 name="endDate"
@@ -595,19 +595,19 @@ const AppointmentManagement = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>ID</TableCell>
-                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Customer</TableCell>
-                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Service</TableCell>
-                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Date & Time</TableCell>
-                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Staff</TableCell>
-                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Branch</TableCell>
-                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Status</TableCell>
-                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Actions</TableCell>
+                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Khách hàng</TableCell>
+                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Dịch vụ</TableCell>
+                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Ngày & Giờ</TableCell>
+                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Nhân viên</TableCell>
+                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Chi nhánh</TableCell>
+                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Trạng thái</TableCell>
+                  <TableCell sx={{ backgroundColor: '#f8f8f8', fontWeight: 600 }}>Thao tác</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">Loading...</TableCell>
+                    <TableCell colSpan={8} align="center">Đang tải...</TableCell>
                   </TableRow>
                 ) : currentAppointments.length > 0 ? (
                   currentAppointments.map((appointment) => {
@@ -640,7 +640,7 @@ const AppointmentManagement = () => {
                             {appointment.service?.name}
                           </Typography>
                           <Typography variant="caption" color="primary">
-                            ${appointment.price.toFixed(2)} • {appointment.service?.duration} min
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appointment.price * 10000)} • {appointment.service?.duration} phút
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -661,7 +661,7 @@ const AppointmentManagement = () => {
                               {!appointment.user?.image && <UserOutlined />}
                             </Avatar>
                             <Typography variant="body2">
-                              {appointment.user?.name || 'Unassigned'}
+                              {appointment.user?.name || 'Chưa phân công'}
                             </Typography>
                           </Box>
                         </TableCell>
@@ -680,7 +680,7 @@ const AppointmentManagement = () => {
                           />
                         </TableCell>
                                                 <TableCell>
-                          <Tooltip title="View Details">
+                          <Tooltip title="Xem chi tiết">
                             <IconButton
                               onClick={() => handleViewOpen(appointment)}
                               color="info"
@@ -693,7 +693,7 @@ const AppointmentManagement = () => {
                           {/* Hiện nút Update cho cả STAFF và MANAGE nếu chưa completed/cancelled */}
                           {(userRole === 'ROLE_MANAGE' || userRole === 'ROLE_STAFF') && appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
                             <>
-                              <Tooltip title="Update Status">
+                              <Tooltip title="Cập nhật trạng thái">
                                 <IconButton
                                   onClick={() => handleStatusDialogOpen(appointment)}
                                   color="primary"
@@ -702,7 +702,7 @@ const AppointmentManagement = () => {
                                   <EditOutlined />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title={!appointment.customer?.email ? "No customer email available" : "Send Confirmation Email"}>
+                              <Tooltip title={!appointment.customer?.email ? "Không có email khách hàng" : "Gửi email xác nhận"}>
                                 <span>
                                   <IconButton 
                                     onClick={() => handleOpenEmailConfirmation(appointment)} 
