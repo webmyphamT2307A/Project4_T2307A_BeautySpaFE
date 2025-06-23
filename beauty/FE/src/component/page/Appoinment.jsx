@@ -662,7 +662,7 @@ const Appointment = () => {
 
             if (!customerIdToSubmit && (formData.fullName && formData.phoneNumber)) {
                 try {
-                    const res = await axios.post('http://localhost:8080/api/v1/customer/guest-create', {
+                    const res = await axios.post('http://localhost:8080/api/v1/customers/guest-create', {
                         fullName: formData.fullName,
                         phone: formData.phoneNumber,
                     });
