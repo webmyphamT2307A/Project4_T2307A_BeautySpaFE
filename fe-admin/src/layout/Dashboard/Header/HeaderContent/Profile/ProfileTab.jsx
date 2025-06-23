@@ -14,13 +14,24 @@ import UserOutlined from '@ant-design/icons/UserOutlined';
 import WalletOutlined from '@ant-design/icons/WalletOutlined';
 
 // utils
-import { authUtils } from 'utils/auth';
+import { useNavigate } from 'react-router-dom';
 
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
 
 export default function ProfileTab() {
-  const handleLogout = () => {
-    authUtils.logout();
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) { }
+    Cookies.remove('admin_token', { path: '/admin' });
+  Cookies.remove('admin_role', { path: '/admin' });
+  Cookies.remove('staff_token', { path: '/staff' });
+  Cookies.remove('staff_role', { path: '/staff' });
+
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  navigate('/login');
   };
 
   return (
