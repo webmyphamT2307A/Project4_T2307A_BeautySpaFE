@@ -645,11 +645,14 @@ const UserScheduleManager = () => {
           </Grid>
         </Grid>
         
-        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button size="small" onClick={clearFilters} variant="outlined">
-            Xóa Bộ Lọc
-          </Button>
-        </Box>
+        {/* Chỉ hiện button Clear Filters khi có filter được áp dụng */}
+        {(filterByUserId || filterStatus || filterMonth || filterYear || startDate || endDate || searchQuery) && (
+          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button size="small" onClick={clearFilters} variant="outlined">
+              Xóa Bộ Lọc
+            </Button>
+          </Box>
+        )}
       </Box>
 
       <TableContainer component={Paper} sx={{ boxShadow: 'none', borderRadius: '10px', maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>

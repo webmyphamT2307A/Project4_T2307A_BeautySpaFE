@@ -32,8 +32,9 @@ const Appointment = () => {
     const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
     const [staffSearchTerm, setStaffSearchTerm] = useState('');
     const [selectedStaffId, setSelectedStaffId] = useState(null); // To track visually selected staff
-    const [strictFiltering, setStrictFiltering] = useState(true); // Enable strict skill filtering
+    const [strictFiltering, setStrictFiltering] = useState(true); // Enable strict skill filtering - made more intelligent
     const [scheduleFiltering, setScheduleFiltering] = useState(true); // Enable schedule filtering
+    const [shiftFiltering, setShiftFiltering] = useState(true); // Enable shift filtering by default
 
     // Cancel appointment states
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -72,6 +73,23 @@ const Appointment = () => {
 
                 const response = await axios.get(apiUrl, { params });
                 const rawStaffList = Array.isArray(response.data) ? response.data : (response.data.data || []);
+
+                // Get selected timeslot to determine shift (moved outside try-catch)
+                const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
+                let requiredShift = null;
+                
+                if (selectedTimeSlot) {
+                    const startHour = parseInt(selectedTimeSlot.startTime.split(':')[0]);
+                    // Determine shift based on time
+                    if (startHour >= 6 && startHour < 12) {
+                        requiredShift = 'Sáng';
+                    } else if (startHour >= 12 && startHour < 18) {
+                        requiredShift = 'Chiều';
+                    } else {
+                        requiredShift = 'Tối';
+                    }
+                    console.log(`🕐 Selected time slot: ${selectedTimeSlot.startTime}, Required shift: ${requiredShift}`);
+                }
 
                 // If date is selected, filter staff who have work schedule on that date
                 let staffWithSchedule = rawStaffList;
@@ -112,10 +130,10 @@ const Appointment = () => {
                         if (schedules.length === 0) {
                             console.log("⚠️ No schedules found for date:", formData.appointmentDate);
                         } else {
-                            console.log("📋 Schedule details:");
-                            schedules.forEach((schedule, index) => {
-                                console.log(`   ${index + 1}. User ${schedule.userId} (${schedule.userName || 'Unknown'}) - Work Date: ${schedule.workDate} - Status: ${schedule.status} - Active: ${schedule.isActive}`);
-                            });
+                                                    console.log("📋 Schedule details:");
+                        schedules.forEach((schedule, index) => {
+                            console.log(`   ${index + 1}. User ${schedule.userId} (${schedule.userName || 'Unknown'}) - Work Date: ${schedule.workDate} - Shift: ${schedule.shift || 'Unknown'} - Status: ${schedule.status} - Active: ${schedule.isActive}`);
+                        });
                         }
                         
                         // Get list of staff IDs who have schedules on this date
@@ -127,22 +145,34 @@ const Appointment = () => {
                                 const isActive = schedule.isActive === true;
                                 const isNotCompleted = schedule.status !== 'completed';
                                 
+                                // Check shift compatibility (if shift info is available and shift filtering is enabled)
+                                let isShiftMatch = true;
+                                if (shiftFiltering && requiredShift && schedule.shift) {
+                                    isShiftMatch = schedule.shift.toLowerCase().includes(requiredShift.toLowerCase()) ||
+                                                  requiredShift.toLowerCase().includes(schedule.shift.toLowerCase()) ||
+                                                  schedule.shift.toLowerCase() === 'full day' ||
+                                                  schedule.shift.toLowerCase() === 'cả ngày';
+                                }
+                                
                                 console.log("🔍 Checking schedule:", {
                                     userId: schedule.userId,
                                     userName: schedule.userName || 'Unknown',
                                     workDate: workDate,
                                     requestedDate: requestedDate,
+                                    shift: schedule.shift || 'Unknown',
+                                    requiredShift: requiredShift,
                                     isDateMatch: isDateMatch,
                                     isActive: isActive,
                                     status: schedule.status,
                                     isNotCompleted: isNotCompleted,
-                                    finalResult: isDateMatch && isActive && isNotCompleted
+                                    isShiftMatch: isShiftMatch,
+                                    finalResult: isDateMatch && isActive && isNotCompleted && isShiftMatch
                                 });
                                 
-                                return isDateMatch && isActive && isNotCompleted;
+                                return isDateMatch && isActive && isNotCompleted && isShiftMatch;
                             })
                             .map(schedule => {
-                                console.log("✅ Valid schedule for user:", schedule.userId);
+                                console.log("✅ Valid schedule for user:", schedule.userId, `(Shift: ${schedule.shift || 'Unknown'})`);
                                 return schedule.userId;
                             });
                         
@@ -217,6 +247,13 @@ const Appointment = () => {
                                     'chăm sóc da': ['facial', 'skin', 'skincare', 'beauty', 'face', 'chăm sóc da'],
                                     'làm sạch da': ['facial', 'skin', 'skincare', 'beauty', 'face', 'chăm sóc da'],
                                     
+                                    // Hair removal services - TRIỆT LÔNG
+                                    'triệt lông': ['triệt lông', 'laser', 'hair removal', 'wax', 'waxing', 'epilazione', 'depilação'],
+                                    'laser': ['triệt lông', 'laser', 'hair removal', 'ipl', 'laser hair removal'],
+                                    'wax': ['triệt lông', 'wax', 'waxing', 'hair removal', 'brazilian'],
+                                    'waxing': ['triệt lông', 'wax', 'waxing', 'hair removal'],
+                                    'hair removal': ['triệt lông', 'laser', 'hair removal', 'wax', 'waxing'],
+                                    
                                     // Massage services
                                     'massage': ['massage', 'therapy', 'body', 'relaxation', 'mát xa', 'trị liệu'],
                                     'mát xa': ['massage', 'therapy', 'body', 'relaxation', 'mát xa', 'trị liệu'],
@@ -246,12 +283,16 @@ const Appointment = () => {
                                 for (const [key, skills] of Object.entries(serviceSkillMapping)) {
                                     if (serviceName.includes(key)) {
                                         requiredSkills = [...requiredSkills, ...skills];
+                                        console.log(`🎯 Service "${serviceName}" matched key "${key}" -> skills: [${skills.join(', ')}]`);
                                     }
                                 }
                                 
                                 // If no specific skills found, use generic spa skills
                                 if (requiredSkills.length === 0) {
                                     requiredSkills = ['spa', 'beauty', 'wellness', 'service', 'customer'];
+                                    console.log(`⚠️ No specific skills found for "${serviceName}", using generic: [${requiredSkills.join(', ')}]`);
+                                } else {
+                                    console.log(`✅ Final required skills for "${serviceName}": [${requiredSkills.join(', ')}]`);
                                 }
                                 
                                 // STRICT skill matching - only show staff with relevant skills
@@ -287,6 +328,19 @@ const Appointment = () => {
                                     // Direct service name match in skills/role
                                     if (skillsText.includes(serviceName) || roleName.includes(serviceName)) {
                                         return true;
+                                    }
+                                    
+                                    // Hair removal / Triệt lông specific matching
+                                    if (serviceName.includes('triệt lông') || serviceName.includes('laser') || 
+                                        serviceName.includes('hair removal') || serviceName.includes('wax')) {
+                                        return skillsText.includes('triệt lông') || 
+                                               skillsText.includes('laser') || 
+                                               skillsText.includes('hair removal') ||
+                                               skillsText.includes('wax') ||
+                                               skillsText.includes('waxing') ||
+                                               roleName.includes('triệt lông') ||
+                                               roleName.includes('laser') ||
+                                               roleName.includes('hair removal');
                                     }
                                     
                                     // Specific service category matching
@@ -328,13 +382,12 @@ const Appointment = () => {
                                     return false;
                                 })();
                                 
-                                // Final qualification: Must have either specific skill OR (general spa + basic skill match)
-                                const isQualified = hasRequiredSkill || 
+                                // Final qualification: More intelligent filtering 
+                                const isQualified = !strictFiltering || // If not strict, accept all
+                                                  hasRequiredSkill || 
                                                   isManagerOrSeniorWithSkill || 
                                                   hasSpecificServiceSkill ||
-                                                  (hasGeneralSpaExperience && requiredSkills.some(skill => 
-                                                      skillsText.includes(skill) || roleName.includes(skill)
-                                                  ));
+                                                  hasGeneralSpaExperience; // Remove the "accept all" fallback
                                 
                                 if (!isQualified) {
                                     console.log(`❌ Staff ${staff.fullName} filtered out for service: ${serviceName}`);
@@ -363,11 +416,17 @@ const Appointment = () => {
                 // Final debug summary
                 console.log("\n🎯 FINAL STAFF LIST SUMMARY:");
                 console.log(`   📅 Selected Date: ${formData.appointmentDate}`);
+                console.log(`   🕐 Selected Time Slot: ${selectedTimeSlot ? selectedTimeSlot.startTime + '-' + selectedTimeSlot.endTime : 'None'}`);
                 console.log(`   🔄 Schedule Filtering: ${scheduleFiltering ? 'ENABLED' : 'DISABLED'}`);
+                console.log(`   ⏰ Shift Filtering: ${shiftFiltering ? 'ENABLED' : 'DISABLED'}`);
+                console.log(`   🎯 Strict Skill Filtering: ${strictFiltering ? 'ENABLED' : 'DISABLED'}`);
                 console.log(`   📊 Final Staff Count: ${shuffledStaff.length}`);
                 console.log(`   👥 Staff Names: [${shuffledStaff.map(s => s.fullName).join(', ')}]`);
                 if (formData.appointmentDate && scheduleFiltering) {
                     console.log(`   ⚠️  NOTE: Only staff with schedules on ${formData.appointmentDate} should be shown!`);
+                    if (shiftFiltering && requiredShift) {
+                        console.log(`   ⚠️  NOTE: Only staff with ${requiredShift} shift should be shown!`);
+                    }
                 }
                 
                 setStaffList(shuffledStaff);
@@ -380,7 +439,7 @@ const Appointment = () => {
         };
 
         fetchStaffList();
-    }, [formData.serviceId, formData.appointmentDate, services]); // Re-fetch when service or date changes
+            }, [formData.serviceId, formData.appointmentDate, formData.timeSlotId, services, timeSlots, scheduleFiltering, shiftFiltering]); // Re-fetch when any relevant parameter changes
 
     // Fetch time slots
     useEffect(() => {
@@ -1043,7 +1102,49 @@ const Appointment = () => {
                     </div>
                 </div>
                 <div className="col-12 col-md-6">
-                    <div className="d-flex flex-column align-items-md-end">                        
+                    <div className="d-flex flex-column align-items-md-end">  
+                        <div className="d-flex flex-wrap gap-2 mb-2">
+                            <button
+                                type="button"
+                                className={`btn btn-sm ${shiftFiltering ? 'btn-success' : 'btn-outline-light'}`}
+                                onClick={() => {
+                                    setShiftFiltering(!shiftFiltering);
+                                    // Show toast notification
+                                    if (!shiftFiltering) {
+                                        toast.info('✅ Đã bật lọc theo ca làm việc - Chỉ hiển thị nhân viên có ca phù hợp');
+                                    } else {
+                                        toast.info('❌ Đã tắt lọc theo ca làm việc - Hiển thị tất cả nhân viên có lịch làm việc');
+                                    }
+                                }}
+                                style={{ fontSize: '0.8rem' }}
+                                title={shiftFiltering ? "Tắt lọc theo ca làm việc" : "Bật lọc theo ca làm việc"}
+                            >
+                                <i className={`fas ${shiftFiltering ? 'fa-toggle-on' : 'fa-toggle-off'} me-1`}></i>
+                                Lọc theo ca làm việc
+                            </button>
+                            {/* Hiển thị ca làm việc hiện tại */}
+                            {formData.timeSlotId && (() => {
+                                const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
+                                if (selectedTimeSlot) {
+                                    const startHour = parseInt(selectedTimeSlot.startTime.split(':')[0]);
+                                    let currentShift = '';
+                                    if (startHour >= 6 && startHour < 12) {
+                                        currentShift = 'Sáng';
+                                    } else if (startHour >= 12 && startHour < 18) {
+                                        currentShift = 'Chiều';
+                                    } else {
+                                        currentShift = 'Tối';
+                                    }
+                                    return (
+                                        <span className="badge bg-info" style={{ fontSize: '0.75rem' }}>
+                                            <i className="fas fa-clock me-1"></i>
+                                            Ca {currentShift}
+                                        </span>
+                                    );
+                                }
+                                return null;
+                            })()}
+                        </div>                    
                         {(isCheckingAvailabilities || isLoadingSchedules) && (
                             <div className="text-info">
                                 <i className="fas fa-spinner fa-spin me-2"></i>
@@ -1067,6 +1168,24 @@ const Appointment = () => {
                                     <p className="mb-2">Không có nhân viên nào có:</p>
                                     <ul className="list-unstyled">
                                         <li><i className="fas fa-calendar-check me-2"></i>Lịch làm việc vào {formData.appointmentDate || 'ngày đã chọn'}</li>
+                                        {shiftFiltering && formData.timeSlotId && (() => {
+                                            const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
+                                            if (selectedTimeSlot) {
+                                                const startHour = parseInt(selectedTimeSlot.startTime.split(':')[0]);
+                                                let currentShift = '';
+                                                if (startHour >= 6 && startHour < 12) {
+                                                    currentShift = 'Sáng';
+                                                } else if (startHour >= 12 && startHour < 18) {
+                                                    currentShift = 'Chiều';
+                                                } else {
+                                                    currentShift = 'Tối';
+                                                }
+                                                return (
+                                                    <li><i className="fas fa-user-clock me-2"></i>Ca làm việc phù hợp (Ca {currentShift})</li>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                         {strictFiltering && formData.serviceId && (
                                             <li><i className="fas fa-tools me-2"></i>Kỹ năng phù hợp với dịch vụ "{services.find(s => String(s.id) === formData.serviceId)?.name}"</li>
                                         )}
@@ -1077,14 +1196,26 @@ const Appointment = () => {
                                     <div className="mt-3">
                                         <div className="alert alert-warning bg-transparent border-warning text-warning small mb-3">
                                             <i className="fas fa-info-circle me-2"></i>
-                                            {strictFiltering 
-                                                ? <><strong>Hệ thống đã lọc nghiêm ngặt</strong> chỉ hiển thị nhân viên có kỹ năng chuyên môn phù hợp với dịch vụ</>
-                                                : <><strong>Đang hiển thị tất cả nhân viên</strong> có ca làm việc. Bật "Lọc nghiêm ngặt" để chỉ xem nhân viên có kỹ năng phù hợp</>
-                                            }
+                                            <div className="mb-2">
+                                                <strong>Hệ thống đang tìm kiếm:</strong>
+                                                <ul className="mb-1 mt-1">
+                                                    <li>Nhân viên có lịch làm việc trong ngày đã chọn</li>
+                                                    {shiftFiltering && (
+                                                        <li>Nhân viên có ca làm việc phù hợp với thời gian đã chọn</li>
+                                                    )}
+                                                    <li>Nhân viên có thể phục vụ dịch vụ được chọn</li>
+                                                </ul>
+                                            </div>
+                                            <strong>Gợi ý:</strong> 
+                                            {shiftFiltering ? (
+                                                <span> Thử tắt "Lọc theo ca làm việc" hoặc chọn thời gian khác để xem thêm nhân viên.</span>
+                                            ) : (
+                                                <span> Thử chọn ngày khác hoặc dịch vụ khác nếu không tìm thấy nhân viên phù hợp.</span>
+                                            )}
                                         </div>
                                         <small className="text-warning">
                                             <i className="fas fa-lightbulb me-1"></i>
-                                            Gợi ý: Thử chọn dịch vụ khác hoặc thời gian khác
+                                            Hoặc liên hệ trực tiếp với spa để được hỗ trợ
                                         </small>
                                     </div>
                                 </div>

@@ -26,6 +26,7 @@ import {
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { useSearchParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
@@ -35,6 +36,7 @@ const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confi
 const AppointmentManagement = () => {
   // States
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +52,7 @@ const AppointmentManagement = () => {
     startDate: '',
     endDate: ''
   });
+  const [pageTitle, setPageTitle] = useState('Quản Lý Lịch Hẹn');
 
   const [staffList, setStaffList] = useState([]);
   const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
@@ -71,6 +74,33 @@ const AppointmentManagement = () => {
       });
     }
   }, [searchParams]);
+
+  // Handle filters from dashboard navigation
+  useEffect(() => {
+    if (location.state) {
+      const { filterStatus, filterDate, startDate, endDate, title } = location.state;
+      
+      if (title) {
+        setPageTitle(title);
+      }
+      
+      if (filterStatus) {
+        setStatusFilter(filterStatus);
+      }
+      
+      if (filterDate) {
+        setDateFilter({
+          startDate: filterDate,
+          endDate: filterDate
+        });
+      } else if (startDate && endDate) {
+        setDateFilter({
+          startDate: startDate,
+          endDate: endDate
+        });
+      }
+    }
+  }, [location.state]);
 
   // Fetch danh sách lịch hẹn ban đầu
   useEffect(() => {
@@ -908,46 +938,48 @@ const AppointmentManagement = () => {
   };
 
   return (
-    <MainCard title="Appointment Management">
+    <MainCard title={pageTitle}>
       <Grid container spacing={3}>
         {/* Search and Filter Controls */}
-        <Grid item xs={12} display="flex" flexWrap="wrap" gap={2} alignItems="center" mb={2}>
-          <TextField
-            placeholder="Search by name, phone or service"
-            variant="outlined"
-            size="small"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            sx={{ width: { xs: '100%', sm: '280px' } }}
-            InputProps={{
-              startAdornment: (<InputAdornment position="start"><SearchOutlined /></InputAdornment>),
-              endAdornment: searchQuery ? (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setSearchQuery('')}>
-                    <CloseOutlined style={{ fontSize: 14 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : null
-            }}
-          />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Status</InputLabel>
-            <Select value={statusFilter} label="Status" onChange={handleStatusFilterChange}>
-              <MenuItem value="all">All Status</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="confirmed">Confirmed</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
-            </Select>
-          </FormControl>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <TextField label="From Date" type="date" size="small" name="startDate" value={dateFilter.startDate} onChange={handleDateFilterChange} InputLabelProps={{ shrink: true }} sx={{ width: 150 }} />
-            <Typography variant="body2">to</Typography>
-            <TextField label="To Date" type="date" size="small" name="endDate" value={dateFilter.endDate} onChange={handleDateFilterChange} InputLabelProps={{ shrink: true }} sx={{ width: 150 }} />
-            {(dateFilter.startDate || dateFilter.endDate) && (
-              <IconButton size="small" onClick={clearDateFilter}><CloseOutlined style={{ fontSize: 14 }} /></IconButton>
-            )}
-          </Box>
+        <Grid item xs={12}>
+          <Card sx={{ p: 2, mb: 2 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FilterOutlined />
+                Bộ Lọc & Tìm Kiếm
+                {location.state && (
+                  <Chip 
+                    size="small" 
+                    label={`Từ Dashboard`} 
+                    color="primary" 
+                    variant="outlined"
+                    sx={{ ml: 1 }}
+                  />
+                )}
+              </Typography>
+              
+              {/* Filter result count */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Hiển thị {filteredAppointments.length} / {appointments.length} lịch hẹn
+                  {(statusFilter !== 'all' || dateFilter.startDate || dateFilter.endDate || searchQuery) && (
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        setStatusFilter('all');
+                        setDateFilter({ startDate: '', endDate: '' });
+                        setSearchQuery('');
+                        setPageTitle('Quản Lý Lịch Hẹn');
+                      }}
+                      sx={{ ml: 2 }}
+                    >
+                      Xóa Bộ Lọc
+                    </Button>
+                  )}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
 
         {/* Time Conflict Test Panel */}

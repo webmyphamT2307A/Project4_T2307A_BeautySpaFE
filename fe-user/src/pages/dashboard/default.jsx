@@ -18,8 +18,9 @@ import { LineChart } from '@mui/x-charts/LineChart';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { format, getDate, getDaysInMonth, parse, getYear } from 'date-fns';
+import { format, getDate, getDaysInMonth, parse, getYear, isSameDay } from 'date-fns';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
 // assets
@@ -44,9 +45,11 @@ const apiClient = axios.create({
 import './dashboard.css';
 
 export default function DashboardDefault() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [workSchedule, setWorkSchedule] = useState([]);
+  const [monthlySchedule, setMonthlySchedule] = useState([]);
   const [dashboardSummary, setDashboardSummary] = useState({
     waiting: 0,
     served: 0,
@@ -101,30 +104,43 @@ export default function DashboardDefault() {
         // =================================================================
         // SỬ DỤNG CHÍNH XÁC CÁC API TỪ 4 MODULE BACKEND CỦA BẤN
         // =================================================================
+        const currentMonth = today.getMonth() + 1;
         const requests = [
-          // 1. Lịch làm việc từ UsersScheduleController
+          // 1. Lịch làm việc hôm nay từ UsersScheduleController
           apiClient.get(`/users-schedules/user/${userId}`, {
             params: { startDate: todayStr, endDate: todayStr }
           }),
           
-          // 2. Thống kê tổng quan từ StatisticController
+          // 2. Lịch làm việc cả tháng để hiển thị trên calendar
+          apiClient.get(`/users-schedules/user/${userId}`, {
+            params: { month: currentMonth, year: currentYear }
+          }),
+          
+          // 3. Thống kê tổng quan từ StatisticController
           apiClient.get('/statistics/staff/summary', {
             params: { userId: userId }
           }),
           
-          // 3. Dữ liệu rating hàng tháng cho biểu đồ từ StatisticController
+          // 4. Dữ liệu rating hàng tháng cho biểu đồ từ StatisticController
           apiClient.get('/statistics/my-monthly-ratings', {
             params: { userId: userId, year: currentYear }
           })
         ];
 
-        const [scheduleRes, summaryRes, ratingsRes] = await Promise.allSettled(requests);
+        const [todayScheduleRes, monthlyScheduleRes, summaryRes, ratingsRes] = await Promise.allSettled(requests);
 
-        // Xử lý kết quả lịch làm việc
-        if (scheduleRes.status === 'fulfilled' && scheduleRes.value.data.status === 'SUCCESS') {
-          setWorkSchedule(scheduleRes.value.data.data);
-        } else if (scheduleRes.status === 'rejected') {
-          console.error('Error fetching schedule:', scheduleRes.reason);
+        // Xử lý kết quả lịch làm việc hôm nay
+        if (todayScheduleRes.status === 'fulfilled' && todayScheduleRes.value.data.status === 'SUCCESS') {
+          setWorkSchedule(todayScheduleRes.value.data.data);
+        } else if (todayScheduleRes.status === 'rejected') {
+          console.error('Error fetching today schedule:', todayScheduleRes.reason);
+        }
+
+        // Xử lý kết quả lịch làm việc cả tháng
+        if (monthlyScheduleRes.status === 'fulfilled' && monthlyScheduleRes.value.data.status === 'SUCCESS') {
+          setMonthlySchedule(monthlyScheduleRes.value.data.data);
+        } else if (monthlyScheduleRes.status === 'rejected') {
+          console.error('Error fetching monthly schedule:', monthlyScheduleRes.reason);
         }
 
         // Xử lý kết quả thống kê tổng quan (DashboardSummaryDto)
@@ -162,7 +178,8 @@ export default function DashboardDefault() {
         }
 
         console.log('✅ All API responses:');
-        console.log('📅 Schedule:', scheduleRes);
+        console.log('📅 Today Schedule:', todayScheduleRes);
+        console.log('📅 Monthly Schedule:', monthlyScheduleRes);
         console.log('📊 Summary:', summaryRes);
         console.log('⭐ Monthly Ratings:', ratingsRes);
 
@@ -174,6 +191,15 @@ export default function DashboardDefault() {
     };
 
     fetchDashboardData();
+    
+    // Set up auto refresh để cập nhật real-time khi có thay đổi appointment
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 60000); // Refresh mỗi 60 giây
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [userId]);
 
   const getStatusChip = (status) => {
@@ -212,6 +238,10 @@ export default function DashboardDefault() {
       color = 'success';
       translatedStatus = 'Hoàn thành';
     }
+    if (status === 'cancelled') {
+      color = 'error';
+      translatedStatus = 'Đã hủy';
+    }
     
     return <Chip label={translatedStatus || 'N/A'} color={color} size="small" sx={{ fontWeight: 600 }} />;
   };
@@ -230,6 +260,23 @@ export default function DashboardDefault() {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
+  };
+
+  // Kiểm tra ngày có lịch làm việc không
+  const hasScheduleOnDate = (date) => {
+    return monthlySchedule.some(schedule => 
+      isSameDay(new Date(schedule.workDate), date)
+    );
+  };
+
+  // Xử lý click vào ngày trên calendar
+  const handleCalendarDateChange = (newDate) => {
+    setCalendarDate(newDate);
+    // Nếu ngày có lịch làm việc, chuyển đến trang work schedule
+    if (hasScheduleOnDate(newDate)) {
+      const dateParam = format(newDate, 'yyyy-MM-dd');
+      navigate(`/roll_call/workSchedulePage?date=${dateParam}`);
+    }
   };
 
   if (loading && !userId) {
@@ -444,22 +491,81 @@ export default function DashboardDefault() {
           
           {/* Calendar */}
           <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid #f0f0f0' }}>
-            <Typography variant="h6" fontWeight={700} sx={{ mb: 2, px: 1, color: '#2962ff' }}>
-              Calendar
-            </Typography>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2, px: 1 }}>
+              <Typography variant="h6" fontWeight={700} color="#2962ff">
+                Lịch làm việc
+              </Typography>
+              <Tooltip title="Click vào ngày có chấm xanh để xem chi tiết lịch làm việc">
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1,
+                  p: 1,
+                  borderRadius: 1,
+                  bgcolor: '#e3f2fd'
+                }}>
+                  <Box sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    backgroundColor: '#2962ff'
+                  }} />
+                  <Typography variant="caption" color="#2962ff" fontWeight={500}>
+                    Có lịch làm việc
+                  </Typography>
+                </Box>
+              </Tooltip>
+            </Stack>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DateCalendar 
                 value={calendarDate} 
-                onChange={setCalendarDate} 
+                onChange={handleCalendarDateChange}
                 sx={{ 
                   width: '100%',
-                  '.MuiPickersDay-root.Mui-selected': {
-                    backgroundColor: '#2962ff',
-                    '&:hover': { backgroundColor: '#1e4ec7' }
+                  '.MuiPickersDay-root': {
+                    position: 'relative',
+                    '&.Mui-selected': {
+                      backgroundColor: '#2962ff',
+                      '&:hover': { backgroundColor: '#1e4ec7' }
+                    }
                   }
-                }} 
+                }}
               />
             </LocalizationProvider>
+            
+            {/* Hiển thị thông tin lịch làm việc trong tháng */}
+            {monthlySchedule.length > 0 && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: '#f8f9fa', borderRadius: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Lịch làm việc tháng này:
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  {monthlySchedule
+                    .filter(schedule => {
+                      const scheduleDate = new Date(schedule.workDate);
+                      return scheduleDate.getMonth() === calendarDate.getMonth() && 
+                             scheduleDate.getFullYear() === calendarDate.getFullYear();
+                    })
+                    .map((schedule) => (
+                      <Chip
+                        key={schedule.id}
+                        label={`${format(new Date(schedule.workDate), 'dd/MM')} - ${schedule.shift}`}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        onClick={() => {
+                          const dateParam = format(new Date(schedule.workDate), 'yyyy-MM-dd');
+                          navigate(`/roll_call/workSchedulePage?date=${dateParam}`);
+                        }}
+                        sx={{ 
+                          cursor: 'pointer',
+                          '&:hover': { backgroundColor: '#e3f2fd' }
+                        }}
+                      />
+                    ))}
+                </Stack>
+              </Box>
+            )}
           </Paper>
         </Grid>
         
