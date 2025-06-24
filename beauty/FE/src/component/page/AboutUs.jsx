@@ -87,7 +87,7 @@ const AboutUs = () => {
           </div>
         </div>
       </div>
-            {/* Modal Video */}
+      {/* Modal Video */}
       <div className="modal fade" id="videoModal" tabIndex={-1} aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div className="modal-dialog modal-lg">
           <div className="modal-content rounded-3">
@@ -100,9 +100,9 @@ const AboutUs = () => {
             </div>
             <div className="modal-body p-0">
               <div className="ratio ratio-16x9">
-                <video 
+                <video
                   className="rounded-bottom"
-                  controls 
+                  controls
                   autoPlay
                   muted
                   loop

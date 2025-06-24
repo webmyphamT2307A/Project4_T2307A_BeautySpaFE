@@ -378,7 +378,7 @@ const ContactPage = () => {
                                         <i className="fa fa-phone-alt fa-2x me-4" style={{ color: '#fdb5b9' }} />
                                         <div>
                                             <h4>Điện Thoại</h4>
-                                            <p className="mb-0">(028) 1234 5678</p>
+                                            <p className="mb-0">(+84) 0123456789</p>
                                         </div>
                                     </div>
                                 </div>
