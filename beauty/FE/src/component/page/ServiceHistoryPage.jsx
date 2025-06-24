@@ -146,7 +146,7 @@ const ServiceHistoryPage = () => {
 
                 return true;
             });
-            
+
         // Sort by date descending
         return filtered.sort((a, b) => {
             const dateA = parseDate(a.appointmentDate);
@@ -556,30 +556,68 @@ const ServiceHistoryPage = () => {
     };
 
     const renderFilters = () => (
-        <div className="card shadow-sm mb-4">
-            <div className="card-header bg-light">
-                <h5 className="mb-0"><i className="fas fa-filter me-2 text-primary"></i>Bộ Lọc Lịch Hẹn</h5>
+        <div className="card shadow-sm mb-4 border-0 rounded-3">
+            <div className="card-header py-3" style={{
+                background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)',
+                borderBottom: '2px solid rgba(253, 181, 185, 0.2)',
+                borderTopLeftRadius: '15px',
+                borderTopRightRadius: '15px'
+            }}>
+                <h5 className="mb-0 fw-bold" style={{ color: '#2c3e50' }}>
+                    <i className="fas fa-filter me-2" style={{ color: '#FDB5B9' }}></i>
+                    Bộ Lọc Lịch Hẹn
+                </h5>
             </div>
             <div className="card-body p-4">
                 <div className="row g-3 align-items-end">
                     <div className="col-lg-3 col-md-6">
-                        <label htmlFor="searchTerm" className="form-label fw-bold">Tìm kiếm</label>
+                        <label htmlFor="searchTerm" className="form-label fw-bold" style={{ color: '#2c3e50' }}>
+                            <i className="fas fa-search me-1" style={{ color: '#FDB5B9' }}></i>
+                            Tìm kiếm
+                        </label>
                         <input
                             type="text"
                             id="searchTerm"
-                            className="form-control"
+                            className="form-control rounded-pill border-2"
                             placeholder="Tên dịch vụ, nhân viên..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                borderColor: 'rgba(253, 181, 185, 0.3)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#FDB5B9';
+                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor = 'rgba(253, 181, 185, 0.3)';
+                                e.target.style.boxShadow = 'none';
+                            }}
                         />
                     </div>
                     <div className="col-lg-3 col-md-6">
-                        <label htmlFor="filterStatus" className="form-label fw-bold">Trạng thái</label>
+                        <label htmlFor="filterStatus" className="form-label fw-bold" style={{ color: '#2c3e50' }}>
+                            <i className="fas fa-flag me-1" style={{ color: '#FDB5B9' }}></i>
+                            Trạng thái
+                        </label>
                         <select
                             id="filterStatus"
-                            className="form-select"
+                            className="form-select rounded-pill border-2"
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
+                            style={{
+                                borderColor: 'rgba(253, 181, 185, 0.3)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#FDB5B9';
+                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor = 'rgba(253, 181, 185, 0.3)';
+                                e.target.style.boxShadow = 'none';
+                            }}
                         >
                             <option value="all">Tất cả</option>
                             <option value="completed">Đã hoàn thành</option>
@@ -588,35 +626,82 @@ const ServiceHistoryPage = () => {
                         </select>
                     </div>
                     <div className="col-lg-2 col-md-4">
-                        <label htmlFor="filterStartDate" className="form-label fw-bold">Từ ngày</label>
+                        <label htmlFor="filterStartDate" className="form-label fw-bold" style={{ color: '#2c3e50' }}>
+                            <i className="fas fa-calendar-day me-1" style={{ color: '#FDB5B9' }}></i>
+                            Từ ngày
+                        </label>
                         <input
                             type="date"
                             id="filterStartDate"
-                            className="form-control"
+                            className="form-control rounded-pill border-2"
                             value={filterStartDate}
                             onChange={(e) => setFilterStartDate(e.target.value)}
+                            style={{
+                                borderColor: 'rgba(253, 181, 185, 0.3)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#FDB5B9';
+                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor = 'rgba(253, 181, 185, 0.3)';
+                                e.target.style.boxShadow = 'none';
+                            }}
                         />
                     </div>
                     <div className="col-lg-2 col-md-4">
-                        <label htmlFor="filterEndDate" className="form-label fw-bold">Đến ngày</label>
+                        <label htmlFor="filterEndDate" className="form-label fw-bold" style={{ color: '#2c3e50' }}>
+                            <i className="fas fa-calendar-day me-1" style={{ color: '#FDB5B9' }}></i>
+                            Đến ngày
+                        </label>
                         <input
                             type="date"
                             id="filterEndDate"
-                            className="form-control"
+                            className="form-control rounded-pill border-2"
                             value={filterEndDate}
                             onChange={(e) => setFilterEndDate(e.target.value)}
                             min={filterStartDate}
+                            style={{
+                                borderColor: 'rgba(253, 181, 185, 0.3)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#FDB5B9';
+                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor = 'rgba(253, 181, 185, 0.3)';
+                                e.target.style.boxShadow = 'none';
+                            }}
                         />
                     </div>
                     <div className="col-lg-2 col-md-4">
                         {isAnyFilterActive && (
-                            <button 
-                                className="btn btn-outline-secondary w-100"
+                            <button
+                                className="btn btn-outline-secondary w-100 rounded-pill border-2 fw-bold"
                                 onClick={() => {
                                     setFilterStatus('all');
                                     setFilterStartDate('');
                                     setFilterEndDate('');
                                     setSearchTerm('');
+                                }}
+                                style={{
+                                    borderColor: 'rgba(253, 181, 185, 0.5)',
+                                    color: '#FDB5B9',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.backgroundColor = '#FDB5B9';
+                                    e.target.style.borderColor = '#FDB5B9';
+                                    e.target.style.color = 'white';
+                                    e.target.style.transform = 'translateY(-2px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.backgroundColor = 'transparent';
+                                    e.target.style.borderColor = 'rgba(253, 181, 185, 0.5)';
+                                    e.target.style.color = '#FDB5B9';
+                                    e.target.style.transform = 'translateY(0)';
                                 }}
                             >
                                 <i className="fas fa-undo me-2"></i>Reset
@@ -691,7 +776,7 @@ const ServiceHistoryPage = () => {
                                         <div className="fw-bold" style={{ color: '#495057' }}>
                                             {item.displayDate || item.appointmentDate}
                                         </div>
-                                        <small className="text-muted">{item.slot || item.appointmentTime}</small>
+                                        {/* <small className="text-muted">{item.slot || item.appointmentTime}</small> */}
                                     </div>
                                 </td>
                                 <td className="py-3 align-middle">
@@ -744,38 +829,66 @@ const ServiceHistoryPage = () => {
                 </tbody>
             </table>
             {/* Phần thống kê ở footer table */}
-            <div className="bg-light p-3 border-top">
+            <div className="p-3 border-top" style={{
+                background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)',
+                borderBottomLeftRadius: '15px',
+                borderBottomRightRadius: '15px'
+            }}>
                 <div className="row text-center">
                     <div className="col-md-4">
                         <div className="d-flex align-items-center justify-content-center">
-                            <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '40px', height: '40px' }}>
+                            <div className="text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style={{
+                                    width: '50px',
+                                    height: '50px',
+                                    background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                    boxShadow: '0 4px 10px rgba(253, 181, 185, 0.3)'
+                                }}>
                                 <i className="fas fa-list"></i>
                             </div>
                             <div>
-                                <div className="fw-bold text-primary">{filteredAndSortedHistory.length}</div>
-                                <small className="text-muted">Tổng lịch hẹn (kết quả lọc)</small>
+                                <div className="fw-bold" style={{ color: '#2c3e50', fontSize: '1.2rem' }}>
+                                    {filteredAndSortedHistory.length}
+                                </div>
+                                <small className="text-muted">Tổng lịch hẹn</small>
                             </div>
                         </div>
                     </div>
                     <div className="col-md-4">
                         <div className="d-flex align-items-center justify-content-center">
-                            <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '40px', height: '40px' }}>
+                            <div className="text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style={{
+                                    width: '50px',
+                                    height: '50px',
+                                    background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                                    boxShadow: '0 4px 10px rgba(40, 167, 69, 0.3)'
+                                }}>
                                 <i className="fas fa-coins"></i>
                             </div>
                             <div>
-                                <div className="fw-bold text-success">{formatVNDPrice(filteredCalculatedTotal)}</div>
-                                <small className="text-muted">Tổng chi tiêu (kết quả lọc)</small>
+                                <div className="fw-bold text-success" style={{ fontSize: '1.2rem' }}>
+                                    {formatVNDPrice(filteredCalculatedTotal)}
+                                </div>
+                                <small className="text-muted">Tổng chi tiêu</small>
                             </div>
                         </div>
                     </div>
                     <div className="col-md-4">
                         <div className="d-flex align-items-center justify-content-center">
-                            <div className="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '40px', height: '40px' }}>
+                            <div className="text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style={{
+                                    width: '50px',
+                                    height: '50px',
+                                    background: 'linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%)',
+                                    boxShadow: '0 4px 10px rgba(23, 162, 184, 0.3)'
+                                }}>
                                 <i className="fas fa-calendar-check"></i>
                             </div>
                             <div>
-                                <div className="fw-bold text-info">{filteredAndSortedHistory.length > 0 ? (filteredAndSortedHistory[0].displayDate || filteredAndSortedHistory[0].appointmentDate) : 'Chưa có'}</div>
-                                <small className="text-muted">Lần gần nhất (kết quả lọc)</small>
+                                <div className="fw-bold text-info" style={{ fontSize: '1.2rem' }}>
+                                    {filteredAndSortedHistory.length > 0 ? (filteredAndSortedHistory[0].displayDate || filteredAndSortedHistory[0].appointmentDate) : 'Chưa có'}
+                                </div>
+                                <small className="text-muted">Lần gần nhất</small>
                             </div>
                         </div>
                     </div>
@@ -962,18 +1075,22 @@ const ServiceHistoryPage = () => {
                         history.length > 0 ? (
                             <>
                                 {renderFilters()}
-                                
+
                                 {filteredAndSortedHistory.length > 0 ? (
                                     <div className="row justify-content-center">
                                         <div className="col-12">
-                                            <div className="card shadow-lg border-0">
-                                                <div className="card-header bg-success text-white py-3">
+                                            <div className="card shadow-lg border-0 rounded-3">
+                                                <div className="card-header text-white py-4" style={{
+                                                    background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                                    borderTopLeftRadius: '15px',
+                                                    borderTopRightRadius: '15px'
+                                                }}>
                                                     <div className="d-flex justify-content-between align-items-center">
-                                                        <h5 className="mb-0">
+                                                        <h5 className="mb-0 fw-bold">
                                                             <i className="fas fa-check-circle me-2"></i>
                                                             Tìm thấy {filteredAndSortedHistory.length} lịch hẹn
                                                         </h5>
-                                                        <span className="badge bg-light text-dark">
+                                                        <span className="badge bg-white text-dark px-3 py-2 rounded-pill">
                                                             <i className="fas fa-calendar-check me-1"></i>
                                                             Kết quả đã lọc
                                                         </span>
@@ -988,19 +1105,51 @@ const ServiceHistoryPage = () => {
                                 ) : (
                                     <div className="row justify-content-center">
                                         <div className="col-lg-8">
-                                            <div className="alert alert-info text-center py-5" role="alert">
-                                                <i className="fas fa-search-minus fa-3x text-info mb-4"></i>
-                                                <h4 className="alert-heading">Không có kết quả phù hợp</h4>
-                                                <p className="mb-4">
+                                            <div className="alert border-0 text-center py-5 rounded-3 shadow-sm"
+                                                style={{
+                                                    background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)',
+                                                    border: '2px solid rgba(253, 181, 185, 0.3) !important'
+                                                }}>
+                                                <div className="icon-circle mx-auto mb-4" style={{
+                                                    width: '80px',
+                                                    height: '80px',
+                                                    backgroundColor: 'rgba(253, 181, 185, 0.2)',
+                                                    borderRadius: '50%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    border: '3px solid #FDB5B9'
+                                                }}>
+                                                    <i className="fas fa-search-minus fa-2x" style={{ color: '#FDB5B9' }}></i>
+                                                </div>
+                                                <h4 className="alert-heading fw-bold mb-3" style={{ color: '#2c3e50' }}>
+                                                    Không có kết quả phù hợp
+                                                </h4>
+                                                <p className="mb-4 text-muted" style={{ fontSize: '1.1rem' }}>
                                                     Không tìm thấy lịch hẹn nào khớp với bộ lọc của bạn.
                                                 </p>
-                                                <button 
-                                                    className="btn btn-primary"
+                                                <button
+                                                    className="btn btn-lg px-4 py-2 rounded-pill fw-bold"
+                                                    style={{
+                                                        background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                                        border: 'none',
+                                                        color: 'white',
+                                                        boxShadow: '0 4px 15px rgba(253, 181, 185, 0.3)',
+                                                        transition: 'all 0.3s ease'
+                                                    }}
                                                     onClick={() => {
                                                         setFilterStatus('all');
                                                         setFilterStartDate('');
                                                         setFilterEndDate('');
                                                         setSearchTerm('');
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.target.style.transform = 'translateY(-2px)';
+                                                        e.target.style.boxShadow = '0 6px 20px rgba(253, 181, 185, 0.4)';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.target.style.transform = 'translateY(0)';
+                                                        e.target.style.boxShadow = '0 4px 15px rgba(253, 181, 185, 0.3)';
                                                     }}
                                                 >
                                                     <i className="fas fa-undo me-2"></i>
@@ -1014,16 +1163,51 @@ const ServiceHistoryPage = () => {
                         ) : (
                             <div className="row justify-content-center">
                                 <div className="col-lg-8">
-                                    <div className="alert alert-info text-center py-5" role="alert">
-                                        <i className="fas fa-search fa-3x text-info mb-4"></i>
-                                        <h4 className="alert-heading">Chưa có lịch hẹn</h4>
-                                        <p className="mb-4">
+                                    <div className="alert border-0 text-center py-5 rounded-3 shadow-sm"
+                                        style={{
+                                            background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)',
+                                            border: '2px solid rgba(253, 181, 185, 0.3) !important'
+                                        }}>
+                                        <div className="icon-circle mx-auto mb-4" style={{
+                                            width: '100px',
+                                            height: '100px',
+                                            backgroundColor: 'rgba(253, 181, 185, 0.2)',
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '3px solid #FDB5B9'
+                                        }}>
+                                            <i className="fas fa-spa fa-3x" style={{ color: '#FDB5B9' }}></i>
+                                        </div>
+                                        <h4 className="alert-heading fw-bold mb-3" style={{ color: '#2c3e50' }}>
+                                            Chưa có lịch hẹn
+                                        </h4>
+                                        <p className="mb-4 text-muted" style={{ fontSize: '1.1rem' }}>
                                             {userInfo
                                                 ? 'Bạn chưa có lịch hẹn hợp lệ nào (có giá tiền và nhân viên phụ trách) tại spa của chúng tôi.'
                                                 : `Không tìm thấy lịch hẹn hợp lệ với số điện thoại: ${lookupIdentifier}`
                                             }
                                         </p>
-                                        <Link to="/ServicePage" className="btn btn-primary">
+                                        <Link
+                                            to="/ServicePage"
+                                            className="btn btn-lg px-4 py-2 rounded-pill fw-bold text-decoration-none"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                                border: 'none',
+                                                color: 'white',
+                                                boxShadow: '0 4px 15px rgba(253, 181, 185, 0.3)',
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.transform = 'translateY(-2px)';
+                                                e.target.style.boxShadow = '0 6px 20px rgba(253, 181, 185, 0.4)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.transform = 'translateY(0)';
+                                                e.target.style.boxShadow = '0 4px 15px rgba(253, 181, 185, 0.3)';
+                                            }}
+                                        >
                                             <i className="fas fa-spa me-2"></i>
                                             Xem Dịch Vụ
                                         </Link>
