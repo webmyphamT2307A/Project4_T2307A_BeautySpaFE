@@ -30,9 +30,9 @@ const formatVNDPrice = (priceValue) => {
     if (priceValue === null || priceValue === undefined || priceValue === 0) {
         return 'Chưa có giá';
     }
-    
+
     let numericPrice = 0;
-    
+
     // Xử lý các format khác nhau từ backend
     if (typeof priceValue === 'string') {
         // Nếu là string có thể chứa ký tự $ hoặc dấu phẩy
@@ -49,7 +49,7 @@ const formatVNDPrice = (priceValue) => {
     if (numericPrice > 0 && numericPrice < 1000) {
         numericPrice *= 10000;
     }
-    
+
     return `${Math.round(numericPrice).toLocaleString('vi-VN')} VNĐ`;
 };
 
@@ -68,6 +68,7 @@ const ServiceHistoryPage = () => {
     const [cancellingAppointments, setCancellingAppointments] = useState(new Set());
     const [customerStats, setCustomerStats] = useState(null);
     const [calculatedTotal, setCalculatedTotal] = useState(0);
+    const [autoLookupPerformed, setAutoLookupPerformed] = useState(false); // Thêm state mới
 
     const validateVietnamesePhone = (phone) => {
         const cleanPhone = phone.replace(/[\s-().]/g, '');
@@ -93,23 +94,105 @@ const ServiceHistoryPage = () => {
 
     useEffect(() => {
         const storedUser = localStorage.getItem('userInfo');
+        const recentBooking = sessionStorage.getItem('recentBooking');
+
         console.log('📝 Raw userInfo from localStorage:', storedUser);
-        
+        console.log('📝 Recent booking from sessionStorage:', recentBooking);
+
         if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
             console.log('👤 Parsed user info:', parsedUser);
-            
+
             setUserInfo(parsedUser);
             const customerIdToUse = parsedUser.customerId || parsedUser.id;
             console.log('🆔 Customer ID being used for API call:', customerIdToUse);
-            console.log('🆔 Available user fields:', Object.keys(parsedUser));
-            
+
             fetchHistoryByCustomerId(customerIdToUse);
             fetchCustomerStats(customerIdToUse);
+
+            // Xóa thông tin đặt lịch vì đã đăng nhập
+            if (recentBooking) {
+                sessionStorage.removeItem('recentBooking');
+            }
+        } else if (recentBooking && !autoLookupPerformed) {
+            // Người dùng chưa đăng nhập nhưng vừa đặt lịch thành công
+            try {
+                const bookingInfo = JSON.parse(recentBooking);
+                console.log('🎯 Auto lookup for recent booking:', bookingInfo);
+
+                // Kiểm tra xem thông tin có còn mới không (trong vòng 5 phút)
+                const timeDiff = Date.now() - bookingInfo.timestamp;
+                if (timeDiff < 5 * 60 * 1000 && bookingInfo.phoneNumber) { // 5 phút
+                    setLookupIdentifier(bookingInfo.phoneNumber);
+                    setAutoLookupPerformed(true);
+
+                    // Hiển thị toast thông báo đang tự động tra cứu
+                    toast.info('Đang tự động tra cứu lịch hẹn vừa đặt...', {
+                        position: "top-right",
+                        autoClose: 3000,
+                    });
+
+                    // Tự động thực hiện tra cứu
+                    setTimeout(() => {
+                        performAutoLookup(bookingInfo.phoneNumber);
+                    }, 1000);
+                } else {
+                    // Thông tin quá cũ, xóa đi
+                    sessionStorage.removeItem('recentBooking');
+                }
+            } catch (error) {
+                console.error('❌ Error parsing recent booking:', error);
+                sessionStorage.removeItem('recentBooking');
+            }
         } else {
-            console.log('❌ No userInfo found in localStorage');
+            console.log('❌ No userInfo found in localStorage and no recent booking');
         }
-    }, []);
+    }, [autoLookupPerformed]);
+
+    // Hàm tự động tra cứu
+    const performAutoLookup = async (phoneNumber) => {
+        console.log('🔍 Performing auto lookup for:', phoneNumber);
+
+        setIsLoading(true);
+        setError('');
+        setLookupPerformed(true);
+
+        try {
+            const response = await axios.get(`http://localhost:8080/api/v1/admin/appointment/history/phone/${phoneNumber}`);
+            if (response.data.status === 'SUCCESS' && response.data.data) {
+                const processedHistory = processHistoryData(response.data.data);
+                setHistory(processedHistory);
+
+                if (processedHistory.length === 0) {
+                    setError(`Không tìm thấy lịch hẹn hợp lệ với số điện thoại: ${phoneNumber}`);
+                } else {
+                    // Hiển thị thông báo thành công
+                    toast.success(`Tìm thấy ${processedHistory.length} lịch hẹn! Lịch hẹn mới nhất đã được hiển thị.`, {
+                        position: "top-right",
+                        autoClose: 4000,
+                    });
+                }
+            } else {
+                setHistory([]);
+                setCalculatedTotal(0);
+                setError(response.data.message || `Không tìm thấy lịch hẹn với số điện thoại: ${phoneNumber}`);
+            }
+        } catch (err) {
+            console.error('❌ Auto lookup error:', err);
+            setError('Lỗi kết nối hoặc không tìm thấy lịch hẹn dịch vụ.');
+            setHistory([]);
+            setCalculatedTotal(0);
+
+            toast.error('Không thể tự động tra cứu lịch hẹn. Vui lòng thử lại thủ công.', {
+                position: "top-right",
+                autoClose: 3000,
+            });
+        } finally {
+            setIsLoading(false);
+            // Xóa thông tin đặt lịch sau khi đã tra cứu xong
+            sessionStorage.removeItem('recentBooking');
+        }
+    };
 
     const fetchCustomerStats = async (customerId) => {
         try {
@@ -125,7 +208,7 @@ const ServiceHistoryPage = () => {
     const processHistoryData = (data) => {
         const appointmentsData = Array.isArray(data) ? data : [data];
         console.log('🔍 Processing data, total items:', appointmentsData.length);
-        
+
         // ✅ CẢI TIẾN: Lọc những record có dữ liệu hợp lệ
         const filteredData = appointmentsData.filter(app => {
             console.log(`📋 Item ${app.id || app.appointmentId}:`, {
@@ -136,15 +219,15 @@ const ServiceHistoryPage = () => {
                 appointmentDate: app.appointmentDate,
                 fullObject: app
             });
-            
+
             // Loại bỏ những record không hợp lệ
             const hasValidId = app.id || app.appointmentId;
             const hasValidPrice = app.servicePrice !== null && app.servicePrice !== undefined && app.servicePrice > 0;
             const hasValidName = app.serviceName && app.serviceName.toLowerCase() !== 'n/a' && app.serviceName.trim() !== '';
             const hasValidUserName = app.userName && app.userName.toLowerCase() !== 'n/a' && app.userName.trim() !== '';
-            
+
             const isValid = hasValidId && hasValidPrice && hasValidName && hasValidUserName;
-            
+
             console.log(`🔍 Validation for ${app.id || app.appointmentId}:`, {
                 hasValidId,
                 hasValidPrice,
@@ -152,12 +235,12 @@ const ServiceHistoryPage = () => {
                 hasValidUserName,
                 isValid
             });
-            
+
             return isValid;
         });
 
         console.log('🎯 After filtering, remaining items:', filteredData.length);
-        
+
         // ✅ DEBUG: Log tất cả dữ liệu trước khi tính tổng
         console.log('🔍 === DEBUGGING TOTAL CALCULATION ===');
         console.log('📊 Raw filtered data:', filteredData);
@@ -201,15 +284,15 @@ const ServiceHistoryPage = () => {
                 }
                 return { text: 'Sắp tới', className: 'bg-info' };
             })();
-            
+
             const rawPrice = app.servicePrice;
             let parsedPrice = parseFloat(app.servicePrice) || 0;
-            
+
             // ✅ Áp dụng cùng logic normalize giá như formatVNDPrice
             if (parsedPrice > 0 && parsedPrice < 1000) {
                 parsedPrice *= 10000; // Backend trả về 38 thay vì 380000
             }
-            
+
             // CHỈ tính những lịch hẹn có trạng thái "Đã hoàn thành"
             if (statusInfo.text === 'Đã hoàn thành') {
                 console.log(`💰 ADDING to total - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Raw Price: ${rawPrice}, Parsed Price: ${parsedPrice}, Status: ${statusInfo.text}, Sum before: ${sum}, Sum after: ${sum + parsedPrice}`);
@@ -219,40 +302,40 @@ const ServiceHistoryPage = () => {
                 return sum;
             }
         }, 0);
-        
+
         console.log('💰 Calculated total price (completed appointments only):', total);
         setCalculatedTotal(total);
-        
+
         return filteredData.map(app => ({
             ...app,
             id: app.id || app.appointmentId,
             appointmentId: app.appointmentId || app.id,
         }));
     };
-    
+
     const fetchHistoryByCustomerId = async (customerId) => {
         setIsLoading(true);
         setError('');
         setLookupPerformed(true);
-        
+
         const apiUrl = `http://localhost:8080/api/v1/admin/appointment/history/customer/${customerId}`;
         console.log('🌐 Making API call to:', apiUrl);
-        
+
         try {
             const response = await axios.get(apiUrl);
             console.log('🔍 Backend response for customer history:', response.data);
             console.log('📡 Response status:', response.status);
             console.log('📡 Response headers:', response.headers);
-            
+
             if (response.data.status === 'SUCCESS' && response.data.data) {
                 console.log('📊 Raw data before processing:', response.data.data);
                 console.log('📊 Data type:', Array.isArray(response.data.data) ? 'Array' : typeof response.data.data);
                 console.log('📊 Data length:', Array.isArray(response.data.data) ? response.data.data.length : 'Not array');
-                
+
                 const processedHistory = processHistoryData(response.data.data);
                 console.log('✅ Processed history:', processedHistory);
                 console.log('✅ Processed history length:', processedHistory.length);
-                
+
                 setHistory(processedHistory);
             } else {
                 console.log('⚠️ Backend response not successful or no data');
@@ -272,7 +355,7 @@ const ServiceHistoryPage = () => {
             setIsLoading(false);
         }
     };
-    
+
     const handleLookup = async (e) => {
         e.preventDefault();
         if (phoneError || !lookupIdentifier) {
@@ -338,15 +421,15 @@ const ServiceHistoryPage = () => {
             const response = await axios.put(`http://localhost:8080/api/v1/admin/appointment/${cancelAppointmentId}/cancel`, {
                 reason: cancelReason
             });
-            
+
             if (response.data.status === 'SUCCESS' || response.status === 200) {
                 toast.success(`Đã hủy lịch hẹn thành công. Lý do: ${cancelReason}`);
-                
+
                 // Cập nhật UI ngay lập tức
-                setHistory(prevHistory => 
-                    prevHistory.map(item => 
-                        item.appointmentId === cancelAppointmentId 
-                            ? { ...item, status: 'cancelled', canCancel: false, statusText: 'Đã hủy', statusClassName: 'bg-danger' } 
+                setHistory(prevHistory =>
+                    prevHistory.map(item =>
+                        item.appointmentId === cancelAppointmentId
+                            ? { ...item, status: 'cancelled', canCancel: false, statusText: 'Đã hủy', statusClassName: 'bg-danger' }
                             : item
                     )
                 );
@@ -444,8 +527,8 @@ const ServiceHistoryPage = () => {
                                 </td>
                                 <td className="py-3 align-items-center">
                                     <div className="d-flex align-items-center">
-                                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
-                                             style={{ width: '40px', height: '40px', fontSize: '0.9rem' }}>
+                                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                                            style={{ width: '40px', height: '40px', fontSize: '0.9rem' }}>
                                             <i className="fas fa-spa"></i>
                                         </div>
                                         <div>
@@ -469,12 +552,11 @@ const ServiceHistoryPage = () => {
                                 </td>
                                 <td className="py-3 align-middle">
                                     <span className={`badge ${statusInfo.className} px-3 py-2`} style={{ fontSize: '0.75rem', fontWeight: '600' }}>
-                                        <i className={`fas ${
-                                            statusInfo.text === 'Đã hủy' ? 'fa-times-circle' :
+                                        <i className={`fas ${statusInfo.text === 'Đã hủy' ? 'fa-times-circle' :
                                             statusInfo.text === 'Đã hoàn thành' ? 'fa-check-circle' :
-                                            statusInfo.text === 'Hôm nay' ? 'fa-clock' :
-                                            'fa-calendar-plus'
-                                        } me-1`}></i>
+                                                statusInfo.text === 'Hôm nay' ? 'fa-clock' :
+                                                    'fa-calendar-plus'
+                                            } me-1`}></i>
                                         {statusInfo.text}
                                     </span>
                                 </td>
@@ -557,7 +639,7 @@ const ServiceHistoryPage = () => {
             </div>
         </div>
     );
-    
+
     return (
         <div>
             <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
@@ -578,12 +660,21 @@ const ServiceHistoryPage = () => {
                             <div className="alert alert-info" role="alert">
                                 <i className="fas fa-info-circle me-2"></i>
                                 <strong>Lưu ý:</strong> Bạn có thể hủy các lịch hẹn sắp tới bằng cách nhấn nút "Hủy Lịch" trong bảng bên dưới.
-                                Lịch hẹn chỉ có thể hủy trước ngày hẹn hoặc trong ngày hẹn. 
-                                <br/>
+                                Lịch hẹn chỉ có thể hủy trước ngày hẹn hoặc trong ngày hẹn.
+                                <br />
                                 <small className="text-muted mt-1 d-block">
                                     <i className="fas fa-filter me-1"></i>
                                     Chỉ hiển thị lịch hẹn hợp lệ (có giá tiền lớn hơn 0, tên dịch vụ và nhân viên không phải N/A).
                                 </small>
+                            </div>
+                        )}
+
+
+                        {/* Thông báo tự động tra cứu */}
+                        {!userInfo && autoLookupPerformed && (
+                            <div className="alert alert-success" role="alert">
+                                <i className="fas fa-magic me-2"></i>
+                                <strong>Tự động tra cứu:</strong> Hệ thống đã tự động tra cứu lịch hẹn với số điện thoại bạn vừa sử dụng để đặt lịch.
                             </div>
                         )}
                     </div>
@@ -593,8 +684,8 @@ const ServiceHistoryPage = () => {
                         <div className="row justify-content-center mb-5">
                             <div className="col-lg-8 col-md-10">
                                 <div className="card shadow-lg border-0">
-                                    <div className="card-header bg-gradient text-white text-center py-4" 
-                                         style={{ background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))', backdropFilter: 'blur(10px)', boxShadow: '0 4px 20px rgba(255, 182, 193, 0.3)' }}>
+                                    <div className="card-header bg-gradient text-white text-center py-4"
+                                        style={{ background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))', backdropFilter: 'blur(10px)', boxShadow: '0 4px 20px rgba(255, 182, 193, 0.3)' }}>
                                         <h4 className="mb-2">
                                             <i className="fas fa-search me-3"></i>
                                             Tra Cứu Lịch Hẹn
@@ -626,7 +717,7 @@ const ServiceHistoryPage = () => {
                                                     required
                                                 />
                                             </div>
-                                            
+
                                             {phoneError && (
                                                 <div className="alert alert-danger py-2 mb-3" role="alert">
                                                     <i className="fas fa-exclamation-triangle me-2"></i>
@@ -634,9 +725,9 @@ const ServiceHistoryPage = () => {
                                                 </div>
                                             )}
 
-                                            <button 
-                                                type="submit" 
-                                                className="btn btn-lg w-100 py-3 mb-3" 
+                                            <button
+                                                type="submit"
+                                                className="btn btn-lg w-100 py-3 mb-3"
                                                 disabled={isLoading || !lookupIdentifier.trim() || phoneError}
                                                 style={{
                                                     fontSize: '1.1rem',
@@ -686,10 +777,12 @@ const ServiceHistoryPage = () => {
                             <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
                                 <span className="visually-hidden">Đang tải...</span>
                             </div>
-                            <p className="mt-3 text-muted">Đang tìm kiếm lịch hẹn...</p>
+                            <p className="mt-3 text-muted">
+                                {autoLookupPerformed ? 'Đang tự động tìm kiếm lịch hẹn vừa đặt...' : 'Đang tìm kiếm lịch hẹn...'}
+                            </p>
                         </div>
                     )}
-                    
+
                     {error && (
                         <div className="row justify-content-center">
                             <div className="col-lg-8">
@@ -699,7 +792,7 @@ const ServiceHistoryPage = () => {
                                     <p className="mb-3">{error}</p>
                                     <hr />
                                     <div className="mb-0">
-                                        <button 
+                                        <button
                                             className="btn btn-outline-danger me-3"
                                             onClick={() => {
                                                 setError('');
@@ -751,7 +844,7 @@ const ServiceHistoryPage = () => {
                                         <i className="fas fa-search fa-3x text-info mb-4"></i>
                                         <h4 className="alert-heading">Chưa có lịch hẹn</h4>
                                         <p className="mb-4">
-                                            {userInfo 
+                                            {userInfo
                                                 ? 'Bạn chưa có lịch hẹn hợp lệ nào (có giá tiền và nhân viên phụ trách) tại spa của chúng tôi.'
                                                 : `Không tìm thấy lịch hẹn hợp lệ với số điện thoại: ${lookupIdentifier}`
                                             }
@@ -826,7 +919,7 @@ const ServiceHistoryPage = () => {
                                 <label className="form-label small text-muted">Hoặc chọn lý do nhanh:</label>
                                 <div className="d-flex flex-wrap gap-2">
                                     {[
-                                        'Bận đột xuất', 
+                                        'Bận đột xuất',
                                         'Thay đổi lịch trình',
                                         'Lý do sức khỏe',
                                         'Có việc gia đình',

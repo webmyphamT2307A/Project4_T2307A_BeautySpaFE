@@ -702,13 +702,25 @@ const Appointment = () => {
             
             // Hiển thị thông báo thành công với thời gian chờ
             toast.success('Đặt lịch thành công! Đang chuyển hướng...', {
-                position: "top-center",
+                position: "top-right",
                 autoClose: 2000,
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: true,
                 draggable: true,
             });
+    
+            // Lưu thông tin để tự động tra cứu ở trang service-history
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            const bookingInfo = {
+                phoneNumber: formData.phoneNumber,
+                fullName: formData.fullName,
+                isLoggedIn: !!userInfo.id,
+                timestamp: Date.now()
+            };
+            
+            // Lưu thông tin đặt lịch vào sessionStorage (chỉ tồn tại trong phiên làm việc hiện tại)
+            sessionStorage.setItem('recentBooking', JSON.stringify(bookingInfo));
     
             // Reset form after successful submission
             setFormData(prev => ({
