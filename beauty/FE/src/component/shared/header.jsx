@@ -7,7 +7,7 @@ import SessionTimer from './SessionTimer';
 
 const Header = () => {
     // Khởi tạo hook useNavigate và useLocation
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
     const location = useLocation();
 
     const [email, setEmail] = useState('');
@@ -27,10 +27,10 @@ const Header = () => {
         if (storedUser) {
             setUserInfo(JSON.parse(storedUser));
         }
-        
+
         // Fetch services data for search
         fetchServicesData();
-        
+
         // Listen for localStorage changes to update userInfo immediately
         const handleStorageChange = (e) => {
             if (e.key === 'userInfo') {
@@ -41,7 +41,7 @@ const Header = () => {
                 }
             }
         };
-        
+
         // Listen for custom userInfo update events
         const handleUserInfoUpdate = (e) => {
             const updatedUser = localStorage.getItem('userInfo');
@@ -49,10 +49,10 @@ const Header = () => {
                 setUserInfo(JSON.parse(updatedUser));
             }
         };
-        
+
         window.addEventListener('storage', handleStorageChange);
         window.addEventListener('userInfoUpdated', handleUserInfoUpdate);
-        
+
         return () => {
             window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('userInfoUpdated', handleUserInfoUpdate);
@@ -73,12 +73,12 @@ const Header = () => {
 
     const handleAvatarClick = () => {
         // Dùng navigate thay vì window.location.href
-        navigate("/CustomerDetail"); 
+        navigate("/CustomerDetail");
     };
 
     const [showSearch, setShowSearch] = useState(false);
     const searchRef = useRef(null);
-    
+
     // Search functionality states
     const [searchTerm, setSearchTerm] = useState('');
     const [servicesData, setServicesData] = useState([]);
@@ -110,33 +110,33 @@ const Header = () => {
         const value = e.target.value;
         setSearchTerm(value);
         setSelectedSuggestionIndex(-1);
-        
+
         // Clean and validate search term
         const cleanedValue = value.trim();
-        
+
         // Don't search if:
         // 1. Empty after trim
         // 2. Only special characters (dots, spaces, etc.)
         // 3. Less than 2 meaningful characters
         const meaningfulChars = cleanedValue.replace(/[^\w\sÀ-ỹ]/g, ''); // Keep only letters, numbers, spaces, Vietnamese
-        
+
         if (!cleanedValue || meaningfulChars.length < 2) {
             setFilteredServices([]);
             setShowSuggestions(false);
             return;
         }
-        
+
         // Search with cleaned term
         const filtered = servicesData.filter(service => {
             const serviceName = service.name.toLowerCase().trim();
             const serviceDesc = service.description.toLowerCase().trim();
             const searchTermLower = cleanedValue.toLowerCase();
-            
+
             // More precise matching - avoid partial matches with special chars
-            return serviceName.includes(searchTermLower) || 
-                   serviceDesc.includes(searchTermLower);
+            return serviceName.includes(searchTermLower) ||
+                serviceDesc.includes(searchTermLower);
         });
-        
+
         // Limit results to prevent overwhelming UI
         const limitedResults = filtered.slice(0, 6);
         setFilteredServices(limitedResults);
@@ -147,12 +147,12 @@ const Header = () => {
         // Validate search term before submitting
         const cleanedValue = searchTerm.trim();
         const meaningfulChars = cleanedValue.replace(/[^\w\sÀ-ỹ]/g, '');
-        
+
         if (!cleanedValue || meaningfulChars.length < 2) {
             // Don't submit invalid search terms
             return;
         }
-        
+
         if (serviceId) {
             // Navigate to specific service
             navigate(`/ServicePage/${serviceId}`);
@@ -171,7 +171,7 @@ const Header = () => {
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault();
-                setSelectedSuggestionIndex(prev => 
+                setSelectedSuggestionIndex(prev =>
                     prev < filteredServices.length - 1 ? prev + 1 : prev
                 );
                 break;
@@ -221,10 +221,10 @@ const Header = () => {
                     token: token
                 }));
                 localStorage.setItem('token', token);
-                
+
                 // Kích hoạt session manager khi đăng nhập thành công
                 sessionManager.onUserLogin();
-                
+
                 // Dùng window.location.href để tải lại toàn bộ trang, cập nhật trạng thái login
                 window.location.href = "/CustomerDetail";
 
@@ -264,20 +264,20 @@ const Header = () => {
         localStorage.removeItem('userInfo');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        
+
         // Update state immediately
         setUserInfo(null);
-        
+
         // Redirect immediately to home page
         window.location.href = '/';
-        
+
         // Call logout API in background after redirect (fire and forget)
         setTimeout(() => {
             const token = localStorage.getItem('token');
             if (token) {
                 fetch('http://localhost:8080/api/v1/customer/logout', {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
@@ -292,27 +292,27 @@ const Header = () => {
     return (
         <div>
             <div className="container-fluid sticky-top px-0">
-                 <div className="container-fluid topbar d-none d-lg-block">
-                     <div className="container px-0">
-                         <div className="row align-items-center">
-                             <div className="col-lg-8">
-                                 <div className="d-flex flex-wrap">
-                                     <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Tìm Địa Điểm</a>
-                                     <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+01234567890</a>
-                                     <a href="#"><i className="fas fa-envelope me-2" />info@sparlex.com</a>
-                                 </div>
-                             </div>
+                <div className="container-fluid topbar d-none d-lg-block">
+                    <div className="container px-0">
+                        <div className="row align-items-center">
+                            <div className="col-lg-8">
+                                <div className="d-flex flex-wrap">
+                                    <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Tìm Địa Điểm</a>
+                                    <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+01234567890</a>
+                                    <a href="#"><i className="fas fa-envelope me-2" />info@sparlex.com</a>
+                                </div>
+                            </div>
                             <div className="col-lg-4">
-                                 <div className="d-flex align-items-center justify-content-end">
-                                     <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-facebook-f" /></a>
-                                     <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-twitter" /></a>
-                                     <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-instagram" /></a>
-                                     <a href="#" className="btn-square border rounded-circle nav-fill"><i className="fab fa-linkedin-in" /></a>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
+                                <div className="d-flex align-items-center justify-content-end">
+                                    <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-facebook-f" /></a>
+                                    <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-twitter" /></a>
+                                    <a href="#" className="me-3 btn-square border rounded-circle nav-fill"><i className="fab fa-instagram" /></a>
+                                    <a href="#" className="btn-square border rounded-circle nav-fill"><i className="fab fa-linkedin-in" /></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="container-fluid bg-light">
                     <div className="container px-0">
@@ -336,9 +336,9 @@ const Header = () => {
                                         <i className="fas fa-search" />
                                     </button>
                                     {!userInfo ? (
-                                        <button 
-                                            className="btn btn-outline-primary rounded-pill ms-3" 
-                                            data-bs-toggle="modal" 
+                                        <button
+                                            className="btn btn-outline-primary rounded-pill ms-3"
+                                            data-bs-toggle="modal"
                                             data-bs-target="#loginModal"
                                             style={{
                                                 padding: '10px 20px',
@@ -370,23 +370,23 @@ const Header = () => {
                                         </button>
                                     ) : (
                                         <div className="nav-item dropdown ms-3">
-                                            <a href="#" className="nav-link dropdown-toggle d-flex align-items-center p-2 rounded-pill" data-bs-toggle="dropdown" style={{ 
+                                            <a href="#" className="nav-link dropdown-toggle d-flex align-items-center p-2 rounded-pill" data-bs-toggle="dropdown" style={{
                                                 border: '2px solid #FDB5B9',
                                                 transition: 'all 0.3s ease',
                                                 background: 'rgba(253, 181, 185, 0.1)'
                                             }}
-                                            onMouseEnter={(e) => {
-                                                e.target.style.background = 'rgba(253, 181, 185, 0.2)';
-                                                e.target.style.borderColor = '#F7A8B8';
-                                                e.target.style.transform = 'translateY(-2px)';
-                                                e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.3)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.target.style.background = 'rgba(253, 181, 185, 0.1)';
-                                                e.target.style.borderColor = '#FDB5B9';
-                                                e.target.style.transform = 'translateY(0)';
-                                                e.target.style.boxShadow = 'none';
-                                            }}
+                                                onMouseEnter={(e) => {
+                                                    e.target.style.background = 'rgba(253, 181, 185, 0.2)';
+                                                    e.target.style.borderColor = '#F7A8B8';
+                                                    e.target.style.transform = 'translateY(-2px)';
+                                                    e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.3)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.target.style.background = 'rgba(253, 181, 185, 0.1)';
+                                                    e.target.style.borderColor = '#FDB5B9';
+                                                    e.target.style.transform = 'translateY(0)';
+                                                    e.target.style.boxShadow = 'none';
+                                                }}
                                             >
                                                 <img
                                                     src={
@@ -424,34 +424,34 @@ const Header = () => {
             </div>
 
             {/* Search functionality */}
-          {showSearch && (
+            {showSearch && (
                 <div ref={searchRef} className="search-bar-wrapper position-absolute w-100 d-flex justify-content-center" style={{ top: "170px", zIndex: 1050 }}>
                     <div className="position-relative" style={{ maxWidth: "600px", width: "100%" }}>
                         <div className="input-group shadow">
-                            <input 
-                                type="search" 
-                                className="form-control p-3" 
-                                placeholder="Tìm kiếm dịch vụ..." 
+                            <input
+                                type="search"
+                                className="form-control p-3"
+                                placeholder="Tìm kiếm dịch vụ..."
                                 value={searchTerm}
                                 onChange={handleSearchChange}
                                 onKeyDown={handleKeyDown}
                                 onFocus={() => searchTerm && setShowSuggestions(true)}
                                 style={{ fontSize: '1rem' }}
                             />
-                            <span 
-                                className="input-group-text p-3 btn-primary" 
+                            <span
+                                className="input-group-text p-3 btn-primary"
                                 style={{ cursor: 'pointer', border: 'none' }}
                                 onClick={() => handleSearchSubmit()}
                             >
                                 <i className="fa fa-search" />
                             </span>
                         </div>
-                        
+
                         {/* Search Suggestions Dropdown */}
                         {showSuggestions && filteredServices.length > 0 && (
-                            <div 
+                            <div
                                 className="position-absolute w-100 bg-white border rounded shadow-lg mt-1"
-                                style={{ 
+                                style={{
                                     zIndex: 1051,
                                     maxHeight: '400px',
                                     overflowY: 'auto'
@@ -460,9 +460,8 @@ const Header = () => {
                                 {filteredServices.slice(0, 8).map((service, index) => (
                                     <div
                                         key={service.id}
-                                        className={`p-3 border-bottom cursor-pointer search-suggestion ${
-                                            index === selectedSuggestionIndex ? 'bg-light' : ''
-                                        }`}
+                                        className={`p-3 border-bottom cursor-pointer search-suggestion ${index === selectedSuggestionIndex ? 'bg-light' : ''
+                                            }`}
                                         onClick={() => handleSuggestionClick(service.id)}
                                         style={{
                                             cursor: 'pointer',
@@ -497,8 +496,8 @@ const Header = () => {
                                                     {service.name}
                                                 </div>
                                                 <div className="text-muted small" style={{ fontSize: '0.85rem' }}>
-                                                    {service.description.length > 60 
-                                                        ? service.description.substring(0, 60) + '...' 
+                                                    {service.description.length > 60
+                                                        ? service.description.substring(0, 60) + '...'
                                                         : service.description}
                                                 </div>
                                                 <div className="text-primary small fw-bold">
@@ -511,7 +510,7 @@ const Header = () => {
                                         </div>
                                     </div>
                                 ))}
-                                
+
                                 {filteredServices.length > 8 && (
                                     <div className="p-2 text-center text-muted small">
                                         Và {filteredServices.length - 8} kết quả khác...
@@ -519,16 +518,16 @@ const Header = () => {
                                 )}
                             </div>
                         )}
-                        
+
                         {/* No results message */}
                         {showSuggestions && searchTerm && filteredServices.length === 0 && (() => {
                             const cleanedValue = searchTerm.trim();
                             const meaningfulChars = cleanedValue.replace(/[^\w\sÀ-ỹ]/g, '');
-                            
+
                             // Don't show "no results" for invalid search terms
                             if (!cleanedValue || meaningfulChars.length < 2) {
                                 return (
-                                    <div 
+                                    <div
                                         className="position-absolute w-100 bg-white border rounded shadow-lg p-3 text-center text-muted mt-1"
                                         style={{ zIndex: 1051 }}
                                     >
@@ -537,9 +536,9 @@ const Header = () => {
                                     </div>
                                 );
                             }
-                            
+
                             return (
-                                <div 
+                                <div
                                     className="position-absolute w-100 bg-white border rounded shadow-lg p-3 text-center text-muted mt-1"
                                     style={{ zIndex: 1051 }}
                                 >
@@ -593,7 +592,7 @@ const Header = () => {
                     </div>
                 </div>
             </div>
-            
+
             {/* Register Modal */}
             <div className="modal fade" id="registerModal" tabIndex={-1} aria-labelledby="registerModalLabel" aria-hidden="true">
                 <div className="modal-dialog modal-dialog-centered">
@@ -655,7 +654,7 @@ const Header = () => {
                     </div>
                 </div>
             </div>
-            
+
             {/* CSS for Search Functionality */}
             <style jsx>{`
                 .search-suggestion:hover {
@@ -694,7 +693,7 @@ const Header = () => {
                     border-bottom: none !important;
                 }
             `}</style>
-            
+
             {/* Session Timer - chỉ hiển thị khi user đăng nhập */}
             {userInfo && <SessionTimer />}
         </div>
