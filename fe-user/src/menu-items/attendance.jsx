@@ -1,13 +1,15 @@
 // assets
 import {
   ClockCircleOutlined,
-  UnorderedListOutlined
+  UnorderedListOutlined,
+  CalendarOutlined
 } from '@ant-design/icons';
 
 // icons
 const icons = {
   ClockCircleOutlined,
-  UnorderedListOutlined
+  UnorderedListOutlined,
+  CalendarOutlined
 };
 
 // ==============================|| MENU ITEMS - ATTENDANCE ||============================== //
@@ -17,6 +19,13 @@ const attendance = {
   title: 'Điểm danh',
   type: 'group',
   children: [
+    {
+      id: 'work-schedule',
+      title: 'Lịch làm việc',
+      type: 'item',
+      url: '/roll_call/workSchedulePage',
+      icon: icons.CalendarOutlined
+    },
     {
       id: 'employee-attendance',
       title: 'Chấm công',

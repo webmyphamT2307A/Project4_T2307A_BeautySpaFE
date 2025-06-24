@@ -485,6 +485,53 @@ const DashboardDefault = () => {
 
   const handleCloseModal = () => setIsStatsModalOpen(false);
 
+  // Handle click on statistic cards to navigate to appointments with filters
+  const handleCardClick = (cardType) => {
+    const today = formatApiDate(new Date());
+    const startOfCurrentMonth = formatApiDate(startOfMonth(new Date()));
+    const endOfCurrentMonth = formatApiDate(endOfMonth(new Date()));
+    
+    switch (cardType) {
+      case 'waiting':
+        // Navigate to appointments page with pending status filter
+        navigate('/spa/appointments', { 
+          state: { 
+            filterStatus: 'pending',
+            filterDate: today,
+            title: 'Khách Hàng Đang Chờ'
+          } 
+        });
+        break;
+      case 'services':
+        // Navigate to appointments page with completed status and current month filter
+        navigate('/spa/appointments', { 
+          state: { 
+            filterStatus: 'completed',
+            startDate: startOfCurrentMonth,
+            endDate: endOfCurrentMonth,
+            title: 'Dịch Vụ Đã Hoàn Thành Tháng Này'
+          } 
+        });
+        break;
+      case 'rating':
+        // Navigate to reviews page
+        navigate('/review/review');
+        break;
+      case 'revenue':
+        // Navigate to appointments page with completed status for today
+        navigate('/spa/appointments', { 
+          state: { 
+            filterStatus: 'completed',
+            filterDate: today,
+            title: 'Doanh Thu Hôm Nay'
+          } 
+        });
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <>
       <Grid container spacing={3}>
@@ -505,10 +552,101 @@ const DashboardDefault = () => {
           </Box>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Khách Chờ" count={waitingCustomers} extra={`${servedCustomers} đã phục vụ hôm nay`} color="warning" icon={<UserOutlined />} /></Grid>
-        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Dịch Vụ Tháng Này" count={totalServices} extra="Đã hoàn thành" icon={<ShopOutlined />} /></Grid>
-        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Đánh Giá Trung Bình" count={overallAverageRating} extra="Đánh giá tổng thể nhân viên" color="success" icon={<StarOutlined />} /></Grid>
-        <Grid item xs={12} sm={6} md={3}><AnalyticEcommerce title="Doanh Thu Hôm Nay" count={todayRevenue} extra="Từ các dịch vụ đã hoàn thành" color="primary" icon={<DollarOutlined />} /></Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box 
+            onClick={() => handleCardClick('waiting')} 
+            sx={{ 
+              cursor: 'pointer',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                '& .MuiCard-root': {
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                }
+              },
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            <AnalyticEcommerce 
+              title="Khách Chờ" 
+              count={waitingCustomers} 
+              extra={`${servedCustomers} đã phục vụ hôm nay`} 
+              color="warning" 
+              icon={<UserOutlined />} 
+            />
+          </Box>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box 
+            onClick={() => handleCardClick('services')} 
+            sx={{ 
+              cursor: 'pointer',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                '& .MuiCard-root': {
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                }
+              },
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            <AnalyticEcommerce 
+              title="Dịch Vụ Tháng Này" 
+              count={totalServices} 
+              extra="Đã hoàn thành" 
+              icon={<ShopOutlined />} 
+            />
+          </Box>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box 
+            onClick={() => handleCardClick('rating')} 
+            sx={{ 
+              cursor: 'pointer',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                '& .MuiCard-root': {
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                }
+              },
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            <AnalyticEcommerce 
+              title="Đánh Giá Trung Bình" 
+              count={overallAverageRating} 
+              extra="Đánh giá tổng thể nhân viên" 
+              color="success" 
+              icon={<StarOutlined />} 
+            />
+          </Box>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box 
+            onClick={() => handleCardClick('revenue')} 
+            sx={{ 
+              cursor: 'pointer',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                '& .MuiCard-root': {
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                }
+              },
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            <AnalyticEcommerce 
+              title="Doanh Thu Hôm Nay" 
+              count={todayRevenue} 
+              extra="Từ các dịch vụ đã hoàn thành" 
+              color="primary" 
+              icon={<DollarOutlined />} 
+            />
+          </Box>
+        </Grid>
 
         <Grid item xs={12} md={8}>
           <Grid container spacing={3}>

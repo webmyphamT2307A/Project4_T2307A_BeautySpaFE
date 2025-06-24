@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 
 const API_URL = 'http://localhost:8080/api/v1/serviceHistory';
 
@@ -35,6 +36,7 @@ const ServiceHistory = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [calculatedTotal, setCalculatedTotal] = useState(0);
 
   // Load data from BE
   useEffect(() => {
@@ -167,6 +169,67 @@ const ServiceHistory = () => {
         })
         .catch(() => toast.error('Lỗi khi xóa lịch sử dịch vụ'));
     }
+  };
+
+  const validateVietnamesePhone = (phone) => {
+    // ... existing code ...
+    console.warn('⚠️ Không thể tải thống kê khách hàng:', error);
+  };
+
+  const processHistoryData = (data) => {
+    const appointmentsData = Array.isArray(data) ? data : [data];
+    console.log('🔍 Processing data, total items:', appointmentsData.length);
+    
+    // ✅ CẢI TIẾN: Lọc những record có dữ liệu hợp lệ
+    const filteredData = appointmentsData.filter(app => {
+      console.log(`📋 Item ${app.id || app.appointmentId}:`, {
+        serviceName: app.serviceName,
+        servicePrice: app.servicePrice,
+        userName: app.userName,
+        status: app.status,
+        appointmentDate: app.appointmentDate,
+        fullObject: app
+      });
+
+      // ✅ FIX: Luôn hiển thị các lịch hẹn đã bị hủy để người dùng biết.
+      if (app.status?.toLowerCase().trim() === 'cancelled') {
+        return true;
+      }
+      
+      // Loại bỏ những record không hợp lệ
+      const hasValidId = app.id || app.appointmentId;
+      const hasValidPrice = app.servicePrice !== null && app.servicePrice !== undefined && app.servicePrice > 0;
+      const hasValidName = app.serviceName && app.serviceName.toLowerCase() !== 'n/a' && app.serviceName.trim() !== '';
+      const hasValidUserName = app.userName && app.userName.toLowerCase() !== 'n/a' && app.userName.trim() !== '';
+      
+      const isValid = hasValidId && hasValidPrice && hasValidName && hasValidUserName;
+      
+      console.log(`🔍 Validation for ${app.id || app.appointmentId}:`, {
+        hasValidId,
+        hasValidPrice,
+        hasValidName,
+        hasValidUserName,
+        isValid
+      });
+      
+      return isValid;
+    });
+
+    console.log('🎯 After filtering, remaining items:', filteredData.length);
+    
+    // ✅ DEBUG: Log tất cả dữ liệu trước khi tính tổng
+    const total = filteredData.reduce((sum, app) => sum + app.servicePrice, 0);
+    setCalculatedTotal(total);
+    
+    return filteredData.map(app => ({
+      ...app,
+      id: app.id || app.appointmentId,
+      appointmentId: app.appointmentId || app.id,
+    }));
+  };
+  
+  const fetchHistoryByCustomerId = async (customerId) => {
+    // ... existing code ...
   };
 
   return (
@@ -318,6 +381,8 @@ const ServiceHistory = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
     </MainCard>
   );
 };

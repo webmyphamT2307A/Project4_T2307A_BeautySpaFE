@@ -26,6 +26,7 @@ import {
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { useSearchParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
@@ -35,6 +36,7 @@ const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confi
 const AppointmentManagement = () => {
   // States
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +52,7 @@ const AppointmentManagement = () => {
     startDate: '',
     endDate: ''
   });
+  const [pageTitle, setPageTitle] = useState('Quản Lý Lịch Hẹn');
 
   const [staffList, setStaffList] = useState([]);
   const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
@@ -61,6 +64,8 @@ const AppointmentManagement = () => {
   const [emailSending, setEmailSending] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [appointmentToCancel, setAppointmentToCancel] = useState(null)
+  const [staffFilter, setStaffFilter] = useState('');
+  const [serviceFilter, setServiceFilter] = useState('');
 
   useEffect(() => {
     const dateFromUrl = searchParams.get('date');
@@ -71,6 +76,33 @@ const AppointmentManagement = () => {
       });
     }
   }, [searchParams]);
+
+  // Handle filters from dashboard navigation
+  useEffect(() => {
+    if (location.state) {
+      const { filterStatus, filterDate, startDate, endDate, title } = location.state;
+      
+      if (title) {
+        setPageTitle(title);
+      }
+      
+      if (filterStatus) {
+        setStatusFilter(filterStatus);
+      }
+      
+      if (filterDate) {
+        setDateFilter({
+          startDate: filterDate,
+          endDate: filterDate
+        });
+      } else if (startDate && endDate) {
+        setDateFilter({
+          startDate: startDate,
+          endDate: endDate
+        });
+      }
+    }
+  }, [location.state]);
 
   // Fetch danh sách lịch hẹn ban đầu
   useEffect(() => {
@@ -243,7 +275,7 @@ const AppointmentManagement = () => {
             user.role && user.role.id === 3 && user.isActive
           ).map(staff => ({
             ...staff,
-            // Đảm bảo skills là array, nếu không có thì set empty array
+            fullName: staff.fullName || staff.staffName || staff.username || staff.email || 'No Name',
             skills: staff.skills || staff.userSkills || []
           }));
 
@@ -284,6 +316,12 @@ const AppointmentManagement = () => {
         return appointmentDate >= start && appointmentDate <= end;
       });
     }
+    if (staffFilter) {
+      results = results.filter(appointment => String(appointment.staff?.id) === String(staffFilter));
+    }
+    if (serviceFilter) {
+      results = results.filter(appointment => String(appointment.service?.id) === String(serviceFilter));
+    }
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       results = results.filter(
@@ -295,7 +333,7 @@ const AppointmentManagement = () => {
     }
     setFilteredAppointments(results);
     setPage(0);
-  }, [searchQuery, statusFilter, dateFilter, appointments]);
+  }, [searchQuery, statusFilter, dateFilter, staffFilter, serviceFilter, appointments]);
 
   // Handlers
   const handleChangePage = (event, newPage) => setPage(newPage);
@@ -908,46 +946,119 @@ const AppointmentManagement = () => {
   };
 
   return (
-    <MainCard title="Appointment Management">
+    <MainCard title={pageTitle}>
       <Grid container spacing={3}>
         {/* Search and Filter Controls */}
-        <Grid item xs={12} display="flex" flexWrap="wrap" gap={2} alignItems="center" mb={2}>
-          <TextField
-            placeholder="Search by name, phone or service"
-            variant="outlined"
-            size="small"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            sx={{ width: { xs: '100%', sm: '280px' } }}
-            InputProps={{
-              startAdornment: (<InputAdornment position="start"><SearchOutlined /></InputAdornment>),
-              endAdornment: searchQuery ? (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setSearchQuery('')}>
-                    <CloseOutlined style={{ fontSize: 14 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : null
-            }}
-          />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Status</InputLabel>
-            <Select value={statusFilter} label="Status" onChange={handleStatusFilterChange}>
-              <MenuItem value="all">All Status</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="confirmed">Confirmed</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
-            </Select>
-          </FormControl>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <TextField label="From Date" type="date" size="small" name="startDate" value={dateFilter.startDate} onChange={handleDateFilterChange} InputLabelProps={{ shrink: true }} sx={{ width: 150 }} />
-            <Typography variant="body2">to</Typography>
-            <TextField label="To Date" type="date" size="small" name="endDate" value={dateFilter.endDate} onChange={handleDateFilterChange} InputLabelProps={{ shrink: true }} sx={{ width: 150 }} />
-            {(dateFilter.startDate || dateFilter.endDate) && (
-              <IconButton size="small" onClick={clearDateFilter}><CloseOutlined style={{ fontSize: 14 }} /></IconButton>
-            )}
-          </Box>
+        <Grid item xs={12}>
+          <Card sx={{ p: 2, mb: 2 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FilterOutlined />
+                Bộ Lọc & Tìm Kiếm
+                {location.state && (
+                  <Chip 
+                    size="small" 
+                    label={`Từ Dashboard`} 
+                    color="primary" 
+                    variant="outlined"
+                    sx={{ ml: 1 }}
+                  />
+                )}
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                <TextField
+                  size="small"
+                  placeholder="Tìm theo tên, SĐT, dịch vụ..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  InputProps={{
+                    startAdornment: (<InputAdornment position="start"><SearchOutlined /></InputAdornment>),
+                    sx: { borderRadius: '8px', minWidth: 220 }
+                  }}
+                />
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel>Trạng thái</InputLabel>
+                  <Select value={statusFilter} label="Trạng thái" onChange={handleStatusFilterChange}>
+                    <MenuItem value="all">Tất cả</MenuItem>
+                    <MenuItem value="pending">Chờ xác nhận</MenuItem>
+                    <MenuItem value="confirmed">Đã xác nhận</MenuItem>
+                    <MenuItem value="completed">Hoàn thành</MenuItem>
+                    <MenuItem value="cancelled">Đã hủy</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel>Nhân viên</InputLabel>
+                  <Select value={staffFilter} label="Nhân viên" onChange={e => setStaffFilter(e.target.value)}>
+                    <MenuItem value="">Tất cả</MenuItem>
+                    {staffList.map(staff => (
+                      <MenuItem key={staff.id} value={staff.id}>{staff.fullName}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel>Dịch vụ</InputLabel>
+                  <Select value={serviceFilter} label="Dịch vụ" onChange={e => setServiceFilter(e.target.value)}>
+                    <MenuItem value="">Tất cả</MenuItem>
+                    {[...new Set(appointments.map(app => app.service?.id && app.service))]
+                      .filter(Boolean)
+                      .map(service => (
+                        <MenuItem key={service.id} value={service.id}>{service.name}</MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  size="small"
+                  label="Từ ngày"
+                  type="date"
+                  value={dateFilter.startDate}
+                  name="startDate"
+                  onChange={handleDateFilterChange}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ minWidth: 140 }}
+                />
+                <TextField
+                  size="small"
+                  label="Đến ngày"
+                  type="date"
+                  value={dateFilter.endDate}
+                  name="endDate"
+                  onChange={handleDateFilterChange}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ minWidth: 140 }}
+                />
+                <Button variant="outlined" onClick={() => {
+                  setStatusFilter('all');
+                  setDateFilter({ startDate: '', endDate: '' });
+                  setSearchQuery('');
+                  setStaffFilter('');
+                  setServiceFilter('');
+                  setPageTitle('Quản Lý Lịch Hẹn');
+                }}>Xóa bộ lọc</Button>
+              </Box>
+              {/* Filter result count */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Hiển thị {filteredAppointments.length} / {appointments.length} lịch hẹn
+                  {(statusFilter !== 'all' || dateFilter.startDate || dateFilter.endDate || searchQuery || staffFilter || serviceFilter) && (
+                    <Button 
+                      size="small" 
+                      onClick={() => {
+                        setStatusFilter('all');
+                        setDateFilter({ startDate: '', endDate: '' });
+                        setSearchQuery('');
+                        setStaffFilter('');
+                        setServiceFilter('');
+                        setPageTitle('Quản Lý Lịch Hẹn');
+                      }}
+                      sx={{ ml: 2 }}
+                    >
+                      Xóa Bộ Lọc
+                    </Button>
+                  )}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
 
         {/* Time Conflict Test Panel */}

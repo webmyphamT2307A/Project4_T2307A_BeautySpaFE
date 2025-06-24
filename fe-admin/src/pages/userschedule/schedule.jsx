@@ -61,6 +61,12 @@ const statusOptions = [
   { value: 'cancelled', label: 'Cancelled', color: 'error' },
 ];
 
+// Shift options for dropdown - Chỉ Sáng và Chiều với thời gian mặc định
+const shiftOptions = [
+  { value: 'Sáng', label: 'Sáng', defaultStart: '08:00', defaultEnd: '12:00' },
+  { value: 'Chiều', label: 'Chiều', defaultStart: '13:00', defaultEnd: '17:00' }
+];
+
 const UserScheduleManager = () => {
   const [schedules, setSchedules] = useState([]);
   const [users, setUsers] = useState([]);
@@ -76,6 +82,20 @@ const UserScheduleManager = () => {
     isLastTask: false,
     isActive: true
   });
+  
+  // New state for flexible shift selection
+  const [shiftForm, setShiftForm] = useState({
+    shiftType: '',
+    startTime: '',
+    endTime: ''
+  });
+  
+  // State for check-in/check-out times
+  const [timeForm, setTimeForm] = useState({
+    checkInTime: '',
+    checkOutTime: ''
+  });
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [filterByUserId, setFilterByUserId] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -85,6 +105,65 @@ const UserScheduleManager = () => {
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Function to parse shift string into components
+  const parseShift = (shiftString) => {
+    if (!shiftString) return { shiftType: '', startTime: '', endTime: '' };
+    
+    // Parse format like "Sáng (09:00 - 11:00)" or "Chiều (14:00 - 18:00)"
+    const regex = /^(.+?)\s*\((\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})\)$/;
+    const match = shiftString.match(regex);
+    
+    if (match) {
+      return {
+        shiftType: match[1].trim(),
+        startTime: match[2],
+        endTime: match[3]
+      };
+    }
+    
+    // Fallback for old format or unmatched strings
+    return {
+      shiftType: shiftString,
+      startTime: '',
+      endTime: ''
+    };
+  };
+
+  // Function to format shift components into display string
+  const formatShift = (shiftType, startTime, endTime) => {
+    if (!shiftType) return '';
+    if (!startTime || !endTime) return shiftType;
+    return `${shiftType} (${startTime} - ${endTime})`;
+  };
+
+  // Handle shift form changes
+  const handleShiftFormChange = (field, value) => {
+    let newShiftForm = { ...shiftForm, [field]: value };
+    
+    // Auto-fill start and end time when shift type is selected
+    if (field === 'shiftType' && value) {
+      const selectedShift = shiftOptions.find(option => option.value === value);
+      if (selectedShift) {
+        newShiftForm = {
+          ...newShiftForm,
+          startTime: selectedShift.defaultStart,
+          endTime: selectedShift.defaultEnd
+        };
+      }
+    }
+    
+    setShiftForm(newShiftForm);
+    
+    // Update the main formData.shift field with formatted string
+    const formattedShift = formatShift(newShiftForm.shiftType, newShiftForm.startTime, newShiftForm.endTime);
+    setFormData(prev => ({ ...prev, shift: formattedShift }));
+  };
+
+  // Handle time form changes for check-in/check-out
+  const handleTimeFormChange = (field, value) => {
+    setTimeForm(prev => ({ ...prev, [field]: value }));
+  };
 
   useEffect(() => {
     fetch(USER_API_URL)
@@ -217,22 +296,35 @@ const UserScheduleManager = () => {
   const handleOpenDialog = (schedule = null) => {
     if (schedule) {
       setCurrentSchedule(schedule);
+      
+      // Parse existing shift to populate shift form
+      const parsedShift = parseShift(schedule.shift);
+      setShiftForm(parsedShift);
+      
+      // Parse existing check-in/check-out times
+      setTimeForm({
+        checkInTime: schedule.checkInTime ? formatTime(schedule.checkInTime) : '',
+        checkOutTime: schedule.checkOutTime ? formatTime(schedule.checkOutTime) : ''
+      });
+      
       setFormData({
         userId: schedule.userId || '',
         shift: schedule.shift || '',
         workDate: schedule.workDate || '',
-        timeSlotId: schedule.timeSlotId || '',
+        timeSlotId: '', // Không sử dụng timeslot
         status: schedule.status || 'pending',
         isLastTask: schedule.isLastTask || false,
         isActive: schedule.isActive === undefined ? true : schedule.isActive,
       });
     } else {
       setCurrentSchedule(null);
+      setShiftForm({ shiftType: '', startTime: '', endTime: '' });
+      setTimeForm({ checkInTime: '', checkOutTime: '' });
       setFormData({
         userId: '',
         shift: '',
         workDate: '',
-        timeSlotId: '',
+        timeSlotId: '', // Không sử dụng timeslot
         status: 'pending',
         isLastTask: false,
         isActive: true
@@ -266,27 +358,35 @@ const UserScheduleManager = () => {
   };
 
   const handleSaveSchedule = () => {
-    if (!formData.userId || !formData.workDate || !formData.timeSlotId) {
-        toast.error("Vui lòng chọn Nhân viên, Ngày làm việc và Ca làm việc.");
-        return;
-    }
-    if (!formData.status || !statusOptions.find(opt => opt.value === formData.status)) {
-        toast.error("Vui lòng chọn trạng thái hợp lệ.");
+    // Validation - Chỉ yêu cầu shift custom
+    if (!formData.userId || !formData.workDate) {
+      toast.error("Vui lòng chọn Nhân viên và Ngày làm việc.");
         return;
     }
 
-    // Get selected timeslot details
-    const selectedTimeslot = getTimeslotById(parseInt(formData.timeSlotId));
-    
+    // Kiểm tra có shift custom
+    if (!shiftForm.shiftType || !shiftForm.startTime || !shiftForm.endTime) {
+      toast.error('Vui lòng chọn ca làm việc và thời gian.');
+      return;
+    }
+
+    if (!formData.status || !statusOptions.find(opt => opt.value === formData.status)) {
+      toast.error("Vui lòng chọn trạng thái hợp lệ.");
+        return;
+    }
+
+    // Prepare shift data
+    const finalShift = formatShift(shiftForm.shiftType, shiftForm.startTime, shiftForm.endTime);
+
     const requestBody = {
         ...formData,
         userId: parseInt(formData.userId, 10),
-        timeSlotId: parseInt(formData.timeSlotId, 10),
-        shift: selectedTimeslot ? `${formatTime(selectedTimeslot.startTime)} - ${formatTime(selectedTimeslot.endTime)}` : formData.shift,
+      timeSlotId: null, // Không sử dụng timeslot nữa
+      shift: finalShift,
         isLastTask: formData.isLastTask || false,
         isActive: formData.isActive === undefined ? true : formData.isActive,
-        checkInTime: null, // Will be set by backend during check-in
-        checkOutTime: null, // Will be set by backend during check-out
+      checkInTime: timeForm.checkInTime || null,
+      checkOutTime: timeForm.checkOutTime || null,
     };
 
     if (currentSchedule) {
@@ -431,7 +531,7 @@ const UserScheduleManager = () => {
           <Grid item xs={12} md={3}>
             <TextField
               size="small"
-              placeholder="Tìm kiếm theo nhân viên, ca làm, trạng thái, vai trò, chi nhánh..."
+              placeholder="Tìm kiếm theo nhân viên, ca làm, trạng thái, vai trò..."
               value={searchQuery}
               onChange={handleSearchChange}
               InputProps={{
@@ -545,11 +645,14 @@ const UserScheduleManager = () => {
           </Grid>
         </Grid>
         
+        {/* Chỉ hiện button Clear Filters khi có filter được áp dụng */}
+        {(filterByUserId || filterStatus || filterMonth || filterYear || startDate || endDate || searchQuery) && (
         <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
           <Button size="small" onClick={clearFilters} variant="outlined">
-            Xóa Bộ Lọc
+              Xóa Bộ Lọc
           </Button>
         </Box>
+        )}
       </Box>
 
       <TableContainer component={Paper} sx={{ boxShadow: 'none', borderRadius: '10px', maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>
@@ -558,7 +661,7 @@ const UserScheduleManager = () => {
             <TableRow>
               <TableCell>#</TableCell>
               <TableCell>Nhân Viên</TableCell>
-              <TableCell>Vai Trò & Chi Nhánh</TableCell>
+              <TableCell>Vai Trò</TableCell>
               <TableCell>Ngày Làm Việc</TableCell>
               <TableCell>Ca Làm Việc</TableCell>
               <TableCell>Giờ Vào</TableCell>
@@ -594,18 +697,22 @@ const UserScheduleManager = () => {
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Box>
                       <Typography variant="body2" color="primary">
                         {schedule.roleName}
                       </Typography>
-
-                    </Box>
                   </TableCell>
-                  <TableCell>{schedule.workDate}</TableCell>
                   <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {schedule.shift}
+                    <Typography variant="body2">
+                      {new Date(schedule.workDate).toLocaleDateString('vi-VN')}
                     </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ClockCircleOutlined style={{ color: '#1976d2', fontSize: '14px' }} />
+                      <Typography variant="body2" fontWeight="medium">
+                        {schedule.shift || 'Không xác định'}
+                      </Typography>
+                    </Box>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color={schedule.checkInTime ? 'success.main' : 'text.secondary'}>
@@ -710,7 +817,7 @@ const UserScheduleManager = () => {
                     <Avatar src={user.imageUrl} sx={{ width: 24, height: 24 }}>
                       {user.fullName?.charAt(0)}
                     </Avatar>
-                    {user.fullName || user.username}
+                  {user.fullName || user.username}
                   </Box>
                 </MenuItem>
               ))}
@@ -729,40 +836,124 @@ const UserScheduleManager = () => {
             required
           />
           
+          {/* Custom Shift Selection - Chỉ Sáng và Chiều */}
+          <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+            Thiết Lập Ca Làm Việc
+          </Typography>
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
           <FormControl fullWidth margin="dense" required>
-            <InputLabel id="timeSlot-label">Ca Làm Việc</InputLabel>
-            <Select
-              labelId="timeSlot-label"
-              name="timeSlotId"
-              value={formData.timeSlotId}
-              label="Ca Làm Việc"
-              onChange={handleFormChange}
-            >
-              <MenuItem value=""><em>Chọn Ca Làm Việc</em></MenuItem>
-              {timeslots.map((slot) => (
-                <MenuItem key={slot.slotId} value={slot.slotId}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ClockCircleOutlined style={{ color: '#1976d2' }} />
-                    <Typography>
-                      {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                    </Typography>
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+                <InputLabel id="shiftType-label">Loại Ca</InputLabel>
+                <Select
+                  labelId="shiftType-label"
+                  value={shiftForm.shiftType}
+                  label="Loại Ca"
+                  onChange={(e) => handleShiftFormChange('shiftType', e.target.value)}
+                >
+                  <MenuItem value=""><em>Chọn Ca</em></MenuItem>
+                  {shiftOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <ClockCircleOutlined style={{ color: '#1976d2' }} />
+                        <Box>
+                          <Typography>{option.label}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {option.defaultStart} - {option.defaultEnd}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+              <TextField
+                margin="dense"
+                label="Thời Gian Bắt Đầu"
+                type="time"
+                fullWidth
+                value={shiftForm.startTime}
+                onChange={(e) => handleShiftFormChange('startTime', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+              <TextField
+                margin="dense"
+                label="Thời Gian Kết Thúc"
+                type="time"
+                fullWidth
+                value={shiftForm.endTime}
+                onChange={(e) => handleShiftFormChange('endTime', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                required
+              />
+            </Grid>
+          </Grid>
 
-          {formData.timeSlotId && (
-            <Box sx={{ mt: 1, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+          {/* Preview of formatted shift */}
+          {formData.shift && (
+            <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
               <Typography variant="body2" color="primary">
                 <ClockCircleOutlined style={{ marginRight: 8 }} />
-                Ca làm việc đã chọn: {(() => {
-                  const selectedSlot = getTimeslotById(parseInt(formData.timeSlotId));
-                  return selectedSlot ? `${formatTime(selectedSlot.startTime)} - ${formatTime(selectedSlot.endTime)}` : '';
-                })()}
+                Ca làm việc: {formData.shift}
               </Typography>
               <Typography variant="caption" color="textSecondary">
-                Nhân viên sẽ check-in/check-out trong khung giờ này
+                Ca làm việc sẽ được lưu với định dạng này
+              </Typography>
+            </Box>
+          )}
+
+          {/* Check-in/Check-out Times */}
+          <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
+            Giờ Vào & Giờ Ra (Tùy Chọn)
+          </Typography>
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                margin="dense"
+                label="Giờ Vào"
+                type="time"
+                fullWidth
+                value={timeForm.checkInTime}
+                onChange={(e) => handleTimeFormChange('checkInTime', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                helperText="Để trống nếu chưa check-in"
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                margin="dense"
+                label="Giờ Ra"
+                type="time"
+                fullWidth
+                value={timeForm.checkOutTime}
+                onChange={(e) => handleTimeFormChange('checkOutTime', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                helperText="Để trống nếu chưa check-out"
+              />
+            </Grid>
+          </Grid>
+
+          {/* Preview check-in/check-out times */}
+          {(timeForm.checkInTime || timeForm.checkOutTime) && (
+            <Box sx={{ mt: 2, p: 2, backgroundColor: '#e8f5e8', borderRadius: 1 }}>
+              <Typography variant="body2" color="success.main">
+                <CheckCircleOutlined style={{ marginRight: 8 }} />
+                Thời gian chấm công: 
+                {timeForm.checkInTime && ` Vào ${timeForm.checkInTime}`}
+                {timeForm.checkInTime && timeForm.checkOutTime && ' |'}
+                {timeForm.checkOutTime && ` Ra ${timeForm.checkOutTime}`}
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Thời gian này sẽ được lưu sẵn thay vì cần check-in/check-out sau
               </Typography>
             </Box>
           )}

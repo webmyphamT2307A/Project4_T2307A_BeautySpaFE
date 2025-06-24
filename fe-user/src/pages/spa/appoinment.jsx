@@ -16,12 +16,14 @@ import {
   ClockCircleOutlined,
   FilterOutlined,
   FormOutlined,
-  MailOutlined
+  MailOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Cookies from 'js-cookie';
+import { useAppointmentFilter } from 'contexts/AppointmentFilterContext';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
 const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
@@ -29,7 +31,7 @@ const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confi
 
 const AppointmentManagement = () => {
   // States
-  const [searchParams] = useSearchParams();
+  const { filter, setFilter } = useAppointmentFilter();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [userRole, setUserRole] = useState('');
@@ -46,6 +48,20 @@ const AppointmentManagement = () => {
     startDate: '',
     endDate: ''
   });
+
+  // Áp dụng filter từ Context khi nó thay đổi
+  useEffect(() => {
+    if (filter) {
+      if (filter.status) {
+        setStatusFilter(filter.status);
+      }
+      if (filter.dateFilter) {
+        setDateFilter(filter.dateFilter);
+      }
+      // Xóa filter trong context sau khi đã áp dụng để không bị lọc lại ở lần sau
+      setFilter(null);
+    }
+  }, [filter, setFilter]);
 
   const [staffList, setStaffList] = useState([]);
   const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
@@ -112,7 +128,7 @@ const AppointmentManagement = () => {
     }
   };
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (silent = false) => {
     const token = Cookies.get('staff_token');
     const role = Cookies.get('staff_role');
     setUserRole(role);
@@ -127,11 +143,11 @@ const AppointmentManagement = () => {
 
     if (!token || (role !== 'ROLE_STAFF' && role !== 'ROLE_MANAGE')) {
       console.error('Người dùng chưa đăng nhập hoặc không có quyền truy cập');
-      toast.error('Vui lòng đăng nhập lại.');
+      if (!silent) toast.error('Vui lòng đăng nhập lại.');
       return;
     }
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const response = await fetch(url, {
         headers: {
@@ -213,13 +229,24 @@ const AppointmentManagement = () => {
         toast.error(data.message || 'Lỗi khi tải dữ liệu lịch hẹn');
       }
     } catch (error) {
-      toast.error(error.message || 'Lỗi khi tải dữ liệu lịch hẹn');
+      if (!silent) toast.error(error.message || 'Lỗi khi tải dữ liệu lịch hẹn');
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
+  // Auto refresh appointments every 30 seconds to get real-time updates
   useEffect(() => {
     fetchAppointments();
+    
+    // Set up auto refresh interval for silent updates  
+    const interval = setInterval(() => {
+      fetchAppointments(true); // Silent refresh to avoid loading indicators
+    }, 30000); // Refresh every 30 seconds
+
+    // Cleanup interval on unmount
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
   // Filter appointments when search query or status filter changes
   useEffect(() => {
@@ -401,31 +428,31 @@ const AppointmentManagement = () => {
     switch (status) {
       case 'pending':
         return {
-          label: 'Pending',
+          label: 'Chờ xử lý',
           color: 'warning',
           icon: <ClockCircleOutlined />
         };
       case 'confirmed':
         return {
-          label: 'Confirmed',
+          label: 'Đã xác nhận',
           color: 'info',
           icon: <CheckOutlined />
         };
       case 'completed':
         return {
-          label: 'Completed',
+          label: 'Hoàn thành',
           color: 'success',
           icon: <CheckOutlined />
         };
       case 'cancelled':
         return {
-          label: 'Cancelled',
+          label: 'Đã hủy',
           color: 'error',
           icon: <CloseOutlined />
         };
       default:
         return {
-          label: status,
+          label: status || 'Không xác định',
           color: 'default',
           icon: <ClockCircleOutlined />
         };
@@ -537,6 +564,23 @@ const AppointmentManagement = () => {
               ) : null
             }}
           />
+
+          <Tooltip title="Tải lại dữ liệu">
+            <IconButton
+              onClick={() => fetchAppointments()}
+              disabled={loading}
+              sx={{
+                bgcolor: 'primary.lighter',
+                color: 'primary.main',
+                '&:hover': {
+                  bgcolor: 'primary.main',
+                  color: 'white'
+                }
+              }}
+            >
+              <ReloadOutlined />
+            </IconButton>
+          </Tooltip>
 
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel id="status-filter-label">Trạng thái</InputLabel>

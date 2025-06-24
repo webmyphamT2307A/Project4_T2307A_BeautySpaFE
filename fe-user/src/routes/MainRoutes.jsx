@@ -9,6 +9,7 @@ import AppointmentManagement from '../pages/spa/appoinment';
 // import RoleManger from '../pages/role/service';
 import AttendancePage from '../pages/roll_call/attendancePage';
 import AttendanceHistoryPage from '../pages/roll_call/attendanceHistoryPage';
+import WorkSchedulePage from '../pages/roll_call/workSchedulePage';
 import SalaryHistory from '../pages/salary/salary-history';
 import ReviewList from '../pages/review/review';
 import path from 'path';
@@ -48,6 +49,10 @@ const MainRoutes = {
     {
       path: 'roll_call',
       children: [
+        {
+          path: 'workSchedulePage',
+          element: <WorkSchedulePage />
+        },
         {
           path: 'attendancePage',
           element: <AttendancePage />
