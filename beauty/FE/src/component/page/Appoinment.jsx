@@ -768,6 +768,8 @@ const Appointment = () => {
         ));
     };
 
+
+
     // Step validation
     const canProceedToStep = (step) => {
         switch (step) {
@@ -1040,43 +1042,40 @@ const Appointment = () => {
                                     <div className="d-flex align-items-center">
                                         <i className="fas fa-user-friends me-2"></i>
                                         <strong>Nhân viên sẵn sàng phục vụ:</strong>
-                                        <span className={`badge ms-2 px-2 py-1 rounded-pill ${
-                                            staffList.length > 2 ? 'bg-success' : 
-                                            staffList.length > 0 ? 'bg-warning text-dark' : 
-                                            'bg-danger'
-                                        }`} style={{ fontSize: '0.8rem' }}>
+                                        <span className={`badge ms-2 px-2 py-1 rounded-pill ${staffList.length > 2 ? 'bg-success' :
+                                            staffList.length > 0 ? 'bg-warning text-dark' :
+                                                'bg-danger'
+                                            }`} style={{ fontSize: '0.8rem' }}>
                                             <i className="fas fa-users me-1"></i>
                                             {staffList.length} người
                                         </span>
                                     </div>
-                                    
+
                                     {slotInfo && (
                                         <div className="d-flex align-items-center">
                                             <i className="fas fa-bookmark me-2"></i>
                                             <span className="me-2">Đã đặt:</span>
-                                            <span className={`badge px-2 py-1 rounded-pill ${
-                                                slotInfo.availableSlot === slotInfo.totalSlot ? 'bg-danger' : 
-                                                slotInfo.availableSlot > slotInfo.totalSlot / 2 ? 'bg-warning text-dark' : 
-                                                'bg-success'
-                                            }`} style={{ fontSize: '0.8rem' }}>
+                                            <span className={`badge px-2 py-1 rounded-pill ${slotInfo.availableSlot === slotInfo.totalSlot ? 'bg-danger' :
+                                                slotInfo.availableSlot > slotInfo.totalSlot / 2 ? 'bg-warning text-dark' :
+                                                    'bg-success'
+                                                }`} style={{ fontSize: '0.8rem' }}>
                                                 <i className="fas fa-calendar-check me-1"></i>
                                                 {slotInfo.availableSlot} / {slotInfo.totalSlot} chỗ
                                             </span>
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 {staffList.length > 0 && (
                                     <div className="d-flex flex-column align-items-end gap-1">
                                         <small className="text-white-50 mb-1">Tình trạng sẵn sàng</small>
                                         <div className="progress rounded-pill" style={{ width: '180px', height: '10px' }}>
                                             <div
-                                                className={`progress-bar progress-bar-striped progress-bar-animated ${
-                                                    staffList.length === 0 ? 'bg-danger' : 
-                                                    staffList.length <= 2 ? 'bg-warning' : 
-                                                    'bg-success'
-                                                }`}
-                                                style={{ 
+                                                className={`progress-bar progress-bar-striped progress-bar-animated ${staffList.length === 0 ? 'bg-danger' :
+                                                    staffList.length <= 2 ? 'bg-warning' :
+                                                        'bg-success'
+                                                    }`}
+                                                style={{
                                                     width: `${Math.min((staffList.length / 5) * 100, 100)}%`,
                                                     borderRadius: '10px'
                                                 }}
@@ -1088,27 +1087,27 @@ const Appointment = () => {
                                         </div>
                                         <small className="text-white-50" style={{ fontSize: '0.7rem' }}>
                                             {staffList.length === 0 ? 'Chưa có nhân viên' :
-                                             staffList.length <= 2 ? 'Ít nhân viên' :
-                                             'Đủ nhân viên'}
+                                                staffList.length <= 2 ? 'Ít nhân viên' :
+                                                    'Đủ nhân viên'}
                                         </small>
                                     </div>
                                 )}
                             </div>
-                            
+
                             {/* Thêm thông báo rõ ràng thân thiện với người dùng */}
                             <div className="mt-3 pt-2 border-top border-white" style={{ borderOpacity: '0.3' }}>
                                 <div className="d-flex align-items-center text-white-50">
                                     <i className="fas fa-info-circle me-2"></i>
                                     <small>
-                                        {staffList.length === 0 ? 
+                                        {staffList.length === 0 ?
                                             'Hiện tại chưa có nhân viên nào có lịch làm việc vào thời gian này. Vui lòng chọn thời gian khác.' :
                                             slotInfo?.availableSlot === slotInfo?.totalSlot ?
-                                            'Thời gian này đã kín lịch. Vui lòng chọn khung giờ khác.' :
-                                            slotInfo?.availableSlot === slotInfo?.totalSlot - 1 ?
-                                            'Chỉ còn 1 chỗ trống cuối cùng! Hãy nhanh tay đặt lịch.' :
-                                            slotInfo?.availableSlot < slotInfo?.totalSlot ?
-                                            `Còn ${slotInfo.totalSlot - slotInfo.availableSlot} chỗ trống. Bạn có thể đặt lịch ngay!` :
-                                            'Nhân viên đã sẵn sàng phục vụ bạn!'
+                                                'Thời gian này đã kín lịch. Vui lòng chọn khung giờ khác.' :
+                                                slotInfo?.availableSlot === slotInfo?.totalSlot - 1 ?
+                                                    'Chỉ còn 1 chỗ trống cuối cùng! Hãy nhanh tay đặt lịch.' :
+                                                    slotInfo?.availableSlot < slotInfo?.totalSlot ?
+                                                        `Còn ${slotInfo.totalSlot - slotInfo.availableSlot} chỗ trống. Bạn có thể đặt lịch ngay!` :
+                                                        'Nhân viên đã sẵn sàng phục vụ bạn!'
                                         }
                                     </small>
                                 </div>
@@ -1351,111 +1350,137 @@ const Appointment = () => {
         </div>
     );
 
-    const renderCustomerInfo = () => (
-        <div className="step-content">
-            <div className="text-center mb-4">
-                <h4 className="text-white mb-2">
-                    <i className="fas fa-user me-2 text-primary"></i>
-                    Thông Tin Khách Hàng
-                </h4>
-                <p className="text-white-50">Vui lòng điền thông tin liên hệ của bạn</p>
-            </div>
+    const renderCustomerInfo = () => {
+        // Kiểm tra trạng thái đăng nhập
+        const isLoggedIn = localStorage.getItem('userInfo') !== null;
 
-            <div className="row g-3">
-                <div className="col-12">
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleUseAccountInfo();
-                        }}
-                        className="btn btn-outline-light w-100 mb-3"
-                        style={{ height: '45px' }}
-                    >
-                        <i className="fas fa-user-circle me-2"></i>
-                        Sử dụng thông tin tài khoản
-                    </button>
+        return (
+            <div className="step-content">
+                <div className="text-center mb-4">
+                    <h4 className="text-white mb-2">
+                        <i className="fas fa-user me-2 text-primary"></i>
+                        Thông Tin Khách Hàng
+                    </h4>
+                    <p className="text-white-50">Vui lòng điền thông tin liên hệ của bạn</p>
                 </div>
 
-                <div className="col-12 col-lg-6">
-                    <label className="form-label text-white fw-bold">
-                        <i className="fas fa-user me-2"></i>Họ và Tên *
-                    </label>
-                    <input
-                        type="text"
-                        name="fullName"
-                        value={formData.fullName}
-                        onChange={handleInputChange}
-                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.fullName ? 'border-danger' : ''}`}
-                        placeholder="Nhập họ và tên của bạn"
-                        style={{ color: 'white', height: '45px' }}
-                    />
-                    {validationErrors.fullName && (
-                        <small className="text-danger mt-1 d-block">{validationErrors.fullName}</small>
+                <div className="row g-3">
+                    {/* Chỉ hiện nút khi đã đăng nhập */}
+                    {isLoggedIn && (
+                        <div className="col-12">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleUseAccountInfo();
+                                }}
+                                className="btn btn-outline-light w-100 mb-3"
+                                style={{ height: '45px' }}
+                            >
+                                <i className="fas fa-user-circle me-2"></i>
+                                Sử dụng thông tin tài khoản
+                            </button>
+                        </div>
                     )}
-                </div>
 
-                <div className="col-12 col-lg-6">
-                    <label className="form-label text-white fw-bold">
-                        <i className="fas fa-phone me-2"></i>Số Điện Thoại *
-                    </label>
-                    <input
-                        type="text"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={handleInputChange}
-                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
-                        placeholder="Nhập số điện thoại (tối đa 10 số)"
-                        maxLength="10"
-                        style={{ color: 'white', height: '45px' }}
-                    />
-                    {validationErrors.phoneNumber && (
-                        <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
+                    {/* Hiển thị thông báo khuyến khích đăng nhập nếu chưa đăng nhập */}
+                    {!isLoggedIn && (
+                        <div className="col-12">
+                            <div className="alert alert-info bg-transparent border-white text-white mb-3">
+                                <div className="d-flex align-items-center">
+                                    <i className="fas fa-info-circle me-2"></i>
+                                    <div>
+                                        <strong>Gợi ý:</strong> Đăng nhập để tự động điền thông tin <i class="fas fa-id-card"></i> và theo dõi lịch hẹn của bạn
+                                        {/* <a href="/login" className="btn btn-sm btn-outline-light ms-2">
+                                            <i className="fas fa-sign-in-alt me-1"></i>
+                                            Đăng nhập
+                                        </a> */}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     )}
-                </div>
 
-                <div className="col-12">
-                    <label className="form-label text-white fw-bold">
-                        <i className="fas fa-comment me-2"></i>Ghi Chú
-                    </label>
-                    <div className="position-relative">
-                        <textarea
-                            name="notes"
-                            value={formData.notes}
+                    <div className="col-12 col-lg-6">
+                        <label className="form-label text-white fw-bold">
+                            <i className="fas fa-user me-2"></i>Họ và Tên *
+                        </label>
+                        <input
+                            type="text"
+                            name="fullName"
+                            value={formData.fullName}
                             onChange={handleInputChange}
-                            className={`form-control border-white bg-transparent text-white custom-placeholder ${validationErrors.notes ? 'border-danger' : ''}`}
-                            rows="4"
-                            placeholder="Ghi chú thêm về yêu cầu của bạn (không bắt buộc)"
-                            maxLength="500"
-                            style={{
-                                color: 'white',
-                                resize: 'none',
-                                fontSize: '0.9rem'
-                            }}
+                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.fullName ? 'border-danger' : ''}`}
+                            placeholder="Nhập họ và tên của bạn"
+                            style={{ color: 'white', height: '45px' }}
                         />
-                        <div className="d-flex justify-content-between align-items-center mt-1">
-                            {validationErrors.notes && (
-                                <small className={`${formData.notes?.length > 500 ? 'text-danger' : formData.notes?.length > 450 ? 'text-warning' : 'text-info'}`}>
-                                    <i className="fas fa-exclamation-circle me-1"></i>
-                                    {validationErrors.notes}
+                        {validationErrors.fullName && (
+                            <small className="text-danger mt-1 d-block">{validationErrors.fullName}</small>
+                        )}
+                    </div>
+
+                    <div className="col-12 col-lg-6">
+                        <label className="form-label text-white fw-bold">
+                            <i className="fas fa-phone me-2"></i>Số Điện Thoại *
+                        </label>
+                        <input
+                            type="text"
+                            name="phoneNumber"
+                            value={formData.phoneNumber}
+                            onChange={handleInputChange}
+                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
+                            placeholder="Nhập số điện thoại (tối đa 10 số)"
+                            maxLength="10"
+                            style={{ color: 'white', height: '45px' }}
+                        />
+                        {validationErrors.phoneNumber && (
+                            <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
+                        )}
+                    </div>
+
+                    <div className="col-12">
+                        <label className="form-label text-white fw-bold">
+                            <i className="fas fa-comment me-2"></i>Ghi Chú
+                        </label>
+                        <div className="position-relative">
+                            <textarea
+                                name="notes"
+                                value={formData.notes}
+                                onChange={handleInputChange}
+                                className={`form-control border-white bg-transparent text-white custom-placeholder ${validationErrors.notes ? 'border-danger' : ''}`}
+                                rows="4"
+                                placeholder="Ghi chú thêm về yêu cầu của bạn (không bắt buộc)"
+                                maxLength="500"
+                                style={{
+                                    color: 'white',
+                                    resize: 'none',
+                                    fontSize: '0.9rem'
+                                }}
+                            />
+                            <div className="d-flex justify-content-between align-items-center mt-1">
+                                {validationErrors.notes && (
+                                    <small className={`${formData.notes?.length > 500 ? 'text-danger' : formData.notes?.length > 450 ? 'text-warning' : 'text-info'}`}>
+                                        <i className="fas fa-exclamation-circle me-1"></i>
+                                        {validationErrors.notes}
+                                    </small>
+                                )}
+                                <small className={`ms-auto ${formData.notes?.length >= 500 ? 'text-danger fw-bold' :
+                                    formData.notes?.length > 450 ? 'text-warning fw-bold' :
+                                        formData.notes?.length > 400 ? 'text-info' : 'text-white-50'
+                                    }`} style={{ fontSize: '0.75rem' }}>
+                                    <i className="fas fa-edit me-1"></i>
+                                    {formData.notes?.length || 0}/500 ký tự
+                                    {formData.notes?.length >= 500 && <span className="ms-1">⚠️ Đã đạt giới hạn!</span>}
+                                    {formData.notes?.length > 450 && formData.notes?.length < 500 && <span className="ms-1">⚠️ Gần hết!</span>}
                                 </small>
-                            )}
-                            <small className={`ms-auto ${formData.notes?.length >= 500 ? 'text-danger fw-bold' :
-                                formData.notes?.length > 450 ? 'text-warning fw-bold' :
-                                    formData.notes?.length > 400 ? 'text-info' : 'text-white-50'
-                                }`} style={{ fontSize: '0.75rem' }}>
-                                <i className="fas fa-edit me-1"></i>
-                                {formData.notes?.length || 0}/500 ký tự
-                                {formData.notes?.length >= 500 && <span className="ms-1">⚠️ Đã đạt giới hạn!</span>}
-                                {formData.notes?.length > 450 && formData.notes?.length < 500 && <span className="ms-1">⚠️ Gần hết!</span>}
-                            </small>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderConfirmation = () => {
         const selectedService = services.find(s => String(s.id) === formData.serviceId);
