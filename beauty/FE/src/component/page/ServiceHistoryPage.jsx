@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -53,6 +53,41 @@ const formatVNDPrice = (priceValue) => {
     return `${Math.round(numericPrice).toLocaleString('vi-VN')} VNĐ`;
 };
 
+// ✅ LOGIC XỬ LÝ TRẠNG THÁI ĐÃ ĐƯỢC CẢI TIẾN (di chuyển ra ngoài component)
+const getAppointmentStatus = (item) => {
+    // Ưu tiên 1: Trạng thái tường minh từ backend là 'cancelled' hoặc 'completed'
+    const directStatus = item.status?.toLowerCase().trim();
+    if (directStatus === 'cancelled') {
+        return { text: 'Đã hủy', className: 'bg-danger' };
+    }
+    if (directStatus === 'completed') {
+        return { text: 'Đã hoàn thành', className: 'bg-success' };
+    }
+
+    // Ưu tiên 2: Logic dựa trên ngày tháng cho các trạng thái còn lại
+    const aptDate = parseDate(item.appointmentDate);
+    if (!aptDate) {
+        return { text: 'Ngày không xác định', className: 'bg-secondary' };
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    aptDate.setHours(0, 0, 0, 0);
+
+    if (aptDate.getTime() < today.getTime()) {
+        return { text: 'Đã hoàn thành', className: 'bg-success' };
+    }
+    if (aptDate.getTime() === today.getTime()) {
+        return { text: 'Đang chờ', className: 'bg-warning text-dark' };
+    }
+    return { text: 'Sắp tới', className: 'bg-info' };
+};
+
+const canCancelAppointment = (item) => {
+    const { text } = getAppointmentStatus(item);
+    // Có thể hủy nếu trạng thái không phải là "Đã hủy" hoặc "Đã hoàn thành"
+    return text !== 'Đã hủy' && text !== 'Đã hoàn thành';
+};
+
 const ServiceHistoryPage = () => {
     const [history, setHistory] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -69,6 +104,78 @@ const ServiceHistoryPage = () => {
     const [customerStats, setCustomerStats] = useState(null);
     const [calculatedTotal, setCalculatedTotal] = useState(0);
     const [autoLookupPerformed, setAutoLookupPerformed] = useState(false); // Thêm state mới
+
+    // ✅ NEW: Filter states
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [filterStartDate, setFilterStartDate] = useState('');
+    const [filterEndDate, setFilterEndDate] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // ✅ NEW: Memoized filtered and sorted history
+    const filteredAndSortedHistory = useMemo(() => {
+        let filtered = history
+            .filter(item => {
+                // Status filter
+                const statusInfo = getAppointmentStatus(item);
+                if (filterStatus !== 'all') {
+                    let statusMatch = false;
+                    if (filterStatus === 'completed' && statusInfo.text === 'Đã hoàn thành') statusMatch = true;
+                    if (filterStatus === 'upcoming' && (statusInfo.text === 'Sắp tới' || statusInfo.text === 'Đang chờ')) statusMatch = true;
+                    if (filterStatus === 'cancelled' && statusInfo.text === 'Đã hủy') statusMatch = true;
+                    if (!statusMatch) return false;
+                }
+
+                // Date range filter
+                const aptDate = parseDate(item.appointmentDate);
+                if (aptDate) {
+                    if (filterStartDate && aptDate < new Date(new Date(filterStartDate).setHours(0, 0, 0, 0))) {
+                        return false;
+                    }
+                    if (filterEndDate && aptDate > new Date(new Date(filterEndDate).setHours(23, 59, 59, 999))) {
+                        return false;
+                    }
+                }
+
+                // Search term filter (service name or staff name)
+                if (searchTerm) {
+                    const term = searchTerm.toLowerCase();
+                    const serviceMatch = item.serviceName?.toLowerCase().includes(term);
+                    const staffMatch = item.userName?.toLowerCase().includes(term);
+                    if (!serviceMatch && !staffMatch) return false;
+                }
+
+                return true;
+            });
+            
+        // Sort by date descending
+        return filtered.sort((a, b) => {
+            const dateA = parseDate(a.appointmentDate);
+            const dateB = parseDate(b.appointmentDate);
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            return dateB - dateA;
+        });
+    }, [history, filterStatus, filterStartDate, filterEndDate, searchTerm]);
+
+    // ✅ NEW: Memoized total for filtered data
+    const filteredCalculatedTotal = useMemo(() => {
+        return filteredAndSortedHistory.reduce((sum, app) => {
+            const statusInfo = getAppointmentStatus(app);
+            if (statusInfo.text === 'Đã hoàn thành') {
+                let parsedPrice = parseFloat(app.servicePrice) || 0;
+                if (parsedPrice > 0 && parsedPrice < 1000) {
+                    parsedPrice *= 10000;
+                }
+                return sum + parsedPrice;
+            }
+            return sum;
+        }, 0);
+    }, [filteredAndSortedHistory]);
+
+    // ✅ NEW: Check if any filter is active
+    const isAnyFilterActive = useMemo(() => {
+        return filterStatus !== 'all' || filterStartDate !== '' || filterEndDate !== '' || searchTerm !== '';
+    }, [filterStatus, filterStartDate, filterEndDate, searchTerm]);
 
     const validateVietnamesePhone = (phone) => {
         const cleanPhone = phone.replace(/[\s-().]/g, '');
@@ -284,7 +391,6 @@ const ServiceHistoryPage = () => {
                 }
                 return { text: 'Sắp tới', className: 'bg-info' };
             })();
-
             const rawPrice = app.servicePrice;
             let parsedPrice = parseFloat(app.servicePrice) || 0;
 
@@ -449,40 +555,78 @@ const ServiceHistoryPage = () => {
         }
     };
 
-    // ✅ LOGIC XỬ LÝ TRẠNG THÁI ĐÃ ĐƯỢC CẢI TIẾN
-    const getAppointmentStatus = (item) => {
-        // Ưu tiên 1: Trạng thái tường minh từ backend là 'cancelled' hoặc 'completed'
-        const directStatus = item.status?.toLowerCase().trim();
-        if (directStatus === 'cancelled') {
-            return { text: 'Đã hủy', className: 'bg-danger' };
-        }
-        if (directStatus === 'completed') {
-            return { text: 'Đã hoàn thành', className: 'bg-success' };
-        }
-
-        // Ưu tiên 2: Logic dựa trên ngày tháng cho các trạng thái còn lại
-        const aptDate = parseDate(item.appointmentDate);
-        if (!aptDate) {
-            return { text: 'Ngày không xác định', className: 'bg-secondary' };
-        }
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        aptDate.setHours(0, 0, 0, 0);
-
-        if (aptDate.getTime() < today.getTime()) {
-            return { text: 'Đã hoàn thành', className: 'bg-success' };
-        }
-        if (aptDate.getTime() === today.getTime()) {
-            return { text: 'Hôm nay', className: 'bg-warning text-dark' };
-        }
-        return { text: 'Sắp tới', className: 'bg-info' };
-    };
-
-    const canCancelAppointment = (item) => {
-        const { text } = getAppointmentStatus(item);
-        // Có thể hủy nếu trạng thái không phải là "Đã hủy" hoặc "Đã hoàn thành"
-        return text !== 'Đã hủy' && text !== 'Đã hoàn thành';
-    };
+    const renderFilters = () => (
+        <div className="card shadow-sm mb-4">
+            <div className="card-header bg-light">
+                <h5 className="mb-0"><i className="fas fa-filter me-2 text-primary"></i>Bộ Lọc Lịch Hẹn</h5>
+            </div>
+            <div className="card-body p-4">
+                <div className="row g-3 align-items-end">
+                    <div className="col-lg-3 col-md-6">
+                        <label htmlFor="searchTerm" className="form-label fw-bold">Tìm kiếm</label>
+                        <input
+                            type="text"
+                            id="searchTerm"
+                            className="form-control"
+                            placeholder="Tên dịch vụ, nhân viên..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="col-lg-3 col-md-6">
+                        <label htmlFor="filterStatus" className="form-label fw-bold">Trạng thái</label>
+                        <select
+                            id="filterStatus"
+                            className="form-select"
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                        >
+                            <option value="all">Tất cả</option>
+                            <option value="completed">Đã hoàn thành</option>
+                            <option value="upcoming">Sắp tới / Đang chờ</option>
+                            <option value="cancelled">Đã hủy</option>
+                        </select>
+                    </div>
+                    <div className="col-lg-2 col-md-4">
+                        <label htmlFor="filterStartDate" className="form-label fw-bold">Từ ngày</label>
+                        <input
+                            type="date"
+                            id="filterStartDate"
+                            className="form-control"
+                            value={filterStartDate}
+                            onChange={(e) => setFilterStartDate(e.target.value)}
+                        />
+                    </div>
+                    <div className="col-lg-2 col-md-4">
+                        <label htmlFor="filterEndDate" className="form-label fw-bold">Đến ngày</label>
+                        <input
+                            type="date"
+                            id="filterEndDate"
+                            className="form-control"
+                            value={filterEndDate}
+                            onChange={(e) => setFilterEndDate(e.target.value)}
+                            min={filterStartDate}
+                        />
+                    </div>
+                    <div className="col-lg-2 col-md-4">
+                        {isAnyFilterActive && (
+                            <button 
+                                className="btn btn-outline-secondary w-100"
+                                onClick={() => {
+                                    setFilterStatus('all');
+                                    setFilterStartDate('');
+                                    setFilterEndDate('');
+                                    setSearchTerm('');
+                                }}
+                            >
+                                <i className="fas fa-undo me-2"></i>Reset
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     const renderHistoryTable = () => (
         <div className="table-responsive">
@@ -516,7 +660,7 @@ const ServiceHistoryPage = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {history.map((item, index) => {
+                    {filteredAndSortedHistory.map((item, index) => {
                         const statusInfo = getAppointmentStatus(item);
                         const isCancellable = canCancelAppointment(item);
 
@@ -608,8 +752,8 @@ const ServiceHistoryPage = () => {
                                 <i className="fas fa-list"></i>
                             </div>
                             <div>
-                                <div className="fw-bold text-primary">{customerStats?.totalAppointments || history.length}</div>
-                                <small className="text-muted">Tổng lịch hẹn</small>
+                                <div className="fw-bold text-primary">{filteredAndSortedHistory.length}</div>
+                                <small className="text-muted">Tổng lịch hẹn (kết quả lọc)</small>
                             </div>
                         </div>
                     </div>
@@ -619,8 +763,8 @@ const ServiceHistoryPage = () => {
                                 <i className="fas fa-coins"></i>
                             </div>
                             <div>
-                                <div className="fw-bold text-success">{formatVNDPrice(calculatedTotal)}</div>
-                                <small className="text-muted">Tổng chi tiêu (đã hoàn thành)</small>
+                                <div className="fw-bold text-success">{formatVNDPrice(filteredCalculatedTotal)}</div>
+                                <small className="text-muted">Tổng chi tiêu (kết quả lọc)</small>
                             </div>
                         </div>
                     </div>
@@ -630,8 +774,8 @@ const ServiceHistoryPage = () => {
                                 <i className="fas fa-calendar-check"></i>
                             </div>
                             <div>
-                                <div className="fw-bold text-info">{customerStats?.lastAppointmentDate || 'Chưa có'}</div>
-                                <small className="text-muted">Lần gần nhất</small>
+                                <div className="fw-bold text-info">{filteredAndSortedHistory.length > 0 ? (filteredAndSortedHistory[0].displayDate || filteredAndSortedHistory[0].appointmentDate) : 'Chưa có'}</div>
+                                <small className="text-muted">Lần gần nhất (kết quả lọc)</small>
                             </div>
                         </div>
                     </div>
@@ -816,27 +960,57 @@ const ServiceHistoryPage = () => {
                     {/* Hiển thị lịch sử */}
                     {((userInfo && !isLoading && !error) || (lookupPerformed && !isLoading && !error)) && (
                         history.length > 0 ? (
-                            <div className="row justify-content-center">
-                                <div className="col-12">
-                                    <div className="card shadow-lg border-0">
-                                        <div className="card-header bg-success text-white py-3">
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <h5 className="mb-0">
-                                                    <i className="fas fa-check-circle me-2"></i>
-                                                    Tìm thấy {history.length} lịch hẹn
-                                                </h5>
-                                                <span className="badge bg-light text-dark">
-                                                    <i className="fas fa-calendar-check me-1"></i>
-                                                    Lịch hẹn hợp lệ
-                                                </span>
+                            <>
+                                {renderFilters()}
+                                
+                                {filteredAndSortedHistory.length > 0 ? (
+                                    <div className="row justify-content-center">
+                                        <div className="col-12">
+                                            <div className="card shadow-lg border-0">
+                                                <div className="card-header bg-success text-white py-3">
+                                                    <div className="d-flex justify-content-between align-items-center">
+                                                        <h5 className="mb-0">
+                                                            <i className="fas fa-check-circle me-2"></i>
+                                                            Tìm thấy {filteredAndSortedHistory.length} lịch hẹn
+                                                        </h5>
+                                                        <span className="badge bg-light text-dark">
+                                                            <i className="fas fa-calendar-check me-1"></i>
+                                                            Kết quả đã lọc
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="card-body p-0">
+                                                    {renderHistoryTable()}
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="card-body p-0">
-                                            {renderHistoryTable()}
+                                    </div>
+                                ) : (
+                                    <div className="row justify-content-center">
+                                        <div className="col-lg-8">
+                                            <div className="alert alert-info text-center py-5" role="alert">
+                                                <i className="fas fa-search-minus fa-3x text-info mb-4"></i>
+                                                <h4 className="alert-heading">Không có kết quả phù hợp</h4>
+                                                <p className="mb-4">
+                                                    Không tìm thấy lịch hẹn nào khớp với bộ lọc của bạn.
+                                                </p>
+                                                <button 
+                                                    className="btn btn-primary"
+                                                    onClick={() => {
+                                                        setFilterStatus('all');
+                                                        setFilterStartDate('');
+                                                        setFilterEndDate('');
+                                                        setSearchTerm('');
+                                                    }}
+                                                >
+                                                    <i className="fas fa-undo me-2"></i>
+                                                    Reset Bộ Lọc
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
+                                )}
+                            </>
                         ) : (
                             <div className="row justify-content-center">
                                 <div className="col-lg-8">

@@ -336,8 +336,8 @@ const SalaryManager = () => {
 
       {loading && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
 
-      <TableContainer component={Paper} sx={{ boxShadow: '1px 1px 5px rgba(0,0,0,0.1)', borderRadius: '10px', maxHeight: 'calc(100vh - 450px)', overflow: 'auto' }}>
-        <Table sx={{ minWidth: 900 }} stickyHeader aria-label="sticky salary table">
+      <TableContainer component={Paper} sx={{ boxShadow: '1px 1px 5px rgba(0,0,0,0.1)', borderRadius: '10px', maxHeight: 'calc(100vh - 450px)', overflow: 'auto', overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 1800, width: '100%' }} stickyHeader aria-label="sticky salary table">
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>

@@ -22,6 +22,7 @@ import { format, getDate, getDaysInMonth, parse, getYear, isSameDay } from 'date
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import { useAppointmentFilter } from 'contexts/AppointmentFilterContext';
 
 // assets
 import BarChartOutlined from '@ant-design/icons/BarChartOutlined';
@@ -46,6 +47,7 @@ import './dashboard.css';
 
 export default function DashboardDefault() {
   const navigate = useNavigate();
+  const { setFilter } = useAppointmentFilter();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [workSchedule, setWorkSchedule] = useState([]);
@@ -297,7 +299,11 @@ export default function DashboardDefault() {
       extra: 'Hôm nay', 
       icon: <UserOutlined />, 
       color: '#2962ff', 
-      bg: '#e3f2fd' 
+      bg: '#e3f2fd',
+      onClick: () => {
+        setFilter({ status: 'pending' });
+        navigate('/spa/appointments');
+      }
     },
     { 
       title: 'Khách hàng đã phục vụ', 
@@ -305,7 +311,11 @@ export default function DashboardDefault() {
       extra: 'Hôm nay', 
       icon: <CheckCircleOutlined />, 
       color: '#2e7d32', 
-      bg: '#e8f5e9' 
+      bg: '#e8f5e9',
+      onClick: () => {
+        setFilter({ status: 'completed' });
+        navigate('/spa/appointments');
+      }
     },
     { 
       title: 'Dịch vụ tháng này', 
@@ -313,7 +323,14 @@ export default function DashboardDefault() {
       extra: 'Tháng này', 
       icon: <BarChartOutlined />, 
       color: '#ed6c02', 
-      bg: '#fff3e0' 
+      bg: '#fff3e0',
+      onClick: () => {
+        const today = new Date();
+        const startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+        setFilter({ dateFilter: { startDate, endDate } });
+        navigate('/spa/appointments');
+      }
     },
     { 
       title: 'Đánh giá trung bình', 
@@ -368,19 +385,25 @@ export default function DashboardDefault() {
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {statCards.map((stat) => (
           <Grid item xs={12} sm={6} md={3} key={stat.title}>
-            <Paper elevation={0} sx={{ 
-              p: 3, 
-              borderRadius: 3, 
-              background: 'white',
-              border: `1px solid ${stat.bg}`,
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
-              }
-            }}>
+            <Paper
+              elevation={0}
+              onClick={stat.onClick}
+              sx={{ 
+                p: 3, 
+                borderRadius: 3, 
+                background: 'white',
+                border: `1px solid ${stat.bg}`,
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.3s ease',
+                cursor: stat.onClick ? 'pointer' : 'default',
+                '&:hover': stat.onClick ? {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                  backgroundColor: stat.bg,
+                } : {}
+              }}
+            >
               {/* Background decoration */}
               <Box sx={{
                 position: 'absolute',
