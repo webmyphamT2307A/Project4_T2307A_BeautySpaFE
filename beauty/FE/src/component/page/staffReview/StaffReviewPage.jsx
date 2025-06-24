@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -45,6 +45,7 @@ const setStaffToCache = (staffList) => {
 
 const StaffReviewPage = () => {
     const { staffId } = useParams();
+    const navigate = useNavigate();
     const [staff, setStaff] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [reviewStats, setReviewStats] = useState({
@@ -362,10 +363,24 @@ const StaffReviewPage = () => {
                                 </span>
                             </div>
                             
-                            <Link to="/appointment" className="btn btn-primary">
+                            <button 
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={() => {
+                                    navigate('/');
+                                    setTimeout(() => {
+                                        const appointmentElement = document.getElementById('appointment');
+                                        if (appointmentElement) {
+                                            const rect = appointmentElement.getBoundingClientRect();
+                                            const y = window.scrollY + rect.top - 100;
+                                            window.scrollTo({ top: y, behavior: 'smooth' });
+                                        }
+                                    }, 1000);
+                                }}
+                            >
                                 <i className="fas fa-calendar-plus me-2"></i>
                                 Đặt Lịch Hẹn
-                            </Link>
+                            </button>
                         </div>
                     </div>
                 </div>
