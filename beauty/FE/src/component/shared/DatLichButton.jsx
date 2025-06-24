@@ -3,7 +3,7 @@ import React from 'react';
 const DatLichButton = ({ onClick }) => {
   const buttonStyle = {
     background: 'linear-gradient(135deg, #FDB5B9, #f89ca0)',
-    border: 'none',
+    border: '2px solid rgb(253, 162, 171)',
     boxShadow: '0 6px 20px rgba(253, 181, 185, 0.3)',
     color: 'white',
     borderRadius: '50px',
