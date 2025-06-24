@@ -316,10 +316,49 @@ const Header = () => {
 
                 <div className="container-fluid bg-light">
                     <div className="container px-0">
-                        <nav className="navbar navbar-light navbar-expand-xl">
-                            <Link to="/" className="navbar-brand">
-                                <h1 className="text-primary display-4">Sparlex</h1>
+                        <nav className="navbar navbar-light navbar-expand-xl p-0">
+
+                            <Link to="/" className="navbar-brand d-flex align-items-center text-decoration-none">
+                                <img
+                                    src="/assets/img/logo.png"
+                                    alt="Sparlex Logo"
+                                    className="img-fluid me-2"
+                                    style={{
+                                        maxHeight: '80px',
+                                        width: 'auto',
+                                        objectFit: 'contain',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.transform = 'scale(1.05)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.transform = 'scale(1)';
+                                    }}
+                                />
+                                <h1
+                                    className="text-primary mb-0 fw-bold"
+                                    style={{
+                                        fontSize: '2rem',
+                                        fontFamily: '"Poppins", sans-serif',
+                                        letterSpacing: '1px',
+                                        textShadow: '2px 2px 4px rgba(0,0,0,0.1)',
+                                        color: '#FDB5B9',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.color = '#F7A8B8';
+                                        e.target.style.textShadow = '2px 2px 6px rgba(0,0,0,0.15)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.color = '#FDB5B9';
+                                        e.target.style.textShadow = '2px 2px 4px rgba(0,0,0,0.1)';
+                                    }}
+                                >
+                                </h1>
                             </Link>
+
+
                             <button className="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
                                 <span className="fa fa-bars text-primary" />
                             </button>
