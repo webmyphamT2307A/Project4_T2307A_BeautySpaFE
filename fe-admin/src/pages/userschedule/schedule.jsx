@@ -361,7 +361,7 @@ const UserScheduleManager = () => {
     // Validation - Chỉ yêu cầu shift custom
     if (!formData.userId || !formData.workDate) {
       toast.error("Vui lòng chọn Nhân viên và Ngày làm việc.");
-      return;
+        return;
     }
 
     // Kiểm tra có shift custom
@@ -372,19 +372,19 @@ const UserScheduleManager = () => {
 
     if (!formData.status || !statusOptions.find(opt => opt.value === formData.status)) {
       toast.error("Vui lòng chọn trạng thái hợp lệ.");
-      return;
+        return;
     }
 
     // Prepare shift data
     const finalShift = formatShift(shiftForm.shiftType, shiftForm.startTime, shiftForm.endTime);
 
     const requestBody = {
-      ...formData,
-      userId: parseInt(formData.userId, 10),
+        ...formData,
+        userId: parseInt(formData.userId, 10),
       timeSlotId: null, // Không sử dụng timeslot nữa
       shift: finalShift,
-      isLastTask: formData.isLastTask || false,
-      isActive: formData.isActive === undefined ? true : formData.isActive,
+        isLastTask: formData.isLastTask || false,
+        isActive: formData.isActive === undefined ? true : formData.isActive,
       checkInTime: timeForm.checkInTime || null,
       checkOutTime: timeForm.checkOutTime || null,
     };
@@ -494,7 +494,7 @@ const UserScheduleManager = () => {
     return (
       <Chip 
         label={statusOption.label} 
-        size="small"
+        size="small" 
         color={statusOption.color}
         variant="outlined"
       />
@@ -647,11 +647,11 @@ const UserScheduleManager = () => {
         
         {/* Chỉ hiện button Clear Filters khi có filter được áp dụng */}
         {(filterByUserId || filterStatus || filterMonth || filterYear || startDate || endDate || searchQuery) && (
-          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button size="small" onClick={clearFilters} variant="outlined">
+        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button size="small" onClick={clearFilters} variant="outlined">
               Xóa Bộ Lọc
-            </Button>
-          </Box>
+          </Button>
+        </Box>
         )}
       </Box>
 
@@ -697,9 +697,9 @@ const UserScheduleManager = () => {
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" color="primary">
-                      {schedule.roleName}
-                    </Typography>
+                      <Typography variant="body2" color="primary">
+                        {schedule.roleName}
+                      </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
@@ -817,7 +817,7 @@ const UserScheduleManager = () => {
                     <Avatar src={user.imageUrl} sx={{ width: 24, height: 24 }}>
                       {user.fullName?.charAt(0)}
                     </Avatar>
-                    {user.fullName || user.username}
+                  {user.fullName || user.username}
                   </Box>
                 </MenuItem>
               ))}
@@ -843,7 +843,7 @@ const UserScheduleManager = () => {
           
           <Grid container spacing={2}>
             <Grid item xs={12} md={4}>
-              <FormControl fullWidth margin="dense" required>
+          <FormControl fullWidth margin="dense" required>
                 <InputLabel id="shiftType-label">Loại Ca</InputLabel>
                 <Select
                   labelId="shiftType-label"
