@@ -15,6 +15,7 @@ import ErrorPage from './component/page/404';
 import CustomerDetail from './component/page/authPage/CustomerDetail';
 import sessionManager from './utils/sessionManager';
 import ServiceHistoryPage from './component/page/ServiceHistoryPage';
+import StaffReviewPage from './component/page/staffReview/StaffReviewPage';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -58,6 +59,7 @@ function App() {
             <Route path="/ErrorPage" element={<ErrorPage />} />
             <Route path="/CustomerDetail" element={<CustomerDetail />} />
             <Route path="/service-history" element={<ServiceHistoryPage />} />
+            <Route path="/staff-review/:staffId" element={<StaffReviewPage />} />
 
             <Route path="*" element={<ErrorPage />} />
           </Routes>

@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const Appointment = () => {
+    const navigate = useNavigate();
+    
     // Step management
     const [currentStep, setCurrentStep] = useState(1);
     const totalSteps = 4;
@@ -550,6 +553,8 @@ const Appointment = () => {
             case 'notes':
                 if (value && value.length > 500) {
                     error = 'Ghi chú không được vượt quá 500 ký tự';
+                } else if (value && value.length > 450) {
+                    error = 'Ghi chú sắp đạt giới hạn 500 ký tự';
                 }
                 break;
             default:
@@ -1255,6 +1260,22 @@ const Appointment = () => {
                                                     ({staff.totalReviews || 0})
                                                 </span>
                                             </div>
+                                            
+                                            {/* Review Link */}
+                                            <div className="text-center mb-3">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-link p-0 text-decoration-none"
+                                                    style={{ fontSize: '0.7rem', color: '#ffc107', border: 'none', background: 'none' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/staff-review/${staff.id}`);
+                                                    }}
+                                                >
+                                                    <i className="fas fa-star me-1"></i>
+                                                    Xem đánh giá
+                                                </button>
+                                            </div>
 
                                             {/* Select Button */}
                                             <button
@@ -1371,10 +1392,20 @@ const Appointment = () => {
                         />
                         <div className="d-flex justify-content-between align-items-center mt-1">
                             {validationErrors.notes && (
-                                <small className="text-danger">{validationErrors.notes}</small>
+                                <small className={`${formData.notes?.length > 500 ? 'text-danger' : formData.notes?.length > 450 ? 'text-warning' : 'text-info'}`}>
+                                    <i className="fas fa-exclamation-circle me-1"></i>
+                                    {validationErrors.notes}
+                                </small>
                             )}
-                            <small className={`text-white-50 ms-auto ${formData.notes?.length > 450 ? 'text-warning' : ''} ${formData.notes?.length >= 500 ? 'text-danger' : ''}`} style={{ fontSize: '0.75rem' }}>
+                            <small className={`ms-auto ${
+                                formData.notes?.length >= 500 ? 'text-danger fw-bold' : 
+                                formData.notes?.length > 450 ? 'text-warning fw-bold' : 
+                                formData.notes?.length > 400 ? 'text-info' : 'text-white-50'
+                            }`} style={{ fontSize: '0.75rem' }}>
+                                <i className="fas fa-edit me-1"></i>
                                 {formData.notes?.length || 0}/500 ký tự
+                                {formData.notes?.length >= 500 && <span className="ms-1">⚠️ Đã đạt giới hạn!</span>}
+                                {formData.notes?.length > 450 && formData.notes?.length < 500 && <span className="ms-1">⚠️ Gần hết!</span>}
                             </small>
                         </div>
                     </div>

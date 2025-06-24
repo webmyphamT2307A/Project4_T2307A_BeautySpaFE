@@ -158,13 +158,69 @@ const ServiceHistoryPage = () => {
 
         console.log('🎯 After filtering, remaining items:', filteredData.length);
         
-        // ✅ TÍNH TỔNG TIỀN từ dữ liệu đã lọc
+        // ✅ DEBUG: Log tất cả dữ liệu trước khi tính tổng
+        console.log('🔍 === DEBUGGING TOTAL CALCULATION ===');
+        console.log('📊 Raw filtered data:', filteredData);
+        filteredData.forEach((app, index) => {
+            console.log(`📋 Item ${index + 1}:`, {
+                id: app.id || app.appointmentId,
+                serviceName: app.serviceName,
+                servicePrice: app.servicePrice,
+                status: app.status,
+                appointmentDate: app.appointmentDate,
+                rawPrice: app.servicePrice,
+                parsedPrice: parseFloat(app.servicePrice) || 0
+            });
+        });
+
+        // ✅ TÍNH TỔNG TIỀN chỉ cho lịch hẹn đã hoàn thành (dựa trên getAppointmentStatus)
         const total = filteredData.reduce((sum, app) => {
-            const price = parseFloat(app.servicePrice) || 0;
-            return sum + price;
+            // Sử dụng chính hàm getAppointmentStatus để đảm bảo 100% nhất quán
+            const statusInfo = (() => {
+                const directStatus = app.status?.toLowerCase().trim();
+                if (directStatus === 'cancelled') {
+                    return { text: 'Đã hủy', className: 'bg-danger' };
+                }
+                if (directStatus === 'completed') {
+                    return { text: 'Đã hoàn thành', className: 'bg-success' };
+                }
+
+                const aptDate = parseDate(app.appointmentDate);
+                if (!aptDate) {
+                    return { text: 'Ngày không xác định', className: 'bg-secondary' };
+                }
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                aptDate.setHours(0, 0, 0, 0);
+
+                if (aptDate.getTime() < today.getTime()) {
+                    return { text: 'Đã hoàn thành', className: 'bg-success' };
+                }
+                if (aptDate.getTime() === today.getTime()) {
+                    return { text: 'Hôm nay', className: 'bg-warning text-dark' };
+                }
+                return { text: 'Sắp tới', className: 'bg-info' };
+            })();
+            
+            const rawPrice = app.servicePrice;
+            let parsedPrice = parseFloat(app.servicePrice) || 0;
+            
+            // ✅ Áp dụng cùng logic normalize giá như formatVNDPrice
+            if (parsedPrice > 0 && parsedPrice < 1000) {
+                parsedPrice *= 10000; // Backend trả về 38 thay vì 380000
+            }
+            
+            // CHỈ tính những lịch hẹn có trạng thái "Đã hoàn thành"
+            if (statusInfo.text === 'Đã hoàn thành') {
+                console.log(`💰 ADDING to total - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Raw Price: ${rawPrice}, Parsed Price: ${parsedPrice}, Status: ${statusInfo.text}, Sum before: ${sum}, Sum after: ${sum + parsedPrice}`);
+                return sum + parsedPrice;
+            } else {
+                console.log(`❌ NOT ADDING - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Price: ${parsedPrice}, Status: ${statusInfo.text}, Reason: Not completed`);
+                return sum;
+            }
         }, 0);
         
-        console.log('💰 Calculated total price:', total);
+        console.log('💰 Calculated total price (completed appointments only):', total);
         setCalculatedTotal(total);
         
         return filteredData.map(app => ({
@@ -482,7 +538,7 @@ const ServiceHistoryPage = () => {
                             </div>
                             <div>
                                 <div className="fw-bold text-success">{formatVNDPrice(calculatedTotal)}</div>
-                                <small className="text-muted">Tổng chi tiêu (đã lọc)</small>
+                                <small className="text-muted">Tổng chi tiêu (đã hoàn thành)</small>
                             </div>
                         </div>
                     </div>
