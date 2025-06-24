@@ -586,7 +586,31 @@ const Header = () => {
                         </div>
                         <div className="modal-footer justify-content-center">
                             <p className="text-center mb-0">
-                                Chưa có tài khoản? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">Đăng ký ngay</a>
+                                Chưa có tài khoản?
+                                <a
+                                    href="#"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#registerModal"
+                                    data-bs-dismiss="modal"
+                                    className="text-decoration-none ms-1"
+                                    style={{
+                                        color: '#FDB5B9',
+                                        fontWeight: '600',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.color = '#B76E79';
+                                        e.target.style.textDecoration = 'underline';
+                                        e.target.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.color = '#FDB5B9';
+                                        e.target.style.textDecoration = 'none';
+                                        e.target.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    Đăng ký ngay
+                                </a>
                             </p>
                         </div>
                     </div>
@@ -648,7 +672,31 @@ const Header = () => {
                         </div>
                         <div className="modal-footer justify-content-center">
                             <p className="text-center mb-0">
-                                Đã có tài khoản? <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal">Đăng nhập</a>
+                                Đã có tài khoản?
+                                <a
+                                    href="#"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#loginModal"
+                                    data-bs-dismiss="modal"
+                                    className="text-decoration-none ms-1"
+                                    style={{
+                                        color: '#FDB5B9',
+                                        fontWeight: '600',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.color = '	#B76E79';
+                                        e.target.style.textDecoration = 'underline';
+                                        e.target.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.color = '#FDB5B9';
+                                        e.target.style.textDecoration = 'none';
+                                        e.target.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    Đăng nhập
+                                </a>
                             </p>
                         </div>
                     </div>
@@ -657,42 +705,72 @@ const Header = () => {
 
             {/* CSS for Search Functionality */}
             <style jsx>{`
-                .search-suggestion:hover {
-                    background-color: #f8f9fa !important;
-                }
-                
-                .search-bar-wrapper::-webkit-scrollbar {
-                    width: 6px;
-                }
-                
-                .search-bar-wrapper::-webkit-scrollbar-track {
-                    background: #f1f1f1;
-                    border-radius: 3px;
-                }
-                
-                .search-bar-wrapper::-webkit-scrollbar-thumb {
-                    background: #c1c1c1;
-                    border-radius: 3px;
-                }
-                
-                .search-bar-wrapper::-webkit-scrollbar-thumb:hover {
-                    background: #a8a8a8;
-                }
-                
-                .input-group-text.btn-primary:hover {
-                    opacity: 0.85;
-                    transform: scale(1.05);
-                    transition: all 0.2s ease;
-                }
-                
-                .search-suggestion {
-                    transition: all 0.2s ease;
-                }
-                
-                .search-suggestion:last-child {
-                    border-bottom: none !important;
-                }
-            `}</style>
+    .search-suggestion:hover {
+        background-color: #f8f9fa !important;
+    }
+    
+    .search-bar-wrapper::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .search-bar-wrapper::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    .search-bar-wrapper::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+    
+    .search-bar-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+    
+    .input-group-text.btn-primary:hover {
+        opacity: 0.85;
+        transform: scale(1.05);
+        transition: all 0.2s ease;
+    }
+    
+    .search-suggestion {
+        transition: all 0.2s ease;
+    }
+    
+    .search-suggestion:last-child {
+        border-bottom: none !important;
+    }
+    
+    /* Modal footer links hover effects */
+    .modal-footer a {
+        transition: all 0.3s ease !important;
+    }
+    
+    .modal-footer a:hover {
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    /* Smooth transitions for modal elements */
+    .modal-content {
+        transition: all 0.3s ease;
+    }
+    
+    .modal-header, .modal-body, .modal-footer {
+        transition: all 0.2s ease;
+    }
+    
+    /* Button hover improvements */
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(253, 181, 185, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(253, 181, 185, 0.3);
+    }
+`}</style>
 
             {/* Session Timer - chỉ hiển thị khi user đăng nhập */}
             {userInfo && <SessionTimer />}
