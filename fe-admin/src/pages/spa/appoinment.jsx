@@ -424,6 +424,7 @@ const AppointmentManagement = () => {
     const updatePayload = {
       fullName: currentAppointment.customer.name,
       phoneNumber: currentAppointment.customer.phone,
+      email: currentAppointment.customer.email,
       status: newStatus,
       slot: currentAppointment.timeSlot.slot,
       notes: currentAppointment.notes,
@@ -753,7 +754,7 @@ const AppointmentManagement = () => {
     try {
       const emailPayload = {
         appointmentId: appointmentToSendEmail.id,
-        customerEmail: appointmentToSendEmail.customer.phone || '',
+        customerEmail: appointmentToSendEmail.customer.email || '',
         customerName: appointmentToSendEmail.customer.name,
         serviceName: appointmentToSendEmail.service.name,
         appointmentDate: appointmentToSendEmail.appointmentDate,
@@ -827,6 +828,7 @@ const AppointmentManagement = () => {
     const updatePayload = {
       fullName: appointmentToEditDetails.customer.name,
       phoneNumber: appointmentToEditDetails.customer.phone,
+      email: appointmentToEditDetails.customer.email,
       status: appointmentToEditDetails.status,
       slot: appointmentToEditDetails.timeSlot.slot,
       notes: appointmentToEditDetails.notes,
