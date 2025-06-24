@@ -118,8 +118,8 @@ const UserAccount = () => {
       const lowercasedQuery = searchQuery.toLowerCase();
       results = results.filter(
         user =>
-          user.fullName.toLowerCase().includes(lowercasedQuery) ||
-          user.phone.toLowerCase().includes(lowercasedQuery) ||
+          (user.fullName && user.fullName.toLowerCase().includes(lowercasedQuery)) ||
+          (user.phone && user.phone.toLowerCase().includes(lowercasedQuery)) ||
           (user.email && user.email.toLowerCase().includes(lowercasedQuery))
       );
     }

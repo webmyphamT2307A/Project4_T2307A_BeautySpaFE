@@ -83,8 +83,11 @@ const UserAccount = () => {
         const usersData = (data.data || []).map(u => ({
           ...u,
           customer_id: u.customer_id || u.id, // fallback if BE returns id
-          full_name: u.full_name || u.fullName,
-          image_url: u.image_url || u.imageUrl,
+          full_name: u.full_name || u.fullName || '',
+          phone: u.phone || '',
+          email: u.email || '',
+          image_url: u.image_url || u.imageUrl || '',
+          address: u.address || '',
           is_active:
             u.is_active === true ||
             u.is_active === 1 ||
@@ -127,8 +130,8 @@ const UserAccount = () => {
         const lowercasedQuery = searchQuery.toLowerCase();
         results = results.filter(
           user =>
-            user.full_name.toLowerCase().includes(lowercasedQuery) ||
-            user.phone.toLowerCase().includes(lowercasedQuery) ||
+            (user.full_name && user.full_name.toLowerCase().includes(lowercasedQuery)) ||
+            (user.phone && user.phone.toLowerCase().includes(lowercasedQuery)) ||
             (user.email && user.email.toLowerCase().includes(lowercasedQuery))
         );
       }
@@ -271,8 +274,11 @@ const UserAccount = () => {
           const usersData = (data.data || []).map(u => ({
             ...u,
             customer_id: u.customer_id || u.id,
-            full_name: u.full_name || u.fullName,
-            image_url: u.image_url || u.imageUrl,
+            full_name: u.full_name || u.fullName || '',
+            phone: u.phone || '',
+            email: u.email || '',
+            image_url: u.image_url || u.imageUrl || '',
+            address: u.address || '',
             is_active:
               u.is_active === true ||
               u.is_active === 1 ||
@@ -314,8 +320,11 @@ const UserAccount = () => {
           const usersData = (data.data || []).map(u => ({
             ...u,
             customer_id: u.customer_id || u.id,
-            full_name: u.full_name || u.fullName,
-            image_url: u.image_url || u.imageUrl,
+            full_name: u.full_name || u.fullName || '',
+            phone: u.phone || '',
+            email: u.email || '',
+            image_url: u.image_url || u.imageUrl || '',
+            address: u.address || '',
             is_active:
               u.is_active === true ||
               u.is_active === 1 ||
