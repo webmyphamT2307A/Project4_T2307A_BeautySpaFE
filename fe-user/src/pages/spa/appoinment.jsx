@@ -23,6 +23,7 @@ import MainCard from 'components/MainCard';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Cookies from 'js-cookie';
+import { useAppointmentFilter } from 'contexts/AppointmentFilterContext';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
 const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
@@ -30,7 +31,7 @@ const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confi
 
 const AppointmentManagement = () => {
   // States
-  const [searchParams] = useSearchParams();
+  const { filter, setFilter } = useAppointmentFilter();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [userRole, setUserRole] = useState('');
@@ -47,6 +48,20 @@ const AppointmentManagement = () => {
     startDate: '',
     endDate: ''
   });
+
+  // Áp dụng filter từ Context khi nó thay đổi
+  useEffect(() => {
+    if (filter) {
+      if (filter.status) {
+        setStatusFilter(filter.status);
+      }
+      if (filter.dateFilter) {
+        setDateFilter(filter.dateFilter);
+      }
+      // Xóa filter trong context sau khi đã áp dụng để không bị lọc lại ở lần sau
+      setFilter(null);
+    }
+  }, [filter, setFilter]);
 
   const [staffList, setStaffList] = useState([]);
   const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
