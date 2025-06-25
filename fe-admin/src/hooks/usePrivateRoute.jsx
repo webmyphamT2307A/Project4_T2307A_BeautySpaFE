@@ -20,13 +20,13 @@ const usePrivateRoute = (allowedRoles) => {
       const user = JSON.parse(userString);
       const roleName = user?.role?.name; // Lấy tên vai trò
 
-      console.log('User from localStorage:', user);
+  console.log('User from localStorage:', user);
       console.log('User Role Name:', roleName);
 
       // Thêm tiền tố 'ROLE_' để so sánh (nếu cần) hoặc kiểm tra trực tiếp
       // Giả sử allowedRoles là một mảng các tên vai trò không có tiền tố, ví dụ ['ADMIN', 'STAFF']
       // Nếu allowedRoles của bạn là ['ROLE_ADMIN'], hãy dùng: `const userRoleForCheck = `ROLE_${roleName?.toUpperCase()}`;`
-      
+
       if (!roleName || !allowedRoles.includes(roleName.toUpperCase())) {
         console.log(`Role '${roleName}' is not in allowed roles [${allowedRoles.join(', ')}], redirecting to login...`);
         toast.warn('Bạn không có quyền truy cập trang này.');
@@ -37,9 +37,9 @@ const usePrivateRoute = (allowedRoles) => {
       toast.error('Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại.');
       // Xóa user data bị hỏng để tránh lặp lại lỗi
       localStorage.removeItem('user');
-      navigate('/login', { replace: true });
-    }
-  }, [allowedRoles, navigate]);
+    navigate('/login', { replace: true });
+  }
+}, [allowedRoles, navigate]);
 };
 
 export default usePrivateRoute;

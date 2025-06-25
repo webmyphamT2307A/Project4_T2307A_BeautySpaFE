@@ -10,6 +10,7 @@ import UserScheduleManager from '../pages/userschedule/schedule';
 import usePrivateRoute from './../hooks/usePrivateRoute';
 import SalaryManagement from '../pages/salary/salary';
 import ReviewList from '../pages/review/review';
+import FeedbackManager from '../pages/feedback/feedback';
 import path from 'path';
 
 // render- Dashboard
@@ -101,9 +102,17 @@ const MainRoutes = {
         element: <ProtectedRoute element={<ReviewList />} />
       }
     ]
-
+    
   },
-  
+  {
+    path: 'feedback',
+    children: [
+      {
+        path: 'feedback',
+        element: <ProtectedRoute element={<FeedbackManager />} />
+      }
+    ]
+  },
     {
       path: 'typography',
       element: <ProtectedRoute element={<Typography />} />

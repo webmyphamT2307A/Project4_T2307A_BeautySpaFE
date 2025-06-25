@@ -3,7 +3,7 @@ import {
   Grid, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, FormControl,
   InputLabel, IconButton, TablePagination, Box, InputAdornment, Chip, MenuItem,
-  Typography, Divider, Avatar, Tooltip, Accordion, AccordionSummary, AccordionDetails,
+  Typography, Divider, Tooltip, Accordion, AccordionSummary, AccordionDetails,
   Card, CardContent, List, ListItem, ListItemText, ListItemIcon
 } from '@mui/material';
 import {
@@ -25,9 +25,10 @@ import {
   CheckCircleOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import ImageAvatar from 'components/ImageAvatar';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
 const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
@@ -36,6 +37,7 @@ const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confi
 const AppointmentManagement = () => {
   // States
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const location = useLocation();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
@@ -77,10 +79,13 @@ const AppointmentManagement = () => {
     }
   }, [searchParams]);
 
-  // Handle filters from dashboard navigation
+  // Handle filters from dashboard navigation and review page
   useEffect(() => {
     if (location.state) {
-      const { filterStatus, filterDate, startDate, endDate, title } = location.state;
+      const { 
+        filterStatus, filterDate, startDate, endDate, title, 
+        serviceId, serviceName, staffId, staffName, fromReview, reviewId 
+      } = location.state;
       
       if (title) {
         setPageTitle(title);
@@ -100,6 +105,28 @@ const AppointmentManagement = () => {
           startDate: startDate,
           endDate: endDate
         });
+      }
+
+      // Handle filters from review page
+      if (fromReview) {
+        console.log('🔍 Navigated from review page:', { serviceId, serviceName, staffId, staffName, reviewId });
+        
+        if (serviceId) {
+          setServiceFilter(serviceId);
+          toast.success(`Đã lọc theo dịch vụ ID: ${serviceId}`);
+        }
+        
+        if (staffId) {
+          setStaffFilter(staffId);
+          toast.success(`Đã lọc theo nhân viên ID: ${staffId}`);
+        }
+        
+        // Show notification about the source review
+        setTimeout(() => {
+          toast.info(`Hiển thị lịch hẹn liên quan đến đánh giá #${reviewId}`, {
+            autoClose: 5000
+          });
+        }, 1000);
       }
     }
   }, [location.state]);
@@ -957,7 +984,16 @@ const AppointmentManagement = () => {
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <FilterOutlined />
                 Bộ Lọc & Tìm Kiếm
-                {location.state && (
+                {location.state && location.state.fromReview && (
+                  <Chip 
+                    size="small" 
+                    label={`Từ Đánh Giá #${location.state.reviewId}`} 
+                    color="secondary" 
+                    variant="outlined"
+                    sx={{ ml: 1 }}
+                  />
+                )}
+                {location.state && !location.state.fromReview && (
                   <Chip 
                     size="small" 
                     label={`Từ Dashboard`} 
@@ -1036,6 +1072,16 @@ const AppointmentManagement = () => {
                   setServiceFilter('');
                   setPageTitle('Quản Lý Lịch Hẹn');
                 }}>Xóa bộ lọc</Button>
+                {location.state && location.state.fromReview && (
+                  <Button 
+                    variant="outlined" 
+                    color="secondary"
+                    onClick={() => navigate('/review/review')}
+                    sx={{ ml: 1 }}
+                  >
+                    ← Quay lại Đánh Giá
+                  </Button>
+                )}
               </Box>
               {/* Filter result count */}
               <Box sx={{ mb: 2 }}>
@@ -1263,9 +1309,7 @@ const AppointmentManagement = () => {
                         <TableCell>#{appointment.id}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar src={appointment.customer?.image} alt={appointment.customer?.name} sx={{ width: 32, height: 32 }}>
-                              {!appointment.customer?.image && <UserOutlined />}
-                            </Avatar>
+                            <ImageAvatar src={appointment.customer?.image} alt={appointment.customer?.name} sx={{ width: 32, height: 32 }} />
                             <Box>
                               <Typography variant="body2" sx={{ fontWeight: 500 }}>{appointment.customer?.name}</Typography>
                               <Typography variant="caption" color="textSecondary">{appointment.customer?.phone}</Typography>
@@ -1282,9 +1326,7 @@ const AppointmentManagement = () => {
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar src={appointment.staff?.image} alt={appointment.staff?.name} sx={{ width: 32, height: 32 }}>
-                              {!(appointment.staff?.image) && <UserOutlined />}
-                            </Avatar>
+                            <ImageAvatar src={appointment.staff?.image} alt={appointment.staff?.name} sx={{ width: 32, height: 32 }} />
                             <Typography variant="body2">{appointment.staff?.name || 'Unassigned'}</Typography>
                           </Box>
                         </TableCell>
@@ -1371,9 +1413,7 @@ const AppointmentManagement = () => {
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" gutterBottom>Customer Information</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <Avatar src={currentAppointment.customer?.image} alt={currentAppointment.customer?.name} sx={{ width: 64, height: 64 }}>
-                      {!currentAppointment.customer?.image && <UserOutlined style={{ fontSize: 32 }} />}
-                    </Avatar>
+                    <ImageAvatar src={currentAppointment.customer?.image} alt={currentAppointment.customer?.name} sx={{ width: 64, height: 64 }} />
                     <Box>
                       <Typography variant="h5">{currentAppointment.customer?.name}</Typography>
                       <Typography variant="body2" color="textSecondary">{currentAppointment.customer?.phone}</Typography>
@@ -1391,9 +1431,7 @@ const AppointmentManagement = () => {
                     <Grid item xs={12}>
                       <Typography variant="caption" color="textSecondary">Staff Assigned</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        <Avatar src={currentAppointment.staff?.image} alt={currentAppointment.staff?.name} sx={{ width: 24, height: 24 }}>
-                          {!(currentAppointment.staff?.image) && <UserOutlined style={{ fontSize: 14 }} />}
-                        </Avatar>
+                        <ImageAvatar src={currentAppointment.staff?.image} alt={currentAppointment.staff?.name} sx={{ width: 24, height: 24 }} />
                         <Box>
                           <Typography variant="body2">{currentAppointment.staff?.name || 'Unassigned'}</Typography>
                           {currentAppointment.staff?.email && (<Typography variant="caption" color="textSecondary">{currentAppointment.staff.email}</Typography>)}
@@ -1548,7 +1586,7 @@ const AppointmentManagement = () => {
                         >
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%', justifyContent: 'space-between' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Avatar src={staff.imageUrl} sx={{ width: 24, height: 24 }} />
+                              <ImageAvatar src={staff.imageUrl} alt={staff.fullName} sx={{ width: 24, height: 24 }} />
                               {staff.fullName}
                               {staff.isDebugMode && (
                                 <Chip
