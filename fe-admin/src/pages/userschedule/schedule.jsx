@@ -381,59 +381,51 @@ const UserScheduleManager = () => {
     const requestBody = {
         ...formData,
         userId: parseInt(formData.userId, 10),
-      timeSlotId: null, // Không sử dụng timeslot nữa
-      shift: finalShift,
+        timeSlotId: null, // Không sử dụng timeslot nữa
+        shift: finalShift,
         isLastTask: formData.isLastTask || false,
         isActive: formData.isActive === undefined ? true : formData.isActive,
-      checkInTime: timeForm.checkInTime || null,
-      checkOutTime: timeForm.checkOutTime || null,
+        checkInTime: timeForm.checkInTime || null,
+        checkOutTime: timeForm.checkOutTime || null,
     };
 
-    if (currentSchedule) {
-      fetch(`${SCHEDULE_API_URL}/update/${currentSchedule.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      })
-        .then(res => res.json())
-        .then(response => {
-          if (response.status === 'SUCCESS') {
-            fetchSchedules();
-            toast.success(response.message ||'Cập nhật lịch trình thành công.');
-          } else {
-            toast.error(response.message || 'Cập nhật lịch trình thất bại.');
-          }
-          setOpenDialog(false);
-        })
-        .catch(() => {
-          toast.error('Lỗi khi cập nhật lịch trình.');
-          setOpenDialog(false);
+    const handleResponse = (response) => {
+      if (response.status === 'SUCCESS') {
+        fetchSchedules();
+        const successMessage = response.message || (currentSchedule ? 'Cập nhật lịch trình thành công.' : 'Tạo lịch trình thành công.');
+        toast.success(successMessage);
+        setOpenDialog(false);
+      } else {
+        const errorMessage = response.message || (currentSchedule ? 'Cập nhật lịch trình thất bại.' : 'Tạo lịch trình thất bại.');
+        toast.error(errorMessage);
+      }
+    };
+
+    const handleError = (error) => {
+        error.json().then(body => {
+            const errorMessage = body.message || 'Có lỗi xảy ra, vui lòng thử lại.';
+            toast.error(errorMessage);
+        }).catch(() => {
+            toast.error('Lỗi kết nối hoặc có vấn đề với máy chủ.');
         });
-    } else {
-      fetch(`${SCHEDULE_API_URL}/created`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      })
-        .then(res => res.json())
-        .then(response => {
-          if (response.status === 'SUCCESS') {
-            toast.success(response.message || 'Tạo lịch trình thành công.');
-            fetchSchedules();
-          } else {
-            toast.error(response.message || 'Tạo lịch trình thất bại.');
-          }
-          setOpenDialog(false);
-        })
-        .catch(() => {
-          toast.error('Lỗi khi tạo lịch trình.');
-          setOpenDialog(false);
-        });
-    }
+    };
+    
+    const url = currentSchedule ? `${SCHEDULE_API_URL}/update/${currentSchedule.id}` : `${SCHEDULE_API_URL}/created`;
+    const method = currentSchedule ? 'PUT' : 'POST';
+
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    })
+    .then(res => {
+        if (!res.ok) {
+            throw res;
+        }
+        return res.json();
+    })
+    .then(handleResponse)
+    .catch(handleError);
   };
 
   const handleDeleteSchedule = (scheduleId) => {

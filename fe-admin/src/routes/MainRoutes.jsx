@@ -29,7 +29,8 @@ const AdminAccount = Loadable(lazy(() => import('pages/account/admin')));
 // ==============================|| MAIN ROUTING ||============================== //
 
 const ProtectedRoute = ({ element }) => {
-  usePrivateRoute(['ROLE_ADMIN']); // Chỉ cho phép ROLE_ADMIN truy cập
+  // Cho phép cả ADMIN và STAFF truy cập. Logic trong hook sẽ xử lý việc viết hoa.
+  usePrivateRoute(['ADMIN', 'STAFF']); 
   return element;
 };
 
