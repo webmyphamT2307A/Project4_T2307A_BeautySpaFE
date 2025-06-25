@@ -55,55 +55,37 @@ const formatVNDPrice = (priceValue) => {
 
 // ✅ LOGIC XỬ LÝ TRẠNG THÁI ĐÃ ĐƯỢC CẢI TIẾN (di chuyển ra ngoài component)
 const getAppointmentStatus = (item) => {
-    // Ưu tiên 1: Trạng thái tường minh từ backend
+    // Ưu tiên 1: Trạng thái tường minh từ backend là 'cancelled' hoặc 'completed'
     const directStatus = item.status?.toLowerCase().trim();
-    
-    if (directStatus === 'completed') {
-        return { text: 'Đã hoàn thành', className: 'bg-success', isCompleted: true, isCancelled: false };
-    }
     if (directStatus === 'cancelled') {
-        return { text: 'Đã hủy', className: 'bg-danger', isCompleted: false, isCancelled: true };
+        return { text: 'Đã hủy', className: 'bg-danger' };
     }
-    if (directStatus === 'confirmed') {
-        return { text: 'Đã xác nhận', className: 'bg-primary', isCompleted: false, isCancelled: false };
-    }
-    // ✅ FIX: Luôn tôn trọng trạng thái 'pending' từ backend, không tự động chuyển thành 'hoàn thành'
-    if (directStatus === 'pending') {
-        // Phân biệt pending của quá khứ và tương lai nếu cần
-        const aptDate = parseDate(item.appointmentDate);
-        if (aptDate && aptDate.getTime() < new Date().setHours(0,0,0,0)) {
-             return { text: 'Chờ xử lý', className: 'bg-secondary', isCompleted: false, isCancelled: false };
-        }
-        return { text: 'Chờ xác nhận', className: 'bg-info', isCompleted: false, isCancelled: false };
+    if (directStatus === 'completed') {
+        return { text: 'Đã hoàn thành', className: 'bg-success' };
     }
 
-    // Ưu tiên 2: Logic dựa trên ngày tháng chỉ được áp dụng khi backend không trả về trạng thái rõ ràng
+    // Ưu tiên 2: Logic dựa trên ngày tháng cho các trạng thái còn lại
     const aptDate = parseDate(item.appointmentDate);
     if (!aptDate) {
-        return { text: 'Ngày không xác định', className: 'bg-secondary', isCompleted: false, isCancelled: false };
+        return { text: 'Ngày không xác định', className: 'bg-secondary' };
     }
-    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     aptDate.setHours(0, 0, 0, 0);
 
     if (aptDate.getTime() < today.getTime()) {
-        return { text: 'Đã hoàn thành', className: 'bg-success', isCompleted: true, isCancelled: false };
+        return { text: 'Đã hoàn thành', className: 'bg-success' };
     }
-    
     if (aptDate.getTime() === today.getTime()) {
-        return { text: 'Hôm nay', className: 'bg-warning text-dark', isCompleted: false, isCancelled: false };
+        return { text: 'Đang chờ', className: 'bg-warning text-dark' };
     }
-    
-    return { text: 'Sắp tới', className: 'bg-info', isCompleted: false, isCancelled: false };
+    return { text: 'Sắp tới', className: 'bg-info' };
 };
 
 const canCancelAppointment = (item) => {
-    const statusInfo = getAppointmentStatus(item);
-    // Chỉ cho phép hủy lịch hẹn chưa hoàn thành và chưa bị hủy
-    // Các trạng thái có thể hủy: "Chờ xác nhận", "Đã xác nhận", "Sắp tới", "Hôm nay"
-    const cancellableStatuses = ['Chờ xác nhận', 'Đã xác nhận', 'Sắp tới', 'Hôm nay'];
-    return cancellableStatuses.includes(statusInfo.text);
+    const { text } = getAppointmentStatus(item);
+    // Có thể hủy nếu trạng thái không phải là "Đã hủy" hoặc "Đã hoàn thành"
+    return text !== 'Đã hủy' && text !== 'Đã hoàn thành';
 };
 
 // Component StarRating để chọn sao
@@ -168,12 +150,7 @@ const ServiceHistoryPage = () => {
                 if (filterStatus !== 'all') {
                     let statusMatch = false;
                     if (filterStatus === 'completed' && statusInfo.text === 'Đã hoàn thành') statusMatch = true;
-                    if (filterStatus === 'upcoming' && (
-                        statusInfo.text === 'Sắp tới' || 
-                        statusInfo.text === 'Hôm nay' || 
-                        statusInfo.text === 'Chờ xác nhận' ||
-                        statusInfo.text === 'Đã xác nhận'
-                    )) statusMatch = true;
+                    if (filterStatus === 'upcoming' && (statusInfo.text === 'Sắp tới' || statusInfo.text === 'Đang chờ')) statusMatch = true;
                     if (filterStatus === 'cancelled' && statusInfo.text === 'Đã hủy') statusMatch = true;
                     if (!statusMatch) return false;
                 }
@@ -210,12 +187,11 @@ const ServiceHistoryPage = () => {
         });
     }, [history, filterStatus, filterStartDate, filterEndDate, searchTerm]);
 
-    // ✅ NEW: Memoized total for filtered data - chỉ tính lịch hẹn đã hoàn thành
+    // ✅ NEW: Memoized total for filtered data
     const filteredCalculatedTotal = useMemo(() => {
         return filteredAndSortedHistory.reduce((sum, app) => {
             const statusInfo = getAppointmentStatus(app);
-            // ✅ Sử dụng isCompleted thay vì so sánh text
-            if (statusInfo.isCompleted === true) {
+            if (statusInfo.text === 'Đã hoàn thành') {
                 let parsedPrice = parseFloat(app.servicePrice) || 0;
                 if (parsedPrice > 0 && parsedPrice < 1000) {
                     parsedPrice *= 10000;
@@ -455,14 +431,12 @@ const ServiceHistoryPage = () => {
                 parsedPrice *= 10000; // Backend trả về 38 thay vì 380000
             }
 
-            
-            // CHỈ tính những lịch hẹn có trạng thái "Đã hoàn thành" (sử dụng isCompleted)
-            if (statusInfo.isCompleted === true) {
-                console.log(`💰 ADDING to total - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Raw Price: ${rawPrice}, Parsed Price: ${parsedPrice}, Status: ${statusInfo.text}, IsCompleted: ${statusInfo.isCompleted}, Sum before: ${sum}, Sum after: ${sum + parsedPrice}`);
-
+            // CHỈ tính những lịch hẹn có trạng thái "Đã hoàn thành"
+            if (statusInfo.text === 'Đã hoàn thành') {
+                console.log(`💰 ADDING to total - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Raw Price: ${rawPrice}, Parsed Price: ${parsedPrice}, Status: ${statusInfo.text}, Sum before: ${sum}, Sum after: ${sum + parsedPrice}`);
                 return sum + parsedPrice;
             } else {
-                console.log(`❌ NOT ADDING - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Price: ${parsedPrice}, Status: ${statusInfo.text}, IsCompleted: ${statusInfo.isCompleted}, Reason: Not completed`);
+                console.log(`❌ NOT ADDING - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Price: ${parsedPrice}, Status: ${statusInfo.text}, Reason: Not completed`);
                 return sum;
             }
         }, 0);
@@ -684,7 +658,6 @@ const ServiceHistoryPage = () => {
     };
 
     const renderFilters = () => (
-
         <div className="card shadow-sm mb-4 border-0 rounded-3">
             <div className="card-header py-3" style={{
                 background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)',
@@ -696,7 +669,6 @@ const ServiceHistoryPage = () => {
                     <i className="fas fa-filter me-2" style={{ color: '#FDB5B9' }}></i>
                     Bộ Lọc Lịch Hẹn
                 </h5>
-
             </div>
             <div className="card-body p-4">
                 <div className="row g-3 align-items-end">
@@ -869,7 +841,7 @@ const ServiceHistoryPage = () => {
                         <th scope="col" className="py-3 border-0" style={{ fontSize: '0.9rem', fontWeight: '600', color: '#495057' }}>
                             <i className="fas fa-sticky-note me-2"></i>Ghi Chú
                         </th>
-                        <th scope="col" className="py-3 border-0 text-end" style={{ fontSize: '0.9rem', fontWeight: '600', color: '#495057' }}>
+                        <th scope="col" className="py-3 border-0" style={{ fontSize: '0.9rem', fontWeight: '600', color: '#495057' }}>
                             <i className="fas fa-cogs me-2"></i>Thao Tác
                         </th>
                     </tr>
@@ -878,7 +850,8 @@ const ServiceHistoryPage = () => {
                     {filteredAndSortedHistory.map((item, index) => {
                         const statusInfo = getAppointmentStatus(item);
                         const isCancellable = canCancelAppointment(item);
-                        const isCompleted = statusInfo.isCompleted === true;
+                        const isCompleted = statusInfo.text === 'Đã hoàn thành';
+                        // Giả sử có trường isReviewed từ backend để biết đã đánh giá hay chưa
                         const isReviewed = item.isReviewed === true;
 
                         return (
@@ -933,45 +906,44 @@ const ServiceHistoryPage = () => {
                                     </div>
                                 </td>
                                 <td className="py-3 align-middle">
-                                    <div className="d-flex justify-content-end gap-2">
+                                    <div className="d-flex flex-column align-items-center gap-2">
+                                        {isCancellable && !cancellingAppointments.has(item.appointmentId) && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-danger btn-sm"
+                                                onClick={() => handleShowCancelModal(item.appointmentId)}
+                                                disabled={cancellingAppointments.has(item.appointmentId)}
+                                            >
+                                                <i className="fas fa-times me-1"></i>
+                                                Hủy Lịch
+                                            </button>
+                                        )}
+                                        {cancellingAppointments.has(item.appointmentId) && (
+                                            <div className="text-warning small">
+                                                <i className="fas fa-spinner fa-spin me-1"></i>
+                                                Đang hủy...
+                                            </div>
+                                        )}
                                         {isCompleted && !isReviewed && userInfo && (
                                             <button
-                                                className="btn btn-warning text-white rounded-pill px-3"
+                                                className="btn btn-outline-primary btn-sm"
                                                 onClick={() => handleShowReviewModal(item)}
-                                                title="Đánh giá dịch vụ đã hoàn thành"
                                             >
                                                 <i className="fas fa-star me-1"></i>
                                                 Đánh giá
                                             </button>
                                         )}
-                                        {!isCompleted && !isCancellable && (
-                                            <div className="d-flex align-items-center text-muted">
+                                        {isCompleted && isReviewed && (
+                                            <span className="text-success small">
+                                                <i className="fas fa-check-circle me-1"></i>
+                                                Đã đánh giá
+                                            </span>
+                                        )}
+                                        {!isCancellable && !isCompleted && (
+                                             <span className="text-muted small">
                                                 <i className="fas fa-info-circle me-1"></i>
                                                 Không thể hủy
-                                            </div>
-                                        )}
-                                        {!isCompleted && !isReviewed && (
-                                            <div className="d-flex align-items-center text-muted">
-                                                <i className="fas fa-info-circle me-1"></i>
-                                                Chưa thể đánh giá
-                                            </div>
-                                        )}
-                                        {isCancellable && !cancellingAppointments.has(item.appointmentId) && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-outline-danger rounded-pill px-3"
-                                                onClick={() => handleShowCancelModal(item.appointmentId)}
-                                                disabled={cancellingAppointments.has(item.appointmentId)}
-                                            >
-                                                <i className="fas fa-times-circle me-1"></i>
-                                                Hủy đặt
-                                            </button>
-                                        )}
-                                        {cancellingAppointments.has(item.appointmentId) && (
-                                            <div className="text-warning">
-                                                <i className="fas fa-spinner fa-spin me-1"></i>
-                                                Đang hủy...
-                                            </div>
+                                            </span>
                                         )}
                                     </div>
                                 </td>
@@ -1050,7 +1022,7 @@ const ServiceHistoryPage = () => {
     );
 
     return (
-        <>
+        <div>
             <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
             <Header />
             <div className="container-fluid py-5" style={{ backgroundColor: '#f8f9fa' }}>
@@ -1190,7 +1162,6 @@ const ServiceHistoryPage = () => {
                                                 </div>
                                             )}
 
-
                                             <button
                                                 type="submit"
                                                 className="btn btn-lg w-100 py-3 fw-bold rounded-3 border-0 position-relative overflow-hidden"
@@ -1229,89 +1200,29 @@ const ServiceHistoryPage = () => {
                                                             <div className="spinner-border spinner-border-sm me-3" role="status">
                                                                 <span className="visually-hidden">Loading...</span>
                                                             </div>
-
                                                             Đang tìm kiếm...
                                                         </>
                                                     ) : (
                                                         <>
-<div className="d-grid gap-3">
-    {/* Nút Tra Cứu Lịch Hẹn chính */}
-    <button
-        type="submit"
-        className="btn btn-primary btn-lg py-3 d-flex align-items-center justify-content-center"
-        disabled={isLoading}
-        style={{
-            fontSize: '1.2rem',
-            fontWeight: 'bold',
-            transition: 'all 0.3s ease'
-        }}
-    >
-        {isLoading ? (
-            <>
-                <span className="spinner-border spinner-border-sm me-3" role="status" aria-hidden="true"></span>
-                <span>Đang tìm kiếm...</span>
-            </>
-        ) : (
-            <>
-                <i className="fas fa-search me-3"></i>
-                <span>Tra Cứu Lịch Hẹn</span>
-            </>
-        )}
-    </button>
+                                                            <i className="fas fa-search me-3"></i>
+                                                            Tra Cứu Lịch Hẹn
+                                                        </>
+                                                    )}
+                                                </span>
+                                            </button>
 
-    {/* Nút Hướng Dẫn Hủy Lịch - chỉ hiển thị sau khi đã tra cứu và có kết quả */}
-    {lookupPerformed && history.length > 0 && (
-        <button
-            type="button"
-            className="btn btn-outline-danger btn-lg py-3"
-            onClick={() => {
-                // Hiển thị thông báo để khách hàng chọn lịch hẹn cụ thể để hủy
-                toast.info('Vui lòng chọn lịch hẹn cụ thể trong bảng bên dưới để hủy', {
-                    position: "top-center",
-                    autoClose: 3000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                });
-            }}
-            disabled={isLoading}
-            style={{
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                borderWidth: '2px',
-                transition: 'all 0.3s ease'
-            }}
-            onMouseEnter={(e) => {
-                if (!isLoading) {
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 8px 25px rgba(220, 53, 69, 0.3)';
-                }
-            }}
-            onMouseLeave={(e) => {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = 'none';
-            }}
-        >
-            <i className="fas fa-times-circle me-2"></i>
-            Hướng Dẫn Hủy Lịch
-        </button>
-    )}
-</div>
-
-{/* Phần văn bản hướng dẫn và hotline */}
-<div className="text-center mt-4">
-    <small className="text-muted d-block mb-2">
-        <i className="fas fa-info-circle me-1"></i>
-        Nhập đúng số điện thoại bạn đã sử dụng khi đặt lịch
-    </small>
-    <small style={{ color: '#6c757d' }}>
-        Cần hỗ trợ? Gọi hotline:
-        <a href="tel:1900xxxx" className="text-decoration-none ms-1" style={{ color: '#FDB5B9', fontWeight: '600' }}>
-            1900-xxxx
-        </a>
-    </small>
-</div>
+                                            {/* Helper text */}
+                                            <div className="text-center mt-4">
+                                                <small className="text-muted d-block mb-2">
+                                                    <i className="fas fa-info-circle me-1"></i>
+                                                    Nhập đúng số điện thoại bạn đã sử dụng khi đặt lịch
+                                                </small>
+                                                <small style={{ color: '#6c757d' }}>
+                                                    Cần hỗ trợ? Gọi hotline:
+                                                    <a href="tel:1900xxxx" className="text-decoration-none ms-1" style={{ color: '#FDB5B9', fontWeight: '600' }}>
+                                                        1900-xxxx
+                                                    </a>
+                                                </small>
                                             </div>
                                         </form>
                                     </div>
@@ -1415,20 +1326,10 @@ const ServiceHistoryPage = () => {
                                                             <i className="fas fa-check-circle me-2"></i>
                                                             Tìm thấy {filteredAndSortedHistory.length} lịch hẹn
                                                         </h5>
-
-                                                        <div className="d-flex align-items-center gap-3">
-                                                            <span className="badge bg-light text-dark">
-                                                                <i className="fas fa-calendar-check me-1"></i>
-                                                                Kết quả đã lọc
-                                                            </span>
-                                                            {!userInfo && (
-                                                                <span className="badge bg-warning text-dark">
-                                                                    <i className="fas fa-info-circle me-1"></i>
-                                                                    Nhấn nút "Hủy Lịch" trong bảng để hủy
-                                                                </span>
-                                                            )}
-                                                        </div>
-
+                                                        <span className="badge bg-white text-dark px-3 py-2 rounded-pill">
+                                                            <i className="fas fa-calendar-check me-1"></i>
+                                                            Kết quả đã lọc
+                                                        </span>
                                                     </div>
                                                 </div>
                                                 <div className="card-body p-0">
@@ -1568,8 +1469,7 @@ const ServiceHistoryPage = () => {
                         animation: 'slideInUp 0.3s ease-out'
                     }}>
                         <div className="modal-header border-0 text-center d-block mb-2">
-                            <h4 className="modal-title fw-bold" style={{ color: '#8B4513' }}>Đánh Giá Dịch Vụ Đã Hoàn Thành</h4>
-                            <small className="text-muted">Chỉ dành cho dịch vụ đã được thực hiện xong</small>
+                            <h4 className="modal-title fw-bold" style={{ color: '#8B4513' }}>Đánh Giá Chất Lượng</h4>
                             <button type="button" className="btn-close" onClick={handleCloseReviewModal} style={{position: 'absolute', top: '1rem', right: '1rem'}}></button>
                         </div>
                         <div className="modal-body px-0 py-2">
@@ -1767,7 +1667,7 @@ const ServiceHistoryPage = () => {
             )}
 
             <Footer />
-        </>
+        </div>
     );
 };
 
