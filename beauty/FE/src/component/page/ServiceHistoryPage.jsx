@@ -680,7 +680,7 @@ const ServiceHistoryPage = () => {
                         <th scope="col" className="py-3 border-0" style={{ fontSize: '0.9rem', fontWeight: '600', color: '#495057' }}>
                             <i className="fas fa-sticky-note me-2"></i>Ghi Chú
                         </th>
-                        <th scope="col" className="py-3 border-0" style={{ fontSize: '0.9rem', fontWeight: '600', color: '#495057' }}>
+                        <th scope="col" className="py-3 border-0 text-end" style={{ fontSize: '0.9rem', fontWeight: '600', color: '#495057' }}>
                             <i className="fas fa-cogs me-2"></i>Thao Tác
                         </th>
                     </tr>
@@ -689,9 +689,7 @@ const ServiceHistoryPage = () => {
                     {filteredAndSortedHistory.map((item, index) => {
                         const statusInfo = getAppointmentStatus(item);
                         const isCancellable = canCancelAppointment(item);
-                        // ✅ Sử dụng thuộc tính isCompleted từ statusInfo thay vì so sánh text
                         const isCompleted = statusInfo.isCompleted === true;
-                        // Giả sử có trường isReviewed từ backend để biết đã đánh giá hay chưa
                         const isReviewed = item.isReviewed === true;
 
                         return (
@@ -747,85 +745,45 @@ const ServiceHistoryPage = () => {
                                     </div>
                                 </td>
                                 <td className="py-3 align-middle">
-                                    <div className="d-flex flex-column align-items-center gap-2">
-                                        {isCancellable && !cancellingAppointments.has(item.appointmentId) && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-outline-danger btn-sm w-100"
-                                                onClick={() => handleShowCancelModal(item.appointmentId)}
-                                                disabled={cancellingAppointments.has(item.appointmentId)}
-                                                style={{ minWidth: '120px' }}
-                                            >
-                                                <i className="fas fa-times-circle me-2"></i>
-                                                Hủy Đặt Lịch
-                                            </button>
-                                        )}
-                                        {cancellingAppointments.has(item.appointmentId) && (
-                                            <div className="text-warning small w-100 text-center">
-                                                <i className="fas fa-spinner fa-spin me-1"></i>
-                                                Đang hủy...
-                                            </div>
-                                        )}
-                                        {/* Chỉ cho phép đánh giá khi dịch vụ đã hoàn thành và chưa được đánh giá */}
+                                    <div className="d-flex justify-content-end gap-2">
                                         {isCompleted && !isReviewed && userInfo && (
                                             <button
-                                                className="btn btn-outline-warning btn-sm w-100"
+                                                className="btn btn-warning text-white rounded-pill px-3"
                                                 onClick={() => handleShowReviewModal(item)}
                                                 title="Đánh giá dịch vụ đã hoàn thành"
-                                                style={{ minWidth: '120px' }}
                                             >
-                                                <i className="fas fa-star me-2"></i>
+                                                <i className="fas fa-star me-1"></i>
                                                 Đánh giá
                                             </button>
                                         )}
-                                        {/* Hiển thị trạng thái đã đánh giá */}
-                                        {isCompleted && isReviewed && (
-                                            <span className="text-success small w-100 text-center">
-                                                <i className="fas fa-check-circle me-1"></i>
-                                                Đã đánh giá
-                                            </span>
-                                        )}
-                                        {/* Thông báo cho dịch vụ chưa hoàn thành */}
-                                        {!isCompleted && userInfo && !isCancellable && (
-                                            <span className="text-muted small w-100 text-center">
-                                                <i className="fas fa-info-circle me-1"></i>
-                                                Chưa thể đánh giá
-                                            </span>
-                                        )}
-                                        {/* Thông báo cho guest users - cần đăng nhập để đánh giá */}
-                                        {!userInfo && isCompleted && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-outline-info btn-sm w-100"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#loginModal"
-                                                title="Đăng nhập để đánh giá dịch vụ"
-                                                style={{ fontSize: '0.75rem', minWidth: '120px' }}
-                                            >
-                                                <i className="fas fa-sign-in-alt me-2"></i>
-                                                Đăng nhập để đánh giá
-                                            </button>
-                                        )}
-                                        {/* Thông báo cho guest users - cần đăng nhập để hủy */}
-                                        {!userInfo && !isCompleted && isCancellable && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-outline-danger btn-sm w-100"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#loginModal"
-                                                title="Đăng nhập để hủy lịch hẹn"
-                                                style={{ fontSize: '0.75rem', minWidth: '120px' }}
-                                            >
-                                                <i className="fas fa-sign-in-alt me-2"></i>
-                                                Đăng nhập để hủy
-                                            </button>
-                                        )}
-                                        {/* Thông báo cho dịch vụ không thể hủy */}
-                                        {!isCancellable && !isCompleted && (
-                                             <span className="text-muted small w-100 text-center">
+                                        {!isCompleted && !isCancellable && (
+                                            <div className="d-flex align-items-center text-muted">
                                                 <i className="fas fa-info-circle me-1"></i>
                                                 Không thể hủy
-                                            </span>
+                                            </div>
+                                        )}
+                                        {!isCompleted && !isReviewed && (
+                                            <div className="d-flex align-items-center text-muted">
+                                                <i className="fas fa-info-circle me-1"></i>
+                                                Chưa thể đánh giá
+                                            </div>
+                                        )}
+                                        {isCancellable && !cancellingAppointments.has(item.appointmentId) && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-danger rounded-pill px-3"
+                                                onClick={() => handleShowCancelModal(item.appointmentId)}
+                                                disabled={cancellingAppointments.has(item.appointmentId)}
+                                            >
+                                                <i className="fas fa-times-circle me-1"></i>
+                                                Hủy đặt
+                                            </button>
+                                        )}
+                                        {cancellingAppointments.has(item.appointmentId) && (
+                                            <div className="text-warning">
+                                                <i className="fas fa-spinner fa-spin me-1"></i>
+                                                Đang hủy...
+                                            </div>
                                         )}
                                     </div>
                                 </td>
