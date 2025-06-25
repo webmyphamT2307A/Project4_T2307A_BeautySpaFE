@@ -47,7 +47,7 @@ const AboutUs = () => {
               </p>
               <p className="mb-4">Chúng tôi cung cấp đa dạng các dịch vụ từ massage, chăm sóc da mặt, làm móng, tẩy lông đến các liệu pháp trị liệu chuyên sâu. Mỗi dịch vụ đều được thiết kế riêng biệt phù hợp với nhu cầu và mong muốn của từng khách hàng.
               </p>
-              <a href="#"
+              <a href="/ServicePage"
                 className="btn rounded-pill py-3 px-5 text-white"
                 style={{
                     backgroundColor: '#FDB5B9',

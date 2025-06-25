@@ -203,11 +203,11 @@ const Contact = () => {
     // -----------------------------------------------------------
 
     return (
-        <div className="container-fluid py-5">
-            <div className="container py-5">
+        <div className="container-fluid py-4">
+            <div className="container py-2">
                 <div className="row g-4 align-items-center">
                     <div className="col-12">
-                        <div className="bg-light rounded p-4 p-sm-5 mt-5">
+                        <div className="bg-light rounded p-4 p-sm-5">
                             <div className="text-center mx-auto" style={{ maxWidth: 500 }}>
                                 <h2 className="display-6 mb-4">Bạn có câu hỏi nào không?</h2>
                             </div>
@@ -361,7 +361,7 @@ const Contact = () => {
                             </form>
                         </div>
                     </div>
-                    <div className="col-12">
+                    <div className="col-12 py-5 mt-5">
                         <div className="rounded shadow-lg border border-2 border-primary">
                             <iframe
                                 className="rounded-top w-100"

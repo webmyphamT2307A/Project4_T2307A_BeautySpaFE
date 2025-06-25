@@ -208,15 +208,15 @@ const ContactPage = () => {
             </div>
 
             <div className="container-fluid contact py-5" style={{ 
-                background: 'linear-gradient(135deg, #fef7f7 0%, #fee2e2 25%, #fecaca 60%, #fdb5b9 100%)',
-                position: 'relative'
+                background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #fdb5b9 100%)',
+                position: 'relative',
             }}>
                 <div className="container pt-5">
                     <div className="row g-4 align-items-center">
                         <div className="col-lg-6">
                             <div className="text-center">
-                                <h1 className="display-3 text-white mb-4">Liên Hệ Với Chúng Tôi</h1>
-                                <p className="text-white fs-4">
+                                <h1 className="display-3 text-dark mb-4">Liên Hệ Với Chúng Tôi</h1>
+                                <p className="text-dark fs-4">
                                     Chúng tôi luôn sẵn sàng lắng nghe ý kiến từ bạn. 
                                     Hãy để lại tin nhắn và chúng tôi sẽ phản hồi trong thời gian sớm nhất.
                                     {userInfo && (
@@ -232,7 +232,7 @@ const ContactPage = () => {
                             <div className="contact-form rounded p-5" style={{
                                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
                                 backdropFilter: 'blur(10px)',
-                                boxShadow: '0 15px 35px rgba(253, 181, 185, 0.2), 0 5px 15px rgba(253, 181, 185, 0.1)',
+                                boxShadow: '0 15px 35px rgba(255, 45, 55, 0.2), 0 5px 15px rgba(255, 25, 36, 0.1)',
                                 border: '1px solid rgba(253, 181, 185, 0.3)'
                             }}>
                                 <form onSubmit={handleSubmit}>
@@ -253,7 +253,7 @@ const ContactPage = () => {
                                                 name="firstName"
                                                 value={formData.firstName}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control bg-white py-3 px-4 border rounded" 
                                                 placeholder="Họ và tên của bạn" 
                                                 required
                                             />
@@ -264,7 +264,7 @@ const ContactPage = () => {
                                                 name="email"
                                                 value={formData.email}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control bg-white py-3 px-4 border rounded" 
                                                 placeholder="Email của bạn" 
                                                 required
                                             />
@@ -275,7 +275,7 @@ const ContactPage = () => {
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control bg-white py-3 px-4 border rounded" 
                                                 placeholder="Số điện thoại (tùy chọn)"
                                             />
                                         </div>
@@ -285,7 +285,7 @@ const ContactPage = () => {
                                                 name="subject"
                                                 value={formData.subject}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control bg-white py-3 px-4 border rounded" 
                                                 placeholder="Chủ đề" 
                                                 required
                                             />
@@ -295,7 +295,7 @@ const ContactPage = () => {
                                                 name="message"
                                                 value={formData.message}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control py-3 px-4 border rounded" 
                                                 rows={4} 
                                                 cols={10} 
                                                 placeholder="Nội dung tin nhắn của bạn" 
@@ -304,7 +304,7 @@ const ContactPage = () => {
                                         </div>
                                         <div className="col-12">
                                             <button 
-                                                className="btn w-100 py-3 px-5" 
+                                                className="btn w-100 py-3 px-5 " 
                                                 type="submit"
                                                 disabled={loading}
                                                 style={{ 

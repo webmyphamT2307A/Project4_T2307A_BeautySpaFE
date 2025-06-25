@@ -938,97 +938,209 @@ const ServiceHistoryPage = () => {
                         )}
                     </div>
 
-                    {/* Form tra cứu cho guest users */}
+
+                    {/* Form tra cứu cho guest users - CẢI THIỆN THIẾT KẾ */}
                     {!userInfo && (
                         <div className="row justify-content-center mb-5">
                             <div className="col-lg-8 col-md-10">
-                                <div className="card shadow-lg border-0">
-                                    <div className="card-header bg-gradient text-white text-center py-4"
-                                        style={{ background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))', backdropFilter: 'blur(10px)', boxShadow: '0 4px 20px rgba(255, 182, 193, 0.3)' }}>
-                                        <h4 className="mb-2">
-                                            <i className="fas fa-search me-3"></i>
-                                            Tra Cứu Lịch Hẹn
-                                        </h4>
-                                        <p className="mb-0 opacity-75">
-                                            Dành cho khách chưa đăng nhập (tra cứu bằng số điện thoại)
-                                        </p>
+                                <div className="card shadow-lg border-0 rounded-4" style={{
+                                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.9) 100%)',
+                                    backdropFilter: 'blur(20px)',
+                                    border: '2px solid rgba(253, 181, 185, 0.2)',
+                                    overflow: 'hidden'
+                                }}>
+                                    {/* Header với gradient nhẹ nhàng */}
+                                    <div className="card-header text-center py-4 border-0" style={{
+                                        background: 'linear-gradient(135deg, rgba(253, 181, 185, 0.15) 0%, rgba(247, 168, 184, 0.1) 100%)',
+                                        position: 'relative'
+                                    }}>
+                                        {/* Decorative elements */}
+                                        <div className="position-absolute top-0 start-0 w-100 h-100" style={{
+                                            background: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23FDB5B9' fill-opacity='0.1'%3E%3Ccircle cx='7' cy='7' r='7'/%3E%3Ccircle cx='53' cy='53' r='7'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                                            opacity: 0.3
+                                        }}></div>
+
+                                        <div className="position-relative">
+                                            <div className="d-inline-flex align-items-center justify-content-center mb-3" style={{
+                                                width: '80px',
+                                                height: '80px',
+                                                background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                                borderRadius: '50%',
+                                                boxShadow: '0 8px 25px rgba(253, 181, 185, 0.3)',
+                                                border: '3px solid rgba(255, 255, 255, 0.8)'
+                                            }}>
+                                                <i className="fas fa-search fa-2x text-white"></i>
+                                            </div>
+                                            <h4 className="mb-2 fw-bold" style={{ color: '#2c3e50' }}>
+                                                Tra Cứu Lịch Hẹn
+                                            </h4>
+                                            <p className="mb-0" style={{ color: '#6c757d', fontSize: '1rem' }}>
+                                                Nhập số điện thoại để xem lịch hẹn của bạn
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="card-body p-4">
+
+                                    <div className="card-body p-5">
                                         <form onSubmit={handleLookup}>
                                             <div className="mb-4">
-                                                <label className="form-label fw-bold text-dark">
-                                                    <i className="fas fa-phone me-2"></i>
-                                                    Nhập số điện thoại:
+                                                <label className="form-label fw-bold mb-3" style={{ color: '#2c3e50', fontSize: '1.1rem' }}>
+                                                    <i className="fas fa-mobile-alt me-2" style={{ color: '#FDB5B9' }}></i>
+                                                    Số điện thoại
                                                 </label>
-                                            </div>
 
-                                            <div className="input-group input-group-lg mb-4">
-                                                <span className="input-group-text bg-light border-end-0">
-                                                    <i className="fas fa-mobile-alt text-muted"></i>
-                                                </span>
-                                                <input
-                                                    type="tel"
-                                                    className={`form-control border-start-0 ${phoneError ? 'is-invalid' : ''}`}
-                                                    placeholder="0987654321"
-                                                    value={lookupIdentifier}
-                                                    onChange={handlePhoneChange}
-                                                    maxLength={15}
-                                                    required
-                                                />
+                                                <div className="position-relative">
+                                                    <div className="input-group input-group-lg shadow-sm" style={{
+                                                        borderRadius: '15px',
+                                                        overflow: 'hidden'
+                                                    }}>
+                                                        <span className="input-group-text border-0" style={{
+                                                            background: 'linear-gradient(135deg, rgba(253, 181, 185, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)',
+                                                            color: '#FDB5B9',
+                                                            fontSize: '1.2rem',
+                                                            padding: '0.75rem 1rem'
+                                                        }}>
+                                                            <i className="fas fa-phone"></i>
+                                                        </span>
+                                                        <input
+                                                            type="tel"
+                                                            className={`form-control border-0 ${phoneError ? 'is-invalid' : ''}`}
+                                                            placeholder="Ví dụ: 0987654321"
+                                                            value={lookupIdentifier}
+                                                            onChange={handlePhoneChange}
+                                                            maxLength={15}
+                                                            required
+                                                            style={{
+                                                                fontSize: '1.1rem',
+                                                                padding: '0.75rem 1rem',
+                                                                backgroundColor: 'rgba(248, 249, 250, 0.8)',
+                                                                color: '#2c3e50',
+                                                                fontWeight: '500'
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    {/* Success/Error indicator */}
+                                                    {lookupIdentifier && !phoneError && (
+                                                        <div className="position-absolute end-0 top-50 translate-middle-y me-3">
+                                                            <i className="fas fa-check-circle text-success"></i>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {phoneError && (
-                                                <div className="alert alert-danger py-2 mb-3" role="alert">
-                                                    <i className="fas fa-exclamation-triangle me-2"></i>
-                                                    <small>{phoneError}</small>
+                                                <div className="alert border-0 rounded-3 py-3 mb-4" style={{
+                                                    background: 'linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(248, 215, 218, 0.8) 100%)',
+                                                    color: '#721c24'
+                                                }}>
+                                                    <div className="d-flex align-items-center">
+                                                        <i className="fas fa-exclamation-triangle me-2"></i>
+                                                        <span className="fw-medium">{phoneError}</span>
+                                                    </div>
                                                 </div>
                                             )}
 
                                             <button
                                                 type="submit"
-                                                className="btn btn-lg w-100 py-3 mb-3"
+                                                className="btn btn-lg w-100 py-3 fw-bold rounded-3 border-0 position-relative overflow-hidden"
                                                 disabled={isLoading || !lookupIdentifier.trim() || phoneError}
                                                 style={{
                                                     fontSize: '1.1rem',
-                                                    fontWeight: '600',
-                                                    background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))',
-                                                    backdropFilter: 'blur(10px)',
-                                                    border: '1px solid rgba(255, 182, 193, 0.3)',
-                                                    color: 'white',
-                                                    boxShadow: '0 8px 32px rgba(255, 182, 193, 0.3)',
-                                                    transition: 'all 0.3s ease'
+                                                    background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                                    color: 'black',
+                                                    boxShadow: '0 8px 25px rgba(253, 181, 185, 0.3)',
+                                                    transition: 'all 0.3s ease',
+                                                    transform: 'translateY(0)',
+                                                    opacity: isLoading || !lookupIdentifier.trim() || phoneError ? 0.6 : 1
                                                 }}
                                                 onMouseEnter={(e) => {
                                                     if (!isLoading && lookupIdentifier.trim() && !phoneError) {
-                                                        e.target.style.background = 'linear-gradient(135deg, rgba(255, 192, 203, 0.95), rgba(255, 218, 224, 0.9))';
                                                         e.target.style.transform = 'translateY(-2px)';
-                                                        e.target.style.boxShadow = '0 12px 40px rgba(255, 182, 193, 0.4)';
+                                                        e.target.style.boxShadow = '0 12px 35px rgba(253, 181, 185, 0.4)';
+                                                        e.target.style.background = 'linear-gradient(135deg,rgb(255, 149, 170) 0%,rgb(255, 89, 98) 100%)';
                                                     }
                                                 }}
                                                 onMouseLeave={(e) => {
-                                                    e.target.style.background = 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))';
                                                     e.target.style.transform = 'translateY(0)';
-                                                    e.target.style.boxShadow = '0 8px 32px rgba(255, 182, 193, 0.3)';
+                                                    e.target.style.boxShadow = '0 8px 25px rgba(253, 181, 185, 0.3)';
+                                                    e.target.style.background = 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)';
                                                 }}
                                             >
-                                                {isLoading ? (
-                                                    <>
-                                                        <div className="spinner-border spinner-border-sm me-2" role="status"></div>
-                                                        Đang tìm kiếm...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <i className="fas fa-search me-2"></i>
-                                                        Tra Cứu Lịch Hẹn
-                                                    </>
-                                                )}
+                                                {/* Button background animation */}
+                                                <div className="position-absolute top-0 start-0 w-100 h-100" style={{
+                                                    background: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/svg%3E")`,
+                                                    opacity: 0.2,
+                                                }}></div>
+
+                                                <span className="position-relativeb" style={{ background: 'none',}}>
+                                                    {isLoading ? (
+                                                        <>
+                                                            <div className="spinner-border spinner-border-sm me-3" role="status">
+                                                                <span className="visually-hidden">Loading...</span>
+                                                            </div>
+                                                            Đang tìm kiếm...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <i className="fas fa-search me-3"></i>
+                                                            Tra Cứu Lịch Hẹn
+                                                        </>
+                                                    )}
+                                                </span>
                                             </button>
+
+                                            {/* Helper text */}
+                                            <div className="text-center mt-4">
+                                                <small className="text-muted d-block mb-2">
+                                                    <i className="fas fa-info-circle me-1"></i>
+                                                    Nhập đúng số điện thoại bạn đã sử dụng khi đặt lịch
+                                                </small>
+                                                <small style={{ color: '#6c757d' }}>
+                                                    Cần hỗ trợ? Gọi hotline:
+                                                    <a href="tel:1900xxxx" className="text-decoration-none ms-1" style={{ color: '#FDB5B9', fontWeight: '600' }}>
+                                                        1900-xxxx
+                                                    </a>
+                                                </small>
+                                            </div>
                                         </form>
                                     </div>
+
+                                    {/* Decorative footer */}
+                                    {/* <div className="card-footer border-0 text-center py-3" style={{
+                                        background: 'linear-gradient(135deg, rgba(253, 181, 185, 0.05) 0%, rgba(247, 168, 184, 0.02) 100%)'
+                                    }}>
+                                        <div className="d-flex justify-content-center align-items-center">
+                                            <div className="d-flex align-items-center me-4">
+                                                <div className="rounded-circle me-2" style={{
+                                                    width: '8px',
+                                                    height: '8px',
+                                                    backgroundColor: '#28a745'
+                                                }}></div>
+                                                <small className="text-muted">Bảo mật</small>
+                                            </div>
+                                            <div className="d-flex align-items-center me-4">
+                                                <div className="rounded-circle me-2" style={{
+                                                    width: '8px',
+                                                    height: '8px',
+                                                    backgroundColor: '#17a2b8'
+                                                }}></div>
+                                                <small className="text-muted">Nhanh chóng</small>
+                                            </div>
+                                            <div className="d-flex align-items-center">
+                                                <div className="rounded-circle me-2" style={{
+                                                    width: '8px',
+                                                    height: '8px',
+                                                    backgroundColor: '#FDB5B9'
+                                                }}></div>
+                                                <small className="text-muted">Chính xác</small>
+                                            </div>
+                                        </div>
+                                    </div> */}
                                 </div>
                             </div>
                         </div>
                     )}
+
 
                     {/* Loading và Error states */}
                     {isLoading && (

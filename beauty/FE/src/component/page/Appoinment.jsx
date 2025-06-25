@@ -76,6 +76,24 @@ const Appointment = () => {
     // Fetch staff list based on selected service and date with schedule validation
     useEffect(() => {
         const fetchStaffList = async () => {
+            // THÊM ĐIỀU KIỆN: Chỉ fetch khi đã có đầy đủ thông tin
+            if (!formData.serviceId || !formData.appointmentDate || !formData.timeSlotId) {
+                console.log("⏸️ Skipping staff API call - Missing required fields:", {
+                    serviceId: formData.serviceId,
+                    appointmentDate: formData.appointmentDate,
+                    timeSlotId: formData.timeSlotId
+                });
+                setStaffList([]);
+                setIsLoadingSchedules(false);
+                return;
+            }
+
+            console.log("🚀 Starting staff API call with complete data:", {
+                serviceId: formData.serviceId,
+                appointmentDate: formData.appointmentDate,
+                timeSlotId: formData.timeSlotId
+            });
+
             try {
                 // First, get all staff
                 let apiUrl = 'http://localhost:8080/api/v1/user/accounts/staff';
@@ -456,6 +474,107 @@ const Appointment = () => {
         fetchStaffList();
     }, [formData.serviceId, formData.appointmentDate, formData.timeSlotId, services, timeSlots, scheduleFiltering, shiftFiltering]); // Re-fetch when any relevant parameter changes
 
+    // Fetch available slots with actual staff count - CẬP NHẬT ĐIỀU KIỆN
+    useEffect(() => {
+        // THÊM ĐIỀU KIỆN: Chỉ fetch khi đã có đầy đủ thông tin
+        if (!formData.appointmentDate || !formData.serviceId || !formData.timeSlotId) {
+            console.log("⏸️ Skipping slot availability API call - Missing required fields:", {
+                appointmentDate: formData.appointmentDate,
+                serviceId: formData.serviceId,
+                timeSlotId: formData.timeSlotId
+            });
+            setSlotInfo(null);
+            return;
+        }
+
+        console.log("🚀 Starting slot availability API call with complete data:", {
+            date: formData.appointmentDate,
+            serviceId: formData.serviceId,
+            timeSlotId: formData.timeSlotId
+        });
+
+        axios.get('http://localhost:8080/api/v1/timeslot/available', {
+            params: {
+                date: formData.appointmentDate,
+                serviceId: formData.serviceId,
+                timeSlotId: formData.timeSlotId
+            }
+        })
+            .then(res => {
+                if (res.data.data && res.data.data.availableSlot !== undefined) {
+                    setSlotInfo(res.data.data);
+                } else if (res.data.availableSlot !== undefined) {
+                    setSlotInfo(res.data);
+                } else {
+                    setSlotInfo(null);
+                }
+            })
+            .catch(() => setSlotInfo(null));
+    }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
+
+    // Kiểm tra lịch rảnh cho TẤT CẢ nhân viên khi thông tin thay đổi - CẬP NHẬT ĐIỀU KIỆN
+    useEffect(() => {
+        const checkAllStaffAvailability = async () => {
+            // THÊM ĐIỀU KIỆN: Chỉ check khi đã có đầy đủ thông tin và có danh sách nhân viên
+            if (!formData.appointmentDate || !formData.timeSlotId || !formData.serviceId || staffList.length === 0) {
+                console.log("⏸️ Skipping staff availability check - Missing required fields or no staff:", {
+                    appointmentDate: formData.appointmentDate,
+                    timeSlotId: formData.timeSlotId,
+                    serviceId: formData.serviceId,
+                    staffListLength: staffList.length
+                });
+                setStaffAvailabilities({});
+                return;
+            }
+
+            console.log("🚀 Starting staff availability check with complete data");
+
+            setIsCheckingAvailabilities(true);
+            setStaffAvailabilities({});
+
+            const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
+            if (!selectedTimeSlot) {
+                setIsCheckingAvailabilities(false);
+                return;
+            }
+
+            const [slotHours, slotMinutes] = selectedTimeSlot.startTime.split(':').map(Number);
+            const [year, month, day] = formData.appointmentDate.split('-').map(Number);
+            const localDateTimeForSlot = new Date(year, month - 1, day, slotHours, slotMinutes);
+            const requestedDateTimeISO = localDateTimeForSlot.toISOString();
+
+            const availabilityChecks = staffList.map(staff => {
+                return axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
+                    params: {
+                        userId: staff.id,
+                        requestedDateTime: requestedDateTimeISO,
+                        durationMinutes: 60 // Cần thay đổi nếu dịch vụ có thời gian khác nhau
+                    }
+                }).then(res => ({
+                    staffId: staff.id,
+                    isAvailable: res.data?.data?.isAvailable || false,
+                    message: res.data?.data?.availabilityMessage || 'Không xác định'
+                })).catch(() => ({
+                    staffId: staff.id,
+                    isAvailable: false,
+                    message: 'Lỗi kiểm tra'
+                }));
+            });
+
+            const results = await Promise.all(availabilityChecks);
+
+            const newAvailabilities = results.reduce((acc, result) => {
+                acc[result.staffId] = { isAvailable: result.isAvailable, message: result.message };
+                return acc;
+            }, {});
+
+            setStaffAvailabilities(newAvailabilities);
+            setIsCheckingAvailabilities(false);
+        };
+
+        checkAllStaffAvailability();
+    }, [formData.appointmentDate, formData.timeSlotId, formData.serviceId, staffList, timeSlots]);
+
     // Fetch time slots
     useEffect(() => {
         axios.get('http://localhost:8080/api/v1/timeslot')
@@ -726,7 +845,7 @@ const Appointment = () => {
             }
 
             await axios.post('http://localhost:8080/api/v1/admin/appointment/create', submitData);
-            
+
             // Hiển thị thông báo thành công với thời gian chờ
             toast.success('Đặt lịch thành công! Đang chuyển hướng...', {
                 position: "top-right",
@@ -848,9 +967,9 @@ const Appointment = () => {
                 const noEmailError = !validationErrors.email || validationErrors.email === '';
 
                 const step4Valid = hasServiceId && hasAppointmentDate && hasTimeSlotId &&
-                                 hasUserId && hasFullName && hasPhoneNumber && hasEmail &&
-                                 noNameError && noPhoneError && noEmailError;
-                
+                    hasUserId && hasFullName && hasPhoneNumber && hasEmail &&
+                    noNameError && noPhoneError && noEmailError;
+
                 console.log("🔍 Step 4 Validation DETAILED:", {
                     serviceId: `"${formData.serviceId}" -> ${hasServiceId}`,
                     appointmentDate: `"${formData.appointmentDate}" -> ${hasAppointmentDate}`,
@@ -1451,7 +1570,7 @@ const Appointment = () => {
                                 <div className="d-flex align-items-center">
                                     <i className="fas fa-info-circle me-2"></i>
                                     <div>
-                                        <strong>Gợi ý:</strong> Đăng nhập để tự động điền thông tin <i class="fas fa-id-card"></i> và theo dõi lịch hẹn của bạn
+                                        <strong>Gợi ý:</strong> Đăng nhập để tự động điền thông tin và theo dõi lịch hẹn của bạn
                                         {/* <a href="/login" className="btn btn-sm btn-outline-light ms-2">
                                             <i className="fas fa-sign-in-alt me-1"></i>
                                             Đăng nhập
@@ -1480,42 +1599,42 @@ const Appointment = () => {
                         )}
                     </div>
 
-                <div className="col-12 col-lg-6">
-                    <label className="form-label text-white fw-bold">
-                        <i className="fas fa-phone me-2"></i>Số Điện Thoại *
-                    </label>
-                    <input
-                        type="tel"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={handleInputChange}
-                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
-                        placeholder="Nhập số điện thoại hợp lệ"
-                        maxLength="15"
-                        style={{ color: 'white', height: '45px' }}
-                    />
-                    {validationErrors.phoneNumber && (
-                        <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
-                    )}
-                </div>
+                    <div className="col-12 col-lg-6">
+                        <label className="form-label text-white fw-bold">
+                            <i className="fas fa-phone me-2"></i>Số Điện Thoại *
+                        </label>
+                        <input
+                            type="tel"
+                            name="phoneNumber"
+                            value={formData.phoneNumber}
+                            onChange={handleInputChange}
+                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
+                            placeholder="Nhập số điện thoại hợp lệ"
+                            maxLength="15"
+                            style={{ color: 'white', height: '45px' }}
+                        />
+                        {validationErrors.phoneNumber && (
+                            <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
+                        )}
+                    </div>
 
-                <div className="col-12">
-                    <label className="form-label text-white fw-bold">
-                        <i className="fas fa-envelope me-2"></i>Email *
-                    </label>
-                    <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.email ? 'border-danger' : ''}`}
-                        placeholder="Nhập email của bạn"
-                        style={{ color: 'white', height: '45px' }}
-                    />
-                    {validationErrors.email && (
-                        <small className="text-danger mt-1 d-block">{validationErrors.email}</small>
-                    )}
-                </div>
+                    <div className="col-12">
+                        <label className="form-label text-white fw-bold">
+                            <i className="fas fa-envelope me-2"></i>Email *
+                        </label>
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.email ? 'border-danger' : ''}`}
+                            placeholder="Nhập email của bạn"
+                            style={{ color: 'white', height: '45px' }}
+                        />
+                        {validationErrors.email && (
+                            <small className="text-danger mt-1 d-block">{validationErrors.email}</small>
+                        )}
+                    </div>
 
                     <div className="col-12">
                         <label className="form-label text-white fw-bold">
@@ -1560,7 +1679,7 @@ const Appointment = () => {
         );
     };
 
-        const renderConfirmation = () => {
+    const renderConfirmation = () => {
         const selectedService = services.find(s => String(s.id) === formData.serviceId);
         const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
         const selectedStaff = staffList.find(s => s.id === selectedStaffId);
@@ -1664,25 +1783,25 @@ const Appointment = () => {
                         {/* Khách Hàng - moved to left side */}
                         <div className="col-12 col-md-6">
                             <div className="border-start border-warning border-3 ps-3">
-                                <h6 className="text-warning mb-1" style={{ 
+                                <h6 className="text-warning mb-1" style={{
                                     fontSize: '1rem',
                                     fontWeight: '600',
                                     textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
                                 }}>
                                     <i className="fas fa-user me-2"></i>Khách Hàng
                                 </h6>
-                                <p className="mb-1 fw-bold" style={{ 
+                                <p className="mb-1 fw-bold" style={{
                                     color: '#ffffff',
                                     fontSize: '1.1rem',
                                     textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
                                 }}>{formData.fullName}</p>
-                                <p className="mb-0" style={{ 
+                                <p className="mb-0" style={{
                                     color: '#e9ecef',
                                     fontSize: '1rem',
                                     textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
                                 }}>{formData.phoneNumber}
-                                <br />
-                                {formData.email}
+                                    <br />
+                                    {formData.email}
                                 </p>
                             </div>
                         </div>
@@ -1931,24 +2050,24 @@ const Appointment = () => {
                                                     <i className="fas fa-chevron-right ms-2"></i>
                                                 </button>
                                             ) : (
-                                                                                <button 
-                                    type="submit"
-                                    className="btn custom-btn submit-btn"
-                                    style={{ minWidth: '180px' }}
-                                    disabled={isSubmittingAppointment || !canProceedToStep(4)}
-                                >
-                                    {isSubmittingAppointment ? (
-                                        <>
-                                            <i className="fas fa-spinner fa-spin me-2"></i>
-                                            Đang Xử Lý...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="fas fa-check me-2"></i>
-                                            Xác Nhận Đặt Lịch
-                                        </>
-                                    )}
-                                </button>
+                                                <button
+                                                    type="submit"
+                                                    className="btn custom-btn submit-btn"
+                                                    style={{ minWidth: '180px' }}
+                                                    disabled={isSubmittingAppointment || !canProceedToStep(4)}
+                                                >
+                                                    {isSubmittingAppointment ? (
+                                                        <>
+                                                            <i className="fas fa-spinner fa-spin me-2"></i>
+                                                            Đang Xử Lý...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <i className="fas fa-check me-2"></i>
+                                                            Xác Nhận Đặt Lịch
+                                                        </>
+                                                    )}
+                                                </button>
                                             )}
                                         </div>
                                     </div>

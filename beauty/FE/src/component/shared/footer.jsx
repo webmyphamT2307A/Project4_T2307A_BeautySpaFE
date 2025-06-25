@@ -16,18 +16,41 @@ const Footer = () => {
                     <div className="col-md-6 col-lg-6 col-xl-3">
                         <div className="footer-item d-flex flex-column">
                             <h4 className="mb-4 text-white">Menu</h4>
-                            <Link to="/" className="nav-item nav-link text-white mb-2">Trang chủ</Link>
-                            <Link to="/AboutPage" className="nav-item nav-link text-white mb-2">Giới thiệu</Link>
-                            <Link to="/ServicePage" className="nav-item nav-link text-white mb-2">Dịch vụ</Link>
-                            <Link to="/ContactPage" className="nav-item nav-link text-white mb-2">Liên hệ</Link>
-
+                            <Link
+                                to="/"
+                                className="nav-item nav-link text-white mb-2"
+                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                            >
+                                Trang chủ
+                            </Link>
+                            <Link
+                                to="/AboutPage"
+                                className="nav-item nav-link text-white mb-2"
+                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                            >
+                                Giới thiệu
+                            </Link>
+                            <Link
+                                to="/ServicePage"
+                                className="nav-item nav-link text-white mb-2"
+                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                            >
+                                Dịch vụ
+                            </Link>
+                            <Link
+                                to="/ContactPage"
+                                className="nav-item nav-link text-white mb-2"
+                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                            >
+                                Liên hệ
+                            </Link>
                         </div>
                     </div>
                     <div className="col-md-6 col-lg-6 col-xl-3">
                         <div className="footer-item d-flex flex-column">
                             <h4 className="mb-4 text-white">Lịch làm việc</h4>
                             <p className="text-muted mb-0">Buổi sáng: <span className="text-white"> 09:00 sáng – 11:00 sáng</span></p>
-                            <p className="text-muted mb-0">Buổi chiều: <span className="text-white"> 02:00 chiều  – 04:00 sáng</span></p>
+                            <p className="text-muted mb-0">Buổi chiều: <span className="text-white"> 13:00 chiều  – 17:00 sáng</span></p>
                             <h4 className="my-4 text-white">Địa chỉ</h4>
                             <p className="mb-0"><i className="fas fa-map-marker-alt  me-2" /> 123 Đường ABC, Quận 1, TP.HCM</p>
                         </div>
