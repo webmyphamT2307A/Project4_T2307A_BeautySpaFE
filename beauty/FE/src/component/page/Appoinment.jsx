@@ -1101,7 +1101,7 @@ const Appointment = () => {
                                 <div className="d-flex flex-column gap-2">
                                     <div className="d-flex align-items-center">
                                         <i className="fas fa-user-friends me-2"></i>
-                                        <strong>Nhân viên sẵn sàng phục vụ:</strong>
+                                        <strong>Nhân viên:</strong>
                                         <span className={`badge ms-2 px-2 py-1 rounded-pill ${staffList.length > 2 ? 'bg-success' :
                                             staffList.length > 0 ? 'bg-warning text-dark' :
                                                 'bg-danger'
