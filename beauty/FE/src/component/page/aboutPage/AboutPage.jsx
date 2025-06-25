@@ -62,41 +62,35 @@ const AboutPage = () => {
                                 <p className="mb-4">Đến với chúng tôi, bạn không chỉ được trải nghiệm những liệu pháp chăm sóc đẳng cấp mà còn được tận hưởng không gian thư giãn tuyệt vời, giúp bạn lấy lại năng lượng và sự tự tin trong cuộc sống.
                                 </p>
                             </div>
-                            <a href="/ServicePage" 
-                               className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5"
-                               style={{
-                                 background: 'linear-gradient(135deg, #FDB5B9, #f89ca0) !important',
-                                 border: 'none !important',
-                                 boxShadow: '0 6px 20px rgba(253, 181, 185, 0.3)',
-                                 color: 'white !important',
-                                 fontWeight: '600',
-                                 fontSize: '1rem',
-                                 letterSpacing: '0.3px',
-                                 transition: 'all 0.3s ease',
-                                 textDecoration: 'none',
-                                 position: 'relative',
-                                 overflow: 'hidden'
-                               }}
-                               onMouseEnter={(e) => {
-                                 e.target.style.setProperty('background', 'linear-gradient(135deg, #F7A8B8, #E589A3)', 'important');
-                                 e.target.style.setProperty('border', 'none', 'important');
-                                 e.target.style.transform = 'translateY(-3px) scale(1.05)';
-                                 e.target.style.boxShadow = '0 12px 30px rgba(253, 181, 185, 0.5)';
-                               }}
-                               onMouseLeave={(e) => {
-                                 e.target.style.setProperty('background', 'linear-gradient(135deg, #FDB5B9, #f89ca0)', 'important');
-                                 e.target.style.setProperty('border', 'none', 'important');
-                                 e.target.style.transform = 'translateY(0) scale(1)';
-                                 e.target.style.boxShadow = '0 6px 20px rgba(253, 181, 185, 0.3)';
-                               }}
-                               onMouseDown={(e) => {
-                                 e.target.style.transform = 'translateY(-1px) scale(1.02)';
-                               }}
-                               onMouseUp={(e) => {
-                                 e.target.style.transform = 'translateY(-3px) scale(1.05)';
-                               }}
+                            <a href="/ServicePage"
+                                className="btn rounded-pill py-3 px-5"
+                                style={{
+                                    backgroundColor: '#FDB5B9',
+                                    borderColor: '#FDB5B9',
+                                    color: 'white',
+                                    border: '1px solid #FDB5B9',
+                                    borderRadius: '50px',
+                                    padding: '12px 20px',
+                                    fontSize: '16px',
+                                    fontWeight: '500',
+                                    textDecoration: 'none',
+                                    display: 'inline-block',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.backgroundColor = '#F7A8B8';
+                                    e.target.style.borderColor = '#F7A8B8';
+                                    e.target.style.transform = 'translateY(-2px)';
+                                    e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.4)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.backgroundColor = '#FDB5B9';
+                                    e.target.style.borderColor = '#FDB5B9';
+                                    e.target.style.transform = 'translateY(0)';
+                                    e.target.style.boxShadow = 'none';
+                                }}
                             >
-                              Khám Phá Thêm
+                                Khám Phá Thêm
                             </a>
                         </div>
                     </div>
@@ -104,16 +98,29 @@ const AboutPage = () => {
             </div>
             {/* Modal Video */}
             <div className="modal fade" id="videoModal" tabIndex={-1} aria-labelledby="exampleModalLabel" aria-hidden="true">
-                <div className="modal-dialog">
-                    <div className="modal-content rounded-0">
-                        <div className="modal-header">
-                            <h5 className="modal-title" id="exampleModalLabel">Video Giới Thiệu</h5>
+                <div className="modal-dialog modal-lg">
+                    <div className="modal-content rounded-3">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title text-primary" id="exampleModalLabel">
+                                <i className="fas fa-play-circle me-2"></i>
+                                Video Giới Thiệu Sparlex
+                            </h5>
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Đóng" />
                         </div>
-                        <div className="modal-body">
-                            {/* 16:9 aspect ratio */}
+                        <div className="modal-body p-0">
                             <div className="ratio ratio-16x9">
-                                <iframe className="embed-responsive-item" src id="video" allowFullScreen allowscriptaccess="always" allow="autoplay" />
+                                <video
+                                    className="rounded-bottom"
+                                    controls
+                                    autoPlay
+                                    muted
+                                    loop
+                                    preload="metadata"
+                                    style={{ objectFit: 'cover' }}
+                                >
+                                    <source src="./assets/vid/about-us-introduction.mp4" type="video/mp4" />
+                                    Trình duyệt của bạn không hỗ trợ video.
+                                </video>
                             </div>
                         </div>
                     </div>

@@ -496,7 +496,7 @@ const ServiceDetailPage = () => {
               </h2>
               <p>
                 <strong>Giá:</strong>{' '}
-                {service.price ? `${service.price.toLocaleString()}$` : 'N/A'}
+                {service.price ? `${service.price.toLocaleString()}VNĐ` : 'N/A'}
               </p>
               <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
               <button 
@@ -610,7 +610,6 @@ const ServiceDetailPage = () => {
                       }}
                       onClick={() => navigate(`/ServicePage/${relatedService.id}`)}
                       >
-                        {/* Gradient overlay */}
                         <div style={{
                           position: 'absolute',
                           top: 0,
@@ -666,8 +665,7 @@ const ServiceDetailPage = () => {
                           </p>
                         </div>
 
-                        {/* Hover icon */}
-                        <div style={{
+                        {/* <div style={{
                           position: 'absolute',
                           top: '10px',
                           right: '10px',
@@ -683,7 +681,7 @@ const ServiceDetailPage = () => {
                           zIndex: 3
                         }} className="hover-icon">
                           <i className="fas fa-eye" style={{ color: '#d6336c', fontSize: '0.8rem' }}></i>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   ))}
