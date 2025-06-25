@@ -381,24 +381,24 @@ const UserScheduleManager = () => {
     const requestBody = {
         ...formData,
         userId: parseInt(formData.userId, 10),
-        timeSlotId: null, // Không sử dụng timeslot nữa
-        shift: finalShift,
+      timeSlotId: null, // Không sử dụng timeslot nữa
+      shift: finalShift,
         isLastTask: formData.isLastTask || false,
         isActive: formData.isActive === undefined ? true : formData.isActive,
-        checkInTime: timeForm.checkInTime || null,
-        checkOutTime: timeForm.checkOutTime || null,
+      checkInTime: timeForm.checkInTime || null,
+      checkOutTime: timeForm.checkOutTime || null,
     };
 
     const handleResponse = (response) => {
-      if (response.status === 'SUCCESS') {
-        fetchSchedules();
+          if (response.status === 'SUCCESS') {
+            fetchSchedules();
         const successMessage = response.message || (currentSchedule ? 'Cập nhật lịch trình thành công.' : 'Tạo lịch trình thành công.');
         toast.success(successMessage);
         setOpenDialog(false);
-      } else {
+          } else {
         const errorMessage = response.message || (currentSchedule ? 'Cập nhật lịch trình thất bại.' : 'Tạo lịch trình thất bại.');
         toast.error(errorMessage);
-      }
+          }
     };
 
     const handleError = (error) => {
@@ -416,8 +416,8 @@ const UserScheduleManager = () => {
     fetch(url, {
       method: method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-    })
+        body: JSON.stringify(requestBody),
+      })
     .then(res => {
         if (!res.ok) {
             throw res;

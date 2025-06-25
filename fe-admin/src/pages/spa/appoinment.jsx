@@ -1075,7 +1075,7 @@ const AppointmentManagement = () => {
                   <Button 
                     variant="outlined" 
                     color="secondary"
-                    onClick={() => navigate('/review')}
+                    onClick={() => navigate('/review/review')}
                     sx={{ ml: 1 }}
                   >
                     ← Quay lại Đánh Giá

@@ -45,7 +45,7 @@ const ReviewList = () => {
         // Kiểm tra xem review có thông tin service không
         if (review.type === 'SERVICE' && review.relatedId) {
             // Chuyển đến trang appointment với filter theo service
-            navigate('/spa/appointment', {
+            navigate('/spa/appointments', {
                 state: {
                     serviceId: review.relatedId,
                     serviceName: `Service #${review.relatedId}`,
@@ -57,7 +57,7 @@ const ReviewList = () => {
             toast.info(`Chuyển đến trang đặt lịch cho dịch vụ ID: ${review.relatedId}`);
         } else if (review.type === 'USER' && review.relatedId) {
             // Nếu là review cho nhân viên, chuyển đến trang appointment với filter theo staff
-            navigate('/spa/appointment', {
+            navigate('/spa/appointments', {
                 state: {
                     staffId: review.relatedId,
                     staffName: `Staff #${review.relatedId}`,
@@ -69,7 +69,7 @@ const ReviewList = () => {
             toast.info(`Chuyển đến trang đặt lịch với nhân viên ID: ${review.relatedId}`);
         } else {
             // Nếu không có thông tin đầy đủ, chuyển đến trang appointment chung
-            navigate('/spa/appointment', {
+            navigate('/spa/appointments', {
                 state: {
                     title: `Đặt Lịch từ Đánh Giá #${review.id}`,
                     fromReview: true,
@@ -83,6 +83,7 @@ const ReviewList = () => {
     // Lấy tất cả review cho admin
     const fetchReviews = async () => {
         setLoading(true);
+        console.log('🚀 Bắt đầu quá trình fetch reviews...');
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`${API_BASE_URL}/reviews/findAll`, {
@@ -90,30 +91,59 @@ const ReviewList = () => {
                     'Authorization': `Bearer ${token}`
                 }
             });
+
+            if (!res.ok) {
+                // Ghi lại lỗi nếu response không thành công (vd: 401, 403, 500)
+                console.error(`Lỗi HTTP! Status: ${res.status}`, await res.text());
+                throw new Error(`API call failed with status ${res.status}`);
+            }
+
             const data = await res.json();
-            if (data.status === 'SUCCESS') {
-                const reviewsData = Array.isArray(data.data) ? data.data : [];
-                // Fetch detailed info for each review to get replies
+            console.log('✅ Dữ liệu thô nhận được từ /reviews/findAll:', data);
+
+            if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
+                const reviewsData = data.data;
+                console.log(`🔍 Tìm thấy ${reviewsData.length} review(s). Bắt đầu lấy chi tiết...`);
+
                 const reviewsWithDetails = await Promise.all(
                     reviewsData.map(async (review) => {
+                        // Kiểm tra review và review.id trước khi fetch
+                        if (!review || typeof review.id === 'undefined') {
+                            console.warn('⚠️ Bỏ qua review không hợp lệ (thiếu id):', review);
+                            return null; // Trả về null để lọc ra sau
+                        }
                         try {
                             const detailRes = await fetch(`${API_BASE_URL}/reviews/${review.id}`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
                             });
                             const detailData = await detailRes.json();
-                            if (detailData.status === 'SUCCESS' && detailData.data.replies) {
-                                return { ...review, replies: detailData.data.replies };
+                            if (detailData.status === 'SUCCESS' && detailData.data) {
+                                // Gộp review gốc với chi tiết (đặc biệt là replies)
+                                return { ...review, replies: detailData.data.replies || [] };
                             }
+                            // Nếu lấy chi tiết thất bại, vẫn giữ lại review gốc
+                            console.warn(`Không thể lấy chi tiết cho review #${review.id}.`, detailData.message);
                             return { ...review, replies: [] };
-                        } catch {
-                            return { ...review, replies: [] };
+                        } catch (detailError) {
+                            console.error(`Lỗi khi fetch chi tiết review #${review.id}:`, detailError);
+                            return { ...review, replies: [] }; // Giữ lại review gốc khi có lỗi
                         }
                     })
                 );
-                setReviews(reviewsWithDetails);
-            } else toast.error(data.message || 'Failed to load reviews');
-        } catch {
-            toast.error('Error loading reviews');
+
+                // Lọc ra các review không hợp lệ (bị null)
+                const validReviews = reviewsWithDetails.filter(r => r !== null);
+                console.log('🎉 Hoàn tất lấy chi tiết. Tổng số review hợp lệ:', validReviews.length);
+                setReviews(validReviews);
+
+            } else {
+                const errorMessage = data.message || 'Dữ liệu trả về không hợp lệ.';
+                toast.error(errorMessage);
+                console.error('Lỗi logic hoặc dữ liệu API:', errorMessage, data);
+            }
+        } catch (error) {
+            console.error('❌ Đã xảy ra lỗi nghiêm trọng trong fetchReviews:', error);
+            toast.error('Không thể tải danh sách đánh giá. Vui lòng kiểm tra console.');
         }
         setLoading(false);
     };

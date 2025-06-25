@@ -55,38 +55,55 @@ const formatVNDPrice = (priceValue) => {
 
 // ✅ LOGIC XỬ LÝ TRẠNG THÁI ĐÃ ĐƯỢC CẢI TIẾN (di chuyển ra ngoài component)
 const getAppointmentStatus = (item) => {
-    // Ưu tiên 1: Trạng thái tường minh từ backend là 'cancelled' hoặc 'completed'
+    // Ưu tiên 1: Trạng thái tường minh từ backend
     const directStatus = item.status?.toLowerCase().trim();
-    if (directStatus === 'cancelled') {
-        return { text: 'Đã hủy', className: 'bg-danger', isCompleted: false, isCancelled: true };
-    }
+    
     if (directStatus === 'completed') {
         return { text: 'Đã hoàn thành', className: 'bg-success', isCompleted: true, isCancelled: false };
     }
+    if (directStatus === 'cancelled') {
+        return { text: 'Đã hủy', className: 'bg-danger', isCompleted: false, isCancelled: true };
+    }
+    if (directStatus === 'confirmed') {
+        return { text: 'Đã xác nhận', className: 'bg-primary', isCompleted: false, isCancelled: false };
+    }
+    // ✅ FIX: Luôn tôn trọng trạng thái 'pending' từ backend, không tự động chuyển thành 'hoàn thành'
+    if (directStatus === 'pending') {
+        // Phân biệt pending của quá khứ và tương lai nếu cần
+        const aptDate = parseDate(item.appointmentDate);
+        if (aptDate && aptDate.getTime() < new Date().setHours(0,0,0,0)) {
+             return { text: 'Chờ xử lý', className: 'bg-secondary', isCompleted: false, isCancelled: false };
+        }
+        return { text: 'Chờ xác nhận', className: 'bg-info', isCompleted: false, isCancelled: false };
+    }
 
-    // Ưu tiên 2: Logic dựa trên ngày tháng cho các trạng thái còn lại
+    // Ưu tiên 2: Logic dựa trên ngày tháng chỉ được áp dụng khi backend không trả về trạng thái rõ ràng
     const aptDate = parseDate(item.appointmentDate);
     if (!aptDate) {
         return { text: 'Ngày không xác định', className: 'bg-secondary', isCompleted: false, isCancelled: false };
     }
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     aptDate.setHours(0, 0, 0, 0);
 
     if (aptDate.getTime() < today.getTime()) {
-        // Chỉ coi là hoàn thành nếu không bị hủy và đã qua ngày hẹn
         return { text: 'Đã hoàn thành', className: 'bg-success', isCompleted: true, isCancelled: false };
     }
+    
     if (aptDate.getTime() === today.getTime()) {
-        return { text: 'Đang chờ', className: 'bg-warning text-dark', isCompleted: false, isCancelled: false };
+        return { text: 'Hôm nay', className: 'bg-warning text-dark', isCompleted: false, isCancelled: false };
     }
+    
     return { text: 'Sắp tới', className: 'bg-info', isCompleted: false, isCancelled: false };
 };
 
 const canCancelAppointment = (item) => {
-    const { text } = getAppointmentStatus(item);
-    // Có thể hủy nếu trạng thái không phải là "Đã hủy" hoặc "Đã hoàn thành"
-    return text !== 'Đã hủy' && text !== 'Đã hoàn thành';
+    const statusInfo = getAppointmentStatus(item);
+    // Chỉ cho phép hủy lịch hẹn chưa hoàn thành và chưa bị hủy
+    // Các trạng thái có thể hủy: "Chờ xác nhận", "Đã xác nhận", "Sắp tới", "Hôm nay"
+    const cancellableStatuses = ['Chờ xác nhận', 'Đã xác nhận', 'Sắp tới', 'Hôm nay'];
+    return cancellableStatuses.includes(statusInfo.text);
 };
 
 // Component StarRating để chọn sao
@@ -150,7 +167,12 @@ const ServiceHistoryPage = () => {
                 if (filterStatus !== 'all') {
                     let statusMatch = false;
                     if (filterStatus === 'completed' && statusInfo.text === 'Đã hoàn thành') statusMatch = true;
-                    if (filterStatus === 'upcoming' && (statusInfo.text === 'Sắp tới' || statusInfo.text === 'Đang chờ')) statusMatch = true;
+                    if (filterStatus === 'upcoming' && (
+                        statusInfo.text === 'Sắp tới' || 
+                        statusInfo.text === 'Hôm nay' || 
+                        statusInfo.text === 'Chờ xác nhận' ||
+                        statusInfo.text === 'Đã xác nhận'
+                    )) statusMatch = true;
                     if (filterStatus === 'cancelled' && statusInfo.text === 'Đã hủy') statusMatch = true;
                     if (!statusMatch) return false;
                 }
@@ -782,6 +804,21 @@ const ServiceHistoryPage = () => {
                                                 Đăng nhập để đánh giá
                                             </button>
                                         )}
+                                        {/* Thông báo cho guest users - cần đăng nhập để hủy */}
+                                        {!userInfo && !isCompleted && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-danger btn-sm"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#loginModal"
+                                                title="Đăng nhập để hủy lịch hẹn"
+                                                style={{ fontSize: '0.75rem' }}
+                                            >
+                                                <i className="fas fa-sign-in-alt me-1"></i>
+                                                Đăng nhập để hủy lịch hẹn
+                                            </button>
+                                        )}
+                                        {/* Thông báo cho dịch vụ chưa hoàn thành */}
                                         {!isCancellable && !isCompleted && (
                                              <span className="text-muted small">
                                                 <i className="fas fa-info-circle me-1"></i>
@@ -835,9 +872,9 @@ const ServiceHistoryPage = () => {
             </div>
         </div>
     );
-    
+
     return (
-        <div>
+        <>
             <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
             <Header />
             <div className="container-fluid py-5" style={{ backgroundColor: '#f8f9fa' }}>
@@ -1338,7 +1375,7 @@ const ServiceHistoryPage = () => {
             )}
 
             <Footer />
-        </div>
+        </>
     );
 };
 
