@@ -64,6 +64,8 @@ const AppointmentManagement = () => {
   const [emailSending, setEmailSending] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [appointmentToCancel, setAppointmentToCancel] = useState(null)
+  const [staffFilter, setStaffFilter] = useState('');
+  const [serviceFilter, setServiceFilter] = useState('');
 
   useEffect(() => {
     const dateFromUrl = searchParams.get('date');
@@ -273,7 +275,7 @@ const AppointmentManagement = () => {
             user.role && user.role.id === 3 && user.isActive
           ).map(staff => ({
             ...staff,
-            // Đảm bảo skills là array, nếu không có thì set empty array
+            fullName: staff.fullName || staff.staffName || staff.username || staff.email || 'No Name',
             skills: staff.skills || staff.userSkills || []
           }));
 
@@ -314,6 +316,12 @@ const AppointmentManagement = () => {
         return appointmentDate >= start && appointmentDate <= end;
       });
     }
+    if (staffFilter) {
+      results = results.filter(appointment => String(appointment.staff?.id) === String(staffFilter));
+    }
+    if (serviceFilter) {
+      results = results.filter(appointment => String(appointment.service?.id) === String(serviceFilter));
+    }
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       results = results.filter(
@@ -325,7 +333,7 @@ const AppointmentManagement = () => {
     }
     setFilteredAppointments(results);
     setPage(0);
-  }, [searchQuery, statusFilter, dateFilter, appointments]);
+  }, [searchQuery, statusFilter, dateFilter, staffFilter, serviceFilter, appointments]);
 
   // Handlers
   const handleChangePage = (event, newPage) => setPage(newPage);
@@ -957,18 +965,89 @@ const AppointmentManagement = () => {
                   />
                 )}
               </Typography>
-              
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                <TextField
+                  size="small"
+                  placeholder="Tìm theo tên, SĐT, dịch vụ..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  InputProps={{
+                    startAdornment: (<InputAdornment position="start"><SearchOutlined /></InputAdornment>),
+                    sx: { borderRadius: '8px', minWidth: 220 }
+                  }}
+                />
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel>Trạng thái</InputLabel>
+                  <Select value={statusFilter} label="Trạng thái" onChange={handleStatusFilterChange}>
+                    <MenuItem value="all">Tất cả</MenuItem>
+                    <MenuItem value="pending">Chờ xác nhận</MenuItem>
+                    <MenuItem value="confirmed">Đã xác nhận</MenuItem>
+                    <MenuItem value="completed">Hoàn thành</MenuItem>
+                    <MenuItem value="cancelled">Đã hủy</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel>Nhân viên</InputLabel>
+                  <Select value={staffFilter} label="Nhân viên" onChange={e => setStaffFilter(e.target.value)}>
+                    <MenuItem value="">Tất cả</MenuItem>
+                    {staffList.map(staff => (
+                      <MenuItem key={staff.id} value={staff.id}>{staff.fullName}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel>Dịch vụ</InputLabel>
+                  <Select value={serviceFilter} label="Dịch vụ" onChange={e => setServiceFilter(e.target.value)}>
+                    <MenuItem value="">Tất cả</MenuItem>
+                    {[...new Set(appointments.map(app => app.service?.id && app.service))]
+                      .filter(Boolean)
+                      .map(service => (
+                        <MenuItem key={service.id} value={service.id}>{service.name}</MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  size="small"
+                  label="Từ ngày"
+                  type="date"
+                  value={dateFilter.startDate}
+                  name="startDate"
+                  onChange={handleDateFilterChange}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ minWidth: 140 }}
+                />
+                <TextField
+                  size="small"
+                  label="Đến ngày"
+                  type="date"
+                  value={dateFilter.endDate}
+                  name="endDate"
+                  onChange={handleDateFilterChange}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ minWidth: 140 }}
+                />
+                <Button variant="outlined" onClick={() => {
+                  setStatusFilter('all');
+                  setDateFilter({ startDate: '', endDate: '' });
+                  setSearchQuery('');
+                  setStaffFilter('');
+                  setServiceFilter('');
+                  setPageTitle('Quản Lý Lịch Hẹn');
+                }}>Xóa bộ lọc</Button>
+              </Box>
               {/* Filter result count */}
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">
                   Hiển thị {filteredAppointments.length} / {appointments.length} lịch hẹn
-                  {(statusFilter !== 'all' || dateFilter.startDate || dateFilter.endDate || searchQuery) && (
+                  {(statusFilter !== 'all' || dateFilter.startDate || dateFilter.endDate || searchQuery || staffFilter || serviceFilter) && (
                     <Button 
                       size="small" 
                       onClick={() => {
                         setStatusFilter('all');
                         setDateFilter({ startDate: '', endDate: '' });
                         setSearchQuery('');
+                        setStaffFilter('');
+                        setServiceFilter('');
                         setPageTitle('Quản Lý Lịch Hẹn');
                       }}
                       sx={{ ml: 2 }}

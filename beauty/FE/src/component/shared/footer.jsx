@@ -10,7 +10,7 @@ const Footer = () => {
                         <div className="footer-item">
                             <h4 className="mb-4 text-white">Bản tin</h4>
                             <p className="text-white">Chúng tôi cam kết mang đến cho bạn những dịch vụ spa và làm đẹp tốt nhất. Hãy theo dõi chúng tôi để cập nhật những thông tin mới nhất về các dịch vụ và ưu đãi đặc biệt.</p>
-                            
+
                         </div>
                     </div>
                     <div className="col-md-6 col-lg-6 col-xl-3">
@@ -20,7 +20,7 @@ const Footer = () => {
                             <Link to="/AboutPage" className="nav-item nav-link text-white mb-2">Giới thiệu</Link>
                             <Link to="/ServicePage" className="nav-item nav-link text-white mb-2">Dịch vụ</Link>
                             <Link to="/ContactPage" className="nav-item nav-link text-white mb-2">Liên hệ</Link>
-                            
+
                         </div>
                     </div>
                     <div className="col-md-6 col-lg-6 col-xl-3">
@@ -30,7 +30,7 @@ const Footer = () => {
                             <p className="text-muted mb-0">Buổi chiều: <span className="text-white"> 02:00 chiều  – 04:00 sáng</span></p>
                             <p className="text-muted mb-0">Buổi tối: <span className="text-white"> 06:00 tối  – 08:00 tối</span></p>
                             <h4 className="my-4 text-white">Địa chỉ</h4>
-                            <p className="mb-0"><i className="fas fa-map-marker-alt  me-2" /> 123 đường Ranking, tòa nhà North, New York, USA</p>
+                            <p className="mb-0"><i className="fas fa-map-marker-alt  me-2" /> 123 Đường ABC, Quận 1, TP.HCM</p>
                         </div>
                     </div>
                     <div className="col-md-6 col-lg-6 col-xl-3">
@@ -40,8 +40,8 @@ const Footer = () => {
                             <a href="#" className="text-white mb-2 text-decoration-none"><i className="fab fa-instagram me-2" /> Instagram</a>
                             <a href="#" className="text-white mb-2 text-decoration-none"><i className="fab fa-twitter me-2" /> Twitter</a>
                             <h4 className="my-4 text-white">Liên hệ với chúng tôi</h4>
-                            <p className="mb-0"><i className="fas fa-envelope  me-2" /> info@example.com</p>
-                            <p className="mb-0"><i className="fas fa-phone  me-2" /> (+012) 3456 7890 123</p>
+                            <p className="mb-0"><i className="fas fa-envelope  me-2" /> info@beautyspa.vn</p>
+                            <p className="mb-0"><i className="fas fa-phone  me-2" /> (+84) 0123456789</p>
                         </div>
                     </div>
                 </div>
@@ -50,7 +50,36 @@ const Footer = () => {
                 <div className="container">
                     <div className="row g-4 align-items-center">
                         <div className="col-md-4 text-center text-md-start mb-md-0">
-                            <span className="text-light"><a href="#"><i className="fas fa-copyright text-light me-2" />Sparlex</a>, Bảo lưu mọi quyền.</span>
+                            <span className="text-light d-flex align-items-center justify-content-center justify-content-md-start">
+                                <img
+                                    src="/assets/img/logoS.png"
+                                    alt="Sparlex Logo"
+                                    className="me-2"
+                                    style={{
+                                        height: '20px',
+                                        width: 'auto',
+                                        objectFit: 'contain',
+                                        // filter: 'brightness(0) invert(1)', 
+                                        opacity: '0.9'
+                                    }}
+                                />
+                                <a
+                                    href="#"
+                                    className="text-primary text-decoration-none"
+                                    style={{
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.color = '#FDB5B9';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.color = '#f8f9fa';
+                                    }}
+                                >
+                                    Sparlex
+                                </a>
+                                , Bảo lưu mọi quyền.
+                            </span>
                         </div>
                         <div className="col-md-4">
                             <div className="d-flex justify-content-center">
@@ -61,7 +90,7 @@ const Footer = () => {
                             </div>
                         </div>
                         <div className="col-md-4 text-center text-md-end text-white">
-                          
+
                         </div>
                     </div>
                 </div>

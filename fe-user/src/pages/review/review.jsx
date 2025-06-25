@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     IconButton, Tooltip, CircularProgress, FormControl, InputLabel, Select, MenuItem, Box,
-    Modal, Typography, TextField, Button, Paper
+    Modal, Typography, TextField, Button, Paper, TablePagination
 } from '@mui/material';
 import { DeleteOutlined, ReadFilled } from '@ant-design/icons'; 
 import MainCard from 'components/MainCard';
@@ -27,6 +27,8 @@ const ReviewList = () => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState('all');
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     // State để quản lý modal phản hồi
     const [replyModalOpen, setReplyModalOpen] = useState(false);
@@ -144,12 +146,23 @@ const ReviewList = () => {
         setLoading(false);
     };
 
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
     const filteredReviews = reviews.filter(r => {
         if (statusFilter === 'all') return true;
         if (statusFilter === 'active') return r.active === true || r.active === 1;
         if (statusFilter === 'inactive') return r.active === false || r.active === 0;
         return true;
     });
+
+    const paginatedReviews = filteredReviews.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     return (
         <MainCard title="Tất cả đánh giá">
@@ -183,7 +196,7 @@ const ReviewList = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredReviews.map((r) => (
+                        {paginatedReviews.map((r) => (
                             <TableRow key={r.id}>
                                 <TableCell>{r.id}</TableCell>
                                 <TableCell>{r.authorName || 'N/A'}</TableCell>
@@ -234,10 +247,20 @@ const ReviewList = () => {
                                 </TableCell>
                             </TableRow>
                         ))}
-                        {filteredReviews.length === 0 && !loading && <TableRow><TableCell colSpan={9} align="center">No reviews found.</TableCell></TableRow>}
+                        {filteredReviews.length === 0 && !loading && <TableRow><TableCell colSpan={8} align="center">No reviews found.</TableCell></TableRow>}
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={filteredReviews.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+            />
 
             {/* Modal để nhập phản hồi */}
             <Modal

@@ -216,7 +216,7 @@ const Contact = () => {
                                                 <i className="fas fa-map-marker-alt fa-2x text-primary me-4" />
                                                 <div>
                                                     <h4>Địa chỉ</h4>
-                                                    <p className="mb-0">123 North tower New York, USA</p>
+                                                    <p className="mb-0">123 Đường ABC, Quận 1, TP.HCM</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -225,7 +225,7 @@ const Contact = () => {
                                                 <i className="fas fa-envelope fa-2x text-primary me-4" />
                                                 <div>
                                                     <h4>Email của chúng tôi</h4>
-                                                    <p className="mb-0">info@example.com</p>
+                                                    <p className="mb-0">info@beautyspa.vn</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -234,7 +234,7 @@ const Contact = () => {
                                                 <i className="fa fa-phone-alt fa-2x text-primary me-4" />
                                                 <div>
                                                     <h4>Điện thoại</h4>
-                                                    <p className="mb-0">(+012) 3456 7890 123</p>
+                                                    <p className="mb-0">(+84) 0123456789</p>
                                                 </div>
                                             </div>
                                         </div>

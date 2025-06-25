@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -30,9 +30,9 @@ const formatVNDPrice = (priceValue) => {
     if (priceValue === null || priceValue === undefined || priceValue === 0) {
         return 'Chưa có giá';
     }
-    
+
     let numericPrice = 0;
-    
+
     // Xử lý các format khác nhau từ backend
     if (typeof priceValue === 'string') {
         // Nếu là string có thể chứa ký tự $ hoặc dấu phẩy
@@ -49,8 +49,43 @@ const formatVNDPrice = (priceValue) => {
     if (numericPrice > 0 && numericPrice < 1000) {
         numericPrice *= 10000;
     }
-    
+
     return `${Math.round(numericPrice).toLocaleString('vi-VN')} VNĐ`;
+};
+
+// ✅ LOGIC XỬ LÝ TRẠNG THÁI ĐÃ ĐƯỢC CẢI TIẾN (di chuyển ra ngoài component)
+const getAppointmentStatus = (item) => {
+    // Ưu tiên 1: Trạng thái tường minh từ backend là 'cancelled' hoặc 'completed'
+    const directStatus = item.status?.toLowerCase().trim();
+    if (directStatus === 'cancelled') {
+        return { text: 'Đã hủy', className: 'bg-danger' };
+    }
+    if (directStatus === 'completed') {
+        return { text: 'Đã hoàn thành', className: 'bg-success' };
+    }
+
+    // Ưu tiên 2: Logic dựa trên ngày tháng cho các trạng thái còn lại
+    const aptDate = parseDate(item.appointmentDate);
+    if (!aptDate) {
+        return { text: 'Ngày không xác định', className: 'bg-secondary' };
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    aptDate.setHours(0, 0, 0, 0);
+
+    if (aptDate.getTime() < today.getTime()) {
+        return { text: 'Đã hoàn thành', className: 'bg-success' };
+    }
+    if (aptDate.getTime() === today.getTime()) {
+        return { text: 'Đang chờ', className: 'bg-warning text-dark' };
+    }
+    return { text: 'Sắp tới', className: 'bg-info' };
+};
+
+const canCancelAppointment = (item) => {
+    const { text } = getAppointmentStatus(item);
+    // Có thể hủy nếu trạng thái không phải là "Đã hủy" hoặc "Đã hoàn thành"
+    return text !== 'Đã hủy' && text !== 'Đã hoàn thành';
 };
 
 const ServiceHistoryPage = () => {
@@ -68,6 +103,79 @@ const ServiceHistoryPage = () => {
     const [cancellingAppointments, setCancellingAppointments] = useState(new Set());
     const [customerStats, setCustomerStats] = useState(null);
     const [calculatedTotal, setCalculatedTotal] = useState(0);
+    const [autoLookupPerformed, setAutoLookupPerformed] = useState(false); // Thêm state mới
+
+    // ✅ NEW: Filter states
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [filterStartDate, setFilterStartDate] = useState('');
+    const [filterEndDate, setFilterEndDate] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // ✅ NEW: Memoized filtered and sorted history
+    const filteredAndSortedHistory = useMemo(() => {
+        let filtered = history
+            .filter(item => {
+                // Status filter
+                const statusInfo = getAppointmentStatus(item);
+                if (filterStatus !== 'all') {
+                    let statusMatch = false;
+                    if (filterStatus === 'completed' && statusInfo.text === 'Đã hoàn thành') statusMatch = true;
+                    if (filterStatus === 'upcoming' && (statusInfo.text === 'Sắp tới' || statusInfo.text === 'Đang chờ')) statusMatch = true;
+                    if (filterStatus === 'cancelled' && statusInfo.text === 'Đã hủy') statusMatch = true;
+                    if (!statusMatch) return false;
+                }
+
+                // Date range filter
+                const aptDate = parseDate(item.appointmentDate);
+                if (aptDate) {
+                    if (filterStartDate && aptDate < new Date(new Date(filterStartDate).setHours(0, 0, 0, 0))) {
+                        return false;
+                    }
+                    if (filterEndDate && aptDate > new Date(new Date(filterEndDate).setHours(23, 59, 59, 999))) {
+                        return false;
+                    }
+                }
+
+                // Search term filter (service name or staff name)
+                if (searchTerm) {
+                    const term = searchTerm.toLowerCase();
+                    const serviceMatch = item.serviceName?.toLowerCase().includes(term);
+                    const staffMatch = item.userName?.toLowerCase().includes(term);
+                    if (!serviceMatch && !staffMatch) return false;
+                }
+
+                return true;
+            });
+
+        // Sort by date descending
+        return filtered.sort((a, b) => {
+            const dateA = parseDate(a.appointmentDate);
+            const dateB = parseDate(b.appointmentDate);
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            return dateB - dateA;
+        });
+    }, [history, filterStatus, filterStartDate, filterEndDate, searchTerm]);
+
+    // ✅ NEW: Memoized total for filtered data
+    const filteredCalculatedTotal = useMemo(() => {
+        return filteredAndSortedHistory.reduce((sum, app) => {
+            const statusInfo = getAppointmentStatus(app);
+            if (statusInfo.text === 'Đã hoàn thành') {
+                let parsedPrice = parseFloat(app.servicePrice) || 0;
+                if (parsedPrice > 0 && parsedPrice < 1000) {
+                    parsedPrice *= 10000;
+                }
+                return sum + parsedPrice;
+            }
+            return sum;
+        }, 0);
+    }, [filteredAndSortedHistory]);
+
+    // ✅ NEW: Check if any filter is active
+    const isAnyFilterActive = useMemo(() => {
+        return filterStatus !== 'all' || filterStartDate !== '' || filterEndDate !== '' || searchTerm !== '';
+    }, [filterStatus, filterStartDate, filterEndDate, searchTerm]);
 
     const validateVietnamesePhone = (phone) => {
         const cleanPhone = phone.replace(/[\s-().]/g, '');
@@ -93,23 +201,105 @@ const ServiceHistoryPage = () => {
 
     useEffect(() => {
         const storedUser = localStorage.getItem('userInfo');
+        const recentBooking = sessionStorage.getItem('recentBooking');
+
         console.log('📝 Raw userInfo from localStorage:', storedUser);
-        
+        console.log('📝 Recent booking from sessionStorage:', recentBooking);
+
         if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
             console.log('👤 Parsed user info:', parsedUser);
-            
+
             setUserInfo(parsedUser);
             const customerIdToUse = parsedUser.customerId || parsedUser.id;
             console.log('🆔 Customer ID being used for API call:', customerIdToUse);
-            console.log('🆔 Available user fields:', Object.keys(parsedUser));
-            
+
             fetchHistoryByCustomerId(customerIdToUse);
             fetchCustomerStats(customerIdToUse);
+
+            // Xóa thông tin đặt lịch vì đã đăng nhập
+            if (recentBooking) {
+                sessionStorage.removeItem('recentBooking');
+            }
+        } else if (recentBooking && !autoLookupPerformed) {
+            // Người dùng chưa đăng nhập nhưng vừa đặt lịch thành công
+            try {
+                const bookingInfo = JSON.parse(recentBooking);
+                console.log('🎯 Auto lookup for recent booking:', bookingInfo);
+
+                // Kiểm tra xem thông tin có còn mới không (trong vòng 5 phút)
+                const timeDiff = Date.now() - bookingInfo.timestamp;
+                if (timeDiff < 5 * 60 * 1000 && bookingInfo.phoneNumber) { // 5 phút
+                    setLookupIdentifier(bookingInfo.phoneNumber);
+                    setAutoLookupPerformed(true);
+
+                    // Hiển thị toast thông báo đang tự động tra cứu
+                    toast.info('Đang tự động tra cứu lịch hẹn vừa đặt...', {
+                        position: "top-right",
+                        autoClose: 3000,
+                    });
+
+                    // Tự động thực hiện tra cứu
+                    setTimeout(() => {
+                        performAutoLookup(bookingInfo.phoneNumber);
+                    }, 1000);
+                } else {
+                    // Thông tin quá cũ, xóa đi
+                    sessionStorage.removeItem('recentBooking');
+                }
+            } catch (error) {
+                console.error('❌ Error parsing recent booking:', error);
+                sessionStorage.removeItem('recentBooking');
+            }
         } else {
-            console.log('❌ No userInfo found in localStorage');
+            console.log('❌ No userInfo found in localStorage and no recent booking');
         }
-    }, []);
+    }, [autoLookupPerformed]);
+
+    // Hàm tự động tra cứu
+    const performAutoLookup = async (phoneNumber) => {
+        console.log('🔍 Performing auto lookup for:', phoneNumber);
+
+        setIsLoading(true);
+        setError('');
+        setLookupPerformed(true);
+
+        try {
+            const response = await axios.get(`http://localhost:8080/api/v1/admin/appointment/history/phone/${phoneNumber}`);
+            if (response.data.status === 'SUCCESS' && response.data.data) {
+                const processedHistory = processHistoryData(response.data.data);
+                setHistory(processedHistory);
+
+                if (processedHistory.length === 0) {
+                    setError(`Không tìm thấy lịch hẹn hợp lệ với số điện thoại: ${phoneNumber}`);
+                } else {
+                    // Hiển thị thông báo thành công
+                    toast.success(`Tìm thấy ${processedHistory.length} lịch hẹn! Lịch hẹn mới nhất đã được hiển thị.`, {
+                        position: "top-right",
+                        autoClose: 4000,
+                    });
+                }
+            } else {
+                setHistory([]);
+                setCalculatedTotal(0);
+                setError(response.data.message || `Không tìm thấy lịch hẹn với số điện thoại: ${phoneNumber}`);
+            }
+        } catch (err) {
+            console.error('❌ Auto lookup error:', err);
+            setError('Lỗi kết nối hoặc không tìm thấy lịch hẹn dịch vụ.');
+            setHistory([]);
+            setCalculatedTotal(0);
+
+            toast.error('Không thể tự động tra cứu lịch hẹn. Vui lòng thử lại thủ công.', {
+                position: "top-right",
+                autoClose: 3000,
+            });
+        } finally {
+            setIsLoading(false);
+            // Xóa thông tin đặt lịch sau khi đã tra cứu xong
+            sessionStorage.removeItem('recentBooking');
+        }
+    };
 
     const fetchCustomerStats = async (customerId) => {
         try {
@@ -125,7 +315,7 @@ const ServiceHistoryPage = () => {
     const processHistoryData = (data) => {
         const appointmentsData = Array.isArray(data) ? data : [data];
         console.log('🔍 Processing data, total items:', appointmentsData.length);
-        
+
         // ✅ CẢI TIẾN: Lọc những record có dữ liệu hợp lệ
         const filteredData = appointmentsData.filter(app => {
             console.log(`📋 Item ${app.id || app.appointmentId}:`, {
@@ -136,15 +326,15 @@ const ServiceHistoryPage = () => {
                 appointmentDate: app.appointmentDate,
                 fullObject: app
             });
-            
+
             // Loại bỏ những record không hợp lệ
             const hasValidId = app.id || app.appointmentId;
             const hasValidPrice = app.servicePrice !== null && app.servicePrice !== undefined && app.servicePrice > 0;
             const hasValidName = app.serviceName && app.serviceName.toLowerCase() !== 'n/a' && app.serviceName.trim() !== '';
             const hasValidUserName = app.userName && app.userName.toLowerCase() !== 'n/a' && app.userName.trim() !== '';
-            
+
             const isValid = hasValidId && hasValidPrice && hasValidName && hasValidUserName;
-            
+
             console.log(`🔍 Validation for ${app.id || app.appointmentId}:`, {
                 hasValidId,
                 hasValidPrice,
@@ -152,12 +342,12 @@ const ServiceHistoryPage = () => {
                 hasValidUserName,
                 isValid
             });
-            
+
             return isValid;
         });
 
         console.log('🎯 After filtering, remaining items:', filteredData.length);
-        
+
         // ✅ DEBUG: Log tất cả dữ liệu trước khi tính tổng
         console.log('🔍 === DEBUGGING TOTAL CALCULATION ===');
         console.log('📊 Raw filtered data:', filteredData);
@@ -201,15 +391,14 @@ const ServiceHistoryPage = () => {
                 }
                 return { text: 'Sắp tới', className: 'bg-info' };
             })();
-            
             const rawPrice = app.servicePrice;
             let parsedPrice = parseFloat(app.servicePrice) || 0;
-            
+
             // ✅ Áp dụng cùng logic normalize giá như formatVNDPrice
             if (parsedPrice > 0 && parsedPrice < 1000) {
                 parsedPrice *= 10000; // Backend trả về 38 thay vì 380000
             }
-            
+
             // CHỈ tính những lịch hẹn có trạng thái "Đã hoàn thành"
             if (statusInfo.text === 'Đã hoàn thành') {
                 console.log(`💰 ADDING to total - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Raw Price: ${rawPrice}, Parsed Price: ${parsedPrice}, Status: ${statusInfo.text}, Sum before: ${sum}, Sum after: ${sum + parsedPrice}`);
@@ -219,40 +408,40 @@ const ServiceHistoryPage = () => {
                 return sum;
             }
         }, 0);
-        
+
         console.log('💰 Calculated total price (completed appointments only):', total);
         setCalculatedTotal(total);
-        
+
         return filteredData.map(app => ({
             ...app,
             id: app.id || app.appointmentId,
             appointmentId: app.appointmentId || app.id,
         }));
     };
-    
+
     const fetchHistoryByCustomerId = async (customerId) => {
         setIsLoading(true);
         setError('');
         setLookupPerformed(true);
-        
+
         const apiUrl = `http://localhost:8080/api/v1/admin/appointment/history/customer/${customerId}`;
         console.log('🌐 Making API call to:', apiUrl);
-        
+
         try {
             const response = await axios.get(apiUrl);
             console.log('🔍 Backend response for customer history:', response.data);
             console.log('📡 Response status:', response.status);
             console.log('📡 Response headers:', response.headers);
-            
+
             if (response.data.status === 'SUCCESS' && response.data.data) {
                 console.log('📊 Raw data before processing:', response.data.data);
                 console.log('📊 Data type:', Array.isArray(response.data.data) ? 'Array' : typeof response.data.data);
                 console.log('📊 Data length:', Array.isArray(response.data.data) ? response.data.data.length : 'Not array');
-                
+
                 const processedHistory = processHistoryData(response.data.data);
                 console.log('✅ Processed history:', processedHistory);
                 console.log('✅ Processed history length:', processedHistory.length);
-                
+
                 setHistory(processedHistory);
             } else {
                 console.log('⚠️ Backend response not successful or no data');
@@ -272,7 +461,7 @@ const ServiceHistoryPage = () => {
             setIsLoading(false);
         }
     };
-    
+
     const handleLookup = async (e) => {
         e.preventDefault();
         if (phoneError || !lookupIdentifier) {
@@ -338,15 +527,15 @@ const ServiceHistoryPage = () => {
             const response = await axios.put(`http://localhost:8080/api/v1/admin/appointment/${cancelAppointmentId}/cancel`, {
                 reason: cancelReason
             });
-            
+
             if (response.data.status === 'SUCCESS' || response.status === 200) {
                 toast.success(`Đã hủy lịch hẹn thành công. Lý do: ${cancelReason}`);
-                
+
                 // Cập nhật UI ngay lập tức
-                setHistory(prevHistory => 
-                    prevHistory.map(item => 
-                        item.appointmentId === cancelAppointmentId 
-                            ? { ...item, status: 'cancelled', canCancel: false, statusText: 'Đã hủy', statusClassName: 'bg-danger' } 
+                setHistory(prevHistory =>
+                    prevHistory.map(item =>
+                        item.appointmentId === cancelAppointmentId
+                            ? { ...item, status: 'cancelled', canCancel: false, statusText: 'Đã hủy', statusClassName: 'bg-danger' }
                             : item
                     )
                 );
@@ -366,40 +555,163 @@ const ServiceHistoryPage = () => {
         }
     };
 
-    // ✅ LOGIC XỬ LÝ TRẠNG THÁI ĐÃ ĐƯỢC CẢI TIẾN
-    const getAppointmentStatus = (item) => {
-        // Ưu tiên 1: Trạng thái tường minh từ backend là 'cancelled' hoặc 'completed'
-        const directStatus = item.status?.toLowerCase().trim();
-        if (directStatus === 'cancelled') {
-            return { text: 'Đã hủy', className: 'bg-danger' };
-        }
-        if (directStatus === 'completed') {
-            return { text: 'Đã hoàn thành', className: 'bg-success' };
-        }
-
-        // Ưu tiên 2: Logic dựa trên ngày tháng cho các trạng thái còn lại
-        const aptDate = parseDate(item.appointmentDate);
-        if (!aptDate) {
-            return { text: 'Ngày không xác định', className: 'bg-secondary' };
-        }
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        aptDate.setHours(0, 0, 0, 0);
-
-        if (aptDate.getTime() < today.getTime()) {
-            return { text: 'Đã hoàn thành', className: 'bg-success' };
-        }
-        if (aptDate.getTime() === today.getTime()) {
-            return { text: 'Hôm nay', className: 'bg-warning text-dark' };
-        }
-        return { text: 'Sắp tới', className: 'bg-info' };
-    };
-
-    const canCancelAppointment = (item) => {
-        const { text } = getAppointmentStatus(item);
-        // Có thể hủy nếu trạng thái không phải là "Đã hủy" hoặc "Đã hoàn thành"
-        return text !== 'Đã hủy' && text !== 'Đã hoàn thành';
-    };
+    const renderFilters = () => (
+        <div className="card shadow-sm mb-4 border-0 rounded-3">
+            <div className="card-header py-3" style={{
+                background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)',
+                borderBottom: '2px solid rgba(253, 181, 185, 0.2)',
+                borderTopLeftRadius: '15px',
+                borderTopRightRadius: '15px'
+            }}>
+                <h5 className="mb-0 fw-bold" style={{ color: '#2c3e50' }}>
+                    <i className="fas fa-filter me-2" style={{ color: '#FDB5B9' }}></i>
+                    Bộ Lọc Lịch Hẹn
+                </h5>
+            </div>
+            <div className="card-body p-4">
+                <div className="row g-3 align-items-end">
+                    <div className="col-lg-3 col-md-6">
+                        <label htmlFor="searchTerm" className="form-label fw-bold" style={{ color: '#2c3e50' }}>
+                            <i className="fas fa-search me-1" style={{ color: '#FDB5B9' }}></i>
+                            Tìm kiếm
+                        </label>
+                        <input
+                            type="text"
+                            id="searchTerm"
+                            className="form-control rounded-pill border-2"
+                            placeholder="Tên dịch vụ, nhân viên..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                borderColor: 'rgba(253, 181, 185, 0.3)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#FDB5B9';
+                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor = 'rgba(253, 181, 185, 0.3)';
+                                e.target.style.boxShadow = 'none';
+                            }}
+                        />
+                    </div>
+                    <div className="col-lg-3 col-md-6">
+                        <label htmlFor="filterStatus" className="form-label fw-bold" style={{ color: '#2c3e50' }}>
+                            <i className="fas fa-flag me-1" style={{ color: '#FDB5B9' }}></i>
+                            Trạng thái
+                        </label>
+                        <select
+                            id="filterStatus"
+                            className="form-select rounded-pill border-2"
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            style={{
+                                borderColor: 'rgba(253, 181, 185, 0.3)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#FDB5B9';
+                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor = 'rgba(253, 181, 185, 0.3)';
+                                e.target.style.boxShadow = 'none';
+                            }}
+                        >
+                            <option value="all">Tất cả</option>
+                            <option value="completed">Đã hoàn thành</option>
+                            <option value="upcoming">Sắp tới / Đang chờ</option>
+                            <option value="cancelled">Đã hủy</option>
+                        </select>
+                    </div>
+                    <div className="col-lg-2 col-md-4">
+                        <label htmlFor="filterStartDate" className="form-label fw-bold" style={{ color: '#2c3e50' }}>
+                            <i className="fas fa-calendar-day me-1" style={{ color: '#FDB5B9' }}></i>
+                            Từ ngày
+                        </label>
+                        <input
+                            type="date"
+                            id="filterStartDate"
+                            className="form-control rounded-pill border-2"
+                            value={filterStartDate}
+                            onChange={(e) => setFilterStartDate(e.target.value)}
+                            style={{
+                                borderColor: 'rgba(253, 181, 185, 0.3)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#FDB5B9';
+                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor = 'rgba(253, 181, 185, 0.3)';
+                                e.target.style.boxShadow = 'none';
+                            }}
+                        />
+                    </div>
+                    <div className="col-lg-2 col-md-4">
+                        <label htmlFor="filterEndDate" className="form-label fw-bold" style={{ color: '#2c3e50' }}>
+                            <i className="fas fa-calendar-day me-1" style={{ color: '#FDB5B9' }}></i>
+                            Đến ngày
+                        </label>
+                        <input
+                            type="date"
+                            id="filterEndDate"
+                            className="form-control rounded-pill border-2"
+                            value={filterEndDate}
+                            onChange={(e) => setFilterEndDate(e.target.value)}
+                            min={filterStartDate}
+                            style={{
+                                borderColor: 'rgba(253, 181, 185, 0.3)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#FDB5B9';
+                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor = 'rgba(253, 181, 185, 0.3)';
+                                e.target.style.boxShadow = 'none';
+                            }}
+                        />
+                    </div>
+                    <div className="col-lg-2 col-md-4">
+                        {isAnyFilterActive && (
+                            <button
+                                className="btn btn-outline-secondary w-100 rounded-pill border-2 fw-bold"
+                                onClick={() => {
+                                    setFilterStatus('all');
+                                    setFilterStartDate('');
+                                    setFilterEndDate('');
+                                    setSearchTerm('');
+                                }}
+                                style={{
+                                    borderColor: 'rgba(253, 181, 185, 0.5)',
+                                    color: '#FDB5B9',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.backgroundColor = '#FDB5B9';
+                                    e.target.style.borderColor = '#FDB5B9';
+                                    e.target.style.color = 'white';
+                                    e.target.style.transform = 'translateY(-2px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.backgroundColor = 'transparent';
+                                    e.target.style.borderColor = 'rgba(253, 181, 185, 0.5)';
+                                    e.target.style.color = '#FDB5B9';
+                                    e.target.style.transform = 'translateY(0)';
+                                }}
+                            >
+                                <i className="fas fa-undo me-2"></i>Reset
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     const renderHistoryTable = () => (
         <div className="table-responsive">
@@ -433,7 +745,7 @@ const ServiceHistoryPage = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {history.map((item, index) => {
+                    {filteredAndSortedHistory.map((item, index) => {
                         const statusInfo = getAppointmentStatus(item);
                         const isCancellable = canCancelAppointment(item);
 
@@ -444,8 +756,8 @@ const ServiceHistoryPage = () => {
                                 </td>
                                 <td className="py-3 align-items-center">
                                     <div className="d-flex align-items-center">
-                                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
-                                             style={{ width: '40px', height: '40px', fontSize: '0.9rem' }}>
+                                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                                            style={{ width: '40px', height: '40px', fontSize: '0.9rem' }}>
                                             <i className="fas fa-spa"></i>
                                         </div>
                                         <div>
@@ -464,17 +776,16 @@ const ServiceHistoryPage = () => {
                                         <div className="fw-bold" style={{ color: '#495057' }}>
                                             {item.displayDate || item.appointmentDate}
                                         </div>
-                                        <small className="text-muted">{item.slot || item.appointmentTime}</small>
+                                        {/* <small className="text-muted">{item.slot || item.appointmentTime}</small> */}
                                     </div>
                                 </td>
                                 <td className="py-3 align-middle">
                                     <span className={`badge ${statusInfo.className} px-3 py-2`} style={{ fontSize: '0.75rem', fontWeight: '600' }}>
-                                        <i className={`fas ${
-                                            statusInfo.text === 'Đã hủy' ? 'fa-times-circle' :
+                                        <i className={`fas ${statusInfo.text === 'Đã hủy' ? 'fa-times-circle' :
                                             statusInfo.text === 'Đã hoàn thành' ? 'fa-check-circle' :
-                                            statusInfo.text === 'Hôm nay' ? 'fa-clock' :
-                                            'fa-calendar-plus'
-                                        } me-1`}></i>
+                                                statusInfo.text === 'Hôm nay' ? 'fa-clock' :
+                                                    'fa-calendar-plus'
+                                            } me-1`}></i>
                                         {statusInfo.text}
                                     </span>
                                 </td>
@@ -518,37 +829,65 @@ const ServiceHistoryPage = () => {
                 </tbody>
             </table>
             {/* Phần thống kê ở footer table */}
-            <div className="bg-light p-3 border-top">
+            <div className="p-3 border-top" style={{
+                background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)',
+                borderBottomLeftRadius: '15px',
+                borderBottomRightRadius: '15px'
+            }}>
                 <div className="row text-center">
                     <div className="col-md-4">
                         <div className="d-flex align-items-center justify-content-center">
-                            <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '40px', height: '40px' }}>
+                            <div className="text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style={{
+                                    width: '50px',
+                                    height: '50px',
+                                    background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                    boxShadow: '0 4px 10px rgba(253, 181, 185, 0.3)'
+                                }}>
                                 <i className="fas fa-list"></i>
                             </div>
                             <div>
-                                <div className="fw-bold text-primary">{customerStats?.totalAppointments || history.length}</div>
+                                <div className="fw-bold" style={{ color: '#2c3e50', fontSize: '1.2rem' }}>
+                                    {filteredAndSortedHistory.length}
+                                </div>
                                 <small className="text-muted">Tổng lịch hẹn</small>
                             </div>
                         </div>
                     </div>
                     <div className="col-md-4">
                         <div className="d-flex align-items-center justify-content-center">
-                            <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '40px', height: '40px' }}>
+                            <div className="text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style={{
+                                    width: '50px',
+                                    height: '50px',
+                                    background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                                    boxShadow: '0 4px 10px rgba(40, 167, 69, 0.3)'
+                                }}>
                                 <i className="fas fa-coins"></i>
                             </div>
                             <div>
-                                <div className="fw-bold text-success">{formatVNDPrice(calculatedTotal)}</div>
-                                <small className="text-muted">Tổng chi tiêu (đã hoàn thành)</small>
+                                <div className="fw-bold text-success" style={{ fontSize: '1.2rem' }}>
+                                    {formatVNDPrice(filteredCalculatedTotal)}
+                                </div>
+                                <small className="text-muted">Tổng chi tiêu</small>
                             </div>
                         </div>
                     </div>
                     <div className="col-md-4">
                         <div className="d-flex align-items-center justify-content-center">
-                            <div className="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '40px', height: '40px' }}>
+                            <div className="text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style={{
+                                    width: '50px',
+                                    height: '50px',
+                                    background: 'linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%)',
+                                    boxShadow: '0 4px 10px rgba(23, 162, 184, 0.3)'
+                                }}>
                                 <i className="fas fa-calendar-check"></i>
                             </div>
                             <div>
-                                <div className="fw-bold text-info">{customerStats?.lastAppointmentDate || 'Chưa có'}</div>
+                                <div className="fw-bold text-info" style={{ fontSize: '1.2rem' }}>
+                                    {filteredAndSortedHistory.length > 0 ? (filteredAndSortedHistory[0].displayDate || filteredAndSortedHistory[0].appointmentDate) : 'Chưa có'}
+                                </div>
                                 <small className="text-muted">Lần gần nhất</small>
                             </div>
                         </div>
@@ -557,7 +896,7 @@ const ServiceHistoryPage = () => {
             </div>
         </div>
     );
-    
+
     return (
         <div>
             <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
@@ -578,12 +917,21 @@ const ServiceHistoryPage = () => {
                             <div className="alert alert-info" role="alert">
                                 <i className="fas fa-info-circle me-2"></i>
                                 <strong>Lưu ý:</strong> Bạn có thể hủy các lịch hẹn sắp tới bằng cách nhấn nút "Hủy Lịch" trong bảng bên dưới.
-                                Lịch hẹn chỉ có thể hủy trước ngày hẹn hoặc trong ngày hẹn. 
-                                <br/>
+                                Lịch hẹn chỉ có thể hủy trước ngày hẹn hoặc trong ngày hẹn.
+                                <br />
                                 <small className="text-muted mt-1 d-block">
                                     <i className="fas fa-filter me-1"></i>
                                     Chỉ hiển thị lịch hẹn hợp lệ (có giá tiền lớn hơn 0, tên dịch vụ và nhân viên không phải N/A).
                                 </small>
+                            </div>
+                        )}
+
+
+                        {/* Thông báo tự động tra cứu */}
+                        {!userInfo && autoLookupPerformed && (
+                            <div className="alert alert-success" role="alert">
+                                <i className="fas fa-magic me-2"></i>
+                                <strong>Tự động tra cứu:</strong> Hệ thống đã tự động tra cứu lịch hẹn với số điện thoại bạn vừa sử dụng để đặt lịch.
                             </div>
                         )}
                     </div>
@@ -593,8 +941,8 @@ const ServiceHistoryPage = () => {
                         <div className="row justify-content-center mb-5">
                             <div className="col-lg-8 col-md-10">
                                 <div className="card shadow-lg border-0">
-                                    <div className="card-header bg-gradient text-white text-center py-4" 
-                                         style={{ background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))', backdropFilter: 'blur(10px)', boxShadow: '0 4px 20px rgba(255, 182, 193, 0.3)' }}>
+                                    <div className="card-header bg-gradient text-white text-center py-4"
+                                        style={{ background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))', backdropFilter: 'blur(10px)', boxShadow: '0 4px 20px rgba(255, 182, 193, 0.3)' }}>
                                         <h4 className="mb-2">
                                             <i className="fas fa-search me-3"></i>
                                             Tra Cứu Lịch Hẹn
@@ -626,7 +974,7 @@ const ServiceHistoryPage = () => {
                                                     required
                                                 />
                                             </div>
-                                            
+
                                             {phoneError && (
                                                 <div className="alert alert-danger py-2 mb-3" role="alert">
                                                     <i className="fas fa-exclamation-triangle me-2"></i>
@@ -634,9 +982,9 @@ const ServiceHistoryPage = () => {
                                                 </div>
                                             )}
 
-                                            <button 
-                                                type="submit" 
-                                                className="btn btn-lg w-100 py-3 mb-3" 
+                                            <button
+                                                type="submit"
+                                                className="btn btn-lg w-100 py-3 mb-3"
                                                 disabled={isLoading || !lookupIdentifier.trim() || phoneError}
                                                 style={{
                                                     fontSize: '1.1rem',
@@ -686,10 +1034,12 @@ const ServiceHistoryPage = () => {
                             <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
                                 <span className="visually-hidden">Đang tải...</span>
                             </div>
-                            <p className="mt-3 text-muted">Đang tìm kiếm lịch hẹn...</p>
+                            <p className="mt-3 text-muted">
+                                {autoLookupPerformed ? 'Đang tự động tìm kiếm lịch hẹn vừa đặt...' : 'Đang tìm kiếm lịch hẹn...'}
+                            </p>
                         </div>
                     )}
-                    
+
                     {error && (
                         <div className="row justify-content-center">
                             <div className="col-lg-8">
@@ -699,7 +1049,7 @@ const ServiceHistoryPage = () => {
                                     <p className="mb-3">{error}</p>
                                     <hr />
                                     <div className="mb-0">
-                                        <button 
+                                        <button
                                             className="btn btn-outline-danger me-3"
                                             onClick={() => {
                                                 setError('');
@@ -723,40 +1073,141 @@ const ServiceHistoryPage = () => {
                     {/* Hiển thị lịch sử */}
                     {((userInfo && !isLoading && !error) || (lookupPerformed && !isLoading && !error)) && (
                         history.length > 0 ? (
-                            <div className="row justify-content-center">
-                                <div className="col-12">
-                                    <div className="card shadow-lg border-0">
-                                        <div className="card-header bg-success text-white py-3">
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <h5 className="mb-0">
-                                                    <i className="fas fa-check-circle me-2"></i>
-                                                    Tìm thấy {history.length} lịch hẹn
-                                                </h5>
-                                                <span className="badge bg-light text-dark">
-                                                    <i className="fas fa-calendar-check me-1"></i>
-                                                    Lịch hẹn hợp lệ
-                                                </span>
+                            <>
+                                {renderFilters()}
+
+                                {filteredAndSortedHistory.length > 0 ? (
+                                    <div className="row justify-content-center">
+                                        <div className="col-12">
+                                            <div className="card shadow-lg border-0 rounded-3">
+                                                <div className="card-header text-white py-4" style={{
+                                                    background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                                    borderTopLeftRadius: '15px',
+                                                    borderTopRightRadius: '15px'
+                                                }}>
+                                                    <div className="d-flex justify-content-between align-items-center">
+                                                        <h5 className="mb-0 fw-bold">
+                                                            <i className="fas fa-check-circle me-2"></i>
+                                                            Tìm thấy {filteredAndSortedHistory.length} lịch hẹn
+                                                        </h5>
+                                                        <span className="badge bg-white text-dark px-3 py-2 rounded-pill">
+                                                            <i className="fas fa-calendar-check me-1"></i>
+                                                            Kết quả đã lọc
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="card-body p-0">
+                                                    {renderHistoryTable()}
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="card-body p-0">
-                                            {renderHistoryTable()}
+                                    </div>
+                                ) : (
+                                    <div className="row justify-content-center">
+                                        <div className="col-lg-8">
+                                            <div className="alert border-0 text-center py-5 rounded-3 shadow-sm"
+                                                style={{
+                                                    background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)',
+                                                    border: '2px solid rgba(253, 181, 185, 0.3) !important'
+                                                }}>
+                                                <div className="icon-circle mx-auto mb-4" style={{
+                                                    width: '80px',
+                                                    height: '80px',
+                                                    backgroundColor: 'rgba(253, 181, 185, 0.2)',
+                                                    borderRadius: '50%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    border: '3px solid #FDB5B9'
+                                                }}>
+                                                    <i className="fas fa-search-minus fa-2x" style={{ color: '#FDB5B9' }}></i>
+                                                </div>
+                                                <h4 className="alert-heading fw-bold mb-3" style={{ color: '#2c3e50' }}>
+                                                    Không có kết quả phù hợp
+                                                </h4>
+                                                <p className="mb-4 text-muted" style={{ fontSize: '1.1rem' }}>
+                                                    Không tìm thấy lịch hẹn nào khớp với bộ lọc của bạn.
+                                                </p>
+                                                <button
+                                                    className="btn btn-lg px-4 py-2 rounded-pill fw-bold"
+                                                    style={{
+                                                        background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                                        border: 'none',
+                                                        color: 'white',
+                                                        boxShadow: '0 4px 15px rgba(253, 181, 185, 0.3)',
+                                                        transition: 'all 0.3s ease'
+                                                    }}
+                                                    onClick={() => {
+                                                        setFilterStatus('all');
+                                                        setFilterStartDate('');
+                                                        setFilterEndDate('');
+                                                        setSearchTerm('');
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.target.style.transform = 'translateY(-2px)';
+                                                        e.target.style.boxShadow = '0 6px 20px rgba(253, 181, 185, 0.4)';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.target.style.transform = 'translateY(0)';
+                                                        e.target.style.boxShadow = '0 4px 15px rgba(253, 181, 185, 0.3)';
+                                                    }}
+                                                >
+                                                    <i className="fas fa-undo me-2"></i>
+                                                    Reset Bộ Lọc
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
+                                )}
+                            </>
                         ) : (
                             <div className="row justify-content-center">
                                 <div className="col-lg-8">
-                                    <div className="alert alert-info text-center py-5" role="alert">
-                                        <i className="fas fa-search fa-3x text-info mb-4"></i>
-                                        <h4 className="alert-heading">Chưa có lịch hẹn</h4>
-                                        <p className="mb-4">
-                                            {userInfo 
+                                    <div className="alert border-0 text-center py-5 rounded-3 shadow-sm"
+                                        style={{
+                                            background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)',
+                                            border: '2px solid rgba(253, 181, 185, 0.3) !important'
+                                        }}>
+                                        <div className="icon-circle mx-auto mb-4" style={{
+                                            width: '100px',
+                                            height: '100px',
+                                            backgroundColor: 'rgba(253, 181, 185, 0.2)',
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '3px solid #FDB5B9'
+                                        }}>
+                                            <i className="fas fa-spa fa-3x" style={{ color: '#FDB5B9' }}></i>
+                                        </div>
+                                        <h4 className="alert-heading fw-bold mb-3" style={{ color: '#2c3e50' }}>
+                                            Chưa có lịch hẹn
+                                        </h4>
+                                        <p className="mb-4 text-muted" style={{ fontSize: '1.1rem' }}>
+                                            {userInfo
                                                 ? 'Bạn chưa có lịch hẹn hợp lệ nào (có giá tiền và nhân viên phụ trách) tại spa của chúng tôi.'
                                                 : `Không tìm thấy lịch hẹn hợp lệ với số điện thoại: ${lookupIdentifier}`
                                             }
                                         </p>
-                                        <Link to="/ServicePage" className="btn btn-primary">
+                                        <Link
+                                            to="/ServicePage"
+                                            className="btn btn-lg px-4 py-2 rounded-pill fw-bold text-decoration-none"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                                border: 'none',
+                                                color: 'white',
+                                                boxShadow: '0 4px 15px rgba(253, 181, 185, 0.3)',
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.transform = 'translateY(-2px)';
+                                                e.target.style.boxShadow = '0 6px 20px rgba(253, 181, 185, 0.4)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.transform = 'translateY(0)';
+                                                e.target.style.boxShadow = '0 4px 15px rgba(253, 181, 185, 0.3)';
+                                            }}
+                                        >
                                             <i className="fas fa-spa me-2"></i>
                                             Xem Dịch Vụ
                                         </Link>
@@ -826,7 +1277,7 @@ const ServiceHistoryPage = () => {
                                 <label className="form-label small text-muted">Hoặc chọn lý do nhanh:</label>
                                 <div className="d-flex flex-wrap gap-2">
                                     {[
-                                        'Bận đột xuất', 
+                                        'Bận đột xuất',
                                         'Thay đổi lịch trình',
                                         'Lý do sức khỏe',
                                         'Có việc gia đình',
