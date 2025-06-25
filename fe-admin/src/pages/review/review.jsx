@@ -48,32 +48,35 @@ const ReviewList = () => {
             navigate('/spa/appointments', {
                 state: {
                     serviceId: review.relatedId,
-                    serviceName: `Service #${review.relatedId}`,
-                    title: `Đặt Lịch Dịch Vụ từ Đánh Giá #${review.id}`,
+                    serviceName: review.serviceName || `Service #${review.relatedId}`,
+                    title: `Đặt Lịch Dịch Vụ "${review.serviceName || `#${review.relatedId}`}" (từ đánh giá ${review.rating}⭐)`,
                     fromReview: true,
-                    reviewId: review.id
+                    reviewId: review.id,
+                    rating: review.rating
                 }
             });
-            toast.info(`Chuyển đến trang đặt lịch cho dịch vụ ID: ${review.relatedId}`);
+            toast.info(`Chuyển đến trang đặt lịch cho dịch vụ: ${review.serviceName || `#${review.relatedId}`}`);
         } else if (review.type === 'USER' && review.relatedId) {
             // Nếu là review cho nhân viên, chuyển đến trang appointment với filter theo staff
             navigate('/spa/appointments', {
                 state: {
                     staffId: review.relatedId,
-                    staffName: `Staff #${review.relatedId}`,
-                    title: `Đặt Lịch với Nhân Viên từ Đánh Giá #${review.id}`,
+                    staffName: review.userName || `Staff #${review.relatedId}`,
+                    title: `Đặt Lịch với Nhân Viên "${review.userName || `#${review.relatedId}`}" (từ đánh giá ${review.rating}⭐)`,
                     fromReview: true,
-                    reviewId: review.id
+                    reviewId: review.id,
+                    rating: review.rating
                 }
             });
-            toast.info(`Chuyển đến trang đặt lịch với nhân viên ID: ${review.relatedId}`);
+            toast.info(`Chuyển đến trang đặt lịch với nhân viên: ${review.userName || `#${review.relatedId}`}`);
         } else {
             // Nếu không có thông tin đầy đủ, chuyển đến trang appointment chung
             navigate('/spa/appointments', {
                 state: {
-                    title: `Đặt Lịch từ Đánh Giá #${review.id}`,
+                    title: `Đặt Lịch từ Đánh Giá #${review.id} (${review.rating}⭐)`,
                     fromReview: true,
-                    reviewId: review.id
+                    reviewId: review.id,
+                    rating: review.rating
                 }
             });
             toast.info('Chuyển đến trang đặt lịch hẹn');
@@ -301,13 +304,42 @@ const ReviewList = () => {
                                         '&:hover': {
                                             backgroundColor: 'primary.light',
                                             color: 'white',
-                                            borderRadius: '4px'
-                                        }
+                                            borderRadius: '4px',
+                                            transform: 'scale(1.05)',
+                                            transition: 'all 0.2s'
+                                        },
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        padding: '8px'
                                     }}
                                     onClick={() => handleRatingClick(r)}
-                                    title="Click để đặt lịch dịch vụ/nhân viên này"
+                                    title={`Click để đặt lịch ${r.type === 'SERVICE' ? 'dịch vụ' : 'nhân viên'} này`}
                                 >
-                                    {r.rating} ⭐
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        backgroundColor: 'primary.lighter',
+                                        padding: '4px 8px',
+                                        borderRadius: '12px',
+                                        '&:hover': {
+                                            backgroundColor: 'primary.light',
+                                            color: 'white'
+                                        }
+                                    }}>
+                                        <span style={{ fontSize: '16px' }}>{r.rating}</span>
+                                        <span style={{ color: '#FFD700', marginLeft: '4px' }}>⭐</span>
+                                    </Box>
+                                    {r.type === 'SERVICE' && (
+                                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                            {r.serviceName || `Dịch vụ #${r.relatedId}`}
+                                        </Typography>
+                                    )}
+                                    {r.type === 'USER' && (
+                                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                            {r.userName || `Nhân viên #${r.relatedId}`}
+                                        </Typography>
+                                    )}
                                 </TableCell>
                                 <TableCell>{r.createdAt?.slice(0, 10)}</TableCell>
                                 <TableCell>
