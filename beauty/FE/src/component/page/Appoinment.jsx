@@ -4,6 +4,18 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+const validateVietnamesePhone = (phone) => {
+    const cleanPhone = phone.replace(/[\s-().]/g, '');
+    const patterns = [
+        /^(84|0)(3[2-9]|5[689]|7[06-9]|8[1-689]|9[0-46-9])[0-9]{7}$/,
+        /^(84|0)(2[0-9])[0-9]{8}$/,
+    ];
+    if (cleanPhone.length < 10 || cleanPhone.length > 11) return 'Số điện thoại phải có 10-11 số.';
+    if (!/^\d+$/.test(cleanPhone)) return 'Số điện thoại chỉ được chứa các chữ số.';
+    if (!patterns.some(p => p.test(cleanPhone))) return 'Định dạng số điện thoại không hợp lệ (VD: 0987654321).';
+    return null;
+};
+
 const Appointment = () => {
     const navigate = useNavigate();
     
@@ -14,6 +26,7 @@ const Appointment = () => {
     const [formData, setFormData] = useState({
         fullName: '',
         phoneNumber: '',
+        email: '',
         appointmentDate: '',
         serviceId: '',
         notes: '',
@@ -50,7 +63,6 @@ const Appointment = () => {
 
     // Validation states và patterns
     const [validationErrors, setValidationErrors] = useState({});
-    const phoneRegex = /^\d{1,10}$/; // Tối đa 10 số
 
     // Fetch services
     useEffect(() => {
@@ -447,7 +459,12 @@ const Appointment = () => {
     // Fetch time slots
     useEffect(() => {
         axios.get('http://localhost:8080/api/v1/timeslot')
-            .then(res => setTimeSlots(Array.isArray(res.data) ? res.data : res.data.data || []))
+            .then(res => {
+                const allSlots = Array.isArray(res.data) ? res.data : res.data.data || [];
+                // Lọc chỉ những time slot có isActive là 1 hoặc true
+                const activeSlots = allSlots.filter(slot => slot.isActive === 1 || slot.isActive === true);
+                setTimeSlots(activeSlots);
+            })
             .catch(() => setTimeSlots([]));
     }, []);
 
@@ -541,13 +558,21 @@ const Appointment = () => {
                     error = 'Họ tên không được để trống';
                 }
                 break;
+            case 'email':
+                if (!value.trim()) {
+                    error = 'Email không được để trống';
+                } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(value)) {
+                    error = 'Định dạng email không hợp lệ';
+                }
+                break;
             case 'phoneNumber':
                 if (!value.trim()) {
                     error = 'Số điện thoại không được để trống';
-                } else if (!phoneRegex.test(value)) {
-                    error = 'Số điện thoại chỉ được chứa số và tối đa 10 chữ số';
-                } else if (value.length > 10) {
-                    error = 'Số điện thoại không được quá 10 chữ số';
+                } else {
+                    const validationMessage = validateVietnamesePhone(value);
+                    if (validationMessage) {
+                        error = validationMessage;
+                    }
                 }
                 break;
             case 'notes':
@@ -623,6 +648,7 @@ const Appointment = () => {
                 ...prev,
                 fullName: storedUserInfo.fullName || '',
                 phoneNumber: storedUserInfo.phone || '',
+                email: storedUserInfo.email || '',
                 customerId: storedUserInfo.id,
             }));
         } else {
@@ -670,6 +696,7 @@ const Appointment = () => {
                     const res = await axios.post('http://localhost:8080/api/v1/customers/guest-create', {
                         fullName: formData.fullName,
                         phone: formData.phoneNumber,
+                        email: formData.email,
                     });
                     customerIdToSubmit = res.data.id;
                 } catch (err) {
@@ -693,8 +720,8 @@ const Appointment = () => {
                 delete submitData.userId;
             }
 
-            if (!submitData.fullName || !submitData.phoneNumber || !submitData.appointmentDate || !submitData.serviceId || !submitData.timeSlotId) {
-                toast.error('Vui lòng điền đầy đủ các trường bắt buộc: Họ tên, SĐT, Dịch vụ, Ngày hẹn, Khung giờ.');
+            if (!submitData.fullName || !submitData.phoneNumber || !submitData.email || !submitData.appointmentDate || !submitData.serviceId || !submitData.timeSlotId) {
+                toast.error('Vui lòng điền đầy đủ các trường bắt buộc: Họ tên, SĐT, Email, Dịch vụ, Ngày hẹn, Khung giờ.');
                 return;
             }
 
@@ -756,7 +783,7 @@ const Appointment = () => {
             console.error('Error in filteredStaffList:', error);
             return [];
         }
-    }, [staffList, staffSearchTerm, staffAvailabilities]); // Thêm staffAvailabilities vào dependencies
+    }, [staffList, staffSearchTerm, staffAvailabilities]);
 
     const renderStars = (rating) => {
         const totalStars = 5;
@@ -787,12 +814,14 @@ const Appointment = () => {
                 const hasUserId = formData.userId !== '' && formData.userId != null && formData.userId !== undefined;
                 const hasFullName = formData.fullName !== '' && formData.fullName?.trim() !== '';
                 const hasPhoneNumber = formData.phoneNumber !== '' && formData.phoneNumber?.trim() !== '';
+                const hasEmail = formData.email !== '' && formData.email?.trim() !== '';
                 const noNameError = !validationErrors.fullName || validationErrors.fullName === '';
                 const noPhoneError = !validationErrors.phoneNumber || validationErrors.phoneNumber === '';
+                const noEmailError = !validationErrors.email || validationErrors.email === '';
                 
                 const step4Valid = hasServiceId && hasAppointmentDate && hasTimeSlotId && 
-                                 hasUserId && hasFullName && hasPhoneNumber && 
-                                 noNameError && noPhoneError;
+                                 hasUserId && hasFullName && hasPhoneNumber && hasEmail &&
+                                 noNameError && noPhoneError && noEmailError;
                 
                 console.log("🔍 Step 4 Validation DETAILED:", {
                     serviceId: `"${formData.serviceId}" -> ${hasServiceId}`,
@@ -801,9 +830,11 @@ const Appointment = () => {
                     userId: `${formData.userId} (type: ${typeof formData.userId}) -> ${hasUserId}`,
                     fullName: `"${formData.fullName}" -> ${hasFullName}`,
                     phoneNumber: `"${formData.phoneNumber}" -> ${hasPhoneNumber}`,
+                    email: `"${formData.email}" -> ${hasEmail}`,
                     validationErrors: validationErrors,
                     noNameError: noNameError,
                     noPhoneError: noPhoneError,
+                    noEmailError: noEmailError,
                     FINAL_RESULT: step4Valid
                 });
                 
@@ -816,8 +847,10 @@ const Appointment = () => {
                     if (!hasUserId) failedFields.push('userId');
                     if (!hasFullName) failedFields.push('fullName');
                     if (!hasPhoneNumber) failedFields.push('phoneNumber');
+                    if (!hasEmail) failedFields.push('email');
                     if (!noNameError) failedFields.push('fullName validation error');
                     if (!noPhoneError) failedFields.push('phoneNumber validation error');
+                    if (!noEmailError) failedFields.push('email validation error');
                     
                     console.error("❌ Step 4 FAILED - Missing fields:", failedFields);
                 }
@@ -863,9 +896,9 @@ const Appointment = () => {
                     }
                     break;
                 case 3:
-                    if (!formData.fullName || !formData.phoneNumber) {
-                        toast.error('Vui lòng điền đầy đủ họ tên và số điện thoại!');
-                    } else if (validationErrors.fullName || validationErrors.phoneNumber) {
+                    if (!formData.fullName || !formData.phoneNumber || !formData.email) {
+                        toast.error('Vui lòng điền đầy đủ họ tên, số điện thoại và email!');
+                    } else if (validationErrors.fullName || validationErrors.phoneNumber || validationErrors.email) {
                         toast.error('Vui lòng sửa lỗi trong thông tin cá nhân!');
                     }
                     break;
@@ -914,6 +947,7 @@ const Appointment = () => {
             setFormData({
                 fullName: '',
                 phoneNumber: '',
+                email: '',
                 appointmentDate: '',
                 serviceId: '',
                 notes: '',
@@ -1357,17 +1391,35 @@ const Appointment = () => {
                         <i className="fas fa-phone me-2"></i>Số Điện Thoại *
                     </label>
                     <input
-                        type="text"
+                        type="tel"
                         name="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={handleInputChange}
                         className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
-                        placeholder="Nhập số điện thoại (tối đa 10 số)"
-                        maxLength="10"
+                        placeholder="Nhập số điện thoại hợp lệ"
+                        maxLength="15"
                         style={{ color: 'white', height: '45px' }}
                     />
                     {validationErrors.phoneNumber && (
                         <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
+                    )}
+                </div>
+
+                <div className="col-12">
+                    <label className="form-label text-white fw-bold">
+                        <i className="fas fa-envelope me-2"></i>Email *
+                    </label>
+                    <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.email ? 'border-danger' : ''}`}
+                        placeholder="Nhập email của bạn"
+                        style={{ color: 'white', height: '45px' }}
+                    />
+                    {validationErrors.email && (
+                        <small className="text-danger mt-1 d-block">{validationErrors.email}</small>
                     )}
                 </div>
 
@@ -1511,7 +1563,10 @@ const Appointment = () => {
                                     color: '#e9ecef',
                                     fontSize: '1rem',
                                     textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>{formData.phoneNumber}</p>
+                                }}>{formData.phoneNumber}
+                                <br />
+                                {formData.email}
+                                </p>
                             </div>
                         </div>
 
@@ -1716,7 +1771,7 @@ const Appointment = () => {
                                     type="submit"
                                     className="btn custom-btn submit-btn"
                                     style={{ minWidth: '180px' }}
-                                    disabled={isSubmittingAppointment}
+                                    disabled={isSubmittingAppointment || !canProceedToStep(4)}
                                 >
                                     {isSubmittingAppointment ? (
                                         <>
