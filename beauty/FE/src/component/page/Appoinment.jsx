@@ -4,6 +4,18 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+const validateVietnamesePhone = (phone) => {
+    const cleanPhone = phone.replace(/[\s-().]/g, '');
+    const patterns = [
+        /^(84|0)(3[2-9]|5[689]|7[06-9]|8[1-689]|9[0-46-9])[0-9]{7}$/,
+        /^(84|0)(2[0-9])[0-9]{8}$/,
+    ];
+    if (cleanPhone.length < 10 || cleanPhone.length > 11) return 'Số điện thoại phải có 10-11 số.';
+    if (!/^\d+$/.test(cleanPhone)) return 'Số điện thoại chỉ được chứa các chữ số.';
+    if (!patterns.some(p => p.test(cleanPhone))) return 'Định dạng số điện thoại không hợp lệ (VD: 0987654321).';
+    return null;
+};
+
 const Appointment = () => {
     const navigate = useNavigate();
 
@@ -14,6 +26,7 @@ const Appointment = () => {
     const [formData, setFormData] = useState({
         fullName: '',
         phoneNumber: '',
+        email: '',
         appointmentDate: '',
         serviceId: '',
         notes: '',
@@ -50,7 +63,6 @@ const Appointment = () => {
 
     // Validation states và patterns
     const [validationErrors, setValidationErrors] = useState({});
-    const phoneRegex = /^\d{1,10}$/; // Tối đa 10 số
 
     // Fetch services
     useEffect(() => {
@@ -447,7 +459,12 @@ const Appointment = () => {
     // Fetch time slots
     useEffect(() => {
         axios.get('http://localhost:8080/api/v1/timeslot')
-            .then(res => setTimeSlots(Array.isArray(res.data) ? res.data : res.data.data || []))
+            .then(res => {
+                const allSlots = Array.isArray(res.data) ? res.data : res.data.data || [];
+                // Lọc chỉ những time slot có isActive là 1 hoặc true
+                const activeSlots = allSlots.filter(slot => slot.isActive === 1 || slot.isActive === true);
+                setTimeSlots(activeSlots);
+            })
             .catch(() => setTimeSlots([]));
     }, []);
 
@@ -541,13 +558,21 @@ const Appointment = () => {
                     error = 'Họ tên không được để trống';
                 }
                 break;
+            case 'email':
+                if (!value.trim()) {
+                    error = 'Email không được để trống';
+                } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(value)) {
+                    error = 'Định dạng email không hợp lệ';
+                }
+                break;
             case 'phoneNumber':
                 if (!value.trim()) {
                     error = 'Số điện thoại không được để trống';
-                } else if (!phoneRegex.test(value)) {
-                    error = 'Số điện thoại chỉ được chứa số và tối đa 10 chữ số';
-                } else if (value.length > 10) {
-                    error = 'Số điện thoại không được quá 10 chữ số';
+                } else {
+                    const validationMessage = validateVietnamesePhone(value);
+                    if (validationMessage) {
+                        error = validationMessage;
+                    }
                 }
                 break;
             case 'notes':
@@ -623,22 +648,23 @@ const Appointment = () => {
                 ...prev,
                 fullName: storedUserInfo.fullName || '',
                 phoneNumber: storedUserInfo.phone || '',
+                email: storedUserInfo.email || '',
                 customerId: storedUserInfo.id,
             }));
         } else {
             toast.error('Không có thông tin tài khoản!');
         }
     };
- 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
         // Check if already submitting
         if (isSubmittingAppointment) {
             toast.warn('Đang xử lý yêu cầu, vui lòng đợi...');
             return;
         }
-    
+
         // Check minimum time between submissions (3 seconds)
         const now = Date.now();
         const timeSinceLastSubmit = now - lastSubmitTime;
@@ -647,29 +673,30 @@ const Appointment = () => {
             toast.warn(`Vui lòng đợi ${remainingTime} giây trước khi thử lại.`);
             return;
         }
-    
+
         setIsSubmittingAppointment(true);
         setLastSubmitTime(now);
-    
+
         try {
             if (formData.userId && staffAvailabilities[formData.userId]?.isAvailable === false) {
                 toast.error("Nhân viên bạn chọn đã bận vào khung giờ này. Vui lòng chọn nhân viên khác.");
                 return;
             }
-    
+
             let formattedDate = formData.appointmentDate;
             if (formattedDate && formattedDate.includes('-')) {
                 const [year, month, day] = formattedDate.split('-');
                 formattedDate = `${day}/${month}/${year}`;
             }
-    
+
             let customerIdToSubmit = formData.customerId;
-    
+
             if (!customerIdToSubmit && (formData.fullName && formData.phoneNumber)) {
                 try {
                     const res = await axios.post('http://localhost:8080/api/v1/customers/guest-create', {
                         fullName: formData.fullName,
                         phone: formData.phoneNumber,
+                        email: formData.email,
                     });
                     customerIdToSubmit = res.data.id;
                 } catch (err) {
@@ -677,7 +704,7 @@ const Appointment = () => {
                     return;
                 }
             }
-    
+
             const submitData = {
                 ...formData,
                 customerId: customerIdToSubmit,
@@ -688,16 +715,16 @@ const Appointment = () => {
                 price: formData.price,
                 slot: formData.slot || "1",
             };
-    
+
             if (!submitData.userId) {
                 delete submitData.userId;
             }
-    
-            if (!submitData.fullName || !submitData.phoneNumber || !submitData.appointmentDate || !submitData.serviceId || !submitData.timeSlotId) {
-                toast.error('Vui lòng điền đầy đủ các trường bắt buộc: Họ tên, SĐT, Dịch vụ, Ngày hẹn, Khung giờ.');
+
+            if (!submitData.fullName || !submitData.phoneNumber || !submitData.email || !submitData.appointmentDate || !submitData.serviceId || !submitData.timeSlotId) {
+                toast.error('Vui lòng điền đầy đủ các trường bắt buộc: Họ tên, SĐT, Email, Dịch vụ, Ngày hẹn, Khung giờ.');
                 return;
             }
-    
+
             await axios.post('http://localhost:8080/api/v1/admin/appointment/create', submitData);
             
             // Hiển thị thông báo thành công với thời gian chờ
@@ -709,7 +736,7 @@ const Appointment = () => {
                 pauseOnHover: true,
                 draggable: true,
             });
-    
+
             // Lưu thông tin để tự động tra cứu ở trang service-history
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             const bookingInfo = {
@@ -718,10 +745,10 @@ const Appointment = () => {
                 isLoggedIn: !!userInfo.id,
                 timestamp: Date.now()
             };
-            
+
             // Lưu thông tin đặt lịch vào sessionStorage (chỉ tồn tại trong phiên làm việc hiện tại)
             sessionStorage.setItem('recentBooking', JSON.stringify(bookingInfo));
-    
+
             // Reset form after successful submission
             setFormData(prev => ({
                 ...prev,
@@ -735,12 +762,12 @@ const Appointment = () => {
             setSelectedStaffId(null);
             setStaffAvailabilities({});
             setCurrentStep(1); // Reset về step đầu tiên
-    
+
             // Chuyển hướng sau 2 giây để người dùng có thể thấy thông báo thành công
             setTimeout(() => {
                 navigate('/service-history');
             }, 2000);
-    
+
         } catch (error) {
             if (error.response) {
                 toast.error('Đặt lịch thất bại! Lỗi: ' + (error.response.data.message || error.response.data));
@@ -782,7 +809,7 @@ const Appointment = () => {
             console.error('Error in filteredStaffList:', error);
             return [];
         }
-    }, [staffList, staffSearchTerm, staffAvailabilities]); // Thêm staffAvailabilities vào dependencies
+    }, [staffList, staffSearchTerm, staffAvailabilities]);
 
     const renderStars = (rating) => {
         const totalStars = 5;
@@ -815,13 +842,15 @@ const Appointment = () => {
                 const hasUserId = formData.userId !== '' && formData.userId != null && formData.userId !== undefined;
                 const hasFullName = formData.fullName !== '' && formData.fullName?.trim() !== '';
                 const hasPhoneNumber = formData.phoneNumber !== '' && formData.phoneNumber?.trim() !== '';
+                const hasEmail = formData.email !== '' && formData.email?.trim() !== '';
                 const noNameError = !validationErrors.fullName || validationErrors.fullName === '';
                 const noPhoneError = !validationErrors.phoneNumber || validationErrors.phoneNumber === '';
+                const noEmailError = !validationErrors.email || validationErrors.email === '';
 
                 const step4Valid = hasServiceId && hasAppointmentDate && hasTimeSlotId &&
-                    hasUserId && hasFullName && hasPhoneNumber &&
-                    noNameError && noPhoneError;
-
+                                 hasUserId && hasFullName && hasPhoneNumber && hasEmail &&
+                                 noNameError && noPhoneError && noEmailError;
+                
                 console.log("🔍 Step 4 Validation DETAILED:", {
                     serviceId: `"${formData.serviceId}" -> ${hasServiceId}`,
                     appointmentDate: `"${formData.appointmentDate}" -> ${hasAppointmentDate}`,
@@ -829,9 +858,11 @@ const Appointment = () => {
                     userId: `${formData.userId} (type: ${typeof formData.userId}) -> ${hasUserId}`,
                     fullName: `"${formData.fullName}" -> ${hasFullName}`,
                     phoneNumber: `"${formData.phoneNumber}" -> ${hasPhoneNumber}`,
+                    email: `"${formData.email}" -> ${hasEmail}`,
                     validationErrors: validationErrors,
                     noNameError: noNameError,
                     noPhoneError: noPhoneError,
+                    noEmailError: noEmailError,
                     FINAL_RESULT: step4Valid
                 });
 
@@ -844,8 +875,10 @@ const Appointment = () => {
                     if (!hasUserId) failedFields.push('userId');
                     if (!hasFullName) failedFields.push('fullName');
                     if (!hasPhoneNumber) failedFields.push('phoneNumber');
+                    if (!hasEmail) failedFields.push('email');
                     if (!noNameError) failedFields.push('fullName validation error');
                     if (!noPhoneError) failedFields.push('phoneNumber validation error');
+                    if (!noEmailError) failedFields.push('email validation error');
 
                     console.error("❌ Step 4 FAILED - Missing fields:", failedFields);
                 }
@@ -891,9 +924,9 @@ const Appointment = () => {
                     }
                     break;
                 case 3:
-                    if (!formData.fullName || !formData.phoneNumber) {
-                        toast.error('Vui lòng điền đầy đủ họ tên và số điện thoại!');
-                    } else if (validationErrors.fullName || validationErrors.phoneNumber) {
+                    if (!formData.fullName || !formData.phoneNumber || !formData.email) {
+                        toast.error('Vui lòng điền đầy đủ họ tên, số điện thoại và email!');
+                    } else if (validationErrors.fullName || validationErrors.phoneNumber || validationErrors.email) {
                         toast.error('Vui lòng sửa lỗi trong thông tin cá nhân!');
                     }
                     break;
@@ -942,6 +975,7 @@ const Appointment = () => {
             setFormData({
                 fullName: '',
                 phoneNumber: '',
+                email: '',
                 appointmentDate: '',
                 serviceId: '',
                 notes: '',
@@ -1446,24 +1480,42 @@ const Appointment = () => {
                         )}
                     </div>
 
-                    <div className="col-12 col-lg-6">
-                        <label className="form-label text-white fw-bold">
-                            <i className="fas fa-phone me-2"></i>Số Điện Thoại *
-                        </label>
-                        <input
-                            type="text"
-                            name="phoneNumber"
-                            value={formData.phoneNumber}
-                            onChange={handleInputChange}
-                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
-                            placeholder="Nhập số điện thoại (tối đa 10 số)"
-                            maxLength="10"
-                            style={{ color: 'white', height: '45px' }}
-                        />
-                        {validationErrors.phoneNumber && (
-                            <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
-                        )}
-                    </div>
+                <div className="col-12 col-lg-6">
+                    <label className="form-label text-white fw-bold">
+                        <i className="fas fa-phone me-2"></i>Số Điện Thoại *
+                    </label>
+                    <input
+                        type="tel"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
+                        placeholder="Nhập số điện thoại hợp lệ"
+                        maxLength="15"
+                        style={{ color: 'white', height: '45px' }}
+                    />
+                    {validationErrors.phoneNumber && (
+                        <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
+                    )}
+                </div>
+
+                <div className="col-12">
+                    <label className="form-label text-white fw-bold">
+                        <i className="fas fa-envelope me-2"></i>Email *
+                    </label>
+                    <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.email ? 'border-danger' : ''}`}
+                        placeholder="Nhập email của bạn"
+                        style={{ color: 'white', height: '45px' }}
+                    />
+                    {validationErrors.email && (
+                        <small className="text-danger mt-1 d-block">{validationErrors.email}</small>
+                    )}
+                </div>
 
                     <div className="col-12">
                         <label className="form-label text-white fw-bold">
@@ -1512,7 +1564,7 @@ const Appointment = () => {
         const selectedService = services.find(s => String(s.id) === formData.serviceId);
         const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
         const selectedStaff = staffList.find(s => s.id === selectedStaffId);
-    
+
         return (
             <div className="step-content">
                 <div className="text-center mb-4">
@@ -1526,7 +1578,7 @@ const Appointment = () => {
                         fontSize: '1rem'
                     }}>Vui lòng kiểm tra kỹ thông tin trước khi xác nhận</p>
                 </div>
-    
+
                 {/* Summary Card */}
                 <div className="confirmation-summary mb-4 p-4 rounded-3" style={{
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
@@ -1574,7 +1626,7 @@ const Appointment = () => {
                                 </div>
                             </div>
                         </div>
-    
+
                         {/* Staff Info */}
                         <div className="col-12 col-lg-6">
                             <div className="info-block h-100">
@@ -1608,9 +1660,37 @@ const Appointment = () => {
                                 )}
                             </div>
                         </div>
+
+                        {/* Khách Hàng - moved to left side */}
+                        <div className="col-12 col-md-6">
+                            <div className="border-start border-warning border-3 ps-3">
+                                <h6 className="text-warning mb-1" style={{ 
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    <i className="fas fa-user me-2"></i>Khách Hàng
+                                </h6>
+                                <p className="mb-1 fw-bold" style={{ 
+                                    color: '#ffffff',
+                                    fontSize: '1.1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                                }}>{formData.fullName}</p>
+                                <p className="mb-0" style={{ 
+                                    color: '#e9ecef',
+                                    fontSize: '1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>{formData.phoneNumber}
+                                <br />
+                                {formData.email}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Thời Gian - moved to right side with Vietnamese format */}
                     </div>
                 </div>
-    
+
                 {/* Appointment Details */}
                 <div className="appointment-details mb-4 p-4 rounded-3" style={{
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
@@ -1621,7 +1701,7 @@ const Appointment = () => {
                         <i className="fas fa-info-circle me-2 text-primary"></i>
                         Chi Tiết Cuộc Hẹn
                     </h5>
-                    
+
                     <div className="row g-3">
                         {/* Date & Time */}
                         <div className="col-12 col-md-6">
@@ -1648,7 +1728,7 @@ const Appointment = () => {
                                 </div>
                             </div>
                         </div>
-    
+
                         {/* Customer Info */}
                         <div className="col-12 col-md-6">
                             <div className="detail-item p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
@@ -1666,7 +1746,7 @@ const Appointment = () => {
                             </div>
                         </div>
                     </div>
-    
+
                     {/* Notes */}
                     {formData.notes && (
                         <div className="mt-3">
@@ -1684,7 +1764,7 @@ const Appointment = () => {
                         </div>
                     )}
                 </div>
-    
+
                 {/* Total Cost */}
                 <div className="total-cost p-4 rounded-3 text-center" style={{
                     background: 'linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(40, 167, 69, 0.1) 100%)',
@@ -1711,7 +1791,7 @@ const Appointment = () => {
                         </div>
                     </div>
                 </div>
-    
+
                 {/* Warning Notice */}
                 <div className="alert alert-warning bg-transparent border-warning text-warning mt-4">
                     <div className="d-flex align-items-start">
@@ -1851,24 +1931,24 @@ const Appointment = () => {
                                                     <i className="fas fa-chevron-right ms-2"></i>
                                                 </button>
                                             ) : (
-                                                <button
-                                                    type="submit"
-                                                    className="btn custom-btn submit-btn"
-                                                    style={{ minWidth: '180px' }}
-                                                    disabled={isSubmittingAppointment}
-                                                >
-                                                    {isSubmittingAppointment ? (
-                                                        <>
-                                                            <i className="fas fa-spinner fa-spin me-2"></i>
-                                                            Đang Xử Lý...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <i className="fas fa-check me-2"></i>
-                                                            Xác Nhận Đặt Lịch
-                                                        </>
-                                                    )}
-                                                </button>
+                                                                                <button 
+                                    type="submit"
+                                    className="btn custom-btn submit-btn"
+                                    style={{ minWidth: '180px' }}
+                                    disabled={isSubmittingAppointment || !canProceedToStep(4)}
+                                >
+                                    {isSubmittingAppointment ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin me-2"></i>
+                                            Đang Xử Lý...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-check me-2"></i>
+                                            Xác Nhận Đặt Lịch
+                                        </>
+                                    )}
+                                </button>
                                             )}
                                         </div>
                                     </div>
