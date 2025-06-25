@@ -88,6 +88,26 @@ const canCancelAppointment = (item) => {
     return text !== 'Đã hủy' && text !== 'Đã hoàn thành';
 };
 
+// Component StarRating để chọn sao
+const StarRating = ({ rating, setRating, disabled = false }) => (
+    <div className="d-flex justify-content-center" style={{ gap: '0.5rem' }}>
+        {[1, 2, 3, 4, 5].map((star) => (
+            <i
+                key={star}
+                className={`fas fa-star ${star <= rating ? 'text-warning' : 'text-light'}`}
+                style={{
+                    cursor: disabled ? 'default' : 'pointer',
+                    fontSize: '1.75rem',
+                    transition: 'transform 0.2s',
+                }}
+                onMouseEnter={(e) => { if (!disabled) e.target.style.transform = 'scale(1.2)'; }}
+                onMouseLeave={(e) => { if (!disabled) e.target.style.transform = 'scale(1)'; }}
+                onClick={() => { if (!disabled) setRating(star); }}
+            ></i>
+        ))}
+    </div>
+);
+
 const ServiceHistoryPage = () => {
     const [history, setHistory] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -104,6 +124,16 @@ const ServiceHistoryPage = () => {
     const [customerStats, setCustomerStats] = useState(null);
     const [calculatedTotal, setCalculatedTotal] = useState(0);
     const [autoLookupPerformed, setAutoLookupPerformed] = useState(false); // Thêm state mới
+
+    // Review Modal States
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [reviewingAppointment, setReviewingAppointment] = useState(null);
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+    const [reviewData, setReviewData] = useState({
+        serviceRating: 0,
+        staffRating: 0,
+        comment: '',
+    });
 
     // ✅ NEW: Filter states
     const [filterStatus, setFilterStatus] = useState('all');
@@ -557,6 +587,76 @@ const ServiceHistoryPage = () => {
         }
     };
 
+    const handleShowReviewModal = (appointment) => {
+        setReviewingAppointment(appointment);
+        // Reset state trước khi mở modal
+        setReviewData({ serviceRating: 0, staffRating: 0, comment: '' });
+        setShowReviewModal(true);
+    };
+
+    const handleCloseReviewModal = () => {
+        setShowReviewModal(false);
+        setReviewingAppointment(null);
+        setIsSubmittingReview(false);
+    };
+
+    const handleSubmitReview = async () => {
+        if (reviewData.serviceRating === 0 && reviewData.staffRating === 0) {
+            toast.warn("Vui lòng xếp hạng sao cho dịch vụ hoặc nhân viên.");
+            return;
+        }
+        if (!reviewingAppointment) return;
+
+        setIsSubmittingReview(true);
+
+        // Dữ liệu gửi đi, khớp với ReviewServiceAndStaffRequestDTO của backend
+        const payload = {
+            serviceId: reviewingAppointment.serviceId,
+            staffId: reviewingAppointment.userId,
+            serviceRating: reviewData.serviceRating,
+            staffRating: reviewData.staffRating,
+            comment: reviewData.comment,
+            // Backend DTO nên có trường này để liên kết review với lịch hẹn
+            appointmentId: reviewingAppointment.appointmentId,
+        };
+
+        try {
+            // Lấy token từ localStorage
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+                setIsSubmittingReview(false);
+                return;
+            }
+
+            // Cấu hình headers với token
+            const config = {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            };
+
+            // Gọi đến endpoint mới để tạo review cho cả service và staff, đính kèm token
+            await axios.post('http://localhost:8080/api/v1/reviews/service-and-staff', payload, config);
+
+            toast.success("Cảm ơn bạn đã gửi đánh giá!");
+            handleCloseReviewModal();
+
+            // Refresh lại danh sách lịch sử để cập nhật trạng thái (nút "Đánh giá" sẽ biến mất)
+            if (userInfo) {
+                const customerIdToUse = userInfo.customerId || userInfo.id;
+                fetchHistoryByCustomerId(customerIdToUse);
+            } else if (lookupIdentifier && lookupPerformed) {
+                // Nếu là guest thì thực hiện lại việc tra cứu
+                handleLookup({ preventDefault: () => {} });
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Có lỗi xảy ra khi gửi đánh giá.");
+        } finally {
+            setIsSubmittingReview(false);
+        }
+    };
+
     const renderFilters = () => (
         <div className="card shadow-sm mb-4 border-0 rounded-3">
             <div className="card-header py-3" style={{
@@ -750,6 +850,9 @@ const ServiceHistoryPage = () => {
                     {filteredAndSortedHistory.map((item, index) => {
                         const statusInfo = getAppointmentStatus(item);
                         const isCancellable = canCancelAppointment(item);
+                        const isCompleted = statusInfo.text === 'Đã hoàn thành';
+                        // Giả sử có trường isReviewed từ backend để biết đã đánh giá hay chưa
+                        const isReviewed = item.isReviewed === true;
 
                         return (
                             <tr key={item.id} style={{ borderLeft: `4px solid ${index % 2 === 0 ? '#007bff' : '#28a745'}` }}>
@@ -803,27 +906,46 @@ const ServiceHistoryPage = () => {
                                     </div>
                                 </td>
                                 <td className="py-3 align-middle">
-                                    {isCancellable && !cancellingAppointments.has(item.appointmentId) ? (
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-danger btn-sm"
-                                            onClick={() => handleShowCancelModal(item.appointmentId)}
-                                            disabled={cancellingAppointments.has(item.appointmentId)}
-                                        >
-                                            <i className="fas fa-times me-1"></i>
-                                            Hủy Lịch
-                                        </button>
-                                    ) : cancellingAppointments.has(item.appointmentId) ? (
-                                        <div className="text-warning small">
-                                            <i className="fas fa-spinner fa-spin me-1"></i>
-                                            Đang hủy...
-                                        </div>
-                                    ) : (
-                                        <span className="text-muted small">
-                                            <i className="fas fa-info-circle me-1"></i>
-                                            Không thể hủy
-                                        </span>
-                                    )}
+                                    <div className="d-flex flex-column align-items-center gap-2">
+                                        {isCancellable && !cancellingAppointments.has(item.appointmentId) && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-danger btn-sm"
+                                                onClick={() => handleShowCancelModal(item.appointmentId)}
+                                                disabled={cancellingAppointments.has(item.appointmentId)}
+                                            >
+                                                <i className="fas fa-times me-1"></i>
+                                                Hủy Lịch
+                                            </button>
+                                        )}
+                                        {cancellingAppointments.has(item.appointmentId) && (
+                                            <div className="text-warning small">
+                                                <i className="fas fa-spinner fa-spin me-1"></i>
+                                                Đang hủy...
+                                            </div>
+                                        )}
+                                        {isCompleted && !isReviewed && userInfo && (
+                                            <button
+                                                className="btn btn-outline-primary btn-sm"
+                                                onClick={() => handleShowReviewModal(item)}
+                                            >
+                                                <i className="fas fa-star me-1"></i>
+                                                Đánh giá
+                                            </button>
+                                        )}
+                                        {isCompleted && isReviewed && (
+                                            <span className="text-success small">
+                                                <i className="fas fa-check-circle me-1"></i>
+                                                Đã đánh giá
+                                            </span>
+                                        )}
+                                        {!isCancellable && !isCompleted && (
+                                             <span className="text-muted small">
+                                                <i className="fas fa-info-circle me-1"></i>
+                                                Không thể hủy
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         );
@@ -1332,6 +1454,98 @@ const ServiceHistoryPage = () => {
                     )}
                 </div>
             </div>
+
+            {/* Review Modal */}
+            {showReviewModal && reviewingAppointment && (
+                 <div className="modal-overlay" style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.6)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', zIndex: 1050
+                }}>
+                    <div className="modal-content" style={{
+                        background: '#ffffff', borderRadius: '12px', padding: '1.5rem',
+                        width: '90%', maxWidth: '480px',
+                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+                        animation: 'slideInUp 0.3s ease-out'
+                    }}>
+                        <div className="modal-header border-0 text-center d-block mb-2">
+                            <h4 className="modal-title fw-bold" style={{ color: '#8B4513' }}>Đánh Giá Chất Lượng</h4>
+                            <button type="button" className="btn-close" onClick={handleCloseReviewModal} style={{position: 'absolute', top: '1rem', right: '1rem'}}></button>
+                        </div>
+                        <div className="modal-body px-0 py-2">
+                            <div className="mb-3 p-3 bg-light rounded-3" style={{border: '1px solid #eee'}}>
+                                <div className="d-flex align-items-center mb-2">
+                                    <i className="fas fa-cut me-3 text-danger" style={{fontSize: '1.2rem'}}></i>
+                                    <span className="fw-bold me-2">Dịch vụ:</span>
+                                    <span className="text-muted">{reviewingAppointment.serviceName}</span>
+                                </div>
+                                <div className="d-flex align-items-center">
+                                    <i className="fas fa-user-tie me-3 text-danger" style={{fontSize: '1.2rem'}}></i>
+                                    <span className="fw-bold me-2">Stylist:</span>
+                                    <span className="text-muted">{reviewingAppointment.userName}</span>
+                                </div>
+                            </div>
+
+                            <div className="mb-3 text-center">
+                                <label className="form-label fw-bold mb-2">Xếp hạng dịch vụ</label>
+                                <StarRating
+                                    rating={reviewData.serviceRating}
+                                    setRating={(rating) => setReviewData(prev => ({ ...prev, serviceRating: rating }))}
+                                />
+                            </div>
+
+                            <div className="mb-4 text-center">
+                                <label className="form-label fw-bold mb-2">Xếp hạng nhân viên</label>
+                                <StarRating
+                                    rating={reviewData.staffRating}
+                                    setRating={(rating) => setReviewData(prev => ({ ...prev, staffRating: rating }))}
+                                />
+                            </div>
+
+                            <div className="mb-3">
+                                <label htmlFor="reviewComment" className="form-label fw-bold">Bình luận (tùy chọn)</label>
+                                <textarea
+                                    id="reviewComment"
+                                    className="form-control"
+                                    rows="3"
+                                    placeholder="Chia sẻ cảm nhận của bạn về dịch vụ..."
+                                    value={reviewData.comment}
+                                    onChange={(e) => setReviewData(prev => ({ ...prev, comment: e.target.value }))}
+                                />
+                            </div>
+                        </div>
+                        <div className="modal-footer border-0 d-flex justify-content-end gap-2">
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={handleCloseReviewModal}
+                                disabled={isSubmittingReview}
+                                style={{backgroundColor: '#6c757d', borderColor: '#6c757d'}}
+                            >
+                                <i className="fas fa-times me-2"></i>Hủy
+                            </button>
+                            <button
+                                type="button"
+                                className="btn"
+                                onClick={handleSubmitReview}
+                                disabled={isSubmittingReview || (reviewData.serviceRating === 0 && reviewData.staffRating === 0)}
+                                style={{backgroundColor: '#e83e8c', color: 'white', borderColor: '#e83e8c'}}
+                            >
+                                {isSubmittingReview ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Đang gửi...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="fas fa-paper-plane me-2"></i>Gửi đánh giá
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Cancel Appointment Modal - Simplified */}
             {showCancelModal && (
