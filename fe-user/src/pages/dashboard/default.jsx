@@ -275,10 +275,10 @@ export default function DashboardDefault() {
   const handleCalendarDateChange = (newDate) => {
     setCalendarDate(newDate);
     // Nếu ngày có lịch làm việc, chuyển đến trang work schedule
-    if (hasScheduleOnDate(newDate)) {
-      const dateParam = format(newDate, 'yyyy-MM-dd');
-      navigate(`/roll_call/workSchedulePage?date=${dateParam}`);
-    }
+    // if (hasScheduleOnDate(newDate)) {
+    //   const dateParam = format(newDate, 'yyyy-MM-dd');
+    //   navigate(`/roll_call/workSchedulePage?date=${dateParam}`);
+    // }
   };
 
   if (loading && !userId) {
@@ -450,11 +450,11 @@ export default function DashboardDefault() {
       </Grid>
 
       {/* Main Content */}
-      <Grid container spacing={3}>
+      <Grid container spacing={'1%'}>
         {/* Left Side */}
-        <Grid item xs={12} lg={5}>
+        <Grid item xs={12} width={'20%'} lg={5}>
           {/* Schedule */}
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 3, mb: 3, border: '1px solid #f0f0f0' }}>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: 3, mb: 3, border: '1px solid #f0f0f0', maxWidth: '100%',  }}>
             <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
               <Box sx={{
                 bgcolor: '#e3f2fd',
@@ -513,7 +513,7 @@ export default function DashboardDefault() {
           </Paper>
           
           {/* Calendar */}
-          <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid #f0f0f0' }}>
+          <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid #f0f0f0', maxWidth: '100%',  }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2, px: 1 }}>
               <Typography variant="h6" fontWeight={700} color="#2962ff">
                 Lịch làm việc
@@ -543,8 +543,7 @@ export default function DashboardDefault() {
               <DateCalendar 
                 value={calendarDate} 
                 onChange={handleCalendarDateChange}
-                sx={{ 
-                  width: '100%',
+                sx={{
                   '.MuiPickersDay-root': {
                     position: 'relative',
                     '&.Mui-selected': {
@@ -562,7 +561,7 @@ export default function DashboardDefault() {
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Lịch làm việc tháng này:
                 </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap">
+                <Stack direction="column" spacing={1} flexWrap="wrap" justifyContent="flex-start">
                   {monthlySchedule
                     .filter(schedule => {
                       const scheduleDate = new Date(schedule.workDate);
@@ -593,12 +592,12 @@ export default function DashboardDefault() {
         </Grid>
         
         {/* Right Side - Chart */}
-        <Grid item xs={12} lg={7}>
+        <Grid item xs={12} width={'79%'} lg={7}>
           <Paper elevation={0} sx={{ 
             p: 3, 
             borderRadius: 3, 
-            height: '100%', 
-            display: 'flex', 
+            height: '100%',
+            display: 'flex',
             flexDirection: 'column',
             border: '1px solid #f0f0f0'
           }}>
@@ -606,8 +605,8 @@ export default function DashboardDefault() {
               <Box sx={{
                 bgcolor: '#e3f2fd',
                 borderRadius: '12px',
-                width: 40,
-                height: 40,
+                width: 'auto',
+                height: 'auto',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -615,7 +614,7 @@ export default function DashboardDefault() {
                 <StarOutlined style={{ fontSize: '20px', color: '#2962ff' }} />
               </Box>
               <Typography variant="h6" fontWeight={700} color="#2962ff">
-                Monthly Rating Chart
+                Biểu đồ đánh giá hàng tháng
               </Typography>
             </Stack>
             
@@ -635,15 +634,16 @@ export default function DashboardDefault() {
                     series={[{ 
                       data: chartData.series[0].data, 
                       area: true, 
-                      showMark: true, 
+                      showMark: true,
+                      width: '100%',
                       color: '#f57c00',
-                      label: 'Monthly Rating'
+                      label: 'Đánh giá hàng tháng'
                     }]}
                     xAxis={chartData.xAxis}
                     yAxis={[{ 
                       min: 0,
                       max: 10,
-                      label: 'Rating (out of 10)'
+                      label: 'Thang điểm 10'
                     }]}
                     sx={{ 
                       '.MuiLineElement-root': { strokeWidth: 3 },
@@ -688,7 +688,7 @@ export default function DashboardDefault() {
             {/* Rating Summary */}
             <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography fontWeight={600} color="text.secondary">
-                Overall Average Rating
+                Điểm đánh giá trung bình
               </Typography>
               <Box sx={{
                 display: 'flex',

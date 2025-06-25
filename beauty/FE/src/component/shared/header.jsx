@@ -371,7 +371,34 @@ const Header = () => {
                                     <Link to="/service-history" className={`nav-item nav-link ${location.pathname === '/service-history' ? 'active' : ''}`}>Lịch Sử Dịch Vụ</Link>
                                 </div>
                                 <div className="d-flex align-items-center flex-nowrap pt-xl-0">
-                                    <button className="btn-search btn btn-primary btn-primary-outline-0 rounded-circle btn-lg-square" onClick={() => setShowSearch(!showSearch)}>
+                                    <button className="btn-search btn btn-primary  rounded-circle btn-lg-square"
+                                            onClick={() => setShowSearch(!showSearch)}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.background = '#FDB5B9';
+                                                e.target.style.color = 'white';
+                                                e.target.style.boxShadow = '0 2px 6px rgba(253, 181, 185, 0.3)';
+                                                // Đảm bảo icon hiển thị
+                                                const icon = e.target.querySelector('i');
+                                                if (icon) {
+                                                    icon.style.color = 'white';
+                                                    icon.style.background = 'transparent';
+                                                };
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.background = 'transparent';
+                                                e.target.style.color = '#FDB5B9';
+                                                e.target.style.boxShadow = 'none';
+                                                e.target.style.border = '2px solid #FDB5B9';
+                                                // Khôi phục màu icon
+                                                const icon = e.target.querySelector('i');
+                                                if (icon) {
+                                                    icon.style.color = '#FDB5B9';
+                                                    icon.style.background = 'transparent';
+                                                }
+                                            }}
+                                            style={{background: '#FDB5B9', color: 'white', border: '2px solid #FDB5B9', padding: '10px 15px', transition: 'all 0.3s ease', width: "50px",
+                                                height: "50px"}}
+                                    >
                                         <i className="fas fa-search" />
                                     </button>
                                     {!userInfo ? (
@@ -393,7 +420,10 @@ const Header = () => {
                                                 e.target.style.boxShadow = '0 2px 6px rgba(253, 181, 185, 0.3)';
                                                 // Đảm bảo icon hiển thị
                                                 const icon = e.target.querySelector('i');
-                                                if (icon) icon.style.color = 'white';
+                                                if (icon) {
+                                                    icon.style.color = 'white';
+                                                    icon.style.background = 'transparent';
+                                                };
                                             }}
                                             onMouseLeave={(e) => {
                                                 e.target.style.background = 'transparent';
@@ -401,10 +431,13 @@ const Header = () => {
                                                 e.target.style.boxShadow = 'none';
                                                 // Khôi phục màu icon
                                                 const icon = e.target.querySelector('i');
-                                                if (icon) icon.style.color = '#FDB5B9';
+                                                if (icon) {
+                                                    icon.style.color = '#FDB5B9';
+                                                    icon.style.background = 'transparent';
+                                                }
                                             }}
                                         >
-                                            <i className="fas fa-user me-2"></i>
+                                            <i className="fas fa-user me-2" style={{ background: "transparent"}}></i>
                                             Đăng Nhập
                                         </button>
                                     ) : (

@@ -496,7 +496,7 @@ const ServiceDetailPage = () => {
               </h2>
               <p>
                 <strong>Giá:</strong>{' '}
-                {service.price ? `${service.price.toLocaleString()}$` : 'N/A'}
+                {service.price ? `${service.price.toLocaleString()}VNĐ` : 'N/A'}
               </p>
               <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
               <button 

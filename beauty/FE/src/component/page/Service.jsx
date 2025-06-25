@@ -6,6 +6,7 @@ const Service = () => {
   const [servicesData, setServicesData] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -60,7 +61,10 @@ const Service = () => {
               const isEven = index % 2 === 0;
               return (
                 <div className="col-lg-6" key={service.id}>
-                  <div className={`services-item bg-light border-4 ${isEven ? 'border-end' : 'border-start'} border-primary rounded p-4`}>
+                  <div className={`services-item bg-light border-4 ${isEven ? 'border-end' : 'border-start'} border-primary rounded p-4`}
+                       onMouseEnter={() => setHoveredIndex(index)}
+                       onMouseLeave={() => setHoveredIndex(null)}
+                  >
                     <div className="row align-items-center">
                       {isEven ? (
                         <>
@@ -89,6 +93,7 @@ const Service = () => {
                                     }
                                   }, 100);
                                 }}
+                                isHovered={hoveredIndex === index}
                               />
                             </div>
                           </div>
@@ -160,6 +165,7 @@ const Service = () => {
                                     }
                                   }, 100);
                                 }}
+                                isHovered={hoveredIndex === index}
                               />
                             </div>
                           </div>

@@ -41,6 +41,7 @@ const Appointment = () => {
     const [services, setServices] = useState([]);
     const [timeSlots, setTimeSlots] = useState([]);
     const [staffList, setStaffList] = useState([]);
+    const [countStaffAvaiable, setCountStaffAvaiable] = useState(0);
     const [slotInfo, setSlotInfo] = useState(null);
     // State quản lý lịch rảnh của TẤT CẢ nhân viên
     const [staffAvailabilities, setStaffAvailabilities] = useState({}); // { staffId: { isAvailable, message } }
@@ -78,21 +79,11 @@ const Appointment = () => {
         const fetchStaffList = async () => {
             // THÊM ĐIỀU KIỆN: Chỉ fetch khi đã có đầy đủ thông tin
             if (!formData.serviceId || !formData.appointmentDate || !formData.timeSlotId) {
-                console.log("⏸️ Skipping staff API call - Missing required fields:", {
-                    serviceId: formData.serviceId,
-                    appointmentDate: formData.appointmentDate,
-                    timeSlotId: formData.timeSlotId
-                });
                 setStaffList([]);
+                setCountStaffAvaiable(0);
                 setIsLoadingSchedules(false);
                 return;
             }
-
-            console.log("🚀 Starting staff API call with complete data:", {
-                serviceId: formData.serviceId,
-                appointmentDate: formData.appointmentDate,
-                timeSlotId: formData.timeSlotId
-            });
 
             try {
                 // First, get all staff
@@ -121,23 +112,16 @@ const Appointment = () => {
                     } else {
                         requiredShift = 'Tối';
                     }
-                    console.log(`🕐 Selected time slot: ${selectedTimeSlot.startTime}, Required shift: ${requiredShift}`);
                 }
 
                 // If date is selected, filter staff who have work schedule on that date
                 let staffWithSchedule = rawStaffList;
                 if (formData.appointmentDate && scheduleFiltering) {
-                    console.log("🔍 Checking staff schedules for date:", formData.appointmentDate);
                     setIsLoadingSchedules(true);
 
                     // Get all schedules for the selected date
                     try {
                         // Debug: Check date format before API call
-                        console.log("🕒 Date format check:");
-                        console.log(`   Input date: "${formData.appointmentDate}" (type: ${typeof formData.appointmentDate})`);
-                        console.log(`   Expected format: YYYY-MM-DD`);
-                        console.log(`   Date valid?: ${!isNaN(Date.parse(formData.appointmentDate))}`);
-
                         const scheduleResponse = await axios.get('http://localhost:8080/api/v1/users-schedules', {
                             params: {
                                 startDate: formData.appointmentDate,
@@ -149,23 +133,15 @@ const Appointment = () => {
                         // Check if API URL is correctly formed
                         const apiUrl = scheduleResponse.config.url;
                         const apiParams = scheduleResponse.config.params;
-                        console.log("🌐 Actual API URL:", apiUrl);
-                        console.log("🌐 Actual API Params:", apiParams);
 
                         const schedules = Array.isArray(scheduleResponse.data?.data)
                             ? scheduleResponse.data.data
                             : (Array.isArray(scheduleResponse.data) ? scheduleResponse.data : []);
 
-                        console.log("📅 API Response:", scheduleResponse.data);
-                        console.log("📅 Found schedules:", schedules);
-                        console.log("🗓️ Requested date:", formData.appointmentDate);
 
                         if (schedules.length === 0) {
-                            console.log("⚠️ No schedules found for date:", formData.appointmentDate);
                         } else {
-                            console.log("📋 Schedule details:");
                             schedules.forEach((schedule, index) => {
-                                console.log(`   ${index + 1}. User ${schedule.userId} (${schedule.userName || 'Unknown'}) - Work Date: ${schedule.workDate} - Shift: ${schedule.shift || 'Unknown'} - Status: ${schedule.status} - Active: ${schedule.isActive}`);
                             });
                         }
 
@@ -187,31 +163,13 @@ const Appointment = () => {
                                         schedule.shift.toLowerCase() === 'cả ngày';
                                 }
 
-                                console.log("🔍 Checking schedule:", {
-                                    userId: schedule.userId,
-                                    userName: schedule.userName || 'Unknown',
-                                    workDate: workDate,
-                                    requestedDate: requestedDate,
-                                    shift: schedule.shift || 'Unknown',
-                                    requiredShift: requiredShift,
-                                    isDateMatch: isDateMatch,
-                                    isActive: isActive,
-                                    status: schedule.status,
-                                    isNotCompleted: isNotCompleted,
-                                    isShiftMatch: isShiftMatch,
-                                    finalResult: isDateMatch && isActive && isNotCompleted && isShiftMatch
-                                });
 
                                 return isDateMatch && isActive && isNotCompleted && isShiftMatch;
                             })
                             .map(schedule => {
-                                console.log("✅ Valid schedule for user:", schedule.userId, `(Shift: ${schedule.shift || 'Unknown'})`);
                                 return schedule.userId;
                             });
 
-                        console.log("👥 Staff IDs with schedule:", staffIdsWithSchedule);
-                        console.log("👥 Total staff before filtering:", rawStaffList.length);
-                        console.log("👥 Staff IDs from API:", rawStaffList.map(s => s.id));
 
                         // Check if we have schedules but none match the requested date
                         const schedulesButWrongDate = schedules.filter(s =>
@@ -229,17 +187,15 @@ const Appointment = () => {
 
                         // Filter staff list to only include those with schedules
                         if (staffIdsWithSchedule.length === 0) {
-                            console.log("⚠️ No staff found with schedules on this date. Showing empty list.");
+                            console.warn("⚠️ No staff found with schedules on this date. Showing empty list.");
                             staffWithSchedule = []; // Show no staff if no schedules found
                         } else {
                             staffWithSchedule = rawStaffList.filter(staff => {
                                 const hasSchedule = staffIdsWithSchedule.includes(staff.id);
-                                console.log(`👤 Staff ${staff.fullName} (ID: ${staff.id}): ${hasSchedule ? 'HAS' : 'NO'} schedule`);
                                 return hasSchedule;
                             });
                         }
 
-                        console.log(`✅ Filtered from ${rawStaffList.length} to ${staffWithSchedule.length} staff with schedules`);
                     } catch (scheduleError) {
                         console.error("❌ Error fetching schedules:", scheduleError);
                         // If schedule API fails, show all staff (fallback)
@@ -316,16 +272,14 @@ const Appointment = () => {
                                 for (const [key, skills] of Object.entries(serviceSkillMapping)) {
                                     if (serviceName.includes(key)) {
                                         requiredSkills = [...requiredSkills, ...skills];
-                                        console.log(`🎯 Service "${serviceName}" matched key "${key}" -> skills: [${skills.join(', ')}]`);
                                     }
                                 }
 
                                 // If no specific skills found, use generic spa skills
                                 if (requiredSkills.length === 0) {
                                     requiredSkills = ['spa', 'beauty', 'wellness', 'service', 'customer'];
-                                    console.log(`⚠️ No specific skills found for "${serviceName}", using generic: [${requiredSkills.join(', ')}]`);
+                                    console.warn(`⚠️ No specific skills found for "${serviceName}", using generic: [${requiredSkills.join(', ')}]`);
                                 } else {
-                                    console.log(`✅ Final required skills for "${serviceName}": [${requiredSkills.join(', ')}]`);
                                 }
 
                                 // STRICT skill matching - only show staff with relevant skills
@@ -423,14 +377,9 @@ const Appointment = () => {
                                     hasGeneralSpaExperience; // Remove the "accept all" fallback
 
                                 if (!isQualified) {
-                                    console.log(`❌ Staff ${staff.fullName} filtered out for service: ${serviceName}`);
-                                    console.log(`   Required skills: [${requiredSkills.join(', ')}]`);
-                                    console.log(`   Staff role: "${roleName}", skills: "${skillsText}"`);
-                                    console.log(`   Checks: hasRequiredSkill=${hasRequiredSkill}, hasSpecificServiceSkill=${hasSpecificServiceSkill}, hasGeneralSpaExperience=${hasGeneralSpaExperience}`);
+
                                     return false;
                                 } else {
-                                    console.log(`✅ Staff ${staff.fullName} QUALIFIED for service: ${serviceName}`);
-                                    console.log(`   Staff role: "${roleName}", skills: "${skillsText}"`);
                                 }
                             }
                         }
@@ -447,26 +396,19 @@ const Appointment = () => {
                 const shuffledStaff = [...filteredStaff].sort(() => 0.5 - Math.random());
 
                 // Final debug summary
-                console.log("\n🎯 FINAL STAFF LIST SUMMARY:");
-                console.log(`   📅 Selected Date: ${formData.appointmentDate}`);
-                console.log(`   🕐 Selected Time Slot: ${selectedTimeSlot ? selectedTimeSlot.startTime + '-' + selectedTimeSlot.endTime : 'None'}`);
-                console.log(`   🔄 Schedule Filtering: ${scheduleFiltering ? 'ENABLED' : 'DISABLED'}`);
-                console.log(`   ⏰ Shift Filtering: ${shiftFiltering ? 'ENABLED' : 'DISABLED'}`);
-                console.log(`   🎯 Strict Skill Filtering: ${strictFiltering ? 'ENABLED' : 'DISABLED'}`);
-                console.log(`   📊 Final Staff Count: ${shuffledStaff.length}`);
-                console.log(`   👥 Staff Names: [${shuffledStaff.map(s => s.fullName).join(', ')}]`);
+
                 if (formData.appointmentDate && scheduleFiltering) {
-                    console.log(`   ⚠️  NOTE: Only staff with schedules on ${formData.appointmentDate} should be shown!`);
+                    console.warn(`   ⚠️  NOTE: Only staff with schedules on ${formData.appointmentDate} should be shown!`);
                     if (shiftFiltering && requiredShift) {
-                        console.log(`   ⚠️  NOTE: Only staff with ${requiredShift} shift should be shown!`);
+                        console.warn(`   ⚠️  NOTE: Only staff with ${requiredShift} shift should be shown!`);
                     }
                 }
 
                 setStaffList(shuffledStaff);
-
             } catch (error) {
                 console.error("Error fetching staff list:", error);
                 setStaffList([]);
+                setCountStaffAvaiable(0);
                 toast.error("Không thể tải danh sách nhân viên.");
             }
         };
@@ -478,20 +420,10 @@ const Appointment = () => {
     useEffect(() => {
         // THÊM ĐIỀU KIỆN: Chỉ fetch khi đã có đầy đủ thông tin
         if (!formData.appointmentDate || !formData.serviceId || !formData.timeSlotId) {
-            console.log("⏸️ Skipping slot availability API call - Missing required fields:", {
-                appointmentDate: formData.appointmentDate,
-                serviceId: formData.serviceId,
-                timeSlotId: formData.timeSlotId
-            });
             setSlotInfo(null);
             return;
         }
 
-        console.log("🚀 Starting slot availability API call with complete data:", {
-            date: formData.appointmentDate,
-            serviceId: formData.serviceId,
-            timeSlotId: formData.timeSlotId
-        });
 
         axios.get('http://localhost:8080/api/v1/timeslot/available', {
             params: {
@@ -542,7 +474,6 @@ const Appointment = () => {
             const [year, month, day] = formData.appointmentDate.split('-').map(Number);
             const localDateTimeForSlot = new Date(year, month - 1, day, slotHours, slotMinutes);
             const requestedDateTimeISO = localDateTimeForSlot.toISOString();
-
             const availabilityChecks = staffList.map(staff => {
                 return axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
                     params: {
@@ -554,7 +485,8 @@ const Appointment = () => {
                     staffId: staff.id,
                     isAvailable: res.data?.data?.isAvailable || false,
                     message: res.data?.data?.availabilityMessage || 'Không xác định'
-                })).catch(() => ({
+                }
+                )).catch(() => ({
                     staffId: staff.id,
                     isAvailable: false,
                     message: 'Lỗi kiểm tra'
@@ -562,7 +494,10 @@ const Appointment = () => {
             });
 
             const results = await Promise.all(availabilityChecks);
-
+            results.forEach(result => {
+                let countAvai = countStaffAvaiable
+                if (result.isAvailable) setCountStaffAvaiable(countAvai++);
+            });
             const newAvailabilities = results.reduce((acc, result) => {
                 acc[result.staffId] = { isAvailable: result.isAvailable, message: result.message };
                 return acc;
@@ -944,9 +879,10 @@ const Appointment = () => {
 
     // Step validation
     const canProceedToStep = (step) => {
+        console.log("step: ", step);
         switch (step) {
             case 2:
-                return formData.serviceId !== '' && formData.appointmentDate !== '' && formData.timeSlotId !== '';
+                return formData.serviceId !== '' && formData.appointmentDate !== '' && formData.timeSlotId !== '' && (countStaffAvaiable > 0) && (slotInfo.availableSlot < slotInfo.totalSlot);
             case 3:
                 // Must have staff selected and staff must be available
                 const selectedStaffAvailable = formData.userId !== '' &&
@@ -1221,12 +1157,12 @@ const Appointment = () => {
                                     <div className="d-flex align-items-center">
                                         <i className="fas fa-user-friends me-2"></i>
                                         <strong>Nhân viên:</strong>
-                                        <span className={`badge ms-2 px-2 py-1 rounded-pill ${staffList.length > 2 ? 'bg-success' :
-                                            staffList.length > 0 ? 'bg-warning text-dark' :
+                                        <span className={`badge ms-2 px-2 py-1 rounded-pill ${countStaffAvaiable > 2 ? 'bg-success' :
+                                            countStaffAvaiable > 0 ? 'bg-warning text-dark' :
                                                 'bg-danger'
                                             }`} style={{ fontSize: '0.8rem' }}>
                                             <i className="fas fa-users me-1"></i>
-                                            {staffList.length} người
+                                            {countStaffAvaiable} người
                                         </span>
                                     </div>
 
@@ -1245,28 +1181,28 @@ const Appointment = () => {
                                     )}
                                 </div>
 
-                                {staffList.length > 0 && (
+                                {countStaffAvaiable > 0 && (
                                     <div className="d-flex flex-column align-items-end gap-1">
                                         <small className="text-white-50 mb-1">Tình trạng sẵn sàng</small>
                                         <div className="progress rounded-pill" style={{ width: '180px', height: '10px' }}>
                                             <div
-                                                className={`progress-bar progress-bar-striped progress-bar-animated ${staffList.length === 0 ? 'bg-danger' :
-                                                    staffList.length <= 2 ? 'bg-warning' :
+                                                className={`progress-bar progress-bar-striped progress-bar-animated ${countStaffAvaiable === 0 ? 'bg-danger' :
+                                                    countStaffAvaiable <= 2 ? 'bg-warning' :
                                                         'bg-success'
                                                     }`}
                                                 style={{
-                                                    width: `${Math.min((staffList.length / 5) * 100, 100)}%`,
+                                                    width: `${Math.min((countStaffAvaiable / 5) * 100, 100)}%`,
                                                     borderRadius: '10px'
                                                 }}
                                                 role="progressbar"
-                                                aria-valuenow={staffList.length}
+                                                aria-valuenow={countStaffAvaiable}
                                                 aria-valuemin="0"
                                                 aria-valuemax="5"
                                             />
                                         </div>
                                         <small className="text-white-50" style={{ fontSize: '0.7rem' }}>
-                                            {staffList.length === 0 ? 'Chưa có nhân viên' :
-                                                staffList.length <= 2 ? 'Ít nhân viên' :
+                                            {countStaffAvaiable === 0 ? 'Chưa có nhân viên' :
+                                                countStaffAvaiable <= 2 ? 'Ít nhân viên' :
                                                     'Đủ nhân viên'}
                                         </small>
                                     </div>
