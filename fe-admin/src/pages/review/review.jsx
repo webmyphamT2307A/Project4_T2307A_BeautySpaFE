@@ -5,6 +5,7 @@ import {
     Modal, Typography, TextField, Button, Paper, TablePagination
 } from '@mui/material';
 import { DeleteOutlined, ReadFilled } from '@ant-design/icons'; // <<< THAY ĐỔI: Dùng ReadFilled cho trực quan
+import { useNavigate } from 'react-router-dom';
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
 
@@ -24,6 +25,7 @@ const modalStyle = {
 };
 
 const ReviewList = () => {
+    const navigate = useNavigate();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState('all');
@@ -36,6 +38,47 @@ const ReviewList = () => {
     const [replyContent, setReplyContent] = useState('');
     const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
+    // Hàm xử lý click vào rating để chuyển đến trang đặt lịch
+    const handleRatingClick = (review) => {
+        console.log('🔍 Review clicked:', review);
+        
+        // Kiểm tra xem review có thông tin service không
+        if (review.type === 'SERVICE' && review.relatedId) {
+            // Chuyển đến trang appointment với filter theo service
+            navigate('/spa/appointment', {
+                state: {
+                    serviceId: review.relatedId,
+                    serviceName: `Service #${review.relatedId}`,
+                    title: `Đặt Lịch Dịch Vụ từ Đánh Giá #${review.id}`,
+                    fromReview: true,
+                    reviewId: review.id
+                }
+            });
+            toast.info(`Chuyển đến trang đặt lịch cho dịch vụ ID: ${review.relatedId}`);
+        } else if (review.type === 'USER' && review.relatedId) {
+            // Nếu là review cho nhân viên, chuyển đến trang appointment với filter theo staff
+            navigate('/spa/appointment', {
+                state: {
+                    staffId: review.relatedId,
+                    staffName: `Staff #${review.relatedId}`,
+                    title: `Đặt Lịch với Nhân Viên từ Đánh Giá #${review.id}`,
+                    fromReview: true,
+                    reviewId: review.id
+                }
+            });
+            toast.info(`Chuyển đến trang đặt lịch với nhân viên ID: ${review.relatedId}`);
+        } else {
+            // Nếu không có thông tin đầy đủ, chuyển đến trang appointment chung
+            navigate('/spa/appointment', {
+                state: {
+                    title: `Đặt Lịch từ Đánh Giá #${review.id}`,
+                    fromReview: true,
+                    reviewId: review.id
+                }
+            });
+            toast.info('Chuyển đến trang đặt lịch hẹn');
+        }
+    };
 
     // Lấy tất cả review cho admin
     const fetchReviews = async () => {
@@ -220,7 +263,22 @@ const ReviewList = () => {
                                         )}
                                     </Box>
                                 </TableCell>
-                                <TableCell>{r.rating}</TableCell>
+                                <TableCell 
+                                    sx={{ 
+                                        cursor: 'pointer', 
+                                        color: 'primary.main',
+                                        fontWeight: 'bold',
+                                        '&:hover': {
+                                            backgroundColor: 'primary.light',
+                                            color: 'white',
+                                            borderRadius: '4px'
+                                        }
+                                    }}
+                                    onClick={() => handleRatingClick(r)}
+                                    title="Click để đặt lịch dịch vụ/nhân viên này"
+                                >
+                                    {r.rating} ⭐
+                                </TableCell>
                                 <TableCell>{r.createdAt?.slice(0, 10)}</TableCell>
                                 <TableCell>
                                     {r.active === false || r.active === 0 ? (

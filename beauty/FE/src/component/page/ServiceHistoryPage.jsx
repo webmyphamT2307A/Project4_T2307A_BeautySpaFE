@@ -58,28 +58,29 @@ const getAppointmentStatus = (item) => {
     // Ưu tiên 1: Trạng thái tường minh từ backend là 'cancelled' hoặc 'completed'
     const directStatus = item.status?.toLowerCase().trim();
     if (directStatus === 'cancelled') {
-        return { text: 'Đã hủy', className: 'bg-danger' };
+        return { text: 'Đã hủy', className: 'bg-danger', isCompleted: false, isCancelled: true };
     }
     if (directStatus === 'completed') {
-        return { text: 'Đã hoàn thành', className: 'bg-success' };
+        return { text: 'Đã hoàn thành', className: 'bg-success', isCompleted: true, isCancelled: false };
     }
 
     // Ưu tiên 2: Logic dựa trên ngày tháng cho các trạng thái còn lại
     const aptDate = parseDate(item.appointmentDate);
     if (!aptDate) {
-        return { text: 'Ngày không xác định', className: 'bg-secondary' };
+        return { text: 'Ngày không xác định', className: 'bg-secondary', isCompleted: false, isCancelled: false };
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     aptDate.setHours(0, 0, 0, 0);
 
     if (aptDate.getTime() < today.getTime()) {
-        return { text: 'Đã hoàn thành', className: 'bg-success' };
+        // Chỉ coi là hoàn thành nếu không bị hủy và đã qua ngày hẹn
+        return { text: 'Đã hoàn thành', className: 'bg-success', isCompleted: true, isCancelled: false };
     }
     if (aptDate.getTime() === today.getTime()) {
-        return { text: 'Đang chờ', className: 'bg-warning text-dark' };
+        return { text: 'Đang chờ', className: 'bg-warning text-dark', isCompleted: false, isCancelled: false };
     }
-    return { text: 'Sắp tới', className: 'bg-info' };
+    return { text: 'Sắp tới', className: 'bg-info', isCompleted: false, isCancelled: false };
 };
 
 const canCancelAppointment = (item) => {
@@ -186,11 +187,12 @@ const ServiceHistoryPage = () => {
         });
     }, [history, filterStatus, filterStartDate, filterEndDate, searchTerm]);
 
-    // ✅ NEW: Memoized total for filtered data
+    // ✅ NEW: Memoized total for filtered data - chỉ tính lịch hẹn đã hoàn thành
     const filteredCalculatedTotal = useMemo(() => {
         return filteredAndSortedHistory.reduce((sum, app) => {
             const statusInfo = getAppointmentStatus(app);
-            if (statusInfo.text === 'Đã hoàn thành') {
+            // ✅ Sử dụng isCompleted thay vì so sánh text
+            if (statusInfo.isCompleted === true) {
                 let parsedPrice = parseFloat(app.servicePrice) || 0;
                 if (parsedPrice > 0 && parsedPrice < 1000) {
                     parsedPrice *= 10000;
@@ -323,12 +325,12 @@ const ServiceHistoryPage = () => {
                 parsedPrice *= 10000; // Backend trả về 38 thay vì 380000
             }
             
-            // CHỈ tính những lịch hẹn có trạng thái "Đã hoàn thành"
-            if (statusInfo.text === 'Đã hoàn thành') {
-                console.log(`💰 ADDING to total - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Raw Price: ${rawPrice}, Parsed Price: ${parsedPrice}, Status: ${statusInfo.text}, Sum before: ${sum}, Sum after: ${sum + parsedPrice}`);
+            // CHỈ tính những lịch hẹn có trạng thái "Đã hoàn thành" (sử dụng isCompleted)
+            if (statusInfo.isCompleted === true) {
+                console.log(`💰 ADDING to total - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Raw Price: ${rawPrice}, Parsed Price: ${parsedPrice}, Status: ${statusInfo.text}, IsCompleted: ${statusInfo.isCompleted}, Sum before: ${sum}, Sum after: ${sum + parsedPrice}`);
                 return sum + parsedPrice;
             } else {
-                console.log(`❌ NOT ADDING - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Price: ${parsedPrice}, Status: ${statusInfo.text}, Reason: Not completed`);
+                console.log(`❌ NOT ADDING - ID: ${app.id || app.appointmentId}, Service: ${app.serviceName}, Price: ${parsedPrice}, Status: ${statusInfo.text}, IsCompleted: ${statusInfo.isCompleted}, Reason: Not completed`);
                 return sum;
             }
         }, 0);
@@ -552,7 +554,15 @@ const ServiceHistoryPage = () => {
     const renderFilters = () => (
         <div className="card shadow-sm mb-4">
             <div className="card-header bg-light">
-                <h5 className="mb-0"><i className="fas fa-filter me-2 text-primary"></i>Bộ Lọc Lịch Hẹn</h5>
+                <div className="d-flex justify-content-between align-items-center">
+                    <h5 className="mb-0"><i className="fas fa-filter me-2 text-primary"></i>Bộ Lọc Lịch Hẹn</h5>
+                    {!userInfo && (
+                        <small className="text-muted">
+                            <i className="fas fa-lightbulb me-1 text-warning"></i>
+                            Dùng nút "Hủy Lịch" trong bảng để hủy lịch hẹn
+                        </small>
+                    )}
+                </div>
             </div>
             <div className="card-body p-4">
                 <div className="row g-3 align-items-end">
@@ -657,7 +667,8 @@ const ServiceHistoryPage = () => {
                     {filteredAndSortedHistory.map((item, index) => {
                         const statusInfo = getAppointmentStatus(item);
                         const isCancellable = canCancelAppointment(item);
-                        const isCompleted = statusInfo.text === 'Đã hoàn thành';
+                        // ✅ Sử dụng thuộc tính isCompleted từ statusInfo thay vì so sánh text
+                        const isCompleted = statusInfo.isCompleted === true;
                         // Giả sử có trường isReviewed từ backend để biết đã đánh giá hay chưa
                         const isReviewed = item.isReviewed === true;
 
@@ -732,20 +743,44 @@ const ServiceHistoryPage = () => {
                                                 Đang hủy...
                                             </div>
                                         )}
+                                        {/* Chỉ cho phép đánh giá khi dịch vụ đã hoàn thành và chưa được đánh giá */}
                                         {isCompleted && !isReviewed && userInfo && (
                                             <button
-                                                className="btn btn-outline-primary btn-sm"
+                                                className="btn btn-outline-warning btn-sm"
                                                 onClick={() => handleShowReviewModal(item)}
+                                                title="Đánh giá dịch vụ đã hoàn thành"
                                             >
                                                 <i className="fas fa-star me-1"></i>
                                                 Đánh giá
                                             </button>
                                         )}
+                                        {/* Hiển thị trạng thái đã đánh giá */}
                                         {isCompleted && isReviewed && (
                                             <span className="text-success small">
                                                 <i className="fas fa-check-circle me-1"></i>
                                                 Đã đánh giá
                                             </span>
+                                        )}
+                                        {/* Thông báo cho dịch vụ chưa hoàn thành */}
+                                        {!isCompleted && userInfo && (
+                                            <span className="text-muted small">
+                                                <i className="fas fa-info-circle me-1"></i>
+                                                Chưa thể đánh giá
+                                            </span>
+                                        )}
+                                        {/* Thông báo cho guest users - cần đăng nhập để đánh giá */}
+                                        {!userInfo && isCompleted && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-info btn-sm"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#loginModal"
+                                                title="Đăng nhập để đánh giá dịch vụ"
+                                                style={{ fontSize: '0.75rem' }}
+                                            >
+                                                <i className="fas fa-sign-in-alt me-1"></i>
+                                                Đăng nhập để đánh giá
+                                            </button>
                                         )}
                                         {!isCancellable && !isCompleted && (
                                              <span className="text-muted small">
@@ -877,45 +912,86 @@ const ServiceHistoryPage = () => {
                                                 </div>
                                             )}
 
-                                            <button 
-                                                type="submit" 
-                                                className="btn btn-lg w-100 py-3 mb-3" 
-                                                disabled={isLoading || !lookupIdentifier.trim() || phoneError}
-                                                style={{
-                                                    fontSize: '1.1rem',
-                                                    fontWeight: '600',
-                                                    background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))',
-                                                    backdropFilter: 'blur(10px)',
-                                                    border: '1px solid rgba(255, 182, 193, 0.3)',
-                                                    color: 'white',
-                                                    boxShadow: '0 8px 32px rgba(255, 182, 193, 0.3)',
-                                                    transition: 'all 0.3s ease'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    if (!isLoading && lookupIdentifier.trim() && !phoneError) {
-                                                        e.target.style.background = 'linear-gradient(135deg, rgba(255, 192, 203, 0.95), rgba(255, 218, 224, 0.9))';
-                                                        e.target.style.transform = 'translateY(-2px)';
-                                                        e.target.style.boxShadow = '0 12px 40px rgba(255, 182, 193, 0.4)';
-                                                    }
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.target.style.background = 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))';
-                                                    e.target.style.transform = 'translateY(0)';
-                                                    e.target.style.boxShadow = '0 8px 32px rgba(255, 182, 193, 0.3)';
-                                                }}
-                                            >
-                                                {isLoading ? (
-                                                    <>
-                                                        <div className="spinner-border spinner-border-sm me-2" role="status"></div>
-                                                        Đang tìm kiếm...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <i className="fas fa-search me-2"></i>
-                                                        Tra Cứu Lịch Hẹn
-                                                    </>
+                                            <div className="d-grid gap-2">
+                                                <button 
+                                                    type="submit" 
+                                                    className="btn btn-lg py-3" 
+                                                    disabled={isLoading || !lookupIdentifier.trim() || phoneError}
+                                                    style={{
+                                                        fontSize: '1.1rem',
+                                                        fontWeight: '600',
+                                                        background: 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))',
+                                                        backdropFilter: 'blur(10px)',
+                                                        border: '1px solid rgba(255, 182, 193, 0.3)',
+                                                        color: 'white',
+                                                        boxShadow: '0 8px 32px rgba(255, 182, 193, 0.3)',
+                                                        transition: 'all 0.3s ease'
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        if (!isLoading && lookupIdentifier.trim() && !phoneError) {
+                                                            e.target.style.background = 'linear-gradient(135deg, rgba(255, 192, 203, 0.95), rgba(255, 218, 224, 0.9))';
+                                                            e.target.style.transform = 'translateY(-2px)';
+                                                            e.target.style.boxShadow = '0 12px 40px rgba(255, 182, 193, 0.4)';
+                                                        }
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.target.style.background = 'linear-gradient(135deg, rgba(255, 182, 193, 0.9), rgba(255, 192, 203, 0.8))';
+                                                        e.target.style.transform = 'translateY(0)';
+                                                        e.target.style.boxShadow = '0 8px 32px rgba(255, 182, 193, 0.3)';
+                                                    }}
+                                                >
+                                                    {isLoading ? (
+                                                        <>
+                                                            <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                                                            Đang tìm kiếm...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <i className="fas fa-search me-2"></i>
+                                                            Tra Cứu Lịch Hẹn
+                                                        </>
+                                                    )}
+                                                </button>
+                                                
+                                                {/* Nút Hủy Đặt Lịch - chỉ hiển thị khi đã tra cứu và có lịch hẹn */}
+                                                {lookupPerformed && history.length > 0 && (
+                                                    <button 
+                                                        type="button"
+                                                        className="btn btn-outline-danger btn-lg py-3"
+                                                        onClick={() => {
+                                                            // Hiển thị thông báo để khách hàng chọn lịch hẹn cụ thể để hủy
+                                                            toast.info('Vui lòng chọn lịch hẹn cụ thể trong bảng bên dưới để hủy', {
+                                                                position: "top-center",
+                                                                autoClose: 3000,
+                                                                hideProgressBar: false,
+                                                                closeOnClick: true,
+                                                                pauseOnHover: true,
+                                                                draggable: true,
+                                                            });
+                                                        }}
+                                                        disabled={isLoading}
+                                                        style={{
+                                                            fontSize: '1.1rem',
+                                                            fontWeight: '600',
+                                                            borderWidth: '2px',
+                                                            transition: 'all 0.3s ease'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            if (!isLoading) {
+                                                                e.target.style.transform = 'translateY(-2px)';
+                                                                e.target.style.boxShadow = '0 8px 25px rgba(220, 53, 69, 0.3)';
+                                                            }
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.target.style.transform = 'translateY(0)';
+                                                            e.target.style.boxShadow = 'none';
+                                                        }}
+                                                    >
+                                                        <i className="fas fa-times-circle me-2"></i>
+                                                        Hướng Dẫn Hủy Lịch
+                                                    </button>
                                                 )}
-                                            </button>
+                                            </div>
                                         </form>
                                     </div>
                                 </div>
@@ -979,10 +1055,18 @@ const ServiceHistoryPage = () => {
                                                             <i className="fas fa-check-circle me-2"></i>
                                                             Tìm thấy {filteredAndSortedHistory.length} lịch hẹn
                                                         </h5>
-                                                        <span className="badge bg-light text-dark">
-                                                            <i className="fas fa-calendar-check me-1"></i>
-                                                            Kết quả đã lọc
-                                                        </span>
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <span className="badge bg-light text-dark">
+                                                                <i className="fas fa-calendar-check me-1"></i>
+                                                                Kết quả đã lọc
+                                                            </span>
+                                                            {!userInfo && (
+                                                                <span className="badge bg-warning text-dark">
+                                                                    <i className="fas fa-info-circle me-1"></i>
+                                                                    Nhấn nút "Hủy Lịch" trong bảng để hủy
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="card-body p-0">
@@ -1055,7 +1139,8 @@ const ServiceHistoryPage = () => {
                         animation: 'slideInUp 0.3s ease-out'
                     }}>
                         <div className="modal-header border-0 text-center d-block mb-2">
-                            <h4 className="modal-title fw-bold" style={{ color: '#8B4513' }}>Đánh Giá Chất Lượng</h4>
+                            <h4 className="modal-title fw-bold" style={{ color: '#8B4513' }}>Đánh Giá Dịch Vụ Đã Hoàn Thành</h4>
+                            <small className="text-muted">Chỉ dành cho dịch vụ đã được thực hiện xong</small>
                             <button type="button" className="btn-close" onClick={handleCloseReviewModal} style={{position: 'absolute', top: '1rem', right: '1rem'}}></button>
                         </div>
                         <div className="modal-body px-0 py-2">

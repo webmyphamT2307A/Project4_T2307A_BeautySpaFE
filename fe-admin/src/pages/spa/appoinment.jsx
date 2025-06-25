@@ -25,7 +25,7 @@ import {
   CheckCircleOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
@@ -36,6 +36,7 @@ const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confi
 const AppointmentManagement = () => {
   // States
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const location = useLocation();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
@@ -77,10 +78,13 @@ const AppointmentManagement = () => {
     }
   }, [searchParams]);
 
-  // Handle filters from dashboard navigation
+  // Handle filters from dashboard navigation and review page
   useEffect(() => {
     if (location.state) {
-      const { filterStatus, filterDate, startDate, endDate, title } = location.state;
+      const { 
+        filterStatus, filterDate, startDate, endDate, title, 
+        serviceId, serviceName, staffId, staffName, fromReview, reviewId 
+      } = location.state;
       
       if (title) {
         setPageTitle(title);
@@ -100,6 +104,28 @@ const AppointmentManagement = () => {
           startDate: startDate,
           endDate: endDate
         });
+      }
+
+      // Handle filters from review page
+      if (fromReview) {
+        console.log('🔍 Navigated from review page:', { serviceId, serviceName, staffId, staffName, reviewId });
+        
+        if (serviceId) {
+          setServiceFilter(serviceId);
+          toast.success(`Đã lọc theo dịch vụ ID: ${serviceId}`);
+        }
+        
+        if (staffId) {
+          setStaffFilter(staffId);
+          toast.success(`Đã lọc theo nhân viên ID: ${staffId}`);
+        }
+        
+        // Show notification about the source review
+        setTimeout(() => {
+          toast.info(`Hiển thị lịch hẹn liên quan đến đánh giá #${reviewId}`, {
+            autoClose: 5000
+          });
+        }, 1000);
       }
     }
   }, [location.state]);
@@ -957,7 +983,16 @@ const AppointmentManagement = () => {
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <FilterOutlined />
                 Bộ Lọc & Tìm Kiếm
-                {location.state && (
+                {location.state && location.state.fromReview && (
+                  <Chip 
+                    size="small" 
+                    label={`Từ Đánh Giá #${location.state.reviewId}`} 
+                    color="secondary" 
+                    variant="outlined"
+                    sx={{ ml: 1 }}
+                  />
+                )}
+                {location.state && !location.state.fromReview && (
                   <Chip 
                     size="small" 
                     label={`Từ Dashboard`} 
@@ -1036,6 +1071,16 @@ const AppointmentManagement = () => {
                   setServiceFilter('');
                   setPageTitle('Quản Lý Lịch Hẹn');
                 }}>Xóa bộ lọc</Button>
+                {location.state && location.state.fromReview && (
+                  <Button 
+                    variant="outlined" 
+                    color="secondary"
+                    onClick={() => navigate('/review')}
+                    sx={{ ml: 1 }}
+                  >
+                    ← Quay lại Đánh Giá
+                  </Button>
+                )}
               </Box>
               {/* Filter result count */}
               <Box sx={{ mb: 2 }}>
