@@ -1592,12 +1592,12 @@ const Appointment = () => {
                                 }}
                             />
                             <div className="d-flex justify-content-between align-items-center mt-1">
-                                {validationErrors.notes && (
+                                {/* {validationErrors.notes && (
                                     <small className={`${formData.notes?.length > 500 ? 'text-danger' : formData.notes?.length > 450 ? 'text-warning' : 'text-info'}`}>
                                         <i className="fas fa-exclamation-circle me-1"></i>
                                         {validationErrors.notes}
                                     </small>
-                                )}
+                                )} */}
                                 <small className={`ms-auto ${formData.notes?.length >= 500 ? 'text-danger fw-bold' :
                                     formData.notes?.length > 450 ? 'text-warning fw-bold' :
                                         formData.notes?.length > 400 ? 'text-info' : 'text-white-50'
@@ -1619,7 +1619,7 @@ const Appointment = () => {
         const selectedService = services.find(s => String(s.id) === formData.serviceId);
         const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
         const selectedStaff = staffList.find(s => s.id === selectedStaffId);
-
+    
         return (
             <div className="step-content">
                 <div className="text-center mb-4">
@@ -1633,7 +1633,7 @@ const Appointment = () => {
                         fontSize: '1rem'
                     }}>Vui lòng kiểm tra kỹ thông tin trước khi xác nhận</p>
                 </div>
-
+  
                 {/* Summary Card */}
                 <div className="confirmation-summary mb-4 p-4 rounded-3" style={{
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
@@ -1642,81 +1642,116 @@ const Appointment = () => {
                     boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
                 }}>
                     <div className="row g-4">
-                        {/* Service Info */}
-                        <div className="col-12 col-lg-6">
-                            <div className="info-block h-100">
-                                <div className="d-flex align-items-center mb-3">
-                                    <div className="icon-circle me-3" style={{
-                                        width: '50px',
-                                        height: '50px',
-                                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        border: '2px solid #28a745'
-                                    }}>
-                                        <i className="fas fa-spa text-success" style={{ fontSize: '1.2rem' }}></i>
-                                    </div>
-                                    <div>
-                                        <h6 className="text-success mb-1 fw-bold">DỊCH VỤ</h6>
-                                        <h5 className="text-white mb-0 fw-bold">{selectedService?.name}</h5>
-                                    </div>
-                                </div>
-                                <div className="service-details">
-                                    <div className="d-flex justify-content-start align-items-center mb-2">
-                                        <span className="text-white-50">
-                                            <i className="fas fa-clock me-2"></i>Thời gian:	&nbsp;
-                                        </span>
-                                        <span className="text-white fw-bold">{selectedService?.duration || '60'} phút</span>
-                                    </div>
-                                    <div className="d-flex justify-content-start align-items-center">
-                                        <span className="text-white-50">
-                                            <i className="fas fa-money-bill me-2"></i>Giá:	&nbsp;
-                                        </span>
-                                        <span className="text-success fw-bold fs-5">
-                                            {selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'} VNĐ
-                                        </span>
-                                    </div>
-                                </div>
+                        {/* Dịch Vụ */}
+                        <div className="col-12 col-md-6">
+                            <div className="border-start border-success border-3 ps-3">
+                                <h6 className="text-success mb-1" style={{
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    <i className="fas fa-spa me-2"></i>Dịch Vụ
+                                </h6>
+                                <p className="mb-1 fw-bold" style={{
+                                    color: '#ffffff',
+                                    fontSize: '1.1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                                }}>{selectedService?.name}</p>
+                                <p className="mb-0" style={{
+                                    color: '#e9ecef',
+                                    fontSize: '1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    Thời gian: {selectedService?.duration || '60'} phút
+                                    <br />
+                                    Giá: {selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'} VNĐ
+                                </p>
                             </div>
                         </div>
-
-                        {/* Staff Info */}
-                        <div className="col-12 col-lg-6">
-                            <div className="info-block h-100">
-                                <div className="d-flex align-items-center mb-3">
-                                    <div className="icon-circle me-3" style={{
-                                        width: '50px',
-                                        height: '50px',
-                                        backgroundColor: 'rgba(253, 181, 185, 0.2)',
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        border: '2px solid #FDB5B9'
-                                    }}>
-                                        <i className="fas fa-user-tie" style={{ fontSize: '1.2rem', color: '#FDB5B9' }}></i>
-                                    </div>
-                                    <div>
-                                        <h6 className="mb-1 fw-bold" style={{ color: '#FDB5B9' }}>NHÂN VIÊN</h6>
-                                        <h5 className="text-white mb-0 fw-bold">{selectedStaff?.fullName || 'Sẽ được phân công'}</h5>
-                                    </div>
-                                </div>
+    
+                        {/* Nhân Viên */}
+                        <div className="col-12 col-md-6">
+                            <div className="border-start border-3 ps-3" style={{ borderColor: '#FDB5B9' }}>
+                                <h6 className="mb-1" style={{
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
+                                    color: '#FDB5B9'
+                                }}>
+                                    <i className="fas fa-user-tie me-2"></i>Nhân Viên
+                                </h6>
+                                <p className="mb-1 fw-bold" style={{
+                                    color: '#ffffff',
+                                    fontSize: '1.1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                                }}>{selectedStaff?.fullName || 'Sẽ được phân công'}</p>
                                 {selectedStaff && (
-                                    <div className="staff-rating d-flex align-items-center">
-                                        <div className="me-2">
+                                    <p className="mb-0" style={{
+                                        color: '#e9ecef',
+                                        fontSize: '1rem',
+                                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                    }}>
+                                        {selectedStaff?.skillsText || 'Chuyên viên Spa'}
+                                        <br />
+                                        <span className="d-inline-flex align-items-center">
                                             {renderStars(selectedStaff?.averageRating)}
-                                        </div>
-                                        <span className="text-white-50" style={{ fontSize: '0.9rem' }}>
-                                            ({selectedStaff?.totalReviews || 0} đánh giá)
+                                            <span className="ms-2">({selectedStaff?.totalReviews || 0} đánh giá)</span>
                                         </span>
-                                    </div>
+                                    </p>
                                 )}
                             </div>
                         </div>
-
-                        {/* Khách Hàng - moved to left side */}
+                    </div>
+                </div>
+    
+                {/* Appointment Details */}
+                <div className="appointment-details mb-4 p-4 rounded-3" style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
+                    backdropFilter: 'blur(15px)',
+                    border: '1px solid rgba(255,255,255,0.2)'
+                }}>
+                    <h5 className="text-primary mb-3 fw-bold">
+                        <i className="fas fa-info-circle me-2 text-primary"></i>
+                        Chi Tiết Cuộc Hẹn
+                    </h5>
+    
+                    <div className="row g-3">
+                        {/* Ngày & Giờ */}
+                        <div className="col-12 col-md-6">
+                            <div className="border-start border-info border-3 ps-3">
+                                <h6 className="text-info mb-1" style={{
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    <i className="fas fa-calendar-alt me-2"></i>Ngày & Giờ
+                                </h6>
+                                <p className="mb-1 fw-bold" style={{
+                                    color: '#ffffff',
+                                    fontSize: '1.1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                                }}>
+                                    {(() => {
+                                        if (formData.appointmentDate) {
+                                            const [year, month, day] = formData.appointmentDate.split('-');
+                                            const date = new Date(year, month - 1, day);
+                                            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                                            return date.toLocaleDateString('vi-VN', options);
+                                        }
+                                        return formData.appointmentDate;
+                                    })()}
+                                </p>
+                                <p className="mb-0" style={{
+                                    color: '#e9ecef',
+                                    fontSize: '1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    Khung giờ: {selectedTimeSlot?.startTime} - {selectedTimeSlot?.endTime}
+                                </p>
+                            </div>
+                        </div>
+    
+                        {/* Khách Hàng */}
                         <div className="col-12 col-md-6">
                             <div className="border-start border-warning border-3 ps-3">
                                 <h6 className="text-warning mb-1" style={{
@@ -1735,107 +1770,88 @@ const Appointment = () => {
                                     color: '#e9ecef',
                                     fontSize: '1rem',
                                     textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>{formData.phoneNumber}
+                                }}>
+                                    {formData.phoneNumber}
                                     <br />
                                     {formData.email}
                                 </p>
                             </div>
                         </div>
-
-                        {/* Thời Gian - moved to right side with Vietnamese format */}
                     </div>
-                </div>
-
-                {/* Appointment Details */}
-                <div className="appointment-details mb-4 p-4 rounded-3" style={{
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
-                    backdropFilter: 'blur(15px)',
-                    border: '1px solid rgba(255,255,255,0.2)'
-                }}>
-                    <h5 className="text-primary mb-3 fw-bold">
-                        <i className="fas fa-info-circle me-2 text-primary"></i>
-                        Chi Tiết Cuộc Hẹn
-                    </h5>
-
-                    <div className="row g-3">
-                        {/* Date & Time */}
-                        <div className="col-12 col-md-6">
-                            <div className="detail-item p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                                <div className="d-flex align-items-center">
-                                    <i className="fas fa-calendar-alt text-info me-3" style={{ fontSize: '1.5rem' }}></i>
-                                    <div>
-                                        <small className="text-info fw-bold d-block">NGÀY & GIỜ</small>
-                                        <div className="text-white fw-normal">
-                                            {(() => {
-                                                if (formData.appointmentDate) {
-                                                    const [year, month, day] = formData.appointmentDate.split('-');
-                                                    const date = new Date(year, month - 1, day);
-                                                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                                                    return date.toLocaleDateString('vi-VN', options);
-                                                }
-                                                return formData.appointmentDate;
-                                            })()}
-                                        </div>
-                                        <div className="text-white fw-bold">
-                                            {selectedTimeSlot?.startTime} - {selectedTimeSlot?.endTime}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Customer Info */}
-                        <div className="col-12 col-md-6">
-                            <div className="detail-item p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                                <div className="d-flex align-items-center">
-                                    <i className="fas fa-user text-warning me-3" style={{ fontSize: '1.5rem' }}></i>
-                                    <div>
-                                        <small className="text-warning fw-bold d-block">THÔNG TIN KHÁCH HÀNG</small>
-                                        <div className="text-white-50 fw-bold">{formData.fullName}</div>
-                                        <div className="text-white-50">
-                                            <i className="fas fa-phone me-1"></i>
-                                            {formData.phoneNumber}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+    
                     {/* Notes */}
                     {formData.notes && (
                         <div className="mt-3">
-                            <div className="detail-item p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                                <div className="d-flex">
-                                    <i className="fas fa-sticky-note text-warning me-3 mt-1" style={{ fontSize: '1.2rem' }}></i>
-                                    <div>
-                                        <small className="text-warning fw-bold d-block mb-1">GHI CHÚ</small>
-                                        <div className="text-white fst-italic" style={{ fontSize: '0.95rem', lineHeight: '1.5' }}>
-                                            {formData.notes}
-                                        </div>
-                                    </div>
+                            <div className="border-start border-warning border-3 ps-3">
+                                <h6 className="text-warning mb-1" style={{
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    <i className="fas fa-sticky-note me-2"></i>Ghi Chú
+                                </h6>
+                                <div className="text-white fst-italic" style={{
+                                    fontSize: '0.95rem',
+                                    lineHeight: '1.5',
+                                    wordWrap: 'break-word',
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'break-word',
+                                    hyphens: 'auto',
+                                    maxHeight: '120px',
+                                    overflowY: 'auto',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    {formData.notes}
                                 </div>
                             </div>
+    
+                            {/* Custom scrollbar styling */}
+                            <style jsx>{`
+                                .mt-3 div:last-child::-webkit-scrollbar {
+                                    width: 4px;
+                                }
+                                
+                                .mt-3 div:last-child::-webkit-scrollbar-track {
+                                    background: rgba(255,255,255,0.1);
+                                    border-radius: 2px;
+                                }
+                                
+                                .mt-3 div:last-child::-webkit-scrollbar-thumb {
+                                    background: rgba(255,193,7,0.5);
+                                    border-radius: 2px;
+                                }
+                                
+                                .mt-3 div:last-child::-webkit-scrollbar-thumb:hover {
+                                    background: rgba(255,193,7,0.7);
+                                }
+                            `}</style>
                         </div>
                     )}
                 </div>
-
+    
                 {/* Total Cost */}
-                <div className="total-cost p-4 rounded-3 text-center" style={{
+                <div className="total-cost p-4 rounded-3" style={{
                     background: 'linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(40, 167, 69, 0.1) 100%)',
                     border: '2px solid rgba(40, 167, 69, 0.5)',
                     backdropFilter: 'blur(15px)'
                 }}>
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 className="text-white mb-1 fw-bold">
-                                <i className="fas fa-receipt me-2"></i>
-                                Tổng Chi Phí
-                            </h5>
-                            <small className="text-white-50">Đã bao gồm tất cả phí dịch vụ</small>
-                        </div>
-                        <div className="text-end">
-                            <h2 className="mb-0 fw-bold" style={{
+                    <div className="border-start border-success border-3 ps-3">
+                        <h6 className="text-success mb-1" style={{
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                        }}>
+                            <i className="fas fa-receipt me-2"></i>Tổng Chi Phí
+                        </h6>
+                        <div className="d-flex justify-content-between align-items-center">
+                            <p className="mb-0" style={{
+                                color: '#e9ecef',
+                                fontSize: '1rem',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                            }}>
+                                Đã bao gồm tất cả phí dịch vụ
+                            </p>
+                            <h2 className="mb-0 fw-bold text-end" style={{
                                 color: '#28a745',
                                 fontSize: '2.5rem',
                                 textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
@@ -1846,7 +1862,7 @@ const Appointment = () => {
                         </div>
                     </div>
                 </div>
-
+    
                 {/* Warning Notice */}
                 <div className="alert alert-warning bg-transparent border-warning text-warning mt-4">
                     <div className="d-flex align-items-start">

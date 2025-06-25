@@ -310,7 +310,7 @@ const ContactPage = () => {
                                                 style={{ 
                                                     background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%, #fee2e2 100%)',
                                                     border: 'none',
-                                                    color: 'white',
+                                                    color: 'black',
                                                     fontWeight: '600',
                                                     borderRadius: '25px',
                                                     transition: 'all 0.3s ease',

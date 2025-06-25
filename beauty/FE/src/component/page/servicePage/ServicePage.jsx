@@ -162,7 +162,7 @@ const ServicePage = () => {
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                   onFocus={() => searchTerm && setShowSuggestions(true)}
                   style={{
-                    border: '2px solid #e9ecef',
+                    border: '2px solid rgb(255, 164, 173)',
                     transition: 'all 0.3s ease',
                     fontSize: '1rem',
                     padding: '12px 50px 12px 20px'
@@ -630,8 +630,8 @@ const ServicePage = () => {
 
         /* Search input focus effect */
         .form-control:focus {
-          border-color: #007bff !important;
-          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+          border-color: rgb(255, 164, 173) !important;
+          box-shadow: 0 0 0 0.2rem rgb(255, 226, 229) !important;
         }
 
         /* Search button hover effect - Keep original position */
