@@ -63,37 +63,31 @@ const AboutPage = () => {
                                 </p>
                             </div>
                             <a href="/ServicePage"
-                                className="btn btn-primary btn-primary-outline-0 rounded-pill py-3 px-5"
+                                className="btn rounded-pill py-3 px-5"
                                 style={{
-                                    background: 'linear-gradient(135deg, #FDB5B9, #f89ca0) !important',
-                                    border: 'none !important',
-                                    boxShadow: '0 6px 20px rgba(253, 181, 185, 0.3)',
-                                    color: 'white !important',
-                                    fontWeight: '600',
-                                    fontSize: '1rem',
-                                    letterSpacing: '0.3px',
-                                    transition: 'all 0.3s ease',
+                                    backgroundColor: '#FDB5B9',
+                                    borderColor: '#FDB5B9',
+                                    color: 'white',
+                                    border: '1px solid #FDB5B9',
+                                    borderRadius: '50px',
+                                    padding: '12px 20px',
+                                    fontSize: '16px',
+                                    fontWeight: '500',
                                     textDecoration: 'none',
-                                    position: 'relative',
-                                    overflow: 'hidden'
+                                    display: 'inline-block',
+                                    transition: 'all 0.3s ease'
                                 }}
                                 onMouseEnter={(e) => {
-                                    e.target.style.setProperty('background', 'linear-gradient(135deg, #F7A8B8, #E589A3)', 'important');
-                                    e.target.style.setProperty('border', 'none', 'important');
-                                    e.target.style.transform = 'translateY(-3px) scale(1.05)';
-                                    e.target.style.boxShadow = '0 12px 30px rgba(253, 181, 185, 0.5)';
+                                    e.target.style.backgroundColor = '#F7A8B8';
+                                    e.target.style.borderColor = '#F7A8B8';
+                                    e.target.style.transform = 'translateY(-2px)';
+                                    e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.4)';
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.target.style.setProperty('background', 'linear-gradient(135deg, #FDB5B9, #f89ca0)', 'important');
-                                    e.target.style.setProperty('border', 'none', 'important');
-                                    e.target.style.transform = 'translateY(0) scale(1)';
-                                    e.target.style.boxShadow = '0 6px 20px rgba(253, 181, 185, 0.3)';
-                                }}
-                                onMouseDown={(e) => {
-                                    e.target.style.transform = 'translateY(-1px) scale(1.02)';
-                                }}
-                                onMouseUp={(e) => {
-                                    e.target.style.transform = 'translateY(-3px) scale(1.05)';
+                                    e.target.style.backgroundColor = '#FDB5B9';
+                                    e.target.style.borderColor = '#FDB5B9';
+                                    e.target.style.transform = 'translateY(0)';
+                                    e.target.style.boxShadow = 'none';
                                 }}
                             >
                                 Khám Phá Thêm

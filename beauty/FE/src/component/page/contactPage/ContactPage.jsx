@@ -308,7 +308,7 @@ const ContactPage = () => {
                                                 type="submit"
                                                 disabled={loading}
                                                 style={{ 
-                                                    background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%, #fee2e2 100%)',
+                                                    background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%)',
                                                     border: 'none',
                                                     color: 'white',
                                                     fontWeight: '600',
@@ -385,21 +385,33 @@ const ContactPage = () => {
                             </div>
                         </div>
                         <div className="col-12">
-                            <div className="rounded">
-                                <iframe className="rounded-top w-100" style={{ height: 450, marginBottom: '-6px' }} src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.324408746655!2d106.69749831533343!3d10.78231859230824!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f38f9ed887b%3A0x14aded5703768989!2zQsOgaSBYw6AgRHXDom4gQ2jDrG0!5e0!3m2!1svi!2s!4v1645678901234!5m2!1svi!2s" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-                            </div>
-                            <div className=" text-center p-4 rounded-bottom" style={{
-                                background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%, #fee2e2 100%)'
-                            }}>
-                                <h4 className="text-white fw-bold">Theo Dõi Chúng Tôi</h4>
-                                <div className="d-flex align-items-center justify-content-center">
-                                    <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle me-3"><i className="fab fa-facebook-f" /></a>
-                                    <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle me-3"><i className="fab fa-twitter" /></a>
-                                    <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle me-3"><i className="fab fa-instagram" /></a>
-                                    <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle"><i className="fab fa-linkedin-in" /></a>
-                                </div>
+                        <div className="rounded shadow-lg border border-2 border-primary">
+                            <iframe
+                                className="rounded-top w-100"
+                                style={{
+                                    height: 450,
+                                    marginBottom: '-6px',
+                                    filter: 'brightness(1.1) contrast(1.1) saturate(1.2)',
+                                }}
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.324408746655!2d106.69749831533343!3d10.78231859230824!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f38f9ed887b%3A0x14aded5703768989!2zQsOgaSBYw6AgRHXDom4gQ2jDrG0!5e0!3m2!1svi!2s!4v1645678901234!5m2!1svi!2s"
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                            />
+                        </div>
+                        <div className="text-center bg-primary p-4 rounded-bottom bg-gradient" style={{
+                            boxShadow: '0 4px 15px rgba(255, 98, 132, 0.3)'
+                        }}>
+                            <h4 className="text-white fw-bold mb-3" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+                                Theo dõi chúng tôi
+                            </h4>
+                            <div className="d-flex align-items-center justify-content-center">
+                                <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-facebook-f" /></a>
+                                <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-twitter" /></a>
+                                <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-instagram" /></a>
+                                <a href="#" className="btn btn-light btn-square rounded-circle shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-linkedin-in" /></a>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>

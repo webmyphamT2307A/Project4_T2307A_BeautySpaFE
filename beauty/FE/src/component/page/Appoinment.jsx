@@ -763,10 +763,10 @@ const Appointment = () => {
             setStaffAvailabilities({});
             setCurrentStep(1); // Reset về step đầu tiên
 
-            // Chuyển hướng sau 2 giây để người dùng có thể thấy thông báo thành công
+            // Chuyển hướng sau 0.5 giây để người dùng có thể thấy thông báo thành công
             setTimeout(() => {
                 navigate('/service-history');
-            }, 2000);
+            }, 500);
 
         } catch (error) {
             if (error.response) {

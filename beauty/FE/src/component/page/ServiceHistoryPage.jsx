@@ -234,10 +234,11 @@ const ServiceHistoryPage = () => {
                     setAutoLookupPerformed(true);
 
                     // Hiển thị toast thông báo đang tự động tra cứu
-                    toast.info('Đang tự động tra cứu lịch hẹn vừa đặt...', {
-                        position: "top-right",
-                        autoClose: 3000,
-                    });
+                    // toast.info('Đang tự động tra cứu lịch hẹn vừa đặt...', {
+                    //     position: "top-right",
+                    //     autoClose: 3000,
+                    // });
+                    console.log('🔍 Recent booking is fresh, performing auto lookup...');
 
                     // Tự động thực hiện tra cứu
                     setTimeout(() => {
@@ -274,10 +275,11 @@ const ServiceHistoryPage = () => {
                     setError(`Không tìm thấy lịch hẹn hợp lệ với số điện thoại: ${phoneNumber}`);
                 } else {
                     // Hiển thị thông báo thành công
-                    toast.success(`Tìm thấy ${processedHistory.length} lịch hẹn! Lịch hẹn mới nhất đã được hiển thị.`, {
-                        position: "top-right",
-                        autoClose: 4000,
-                    });
+                    // toast.success(`Tìm thấy ${processedHistory.length} lịch hẹn! Lịch hẹn mới nhất đã được hiển thị.`, {
+                    //     position: "top-right",
+                    //     autoClose: 4000,
+                    // });
+                    console.log('✅ Auto lookup successful, processed history:', processedHistory);
                 }
             } else {
                 setHistory([]);

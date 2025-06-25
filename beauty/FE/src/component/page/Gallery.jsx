@@ -9,7 +9,7 @@ const Gallery = () => {
       <h1 className="display-4 mb-4">Khám Phá Bộ Sưu Tập Của Chúng Tôi</h1>
     </div>
     <div className="tab-class text-center">
-      <ul className="nav nav-pills d-inline-flex justify-content-center mb-5">
+      <ul className="nav nav-pills d-inline-flex justify-content-center mb-5 text-uppercase">
         <li className="nav-item">
           <a className="d-flex mx-3 py-2 border border-primary bg-light rounded-pill active" data-bs-toggle="pill" href="#tab-1">
             <span className="text-dark" style={{width: 150}}>Tất Cả</span>
@@ -45,7 +45,7 @@ const Gallery = () => {
                   <div className="gallery-img">
                     <img className="img-fluid rounded w-100" src="assets/img/gallery-1.jpg" alt />
                     <div className="gallery-overlay p-4">
-                      <h4 className="text-secondary">Chăm Sóc Da</h4>
+                      <h4 className="text-primary">Chăm Sóc Da</h4>
                     </div>
                     <div className="search-icon">
                       <a href="assets/img/gallery-1.jpg" data-lightbox="Gallery-1" className="my-auto"><i className="fas fa-search-plus btn-primary btn-primary-outline-0 rounded-circle p-3" /></a>
@@ -56,7 +56,7 @@ const Gallery = () => {
                   <div className="gallery-img">
                     <img className="img-fluid rounded w-100" src="assets/img/gallery-2.jpg" alt />
                     <div className="gallery-overlay p-4">
-                      <h4 className="text-secondary">Tắm Hơi</h4>
+                      <h4 className="text-primary">Tắm Hơi</h4>
                     </div>
                     <div className="search-icon">
                       <a href="assets/img/gallery-2.jpg" data-lightbox="Gallery-2" className="my-auto"><i className="fas fa-search-plus btn-primary btn-primary-outline-0 rounded-circle p-3" /></a>
@@ -67,7 +67,7 @@ const Gallery = () => {
                   <div className="gallery-img">
                     <img className="img-fluid rounded w-100" src="assets/img/gallery-3.jpg" alt />
                     <div className="gallery-overlay p-4">
-                      <h4 className="text-secondary">Liệu Pháp Đá Nóng</h4>
+                      <h4 className="text-primary">Liệu Pháp Đá Nóng</h4>
                     </div>
                     <div className="search-icon">
                       <a href="assets/img/gallery-3.jpg" data-lightbox="Gallery-3" className="my-auto"><i className="fas fa-search-plus btn-primary btn-primary-outline-0 rounded-circle p-3" /></a>
@@ -78,7 +78,7 @@ const Gallery = () => {
                   <div className="gallery-img">
                     <img className="img-fluid rounded w-100" src="assets/img/gallery-4.jpg" alt />
                     <div className="gallery-overlay p-4">
-                      <h4 className="text-secondary">Massage Mặt</h4>
+                      <h4 className="text-primary">Massage Mặt</h4>
                     </div>
                     <div className="search-icon">
                       <a href="assets/img/gallery-4.jpg" data-lightbox="Gallery-4" className="my-auto"><i className="fas fa-search-plus btn-primary btn-primary-outline-0 rounded-circle p-3" /></a>
@@ -89,7 +89,7 @@ const Gallery = () => {
                   <div className="gallery-img">
                     <img className="img-fluid rounded w-100" src="assets/img/gallery-5.jpg" alt />
                     <div className="gallery-overlay p-4">
-                      <h4 className="text-secondary">Chăm Sóc Da</h4>
+                      <h4 className="text-primary">Chăm Sóc Da</h4>
                     </div>
                     <div className="search-icon">
                       <a href="assets/img/gallery-5.jpg" data-lightbox="Gallery-5" className="my-auto"><i className="fas fa-search-plus btn-primary btn-primary-outline-0 rounded-circle p-3" /></a>
@@ -100,7 +100,7 @@ const Gallery = () => {
                   <div className="gallery-img">
                     <img className="img-fluid rounded w-100" src="assets/img/gallery-6.jpg" alt />
                     <div className="gallery-overlay p-4">
-                      <h4 className="text-secondary">Tắm Hơi</h4>
+                      <h4 className="text-primary">Tắm Hơi</h4>
                     </div>
                     <div className="search-icon">
                       <a href="assets/img/gallery-6.jpg" data-lightbox="Gallery-6" className="my-auto"><i className="fas fa-search-plus btn-primary btn-primary-outline-0 rounded-circle p-3" /></a>
@@ -111,7 +111,7 @@ const Gallery = () => {
                   <div className="gallery-img">
                     <img className="img-fluid rounded w-100" src="assets/img/gallery-7.jpg" alt />
                     <div className="gallery-overlay p-4">
-                      <h4 className="text-secondary">Liệu Pháp Đá Nóng</h4>
+                      <h4 className="text-primary">Liệu Pháp Đá Nóng</h4>
                     </div>
                     <div className="search-icon">
                       <a href="assets/img/gallery-7.jpg" data-lightbox="Gallery-7" className="my-auto"><i className="fas fa-search-plus btn-primary btn-primary-outline-0 rounded-circle p-3" /></a>
@@ -122,7 +122,7 @@ const Gallery = () => {
                   <div className="gallery-img">
                     <img className="img-fluid rounded w-100" src="assets/img/gallery-8.jpg" alt />
                     <div className="gallery-overlay p-4">
-                      <h4 className="text-secondary">Massage Mặt</h4>
+                      <h4 className="text-primary">Massage Mặt</h4>
                     </div>
                     <div className="search-icon">
                       <a href="assets/img/gallery-8.jpg" data-lightbox="Gallery-8" className="my-auto"><i className="fas fa-search-plus btn-primary btn-primary-outline-0 rounded-circle p-3" /></a>
