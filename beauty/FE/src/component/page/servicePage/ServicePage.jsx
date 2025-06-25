@@ -315,6 +315,9 @@ const ServicePage = () => {
                                       }
                                     }, 100);
                                   }}
+                                  onMouseEnter={(e) => {
+                                    e.target.setAttribute('style', 'border: 1px solid grey !important; box-shadow: 0 4px 4px rgb(165 136 138 / 98%) !important;');
+                                  }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >
                                   Đặt Lịch
