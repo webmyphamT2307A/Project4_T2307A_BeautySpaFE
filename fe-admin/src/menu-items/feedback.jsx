@@ -17,7 +17,7 @@ const feedback = {
       id: 'feedback',
       title: 'Phản Hồi',
       type: 'item',
-      url: '/feedback/default',
+      url: '/feedback/feedback',
       icon: icons.PaperClipOutlined,
       breadcrumbs: false
     }
