@@ -1,14 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import DatePicker, { registerLocale } from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { vi } from 'date-fns/locale/vi';
-import { format } from 'date-fns';
-
-registerLocale('vi', vi);
 
 const validateVietnamesePhone = (phone) => {
     const cleanPhone = phone.replace(/[\s-().]/g, '');
@@ -24,7 +18,6 @@ const validateVietnamesePhone = (phone) => {
 
 const Appointment = () => {
     const navigate = useNavigate();
-    const datePickerRef = useRef(null);
 
     // Step management
     const [currentStep, setCurrentStep] = useState(1);
@@ -48,6 +41,7 @@ const Appointment = () => {
     const [services, setServices] = useState([]);
     const [timeSlots, setTimeSlots] = useState([]);
     const [staffList, setStaffList] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [countStaffAvaiable, setCountStaffAvaiable] = useState(0);
     const [slotInfo, setSlotInfo] = useState(null);
     // State quản lý lịch rảnh của TẤT CẢ nhân viên
@@ -101,8 +95,11 @@ const Appointment = () => {
                 setStaffList([]);
                 setCountStaffAvaiable(0);
                 setIsLoadingSchedules(false);
+                setLoading(false); // ✅ Thêm ở đây
                 return;
             }
+
+            setLoading(true); // ✅ Đặt ở đây trước tất cả logic chính
 
             try {
                 // First, get all staff
@@ -117,13 +114,12 @@ const Appointment = () => {
                 const response = await axios.get(apiUrl, { params });
                 const rawStaffList = Array.isArray(response.data) ? response.data : (response.data.data || []);
 
-                // Get selected timeslot to determine shift (moved outside try-catch)
+                // Get selected timeslot to determine shift
                 const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
                 let requiredShift = null;
 
                 if (selectedTimeSlot) {
                     const startHour = parseInt(selectedTimeSlot.startTime.split(':')[0]);
-                    // Determine shift based on time
                     if (startHour >= 6 && startHour < 12) {
                         requiredShift = 'Sáng';
                     } else if (startHour >= 12 && startHour < 18) {
@@ -135,17 +131,14 @@ const Appointment = () => {
 
                 // If date is selected, filter staff who have work schedule on that date
                 let staffWithSchedule = rawStaffList;
+
                 if (formData.appointmentDate && scheduleFiltering) {
                     setIsLoadingSchedules(true);
-
-                    // Get all schedules for the selected date
                     try {
-                        // Debug: Check date format before API call
                         const scheduleResponse = await axios.get('http://localhost:8080/api/v1/users-schedules', {
                             params: {
                                 startDate: formData.appointmentDate,
                                 endDate: formData.appointmentDate
-                                // Don't filter by status - get all schedules (pending, confirmed) but not completed
                             }
                         });
 
@@ -153,17 +146,14 @@ const Appointment = () => {
                             ? scheduleResponse.data.data
                             : (Array.isArray(scheduleResponse.data) ? scheduleResponse.data : []);
 
-                        // Get list of staff IDs who have schedules on this date
                         const staffIdsWithSchedule = schedules
                             .filter(schedule => {
-                                const workDate = schedule.workDate; // Format can be "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm:ss"
-                                const requestedDate = formData.appointmentDate; // Format is "YYYY-MM-DD"
-                                // FIX: Use startsWith to handle potential time parts in the date string from backend
+                                const workDate = schedule.workDate;
+                                const requestedDate = formData.appointmentDate;
                                 const isDateMatch = workDate && workDate.startsWith(requestedDate);
                                 const isActive = schedule.isActive === true;
                                 const isNotCompleted = schedule.status !== 'completed';
 
-                                // Check shift compatibility (if shift info is available and shift filtering is enabled)
                                 let isShiftMatch = true;
                                 if (shiftFiltering && requiredShift && schedule.shift) {
                                     isShiftMatch = schedule.shift.toLowerCase().includes(requiredShift.toLowerCase()) ||
@@ -175,16 +165,14 @@ const Appointment = () => {
                             })
                             .map(schedule => schedule.userId);
 
-                        // Filter staff list to only include those with schedules
                         if (staffIdsWithSchedule.length > 0) {
-                             staffWithSchedule = rawStaffList.filter(staff => staffIdsWithSchedule.includes(staff.id));
+                            staffWithSchedule = rawStaffList.filter(staff => staffIdsWithSchedule.includes(staff.id));
                         } else {
-                            staffWithSchedule = []; // Show no staff if no schedules found
+                            staffWithSchedule = [];
                         }
 
                     } catch (scheduleError) {
                         console.error("❌ Error fetching schedules:", scheduleError);
-                        // If schedule API fails, show all staff (fallback)
                         staffWithSchedule = rawStaffList;
                     } finally {
                         setIsLoadingSchedules(false);
@@ -198,13 +186,10 @@ const Appointment = () => {
                     isActiveResolved: staff.isActive === true || staff.isActive === 1 || String(staff.isActive).toLowerCase() === 'true'
                 }));
 
-                // Filter active staff and staff with proper skills
                 const filteredStaff = processedStaff.filter(staff => {
                     try {
-                        // Must be active
                         if (!staff.isActiveResolved) return false;
 
-                        // Service-based skill filtering (only if strict filtering is enabled)
                         if (formData.serviceId && strictFiltering) {
                             const selectedService = services.find(s => String(s.id) === formData.serviceId);
                             if (selectedService) {
@@ -212,26 +197,24 @@ const Appointment = () => {
                                 const skillsText = String(staff.skillsText || '').toLowerCase();
                                 const roleName = String(staff.roleName || '').toLowerCase();
 
-                                // Basic check: if skillsText or roleName contains the service name, it's a match.
                                 if (skillsText.includes(serviceName) || roleName.includes(serviceName)) {
                                     return true;
                                 }
 
-                                // If not direct match, check for related keywords
                                 const serviceSkillMapping = {
-                                     'facial': ['facial', 'skin', 'skincare', 'chăm sóc da'],
-                                     'triệt lông': ['triệt lông', 'laser', 'hair removal', 'waxing'],
-                                     'massage': ['massage', 'therapy', 'mát xa', 'trị liệu'],
-                                     'hair': ['hair', 'hairstyle', 'tóc', 'cắt tóc', 'nhuộm'],
-                                     'nail': ['nail', 'manicure', 'pedicure', 'móng'],
-                                     'spa': ['spa', 'treatment', 'wellness', 'beauty']
+                                    'facial': ['facial', 'skin', 'skincare', 'chăm sóc da'],
+                                    'triệt lông': ['triệt lông', 'laser', 'hair removal', 'waxing'],
+                                    'massage': ['massage', 'therapy', 'mát xa', 'trị liệu'],
+                                    'hair': ['hair', 'hairstyle', 'tóc', 'cắt tóc', 'nhuộm'],
+                                    'nail': ['nail', 'manicure', 'pedicure', 'móng'],
+                                    'spa': ['spa', 'treatment', 'wellness', 'beauty']
                                 };
 
                                 let requiredSkills = [];
                                 for (const [key, skills] of Object.entries(serviceSkillMapping)) {
                                     if (serviceName.includes(key)) {
                                         requiredSkills = skills;
-                                        break; // Found the category
+                                        break;
                                     }
                                 }
 
@@ -244,17 +227,19 @@ const Appointment = () => {
                         return true;
                     } catch (error) {
                         console.error('Error filtering staff:', error, staff);
-                        return true; // Failsafe
+                        return true;
                     }
                 });
-                
+
                 const shuffledStaff = [...filteredStaff].sort(() => 0.5 - Math.random());
                 setStaffList(shuffledStaff);
             } catch (error) {
-                console.error("Error fetching staff list:", error);
+                // console.error("Error fetching staff list:", error);
                 setStaffList([]);
                 setCountStaffAvaiable(0);
                 toast.error("Không thể tải danh sách nhân viên.");
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -377,13 +362,6 @@ const Appointment = () => {
         setFormData(newFormData);
     };
 
-    const handleDateChange = (date) => {
-        // Backend expects 'yyyy-MM-dd'
-        const formattedDate = date ? format(date, 'yyyy-MM-dd') : '';
-        setFormData(prev => ({ ...prev, appointmentDate: formattedDate }));
-        validateField('appointmentDate', formattedDate);
-    };
-
     const handleStaffSelect = (staffId, event) => {
         event?.preventDefault();
         const isBusy = staffAvailabilities[staffId]?.isAvailable === false;
@@ -438,6 +416,12 @@ const Appointment = () => {
                 return;
             }
 
+            let formattedDate = formData.appointmentDate;
+            if (formattedDate && formattedDate.includes('-')) {
+                const [year, month, day] = formattedDate.split('-');
+                formattedDate = `${day}/${month}/${year}`;
+            }
+
             let customerIdToSubmit = formData.customerId;
 
             if (!customerIdToSubmit && (formData.fullName && formData.phoneNumber)) {
@@ -458,6 +442,7 @@ const Appointment = () => {
                 ...formData,
                 customerId: customerIdToSubmit,
                 status: formData.status || 'pending',
+                appointmentDate: formattedDate,
                 branchId: formData.branchId || 1,
                 timeSlotId: formData.timeSlotId,
                 price: formData.price,
@@ -554,7 +539,7 @@ const Appointment = () => {
 
             return filtered;
         } catch (error) {
-            console.error('Error in filteredStaffList:', error);
+            // console.error('Error in filteredStaffList:', error);
             return [];
         }
     }, [staffList, staffSearchTerm, staffAvailabilities]);
@@ -573,10 +558,10 @@ const Appointment = () => {
 
     // Step validation
     const canProceedToStep = (step) => {
-        console.log("step: ", step);
+        // console.log("step: ", step);
         switch (step) {
             case 2:
-                return formData.serviceId !== '' && formData.appointmentDate !== '' && formData.timeSlotId !== '' && (countStaffAvaiable > 0) && (slotInfo.availableSlot < slotInfo.totalSlot);
+                return formData.serviceId !== '' && formData.appointmentDate !== '' && formData.timeSlotId !== '' && (countStaffAvaiable > 0) && (slotInfo.availableSlot < slotInfo.totalSlot) && !loading;
             case 3:
                 // Must have staff selected and staff must be available
                 const selectedStaffAvailable = formData.userId !== '' &&
@@ -600,20 +585,20 @@ const Appointment = () => {
                     hasUserId && hasFullName && hasPhoneNumber && hasEmail &&
                     noNameError && noPhoneError && noEmailError;
 
-                console.log("🔍 Step 4 Validation DETAILED:", {
-                    serviceId: `"${formData.serviceId}" -> ${hasServiceId}`,
-                    appointmentDate: `"${formData.appointmentDate}" -> ${hasAppointmentDate}`,
-                    timeSlotId: `"${formData.timeSlotId}" -> ${hasTimeSlotId}`,
-                    userId: `${formData.userId} (type: ${typeof formData.userId}) -> ${hasUserId}`,
-                    fullName: `"${formData.fullName}" -> ${hasFullName}`,
-                    phoneNumber: `"${formData.phoneNumber}" -> ${hasPhoneNumber}`,
-                    email: `"${formData.email}" -> ${hasEmail}`,
-                    validationErrors: validationErrors,
-                    noNameError: noNameError,
-                    noPhoneError: noPhoneError,
-                    noEmailError: noEmailError,
-                    FINAL_RESULT: step4Valid
-                });
+                // console.log("🔍 Step 4 Validation DETAILED:", {
+                //     serviceId: `"${formData.serviceId}" -> ${hasServiceId}`,
+                //     appointmentDate: `"${formData.appointmentDate}" -> ${hasAppointmentDate}`,
+                //     timeSlotId: `"${formData.timeSlotId}" -> ${hasTimeSlotId}`,
+                //     userId: `${formData.userId} (type: ${typeof formData.userId}) -> ${hasUserId}`,
+                //     fullName: `"${formData.fullName}" -> ${hasFullName}`,
+                //     phoneNumber: `"${formData.phoneNumber}" -> ${hasPhoneNumber}`,
+                //     email: `"${formData.email}" -> ${hasEmail}`,
+                //     validationErrors: validationErrors,
+                //     noNameError: noNameError,
+                //     noPhoneError: noPhoneError,
+                //     noEmailError: noEmailError,
+                //     FINAL_RESULT: step4Valid
+                // });
 
                 // Show which field is failing
                 if (!step4Valid) {
@@ -629,7 +614,7 @@ const Appointment = () => {
                     if (!noPhoneError) failedFields.push('phoneNumber validation error');
                     if (!noEmailError) failedFields.push('email validation error');
 
-                    console.error("❌ Step 4 FAILED - Missing fields:", failedFields);
+                    // console.error("❌ Step 4 FAILED - Missing fields:", failedFields);
                 }
 
                 return step4Valid;
@@ -654,10 +639,10 @@ const Appointment = () => {
         });
 
         if (canProceedToStep(currentStep + 1)) {
-            console.log("✅ Proceeding to next step");
+            // console.log("✅ Proceeding to next step");
             setCurrentStep(prev => Math.min(prev + 1, totalSteps));
         } else {
-            console.log("❌ Cannot proceed - showing error message");
+            // console.log("❌ Cannot proceed - showing error message");
             // Show specific error message based on current step
             switch (currentStep) {
                 case 1:
@@ -799,26 +784,15 @@ const Appointment = () => {
                     <label className="form-label text-white fw-bold">
                         <i className="fas fa-calendar me-2"></i>Chọn Ngày *
                     </label>
-                    <div className="position-relative">
-                        <DatePicker
-                            ref={datePickerRef}
-                            locale="vi"
-                            dateFormat="dd/MM/yyyy"
-                            selected={formData.appointmentDate ? new Date(formData.appointmentDate.replace(/-/g, "/")) : null}
-                            onChange={handleDateChange}
-                            minDate={new Date()}
-                            className="form-control py-2 border-white bg-transparent text-white"
-                            placeholderText="dd/MM/yyyy"
-                            wrapperClassName="w-100"
-                            calendarClassName="custom-calendar" // for custom styling
-                            popperPlacement="bottom-end"
-                        />
-                        <i
-                            className="fas fa-calendar-alt text-white-50 position-absolute top-50 end-0 translate-middle-y me-3"
-                            style={{ cursor: 'pointer', zIndex: 3 }}
-                            onClick={() => datePickerRef.current && datePickerRef.current.setOpen(true)}
-                        ></i>
-                    </div>
+                    <input
+                        type="date"
+                        name="appointmentDate"
+                        value={formData.appointmentDate}
+                        onChange={handleInputChange}
+                        className="form-control py-2 border-white bg-transparent text-white custom-date-picker"
+                        min={new Date().toISOString().split("T")[0]}
+                        style={{ height: '45px' }}
+                    />
                 </div>
 
                 <div className="col-12">
@@ -835,15 +809,10 @@ const Appointment = () => {
                     >
                         <option value="" style={{ color: 'black' }}>Chọn khung giờ</option>
                         {timeSlots.map(slot => {
+                            const slotDateTimeStr = `${formData.appointmentDate}T${slot.endTime}:00`;
+                            const slotEnd = new Date(slotDateTimeStr);
                             const now = new Date();
-                            const todayStr = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split("T")[0];
-                            const isToday = formData.appointmentDate === todayStr;
-
-                            let isPast = false;
-                            if (isToday && slot.startTime) {
-                                const slotStartDateTime = new Date(`${formData.appointmentDate}T${slot.startTime}`);
-                                isPast = slotStartDateTime < now;
-                            }
+                            const isPast = formData.appointmentDate && slot.endTime ? slotEnd < now : false;
 
                             return (
                                 <option
@@ -860,13 +829,15 @@ const Appointment = () => {
                 </div>
 
                 {formData.appointmentDate && formData.timeSlotId && formData.serviceId && (
-                    <div className="col-12">
-                        <div className="alert alert-info bg-transparent border-white text-white rounded-3 shadow-sm">
-                            <div className="d-flex align-items-center justify-content-between flex-wrap">
+                    <div className={`col-12 ${loading ? 'relative' : ''}`}>
+                        <div className={`${loading ? 'loader' : ''}`}></div>
+                        <div className=" alert alert-info bg-transparent border-white text-white rounded-3 shadow-sm">
+                            <div className={`${loading ? 'background-blur' : ''}`}>
+                                <div className="d-flex align-items-center justify-content-between flex-wrap">
                                 <div className="d-flex flex-column gap-2">
                                     <div className="d-flex align-items-center">
                                         <i className="fas fa-user-friends me-2"></i>
-                                        <strong>Nhân viên:</strong>
+                                        <strong>Nhân viên sẵn sàng phục vụ:</strong>
                                         <span className={`badge ms-2 px-2 py-1 rounded-pill ${countStaffAvaiable > 2 ? 'bg-success' :
                                             countStaffAvaiable > 0 ? 'bg-warning text-dark' :
                                                 'bg-danger'
@@ -880,10 +851,11 @@ const Appointment = () => {
                                         <div className="d-flex align-items-center">
                                             <i className="fas fa-bookmark me-2"></i>
                                             <span className="me-2">Đã đặt:</span>
-                                            <span className={`badge px-2 py-1 rounded-pill ${slotInfo.availableSlot === slotInfo.totalSlot ? 'bg-danger' :
-                                                slotInfo.availableSlot > slotInfo.totalSlot / 2 ? 'bg-warning text-dark' :
-                                                    'bg-success'
-                                                }`} style={{ fontSize: '0.8rem' }}>
+                                            <span
+                                                className={`badge px-2 py-1 rounded-pill ${slotInfo.availableSlot === slotInfo.totalSlot ? 'bg-danger' :
+                                                    slotInfo.availableSlot > slotInfo.totalSlot / 2 ? 'bg-warning text-dark' :
+                                                        'bg-success'
+                                                }`} style={{fontSize: '0.8rem'}}>
                                                 <i className="fas fa-calendar-check me-1"></i>
                                                 {slotInfo.availableSlot} / {slotInfo.totalSlot} chỗ
                                             </span>
@@ -894,12 +866,12 @@ const Appointment = () => {
                                 {countStaffAvaiable > 0 && (
                                     <div className="d-flex flex-column align-items-end gap-1">
                                         <small className="text-white-50 mb-1">Tình trạng sẵn sàng</small>
-                                        <div className="progress rounded-pill" style={{ width: '180px', height: '10px' }}>
+                                        <div className="progress rounded-pill" style={{width: '180px', height: '10px'}}>
                                             <div
                                                 className={`progress-bar progress-bar-striped progress-bar-animated ${countStaffAvaiable === 0 ? 'bg-danger' :
                                                     countStaffAvaiable <= 2 ? 'bg-warning' :
                                                         'bg-success'
-                                                    }`}
+                                                }`}
                                                 style={{
                                                     width: `${Math.min((countStaffAvaiable / 5) * 100, 100)}%`,
                                                     borderRadius: '10px'
@@ -910,7 +882,7 @@ const Appointment = () => {
                                                 aria-valuemax="5"
                                             />
                                         </div>
-                                        <small className="text-white-50" style={{ fontSize: '0.7rem' }}>
+                                        <small className="text-white-50" style={{fontSize: '0.7rem'}}>
                                             {countStaffAvaiable === 0 ? 'Chưa có nhân viên' :
                                                 countStaffAvaiable <= 2 ? 'Ít nhân viên' :
                                                     'Đủ nhân viên'}
@@ -919,8 +891,8 @@ const Appointment = () => {
                                 )}
                             </div>
 
-                            {/* Thêm thông báo rõ ràng thân thiện với người dùng */}
-                            <div className="mt-3 pt-2 border-top border-white" style={{ borderOpacity: '0.3' }}>
+                                {/* Thêm thông báo rõ ràng thân thiện với người dùng */}
+                                <div className="mt-3 pt-2 border-top border-white" style={{borderOpacity: '0.3'}}>
                                 <div className="d-flex align-items-center text-white-50">
                                     <i className="fas fa-info-circle me-2"></i>
                                     <small>
@@ -936,6 +908,7 @@ const Appointment = () => {
                                         }
                                     </small>
                                 </div>
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -1130,6 +1103,22 @@ const Appointment = () => {
                                                 </span>
                                             </div>
 
+                                            {/* Review Link */}
+                                            <div className="text-center mb-3">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-link p-0 text-decoration-none"
+                                                    style={{ fontSize: '0.7rem', color: '#ffc107', border: 'none', background: 'none' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/staff-review/${staff.id}`);
+                                                    }}
+                                                >
+                                                    <i className="fas fa-star me-1"></i>
+                                                    Xem đánh giá
+                                                </button>
+                                            </div>
+
                                             {/* Select Button */}
                                             <button
                                                 type="button"
@@ -1286,12 +1275,12 @@ const Appointment = () => {
                                 }}
                             />
                             <div className="d-flex justify-content-between align-items-center mt-1">
-                                {validationErrors.notes && (
+                                {/* {validationErrors.notes && (
                                     <small className={`${formData.notes?.length > 500 ? 'text-danger' : formData.notes?.length > 450 ? 'text-warning' : 'text-info'}`}>
                                         <i className="fas fa-exclamation-circle me-1"></i>
                                         {validationErrors.notes}
                                     </small>
-                                )}
+                                )} */}
                                 <small className={`ms-auto ${formData.notes?.length >= 500 ? 'text-danger fw-bold' :
                                     formData.notes?.length > 450 ? 'text-warning fw-bold' :
                                         formData.notes?.length > 400 ? 'text-info' : 'text-white-50'
@@ -1313,7 +1302,7 @@ const Appointment = () => {
         const selectedService = services.find(s => String(s.id) === formData.serviceId);
         const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
         const selectedStaff = staffList.find(s => s.id === selectedStaffId);
-
+    
         return (
             <div className="step-content">
                 <div className="text-center mb-4">
@@ -1327,7 +1316,7 @@ const Appointment = () => {
                         fontSize: '1rem'
                     }}>Vui lòng kiểm tra kỹ thông tin trước khi xác nhận</p>
                 </div>
-
+  
                 {/* Summary Card */}
                 <div className="confirmation-summary mb-4 p-4 rounded-3" style={{
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
@@ -1336,81 +1325,116 @@ const Appointment = () => {
                     boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
                 }}>
                     <div className="row g-4">
-                        {/* Service Info */}
-                        <div className="col-12 col-lg-6">
-                            <div className="info-block h-100">
-                                <div className="d-flex align-items-center mb-3">
-                                    <div className="icon-circle me-3" style={{
-                                        width: '50px',
-                                        height: '50px',
-                                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        border: '2px solid #28a745'
-                                    }}>
-                                        <i className="fas fa-spa text-success" style={{ fontSize: '1.2rem' }}></i>
-                                    </div>
-                                    <div>
-                                        <h6 className="text-success mb-1 fw-bold">DỊCH VỤ</h6>
-                                        <h5 className="text-white mb-0 fw-bold">{selectedService?.name}</h5>
-                                    </div>
-                                </div>
-                                <div className="service-details">
-                                    <div className="d-flex justify-content-start align-items-center mb-2">
-                                        <span className="text-white-50">
-                                            <i className="fas fa-clock me-2"></i>Thời gian:	&nbsp;
-                                        </span>
-                                        <span className="text-white fw-bold">{selectedService?.duration || '60'} phút</span>
-                                    </div>
-                                    <div className="d-flex justify-content-start align-items-center">
-                                        <span className="text-white-50">
-                                            <i className="fas fa-money-bill me-2"></i>Giá:	&nbsp;
-                                        </span>
-                                        <span className="text-success fw-bold fs-5">
-                                            {selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'} VNĐ
-                                        </span>
-                                    </div>
-                                </div>
+                        {/* Dịch Vụ */}
+                        <div className="col-12 col-md-6">
+                            <div className="border-start border-success border-3 ps-3">
+                                <h6 className="text-success mb-1" style={{
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    <i className="fas fa-spa me-2"></i>Dịch Vụ
+                                </h6>
+                                <p className="mb-1 fw-bold" style={{
+                                    color: '#ffffff',
+                                    fontSize: '1.1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                                }}>{selectedService?.name}</p>
+                                <p className="mb-0" style={{
+                                    color: '#e9ecef',
+                                    fontSize: '1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    Thời gian: {selectedService?.duration || '60'} phút
+                                    <br />
+                                    Giá: {selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'} VNĐ
+                                </p>
                             </div>
                         </div>
-
-                        {/* Staff Info */}
-                        <div className="col-12 col-lg-6">
-                            <div className="info-block h-100">
-                                <div className="d-flex align-items-center mb-3">
-                                    <div className="icon-circle me-3" style={{
-                                        width: '50px',
-                                        height: '50px',
-                                        backgroundColor: 'rgba(253, 181, 185, 0.2)',
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        border: '2px solid #FDB5B9'
-                                    }}>
-                                        <i className="fas fa-user-tie" style={{ fontSize: '1.2rem', color: '#FDB5B9' }}></i>
-                                    </div>
-                                    <div>
-                                        <h6 className="mb-1 fw-bold" style={{ color: '#FDB5B9' }}>NHÂN VIÊN</h6>
-                                        <h5 className="text-white mb-0 fw-bold">{selectedStaff?.fullName || 'Sẽ được phân công'}</h5>
-                                    </div>
-                                </div>
+    
+                        {/* Nhân Viên */}
+                        <div className="col-12 col-md-6">
+                            <div className="border-start border-3 ps-3" style={{ borderColor: '#FDB5B9' }}>
+                                <h6 className="mb-1" style={{
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
+                                    color: '#FDB5B9'
+                                }}>
+                                    <i className="fas fa-user-tie me-2"></i>Nhân Viên
+                                </h6>
+                                <p className="mb-1 fw-bold" style={{
+                                    color: '#ffffff',
+                                    fontSize: '1.1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                                }}>{selectedStaff?.fullName || 'Sẽ được phân công'}</p>
                                 {selectedStaff && (
-                                    <div className="staff-rating d-flex align-items-center">
-                                        <div className="me-2">
+                                    <p className="mb-0" style={{
+                                        color: '#e9ecef',
+                                        fontSize: '1rem',
+                                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                    }}>
+                                        {selectedStaff?.skillsText || 'Chuyên viên Spa'}
+                                        <br />
+                                        <span className="d-inline-flex align-items-center">
                                             {renderStars(selectedStaff?.averageRating)}
-                                        </div>
-                                        <span className="text-white-50" style={{ fontSize: '0.9rem' }}>
-                                            ({selectedStaff?.totalReviews || 0} đánh giá)
+                                            <span className="ms-2">({selectedStaff?.totalReviews || 0} đánh giá)</span>
                                         </span>
-                                    </div>
+                                    </p>
                                 )}
                             </div>
                         </div>
-
-                        {/* Khách Hàng - moved to left side */}
+                    </div>
+                </div>
+    
+                {/* Appointment Details */}
+                <div className="appointment-details mb-4 p-4 rounded-3" style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
+                    backdropFilter: 'blur(15px)',
+                    border: '1px solid rgba(255,255,255,0.2)'
+                }}>
+                    <h5 className="text-primary mb-3 fw-bold">
+                        <i className="fas fa-info-circle me-2 text-primary"></i>
+                        Chi Tiết Cuộc Hẹn
+                    </h5>
+    
+                    <div className="row g-3">
+                        {/* Ngày & Giờ */}
+                        <div className="col-12 col-md-6">
+                            <div className="border-start border-info border-3 ps-3">
+                                <h6 className="text-info mb-1" style={{
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    <i className="fas fa-calendar-alt me-2"></i>Ngày & Giờ
+                                </h6>
+                                <p className="mb-1 fw-bold" style={{
+                                    color: '#ffffff',
+                                    fontSize: '1.1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                                }}>
+                                    {(() => {
+                                        if (formData.appointmentDate) {
+                                            const [year, month, day] = formData.appointmentDate.split('-');
+                                            const date = new Date(year, month - 1, day);
+                                            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                                            return date.toLocaleDateString('vi-VN', options);
+                                        }
+                                        return formData.appointmentDate;
+                                    })()}
+                                </p>
+                                <p className="mb-0" style={{
+                                    color: '#e9ecef',
+                                    fontSize: '1rem',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    Khung giờ: {selectedTimeSlot?.startTime} - {selectedTimeSlot?.endTime}
+                                </p>
+                            </div>
+                        </div>
+    
+                        {/* Khách Hàng */}
                         <div className="col-12 col-md-6">
                             <div className="border-start border-warning border-3 ps-3">
                                 <h6 className="text-warning mb-1" style={{
@@ -1429,107 +1453,88 @@ const Appointment = () => {
                                     color: '#e9ecef',
                                     fontSize: '1rem',
                                     textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>{formData.phoneNumber}
+                                }}>
+                                    {formData.phoneNumber}
                                     <br />
                                     {formData.email}
                                 </p>
                             </div>
                         </div>
-
-                        {/* Thời Gian - moved to right side with Vietnamese format */}
                     </div>
-                </div>
-
-                {/* Appointment Details */}
-                <div className="appointment-details mb-4 p-4 rounded-3" style={{
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
-                    backdropFilter: 'blur(15px)',
-                    border: '1px solid rgba(255,255,255,0.2)'
-                }}>
-                    <h5 className="text-primary mb-3 fw-bold">
-                        <i className="fas fa-info-circle me-2 text-primary"></i>
-                        Chi Tiết Cuộc Hẹn
-                    </h5>
-
-                    <div className="row g-3">
-                        {/* Date & Time */}
-                        <div className="col-12 col-md-6">
-                            <div className="detail-item p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                                <div className="d-flex align-items-center">
-                                    <i className="fas fa-calendar-alt text-info me-3" style={{ fontSize: '1.5rem' }}></i>
-                                    <div>
-                                        <small className="text-info fw-bold d-block">NGÀY & GIỜ</small>
-                                        <div className="text-white fw-normal">
-                                            {(() => {
-                                                if (formData.appointmentDate) {
-                                                    const [year, month, day] = formData.appointmentDate.split('-');
-                                                    const date = new Date(year, month - 1, day);
-                                                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                                                    return date.toLocaleDateString('vi-VN', options);
-                                                }
-                                                return formData.appointmentDate;
-                                            })()}
-                                        </div>
-                                        <div className="text-white fw-bold">
-                                            {selectedTimeSlot?.startTime} - {selectedTimeSlot?.endTime}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Customer Info */}
-                        <div className="col-12 col-md-6">
-                            <div className="detail-item p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                                <div className="d-flex align-items-center">
-                                    <i className="fas fa-user text-warning me-3" style={{ fontSize: '1.5rem' }}></i>
-                                    <div>
-                                        <small className="text-warning fw-bold d-block">THÔNG TIN KHÁCH HÀNG</small>
-                                        <div className="text-white-50 fw-bold">{formData.fullName}</div>
-                                        <div className="text-white-50">
-                                            <i className="fas fa-phone me-1"></i>
-                                            {formData.phoneNumber}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+    
                     {/* Notes */}
                     {formData.notes && (
                         <div className="mt-3">
-                            <div className="detail-item p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                                <div className="d-flex">
-                                    <i className="fas fa-sticky-note text-warning me-3 mt-1" style={{ fontSize: '1.2rem' }}></i>
-                                    <div>
-                                        <small className="text-warning fw-bold d-block mb-1">GHI CHÚ</small>
-                                        <div className="text-white fst-italic" style={{ fontSize: '0.95rem', lineHeight: '1.5' }}>
-                                            {formData.notes}
-                                        </div>
-                                    </div>
+                            <div className="border-start border-warning border-3 ps-3">
+                                <h6 className="text-warning mb-1" style={{
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    <i className="fas fa-sticky-note me-2"></i>Ghi Chú
+                                </h6>
+                                <div className="text-white fst-italic" style={{
+                                    fontSize: '0.95rem',
+                                    lineHeight: '1.5',
+                                    wordWrap: 'break-word',
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'break-word',
+                                    hyphens: 'auto',
+                                    maxHeight: '120px',
+                                    overflowY: 'auto',
+                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                                }}>
+                                    {formData.notes}
                                 </div>
                             </div>
+    
+                            {/* Custom scrollbar styling */}
+                            <style jsx>{`
+                                .mt-3 div:last-child::-webkit-scrollbar {
+                                    width: 4px;
+                                }
+                                
+                                .mt-3 div:last-child::-webkit-scrollbar-track {
+                                    background: rgba(255,255,255,0.1);
+                                    border-radius: 2px;
+                                }
+                                
+                                .mt-3 div:last-child::-webkit-scrollbar-thumb {
+                                    background: rgba(255,193,7,0.5);
+                                    border-radius: 2px;
+                                }
+                                
+                                .mt-3 div:last-child::-webkit-scrollbar-thumb:hover {
+                                    background: rgba(255,193,7,0.7);
+                                }
+                            `}</style>
                         </div>
                     )}
                 </div>
-
+    
                 {/* Total Cost */}
-                <div className="total-cost p-4 rounded-3 text-center" style={{
+                <div className="total-cost p-4 rounded-3" style={{
                     background: 'linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(40, 167, 69, 0.1) 100%)',
                     border: '2px solid rgba(40, 167, 69, 0.5)',
                     backdropFilter: 'blur(15px)'
                 }}>
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 className="text-white mb-1 fw-bold">
-                                <i className="fas fa-receipt me-2"></i>
-                                Tổng Chi Phí
-                            </h5>
-                            <small className="text-white-50">Đã bao gồm tất cả phí dịch vụ</small>
-                        </div>
-                        <div className="text-end">
-                            <h2 className="mb-0 fw-bold" style={{
+                    <div className="border-start border-success border-3 ps-3">
+                        <h6 className="text-success mb-1" style={{
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                        }}>
+                            <i className="fas fa-receipt me-2"></i>Tổng Chi Phí
+                        </h6>
+                        <div className="d-flex justify-content-between align-items-center">
+                            <p className="mb-0" style={{
+                                color: '#e9ecef',
+                                fontSize: '1rem',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                            }}>
+                                Đã bao gồm tất cả phí dịch vụ
+                            </p>
+                            <h2 className="mb-0 fw-bold text-end" style={{
                                 color: '#28a745',
                                 fontSize: '2.5rem',
                                 textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
@@ -1540,7 +1545,7 @@ const Appointment = () => {
                         </div>
                     </div>
                 </div>
-
+    
                 {/* Warning Notice */}
                 <div className="alert alert-warning bg-transparent border-warning text-warning mt-4">
                     <div className="d-flex align-items-start">
@@ -1848,489 +1853,447 @@ const Appointment = () => {
 
             {/* Global CSS */}
             <style jsx global>{`
-              /* Step Progress Styles */
-              .step-progress-container {
-                background: rgba(0, 0, 0, 0.6);
-                backdrop-filter: blur(15px);
-                border-radius: 15px;
-                padding: 20px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-                position: relative;
-                z-index: 10;
-              }
-              
-              .step-progress-wrapper {
-                position: relative;
-                padding: 0 25px;
-              }
-              
-              .step-progress-wrapper::before {
-                content: '';
-                position: absolute;
-                top: 25px;
-                left: 50px;
-                right: 50px;
-                height: 3px;
-                background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3), rgba(255,255,255,0.1));
-                border-radius: 2px;
-                z-index: 1;
-              }
-              
-              .step-item {
-                position: relative;
-                z-index: 3;
-                flex: 1;
-                max-width: 130px;
-              }
-              
-              .step-circle {
-                width: 55px;
-                height: 55px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: rgba(0, 0, 0, 0.3);
-                color: rgba(255,255,255,0.6);
-                font-weight: bold;
-                border: 3px solid rgba(255,255,255,0.2);
-                transition: all 0.4s ease;
-                margin: 0 auto;
-                font-size: 1.1rem;
-                position: relative;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-              }
-              
-              .step-circle::before {
-                content: '';
-                position: absolute;
-                inset: -3px;
-                border-radius: 50%;
-                padding: 3px;
-                background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-                mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-                mask-composite: exclude;
-                opacity: 0;
-                transition: opacity 0.4s ease;
-              }
-              
-              .step-circle.active {
-                background: linear-gradient(135deg, #FDB5B9, #f89ca0);
-                color: white;
-                border-color: #FDB5B9;
-                box-shadow: 0 0 25px rgba(253, 181, 185, 0.5), 0 4px 15px rgba(0, 0, 0, 0.3);
-                transform: scale(1.1);
-              }
-              
-              .step-circle.active::before {
-                opacity: 1;
-              }
-              
-              .step-circle.completed {
-                background: linear-gradient(135deg, #198754, #0f5132);
-                color: white;
-                border-color: #198754;
-                box-shadow: 0 0 20px rgba(25, 135, 84, 0.5), 0 4px 15px rgba(0, 0, 0, 0.3);
-                transform: scale(1.05);
-              }
-              
-              .step-circle.completed::before {
-                opacity: 1;
-              }
-              
-              .step-label {
-                color: #ffffff;
-                font-weight: 600;
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-                font-size: 0.85rem;
-              }
-
-              /* Step Content Styles */
-              .step-content {
-                min-height: 500px;
-                padding: 20px;
-                border-radius: 10px;
-                background: rgba(255,255,255,0.02);
-                backdrop-filter: blur(5px);
-              }
-              
-              /* Confirmation Card */
-              .confirmation-card {
-                border: 1px solid rgba(255,255,255,0.1);
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-              }
-
-              /* Custom Navigation Buttons */
-              .navigation-buttons-wrapper {
-                padding: 20px 0;
-                gap: 20px;
-              }
-
-              .custom-btn {
-                position: relative;
-                padding: 15px 30px;
-                border-radius: 10px;
-                font-weight: 600;
-                font-size: 1rem;
-                border: none;
-                overflow: hidden;
-                transition: all 0.3s ease;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-                backdrop-filter: blur(10px);
-              }
-
-              .custom-btn::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-                transition: left 0.5s ease;
-              }
-
-              .custom-btn:hover::before {
-                left: 100%;
-              }
-
-              .custom-btn i {
-                transition: transform 0.3s ease;
-              }
-
-              /* Previous Button */
-              .prev-btn {
-                background: linear-gradient(135deg, #6c757d, #495057);
-                color: white;
-                border: 2px solid rgba(255, 255, 255, 0.2);
-              }
-
-              .prev-btn:hover:not(:disabled) {
-                background: linear-gradient(135deg, #495057, #343a40);
-                box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
-                transform: translateY(-2px);
-                color: white;
-              }
-
-              .prev-btn:hover:not(:disabled) i {
-                transform: translateX(-3px);
-              }
-
-              .prev-btn:disabled {
-                background: linear-gradient(135deg, rgba(108, 117, 125, 0.4), rgba(73, 80, 87, 0.4));
-                color: rgba(255, 255, 255, 0.5);
-                cursor: not-allowed;
-                border-color: rgba(255, 255, 255, 0.1);
-              }
-
-              /* Next Button */
-              .next-btn {
-                background: linear-gradient(135deg, #FDB5B9, #f89ca0);
-                color: white;
-                border: 2px solid rgba(253, 181, 185, 0.3);
-                box-shadow: 0 4px 15px rgba(253, 181, 185, 0.3);
-              }
-
-              .next-btn:hover:not(:disabled) {
-                background: linear-gradient(135deg, #F7A8B8, #E589A3);
-                box-shadow: 0 6px 25px rgba(253, 181, 185, 0.6);
-                transform: translateY(-2px);
-                color: white;
-              }
-
-              .next-btn:hover:not(:disabled) i {
-                transform: translateX(3px);
-              }
-
-              .next-btn:disabled {
-                background: linear-gradient(135deg, rgba(253, 181, 185, 0.4), rgba(247, 168, 184, 0.4));
-                color: rgba(255, 255, 255, 0.5);
-                cursor: not-allowed;
-                border-color: rgba(253, 181, 185, 0.1);
-                box-shadow: none;
-              }
-
-              /* Submit Button */
-              .submit-btn {
-                background: linear-gradient(135deg, #28a745, #1e7e34);
-                color: white;
-                border: 2px solid rgba(40, 167, 69, 0.3);
-                box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-                animation: subtle-pulse 2s ease-in-out infinite alternate;
-              }
-
-              .submit-btn:hover {
-                background: linear-gradient(135deg, #1e7e34, #155724);
-                box-shadow: 0 6px 25px rgba(40, 167, 69, 0.6);
-                transform: translateY(-2px);
-                color: white;
-              }
-
-              .submit-btn:hover:not(:disabled) i {
-                transform: scale(1.1);
-              }
-
-              .submit-btn:disabled {
-                background: linear-gradient(135deg, rgba(40, 167, 69, 0.4), rgba(30, 126, 52, 0.4)) !important;
-                color: rgba(255, 255, 255, 0.6) !important;
-                cursor: not-allowed !important;
-                border-color: rgba(40, 167, 69, 0.2) !important;
-                box-shadow: none !important;
-                transform: none !important;
-                animation: none !important;
-              }
-
-              .submit-btn:disabled i {
-                transform: none !important;
-              }
-
-              @keyframes subtle-pulse {
-                0% { 
-                  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+                /* Step Progress Styles */
+                .step-progress-container {
+                    background: rgba(0, 0, 0, 0.6);
+                    backdrop-filter: blur(15px);
+                    border-radius: 15px;
+                    padding: 20px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+                    position: relative;
+                    z-index: 10;
                 }
-                100% { 
-                  box-shadow: 0 4px 20px rgba(40, 167, 69, 0.6);
-                }
-              }
 
-                              /* Responsive and custom styles */
+                .step-progress-wrapper {
+                    position: relative;
+                    padding: 0 25px;
+                }
+
+                .step-progress-wrapper::before {
+                    content: '';
+                    position: absolute;
+                    top: 25px;
+                    left: 50px;
+                    right: 50px;
+                    height: 3px;
+                    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+                    border-radius: 2px;
+                    z-index: 1;
+                }
+
+                .step-item {
+                    position: relative;
+                    z-index: 3;
+                    flex: 1;
+                    max-width: 130px;
+                }
+
+                .step-circle {
+                    width: 55px;
+                    height: 55px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(0, 0, 0, 0.3);
+                    color: rgba(255, 255, 255, 0.6);
+                    font-weight: bold;
+                    border: 3px solid rgba(255, 255, 255, 0.2);
+                    transition: all 0.4s ease;
+                    margin: 0 auto;
+                    font-size: 1.1rem;
+                    position: relative;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                }
+
+                .step-circle::before {
+                    content: '';
+                    position: absolute;
+                    inset: -3px;
+                    border-radius: 50%;
+                    padding: 3px;
+                    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+                    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                    mask-composite: exclude;
+                    opacity: 0;
+                    transition: opacity 0.4s ease;
+                }
+
+                .step-circle.active {
+                    background: linear-gradient(135deg, #FDB5B9, #f89ca0);
+                    color: white;
+                    border-color: #FDB5B9;
+                    box-shadow: 0 0 25px rgba(253, 181, 185, 0.5), 0 4px 15px rgba(0, 0, 0, 0.3);
+                    transform: scale(1.1);
+                }
+
+                .step-circle.active::before {
+                    opacity: 1;
+                }
+
+                .step-circle.completed {
+                    background: linear-gradient(135deg, #198754, #0f5132);
+                    color: white;
+                    border-color: #198754;
+                    box-shadow: 0 0 20px rgba(25, 135, 84, 0.5), 0 4px 15px rgba(0, 0, 0, 0.3);
+                    transform: scale(1.05);
+                }
+
+                .step-circle.completed::before {
+                    opacity: 1;
+                }
+
+                .step-label {
+                    color: #ffffff;
+                    font-weight: 600;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+                    font-size: 0.85rem;
+                }
+
+                /* Step Content Styles */
+                .step-content {
+                    min-height: 500px;
+                    padding: 20px;
+                    border-radius: 10px;
+                    background: rgba(255, 255, 255, 0.02);
+                    backdrop-filter: blur(5px);
+                }
+
+                /* Confirmation Card */
+                .confirmation-card {
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                }
+
+                /* Custom Navigation Buttons */
+                .navigation-buttons-wrapper {
+                    padding: 20px 0;
+                    gap: 20px;
+                }
+
+                .custom-btn {
+                    position: relative;
+                    padding: 15px 30px;
+                    border-radius: 10px;
+                    font-weight: 600;
+                    font-size: 1rem;
+                    border: none;
+                    overflow: hidden;
+                    transition: all 0.3s ease;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                    backdrop-filter: blur(10px);
+                }
+
+                .custom-btn::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                    transition: left 0.5s ease;
+                }
+
+                .custom-btn:hover::before {
+                    left: 100%;
+                }
+
+                .custom-btn i {
+                    transition: transform 0.3s ease;
+                }
+
+                /* Previous Button */
+                .prev-btn {
+                    background: linear-gradient(135deg, #6c757d, #495057);
+                    color: white;
+                    border: 2px solid rgba(255, 255, 255, 0.2);
+                }
+
+                .prev-btn:hover:not(:disabled) {
+                    background: linear-gradient(135deg, #495057, #343a40);
+                    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+                    transform: translateY(-2px);
+                    color: white;
+                }
+
+                .prev-btn:hover:not(:disabled) i {
+                    transform: translateX(-3px);
+                }
+
+                .prev-btn:disabled {
+                    background: linear-gradient(135deg, rgba(108, 117, 125, 0.4), rgba(73, 80, 87, 0.4));
+                    color: rgba(255, 255, 255, 0.5);
+                    cursor: not-allowed;
+                    border-color: rgba(255, 255, 255, 0.1);
+                }
+
+                /* Next Button */
+                .next-btn {
+                    background: linear-gradient(135deg, #FDB5B9, #f89ca0);
+                    color: white;
+                    border: 2px solid rgba(253, 181, 185, 0.3);
+                    box-shadow: 0 4px 15px rgba(253, 181, 185, 0.3);
+                }
+
+                .next-btn:hover:not(:disabled) {
+                    background: linear-gradient(135deg, #F7A8B8, #E589A3);
+                    box-shadow: 0 6px 25px rgba(253, 181, 185, 0.6);
+                    transform: translateY(-2px);
+                    color: white;
+                }
+
+                .next-btn:hover:not(:disabled) i {
+                    transform: translateX(3px);
+                }
+
+                .next-btn:disabled {
+                    background: linear-gradient(135deg, rgba(253, 181, 185, 0.4), rgba(247, 168, 184, 0.4));
+                    color: rgba(255, 255, 255, 0.5);
+                    cursor: not-allowed;
+                    border-color: rgba(253, 181, 185, 0.1);
+                    box-shadow: none;
+                }
+
+                /* Submit Button */
+                .submit-btn {
+                    background: linear-gradient(135deg, #28a745, #1e7e34);
+                    color: white;
+                    border: 2px solid rgba(40, 167, 69, 0.3);
+                    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+                    animation: subtle-pulse 2s ease-in-out infinite alternate;
+                }
+
+                .submit-btn:hover {
+                    background: linear-gradient(135deg, #1e7e34, #155724);
+                    box-shadow: 0 6px 25px rgba(40, 167, 69, 0.6);
+                    transform: translateY(-2px);
+                    color: white;
+                }
+
+                .submit-btn:hover:not(:disabled) i {
+                    transform: scale(1.1);
+                }
+
+                .submit-btn:disabled {
+                    background: linear-gradient(135deg, rgba(40, 167, 69, 0.4), rgba(30, 126, 52, 0.4)) !important;
+                    color: rgba(255, 255, 255, 0.6) !important;
+                    cursor: not-allowed !important;
+                    border-color: rgba(40, 167, 69, 0.2) !important;
+                    box-shadow: none !important;
+                    transform: none !important;
+                    animation: none !important;
+                }
+
+                .submit-btn:disabled i {
+                    transform: none !important;
+                }
+
+                @keyframes subtle-pulse {
+                    0% {
+                        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+                    }
+                    100% {
+                        box-shadow: 0 4px 20px rgba(40, 167, 69, 0.6);
+                    }
+                }
+
+                /* Responsive and custom styles */
                 @media (max-width: 767.98px) {
-                  .appointment-form {
-                    height: auto !important;
-                    min-height: 600px !important;
-                    padding: 1rem !important;
-                    background: rgba(0, 0, 0, 0.4) !important;
-                    backdropFilter: blur(10px) !important;
-                  }
-                  .display-4 {
-                    font-size: 2rem !important;
-                  }
-                  .step-progress-container {
-                    padding: 15px;
-                    background: rgba(0, 0, 0, 0.5);
-                  }
-                  .step-progress-wrapper {
-                    padding: 0 10px;
-                  }
-                  .step-progress-wrapper::before {
-                    left: 30px;
-                    right: 30px;
-                    height: 2px;
-                  }
-                  .step-item {
-                    max-width: 80px;
-                  }
-                  .step-circle {
-                    width: 45px;
-                    height: 45px;
-                    font-size: 0.9rem;
-                  }
-                  .step-label {
-                    font-size: 0.7rem;
-                  }
-                  .navigation-buttons-wrapper {
-                    flex-direction: column;
-                    gap: 15px;
-                  }
-                  .custom-btn {
-                    min-width: 100%;
-                    padding: 12px 25px;
-                    font-size: 0.9rem;
-                  }
-                }
-              
-              .text-white-option { color: white !important; }
-              .text-white-option option { color: black !important; background-color: white !important; }
-              .text-white-option option:disabled { color: #999 !important; }
-              
-              .form-control.custom-placeholder::placeholder { color: #ccc; opacity: 1; }
-              .form-control.custom-placeholder:-ms-input-placeholder { color: #ccc; }
-              .form-control.custom-placeholder::-ms-input-placeholder { color: #ccc; }
-              
-              .custom-date-picker::-webkit-calendar-picker-indicator { filter: invert(1); }
-              
-              /* Employee Directory Card Styles */
-              .employee-card {
-                transition: all 0.3s ease-in-out;
-                border: 1px solid rgba(255,255,255,0.2) !important;
-                background: rgba(255,255,255,0.05) !important;
-                backdrop-filter: blur(10px);
-              }
-              
-              .employee-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
-                border-color: rgba(255,255,255,0.4) !important;
-                background: rgba(255,255,255,0.1) !important;
-              }
+                    .appointment-form {
+                        height: auto !important;
+                        min-height: 600px !important;
+                        padding: 1rem !important;
+                        background: rgba(0, 0, 0, 0.4) !important;
+                        backdropFilter: blur(10px) !important;
+                    }
 
-              .employee-card.selected-card {
-                border-color: #0d6efd !important;
-                background: rgba(13, 110, 253, 0.15) !important;
-                box-shadow: 0 0 20px rgba(13, 110, 253, 0.3) !important;
-              }
+                    .display-4 {
+                        font-size: 2rem !important;
+                    }
 
-              .employee-card.busy-card {
-                border-color: #dc3545 !important;
-                background: rgba(220, 53, 69, 0.1) !important;
-                opacity: 0.6;
-              }
+                    .step-progress-container {
+                        padding: 15px;
+                        background: rgba(0, 0, 0, 0.5);
+                    }
 
-              /* Staff Directory Grid */
-              .staff-directory-grid {
-                max-height: 400px;
-                overflow-y: auto;
-                padding: 10px;
-                border-radius: 10px;
-                background: rgba(0,0,0,0.1);
-              }
+                    .step-progress-wrapper {
+                        padding: 0 10px;
+                    }
 
-              .staff-directory-grid::-webkit-scrollbar {
-                width: 6px;
-              }
+                    .step-progress-wrapper::before {
+                        left: 30px;
+                        right: 30px;
+                        height: 2px;
+                    }
 
-              .staff-directory-grid::-webkit-scrollbar-track {
-                background: rgba(255,255,255,0.1);
-                border-radius: 3px;
-              }
+                    .step-item {
+                        max-width: 80px;
+                    }
 
-              .staff-directory-grid::-webkit-scrollbar-thumb {
-                background: rgba(255,255,255,0.3);
-                border-radius: 3px;
-              }
+                    .step-circle {
+                        width: 45px;
+                        height: 45px;
+                        font-size: 0.9rem;
+                    }
 
-              .staff-directory-grid::-webkit-scrollbar-thumb:hover {
-                background: rgba(255,255,255,0.5);
-              }
+                    .step-label {
+                        font-size: 0.7rem;
+                    }
 
-              /* Cancel Modal Animation */
-              .modal-overlay {
-                animation: fadeIn 0.3s ease-out;
-              }
+                    .navigation-buttons-wrapper {
+                        flex-direction: column;
+                        gap: 15px;
+                    }
 
-              .modal-content {
-                animation: slideInUp 0.3s ease-out;
-              }
-
-              @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-              }
-
-              @keyframes slideInUp {
-                from { 
-                  opacity: 0;
-                  transform: translateY(30px);
-                }
-                to { 
-                  opacity: 1;
-                  transform: translateY(0);
-                }
-              }
-
-              /* Cancel reason buttons */
-              .btn-outline-secondary:hover {
-                background-color: #6c757d;
-                border-color: #6c757d;
-                color: white;
-              }
-
-              /* Custom DatePicker Styles */
-                .react-datepicker-wrapper {
-                width: 100%;
-                }
-                .react-datepicker-wrapper .react-datepicker__input-container input {
-                height: 45px;
-                color: white !important; /* Ensure text is white */
-                background-color: transparent !important;
-                }
-                .react-datepicker-wrapper .react-datepicker__input-container input::placeholder {
-                color: #ccc;
-                opacity: 1;
+                    .custom-btn {
+                        min-width: 100%;
+                        padding: 12px 25px;
+                        font-size: 0.9rem;
+                    }
                 }
 
-                .react-datepicker-popper {
-                z-index: 10 !important; /* Ensure calendar appears on top */
+                .text-white-option {
+                    color: white !important;
                 }
 
-                .custom-calendar {
-                font-family: 'Arial', sans-serif;
-                border-radius: 10px;
-                box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-                border: 1px solid rgba(255,255,255,0.2);
-                background-color: #333;
+                .text-white-option option {
+                    color: black !important;
+                    background-color: white !important;
                 }
 
-                .custom-calendar .react-datepicker__header {
-                background-color: #444;
-                border-bottom: 1px solid #555;
-                border-top-left-radius: 10px;
-                border-top-right-radius: 10px;
-                padding: 15px;
+                .text-white-option option:disabled {
+                    color: #999 !important;
                 }
 
-                .custom-calendar .react-datepicker__current-month,
-                .custom-calendar .react-datepicker-time__header,
-                .custom-calendar .react-datepicker__day-name {
-                color: #fff;
-                font-weight: bold;
+                .form-control.custom-placeholder::placeholder {
+                    color: #ccc;
+                    opacity: 1;
                 }
 
-                .custom-calendar .react-datepicker__day {
-                color: #ddd;
-                transition: all 0.2s ease;
+                .form-control.custom-placeholder:-ms-input-placeholder {
+                    color: #ccc;
                 }
 
-                .custom-calendar .react-datepicker__day:hover {
-                background-color: #555;
-                border-radius: 50%;
-                color: #fff;
+                .form-control.custom-placeholder::-ms-input-placeholder {
+                    color: #ccc;
                 }
 
-                .custom-calendar .react-datepicker__day--selected,
-                .custom-calendar .react-datepicker__day--in-selecting-range,
-                .custom-calendar .react-datepicker__day--in-range {
-                background-color: #FDB5B9;
-                color: #333;
-                border-radius: 50%;
-                font-weight: bold;
+                .custom-date-picker::-webkit-calendar-picker-indicator {
+                    filter: invert(1);
                 }
 
-                .custom-calendar .react-datepicker__day--keyboard-selected {
-                background-color: #f89ca0;
-                color: #fff;
+                /* Employee Directory Card Styles */
+                .employee-card {
+                    transition: all 0.3s ease-in-out;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    background: rgba(255, 255, 255, 0.05) !important;
+                    backdrop-filter: blur(10px);
                 }
 
-                .custom-calendar .react-datepicker__day--disabled {
-                color: #777;
-                cursor: not-allowed;
+                .employee-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+                    border-color: rgba(255, 255, 255, 0.4) !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
                 }
 
-                .custom-calendar .react-datepicker__navigation-icon::before {
-                border-color: #fff;
+                .employee-card.selected-card {
+                    border-color: #FDB5B9 !important;
+                    background: rgba(253, 181, 185, 0.15) !important;
+                    box-shadow: 0 0 20px rgba(253, 181, 185, 0.3) !important;
                 }
 
-              /* Mobile responsiveness for cancel modal */
-              @media (max-width: 767.98px) {
+                .employee-card.busy-card {
+                    border-color: #dc3545 !important;
+                    background: rgba(220, 53, 69, 0.1) !important;
+                    opacity: 0.6;
+                }
+
+                /* Staff Directory Grid */
+                .staff-directory-grid {
+                    max-height: 400px;
+                    overflow-y: auto;
+                    padding: 10px;
+                    border-radius: 10px;
+                    background: rgba(0, 0, 0, 0.1);
+                }
+
+                .staff-directory-grid::-webkit-scrollbar {
+                    width: 6px;
+                }
+
+                .staff-directory-grid::-webkit-scrollbar-track {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 3px;
+                }
+
+                .staff-directory-grid::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.3);
+                    border-radius: 3px;
+                }
+
+                .staff-directory-grid::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.5);
+                }
+
+                /* Cancel Modal Animation */
+                .modal-overlay {
+                    animation: fadeIn 0.3s ease-out;
+                }
+
                 .modal-content {
-                  margin: 20px;
-                  padding: 20px;
-                  max-width: none;
-                  width: calc(100% - 40px);
+                    animation: slideInUp 0.3s ease-out;
                 }
-                
-                .modal-footer {
-                  flex-direction: column;
-                  gap: 10px;
+
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                    }
+                    to {
+                        opacity: 1;
+                    }
                 }
-                
-                .modal-footer .btn {
-                  width: 100%;
+
+                @keyframes slideInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
-              }
+
+                /* Cancel reason buttons */
+                .btn-outline-secondary:hover {
+                    background-color: #6c757d;
+                    border-color: #6c757d;
+                    color: white;
+                }
+
+                /* Mobile responsiveness for cancel modal */
+                @media (max-width: 767.98px) {
+                    .modal-content {
+                        margin: 20px;
+                        padding: 20px;
+                        max-width: none;
+                        width: calc(100% - 40px);
+                    }
+
+                    .modal-footer {
+                        flex-direction: column;
+                        gap: 10px;
+                    }
+
+                    .modal-footer .btn {
+                        width: 100%;
+                    }
+                }
             `}</style>
         </div>
     );
