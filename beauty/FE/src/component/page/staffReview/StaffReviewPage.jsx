@@ -6,6 +6,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import Header from '../../shared/header';
 import Footer from '../../shared/footer';
 
+
+
 // 🔧 Utility functions for staff cache management
 const STAFF_CACHE_KEY = 'staffList';
 const STAFF_CACHE_EXPIRY_KEY = 'staffListExpiry';
@@ -42,6 +44,7 @@ const setStaffToCache = (staffList) => {
         console.warn('⚠️ Error setting staff cache:', error);
     }
 };
+
 
 const StaffReviewPage = () => {
     const { staffId } = useParams();
@@ -92,59 +95,36 @@ const StaffReviewPage = () => {
         fetchStaffReviews(currentPage - 1);
     }, [staffId, currentPage]);
 
-    // Recalculate stats when staff data changes
+    // Recalculate stats when staff data or reviews change, fixing the race condition
     useEffect(() => {
         if (staff && reviews) {
             calculateReviewStats(reviews);
         }
-    }, [staff]);
+    }, [staff, reviews]);
 
     const fetchStaffDetails = async () => {
         try {
-            // 🔍 First: Try to get staff from cache (with expiry check)
-            const cachedStaffList = getStaffFromCache();
-            if (cachedStaffList) {
-                const foundStaff = cachedStaffList.find(staff => staff.id === parseInt(staffId, 10));
-                if (foundStaff) {
-                    console.log('✅ Found staff in cache:', foundStaff.fullName);
-                    setStaff(foundStaff);
-                    return; // Exit early if found in cache
-                }
-            }
-
-            // 🌐 Second: Try the admin API endpoint
-            console.log('🔍 Staff not found in cache, trying admin API...');
-            try {
-                const response = await axios.get(`http://localhost:8080/api/v1/admin/accounts/find-by-id/${staffId}`);
-                if (response.data && response.data.status === 'SUCCESS') {
-                    console.log('✅ Found staff via admin API:', response.data.data.fullName);
-                    setStaff(response.data.data); // ⚠️ Admin API wraps data in ResponseObject
-                    return;
-                }
-            } catch (adminError) {
-                console.warn('⚠️ Admin API not accessible:', adminError.response?.status);
-            }
-
-            // 🔄 Third: Fallback to staff list API
-            console.log('🔄 Trying staff list API...');
-            const fallbackResponse = await axios.get('http://localhost:8080/api/v1/user/accounts/staff');
-            const staffList = Array.isArray(fallbackResponse.data)
-                ? fallbackResponse.data
-                : (fallbackResponse.data.data || []);
-
-            // 💾 Cache the staff list for future use
-            setStaffToCache(staffList);
+            // 🔄 ALWAYS fetch from the consistent staff list API for data consistency
+            console.log('🔄 Fetching staff list for details to ensure data is fresh...');
+            const response = await axios.get('http://localhost:8080/api/v1/user/accounts/staff');
+            
+            const staffList = Array.isArray(response.data) 
+                ? response.data 
+                : (response.data.data || []);
+            
 
             const foundStaff = staffList.find(staff => staff.id === parseInt(staffId, 10));
+
             if (foundStaff) {
-                console.log('✅ Found staff via staff list API:', foundStaff.fullName);
+                console.log('✅ Found staff via consistent API:', foundStaff.fullName);
                 setStaff(foundStaff);
             } else {
-                // console.error('❌ Staff not found. Available IDs:', staffList.map(s => s.id));
+                console.error('❌ Staff not found in the list. Requested ID:', staffId);
                 toast.error(`Không tìm thấy nhân viên với ID: ${staffId}`);
             }
         } catch (error) {
-            // console.error('❌ All API attempts failed:', error);
+            console.error('❌ Failed to fetch staff details:', error);
+
             toast.error('Không thể tải thông tin nhân viên. Vui lòng thử lại sau.');
         }
     };
@@ -163,11 +143,8 @@ const StaffReviewPage = () => {
                 const pageData = response.data.data;
                 setReviews(pageData.content || []);
                 setTotalPages(pageData.totalPages || 1);
+                // REMOVED calculateReviewStats from here to prevent race condition
 
-                // Calculate review statistics after both staff and reviews are loaded
-                if (staff || pageData.content) {
-                    calculateReviewStats(pageData.content || []);
-                }
             }
         } catch (error) {
             // console.error('Error fetching staff reviews:', error);
@@ -180,8 +157,11 @@ const StaffReviewPage = () => {
         const dbRating = staff?.averageRating;
         const dbTotalReviews = staff?.totalReviews;
 
-        if (dbRating && dbTotalReviews) {
-            // ✅ Use database values (more accurate)
+        
+        // Use != null to handle cases where rating or reviews might be 0
+        if (dbRating != null && dbTotalReviews != null) {
+            // ✅ Use database values (more accurate and consistent)
+
             console.log(`📊 Using database rating: ${dbRating} (${dbTotalReviews} reviews)`);
 
             // Count ratings from current reviews for chart
@@ -206,9 +186,11 @@ const StaffReviewPage = () => {
             console.log('📊 Calculating rating from current reviews (fallback)');
             const totalReviews = reviewList.length;
             const totalRating = reviewList.reduce((sum, review) => sum + review.rating, 0);
-            const averageRating = (totalRating / totalReviews).toFixed(1);
 
-            const ratingCounts = [5, 4, 3, 2, 1].map(star =>
+            const averageRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0;
+            
+            const ratingCounts = [5, 4, 3, 2, 1].map(star => 
+
                 reviewList.filter(review => review.rating === star).length
             );
 

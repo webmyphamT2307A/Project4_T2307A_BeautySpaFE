@@ -113,20 +113,11 @@ const AppointmentManagement = () => {
         
         if (serviceId) {
           setServiceFilter(serviceId);
-          toast.success(`Đã lọc theo dịch vụ ID: ${serviceId}`);
         }
         
         if (staffId) {
           setStaffFilter(staffId);
-          toast.success(`Đã lọc theo nhân viên ID: ${staffId}`);
         }
-        
-        // Show notification about the source review
-        setTimeout(() => {
-          toast.info(`Hiển thị lịch hẹn liên quan đến đánh giá #${reviewId}`, {
-            autoClose: 5000
-          });
-        }, 1000);
       }
     }
   }, [location.state]);
@@ -927,53 +918,6 @@ const AppointmentManagement = () => {
 
   const currentAppointments = filteredAppointments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  // Test function để tạo dữ liệu test cho time conflict
-  const createTestConflictData = () => {
-    const today = new Date();
-    const testAppointments = [
-      {
-        id: 9991,
-        appointmentId: 9991,
-        fullName: "Test Customer 1",
-        phoneNumber: "0123456789",
-        status: "confirmed",
-        slot: "morning",
-        notes: "Test conflict appointment 1",
-        appointmentDate: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0).toISOString(),
-        endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0).toISOString(),
-        price: 100,
-        service: { id: 1, name: "Test Service", duration: 60 },
-        customer: { name: "Test Customer 1", phone: "0123456789" },
-        staff: { id: staffList[0]?.id, name: staffList[0]?.fullName },
-        createdAt: today.toISOString()
-      },
-      {
-        id: 9992,
-        appointmentId: 9992,
-        fullName: "Test Customer 2",
-        phoneNumber: "0123456790",
-        status: "confirmed",
-        slot: "morning",
-        notes: "Test conflict appointment 2 - SHOULD CONFLICT",
-        appointmentDate: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30).toISOString(),
-        endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 30).toISOString(),
-        price: 120,
-        service: { id: 2, name: "Test Service 2", duration: 60 },
-        customer: { name: "Test Customer 2", phone: "0123456790" },
-        staff: null,
-        createdAt: today.toISOString()
-      }
-    ];
-
-    if (staffList.length > 0) {
-      console.log('🧪 Adding test conflict data...', testAppointments);
-      setAppointments(prev => [...prev, ...testAppointments]);
-      toast.info('Test conflict data added! Check the appointments for today.');
-    } else {
-      toast.error('No staff available for test data');
-    }
-  };
-
   return (
     <MainCard title={pageTitle}>
       <Grid container spacing={3}>
@@ -1107,179 +1051,6 @@ const AppointmentManagement = () => {
               </Box>
             </CardContent>
           </Card>
-        </Grid>
-
-        {/* Time Conflict Test Panel */}
-        <Grid item xs={12} sx={{ mb: 2 }}>
-          <Accordion>
-            <AccordionSummary
-              expandIcon={<  ExpandOutlined />}
-              aria-controls="conflict-test-content"
-              id="conflict-test-header"
-              sx={{ backgroundColor: '#f5f5f5' }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <BugOutlined style={{ color: '#1976d2' }} />
-                <Typography variant="h6">Time Conflict Detection Test Panel</Typography>
-                <Chip
-                  label="Testing Tool"
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                  sx={{ ml: 1 }}
-                />
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Grid container spacing={2}>
-                {/* Staff Conflict Summary */}
-                <Grid item xs={12} md={6}>
-                  <Card sx={{ borderRadius: 2 }}>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        <UserOutlined style={{ marginRight: 8 }} />
-                        Staff Availability Analysis
-                      </Typography>
-                      <List dense>
-                        {staffList.map(staff => {
-                          const staffAppointments = filteredAppointments.filter(app =>
-                            app.user?.id === staff.id && app.status !== 'cancelled'
-                          );
-                          const todayAppointments = staffAppointments.filter(app => {
-                            const appDate = new Date(app.appointmentDate).toDateString();
-                            const today = new Date().toDateString();
-                            return appDate === today;
-                          });
-
-                          return (
-                            <ListItem key={staff.id} divider>
-                              <ListItemIcon>
-                                {todayAppointments.length > 1 ? (
-                                  <WarningOutlined style={{ color: '#ff9800' }} />
-                                ) : todayAppointments.length === 1 ? (
-                                  <ClockCircleOutlined style={{ color: '#2196f3' }} />
-                                ) : (
-                                  <CheckCircleOutlined style={{ color: '#4caf50' }} />
-                                )}
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={staff.fullName}
-                                secondary={
-                                  <Box>
-                                    <Typography variant="caption">
-                                      Today: {todayAppointments.length} appointments
-                                    </Typography>
-                                    <br />
-                                    <Typography variant="caption">
-                                      Total: {staffAppointments.length} appointments
-                                    </Typography>
-                                  </Box>
-                                }
-                              />
-                            </ListItem>
-                          );
-                        })}
-                      </List>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                {/* Time Conflict Detection Rules */}
-                <Grid item xs={12} md={6}>
-                  <Card sx={{ borderRadius: 2 }}>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        <ClockCircleOutlined style={{ marginRight: 8 }} />
-                        Conflict Detection Rules
-                      </Typography>
-                      <List dense>
-                        <ListItem>
-                          <ListItemIcon>
-                            <CheckCircleOutlined style={{ color: '#4caf50' }} />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Same Day Check"
-                            secondary="Only appointments on the same date are checked for conflicts"
-                          />
-                        </ListItem>
-                        <ListItem>
-                          <ListItemIcon>
-                            <CheckCircleOutlined style={{ color: '#4caf50' }} />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Time Overlap Detection"
-                            secondary="Uses formula: start1 < end2 && start2 < end1"
-                          />
-                        </ListItem>
-                        <ListItem>
-                          <ListItemIcon>
-                            <CheckCircleOutlined style={{ color: '#4caf50' }} />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Status Filtering"
-                            secondary="Cancelled appointments are excluded from conflict check"
-                          />
-                        </ListItem>
-                        <ListItem>
-                          <ListItemIcon>
-                            <CheckCircleOutlined style={{ color: '#4caf50' }} />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Real-time Validation"
-                            secondary="Conflicts are checked before saving staff assignments"
-                          />
-                        </ListItem>
-                      </List>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                {/* Test Instructions */}
-                <Grid item xs={12}>
-                  <Card sx={{ borderRadius: 2, backgroundColor: '#e3f2fd' }}>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        <BugOutlined style={{ marginRight: 8 }} />
-                        How to Test Time Conflict Detection
-                      </Typography>
-                      <Typography variant="body2" paragraph>
-                        <strong>Step 1:</strong> Open browser console (F12) to see detailed logs
-                      </Typography>
-                      <Typography variant="body2" paragraph>
-                        <strong>Step 2:</strong> Try to assign the same staff to overlapping time slots:
-                      </Typography>
-                      <Typography variant="body2" component="div" sx={{ ml: 2 }}>
-                        • Click "Edit Details" on any appointment<br />
-                        • Try to assign a staff member who already has an appointment at that time<br />
-                        • The system should show "Busy" status and prevent assignment<br />
-                        • Check console for detailed conflict detection logs
-                      </Typography>
-                      <Typography variant="body2" paragraph sx={{ mt: 2 }}>
-                        <strong>Expected Behavior:</strong> Staff marked as "Busy" cannot be assigned, and you'll see error message: "Cannot assign this staff member. They already have an appointment during this time slot."
-                      </Typography>
-
-                      <Divider sx={{ my: 2 }} />
-
-                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <Button
-                          variant="contained"
-                          color="warning"
-                          onClick={createTestConflictData}
-                          startIcon={<BugOutlined />}
-                          size="small"
-                        >
-                          Create Test Conflict Data
-                        </Button>
-                        <Typography variant="caption" color="textSecondary">
-                          This will add 2 test appointments for today with overlapping times (9:00-10:00 and 9:30-10:30)
-                        </Typography>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
         </Grid>
 
         {/* Appointments Table */}

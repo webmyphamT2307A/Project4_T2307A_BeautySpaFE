@@ -11,6 +11,7 @@ import usePrivateRoute from './../hooks/usePrivateRoute';
 import SalaryManagement from '../pages/salary/salary';
 import ReviewList from '../pages/review/review';
 import FeedbackManager from '../pages/feedback/feedback';
+import TimeSlotManagement from '../pages/timeslot/timeslot';
 import path from 'path';
 import SkillManagement from '../pages/spa/skill';
 
@@ -118,6 +119,10 @@ const MainRoutes = {
       }
     ]
   },
+  {
+    path: 'timeslot',
+    element: <ProtectedRoute element={<TimeSlotManagement />} />
+  },
     {
       path: 'typography',
       element: <ProtectedRoute element={<Typography />} />
@@ -135,7 +140,7 @@ const MainRoutes = {
       element: <ProtectedRoute element={<SamplePage />} />
     },
     {
-      path: 'account',
+      path: 'admin',
       children: [
         {
           path: 'user',
