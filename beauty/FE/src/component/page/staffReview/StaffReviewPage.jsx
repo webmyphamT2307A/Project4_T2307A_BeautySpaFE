@@ -6,6 +6,43 @@ import 'react-toastify/dist/ReactToastify.css';
 import Header from '../../shared/header';
 import Footer from '../../shared/footer';
 
+// 🔧 Utility functions for staff cache management
+const STAFF_CACHE_KEY = 'staffList';
+const STAFF_CACHE_EXPIRY_KEY = 'staffListExpiry';
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+const getStaffFromCache = () => {
+    try {
+        const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
+        const expiry = localStorage.getItem(STAFF_CACHE_EXPIRY_KEY);
+
+        if (cachedData && expiry) {
+            const now = Date.now();
+            if (now < parseInt(expiry, 10)) {
+                return JSON.parse(cachedData);
+            } else {
+                // Cache expired, remove it
+                localStorage.removeItem(STAFF_CACHE_KEY);
+                localStorage.removeItem(STAFF_CACHE_EXPIRY_KEY);
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ Error reading staff cache:', error);
+    }
+    return null;
+};
+
+const setStaffToCache = (staffList) => {
+    try {
+        const expiry = Date.now() + CACHE_DURATION;
+        localStorage.setItem(STAFF_CACHE_KEY, JSON.stringify(staffList));
+        localStorage.setItem(STAFF_CACHE_EXPIRY_KEY, expiry.toString());
+        console.log('💾 Staff list cached for 30 minutes');
+    } catch (error) {
+        console.warn('⚠️ Error setting staff cache:', error);
+    }
+};
+
 const StaffReviewPage = () => {
     const { staffId } = useParams();
     const navigate = useNavigate();
@@ -16,13 +53,13 @@ const StaffReviewPage = () => {
         totalReviews: 0,
         ratingCounts: [0, 0, 0, 0, 0] // [5star, 4star, 3star, 2star, 1star]
     });
-    
+
     // Review form state
     const [newReview, setNewReview] = useState({ rating: 0, comment: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
-    
+
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -32,11 +69,11 @@ const StaffReviewPage = () => {
         // Check authentication
         const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
         const userInfo = localStorage.getItem('userInfo');
-        
+
         console.log('🔍 Authentication check:');
         console.log('   Token:', token ? 'Found ✅' : 'Not found ❌');
         console.log('   UserInfo:', userInfo ? 'Found ✅' : 'Not found ❌');
-        
+
         if (token && userInfo) {
             try {
                 const parsedUser = JSON.parse(userInfo);
@@ -64,14 +101,40 @@ const StaffReviewPage = () => {
 
     const fetchStaffDetails = async () => {
         try {
-            // 🔄 ALWAYS fetch from the consistent staff list API for data consistency
-            console.log('🔄 Fetching staff list for details to ensure data is fresh...');
-            const response = await axios.get('http://localhost:8080/api/v1/user/accounts/staff');
-            
-            const staffList = Array.isArray(response.data) 
-                ? response.data 
-                : (response.data.data || []);
-            
+            // 🔍 First: Try to get staff from cache (with expiry check)
+            const cachedStaffList = getStaffFromCache();
+            if (cachedStaffList) {
+                const foundStaff = cachedStaffList.find(staff => staff.id === parseInt(staffId, 10));
+                if (foundStaff) {
+                    console.log('✅ Found staff in cache:', foundStaff.fullName);
+                    setStaff(foundStaff);
+                    return; // Exit early if found in cache
+                }
+            }
+
+            // 🌐 Second: Try the admin API endpoint
+            console.log('🔍 Staff not found in cache, trying admin API...');
+            try {
+                const response = await axios.get(`http://localhost:8080/api/v1/admin/accounts/find-by-id/${staffId}`);
+                if (response.data && response.data.status === 'SUCCESS') {
+                    console.log('✅ Found staff via admin API:', response.data.data.fullName);
+                    setStaff(response.data.data); // ⚠️ Admin API wraps data in ResponseObject
+                    return;
+                }
+            } catch (adminError) {
+                console.warn('⚠️ Admin API not accessible:', adminError.response?.status);
+            }
+
+            // 🔄 Third: Fallback to staff list API
+            console.log('🔄 Trying staff list API...');
+            const fallbackResponse = await axios.get('http://localhost:8080/api/v1/user/accounts/staff');
+            const staffList = Array.isArray(fallbackResponse.data)
+                ? fallbackResponse.data
+                : (fallbackResponse.data.data || []);
+
+            // 💾 Cache the staff list for future use
+            setStaffToCache(staffList);
+
             const foundStaff = staffList.find(staff => staff.id === parseInt(staffId, 10));
 
             if (foundStaff) {
@@ -96,12 +159,16 @@ const StaffReviewPage = () => {
                     sort: 'createdAt,desc'
                 }
             });
-            
+
             if (response.data.status === 'SUCCESS') {
                 const pageData = response.data.data;
                 setReviews(pageData.content || []);
                 setTotalPages(pageData.totalPages || 1);
-                // REMOVED calculateReviewStats from here to prevent race condition
+
+                // Calculate review statistics after both staff and reviews are loaded
+                if (staff || pageData.content) {
+                    calculateReviewStats(pageData.content || []);
+                }
             }
         } catch (error) {
             console.error('Error fetching staff reviews:', error);
@@ -113,17 +180,16 @@ const StaffReviewPage = () => {
         // 🎯 Use database rating if available, otherwise calculate from reviews
         const dbRating = staff?.averageRating;
         const dbTotalReviews = staff?.totalReviews;
-        
-        // Use != null to handle cases where rating or reviews might be 0
-        if (dbRating != null && dbTotalReviews != null) {
-            // ✅ Use database values (more accurate and consistent)
+
+        if (dbRating && dbTotalReviews) {
+            // ✅ Use database values (more accurate)
             console.log(`📊 Using database rating: ${dbRating} (${dbTotalReviews} reviews)`);
-            
+
             // Count ratings from current reviews for chart
-            const ratingCounts = [5, 4, 3, 2, 1].map(star => 
+            const ratingCounts = [5, 4, 3, 2, 1].map(star =>
                 reviewList.filter(review => review.rating === star).length
             );
-            
+
             setReviewStats({
                 averageRating: parseFloat(dbRating),
                 totalReviews: parseInt(dbTotalReviews),
@@ -141,9 +207,9 @@ const StaffReviewPage = () => {
             console.log('📊 Calculating rating from current reviews (fallback)');
             const totalReviews = reviewList.length;
             const totalRating = reviewList.reduce((sum, review) => sum + review.rating, 0);
-            const averageRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0;
-            
-            const ratingCounts = [5, 4, 3, 2, 1].map(star => 
+            const averageRating = (totalRating / totalReviews).toFixed(1);
+
+            const ratingCounts = [5, 4, 3, 2, 1].map(star =>
                 reviewList.filter(review => review.rating === star).length
             );
 
@@ -157,7 +223,7 @@ const StaffReviewPage = () => {
 
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (isSubmitting) return;
 
         // Validation
@@ -189,7 +255,7 @@ const StaffReviewPage = () => {
             const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
             console.log('🚀 Submitting review:', payload);
             console.log('🔑 Using token:', token ? 'Available ✅' : 'Missing ❌');
-            
+
             const response = await axios.post('http://localhost:8080/api/v1/reviews', payload, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -262,7 +328,7 @@ const StaffReviewPage = () => {
         <div>
             <Header />
             <ToastContainer position="top-right" autoClose={3000} />
-            
+
             {/* Staff Profile Header */}
             <div className="container-fluid bg-light py-5">
                 <div className="container">
@@ -284,7 +350,7 @@ const StaffReviewPage = () => {
                             <h1 className="display-6 mb-3">{staff.fullName}</h1>
                             <p className="lead text-muted mb-2">{staff.skillsText || 'Chuyên viên Spa'}</p>
                             <p className="text-muted mb-3">{staff.description || 'Nhân viên giàu kinh nghiệm tại spa'}</p>
-                            
+
                             {/* Rating Summary */}
                             <div className="d-flex align-items-center mb-3">
                                 <div className="me-3">
@@ -297,8 +363,8 @@ const StaffReviewPage = () => {
                                     ({reviewStats.totalReviews} đánh giá)
                                 </span>
                             </div>
-                            
-                            <button 
+
+                            <button
                                 type="button"
                                 className="btn btn-primary"
                                 onClick={() => {
@@ -472,7 +538,7 @@ const StaffReviewPage = () => {
                                                             </small>
                                                         </div>
                                                         <p className="mb-2">{review.comment}</p>
-                                                        
+
                                                         {/* Business Reply */}
                                                         {review.replies && review.replies.length > 0 && (
                                                             <div className="mt-3 p-3 bg-light rounded">
@@ -502,7 +568,7 @@ const StaffReviewPage = () => {
                                                 <nav>
                                                     <ul className="pagination">
                                                         <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                            <button 
+                                                            <button
                                                                 className="page-link"
                                                                 onClick={() => setCurrentPage(currentPage - 1)}
                                                                 disabled={currentPage === 1}
@@ -512,7 +578,7 @@ const StaffReviewPage = () => {
                                                         </li>
                                                         {[...Array(totalPages)].map((_, index) => (
                                                             <li key={index + 1} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                                                                <button 
+                                                                <button
                                                                     className="page-link"
                                                                     onClick={() => setCurrentPage(index + 1)}
                                                                 >
@@ -521,7 +587,7 @@ const StaffReviewPage = () => {
                                                             </li>
                                                         ))}
                                                         <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                                            <button 
+                                                            <button
                                                                 className="page-link"
                                                                 onClick={() => setCurrentPage(currentPage + 1)}
                                                                 disabled={currentPage === totalPages}
@@ -568,7 +634,7 @@ const StaffReviewPage = () => {
                                         <p className="mb-1">{staff.description}</p>
                                     </div>
                                 )}
-                                
+
                                 <div className="text-center mt-4">
                                     <Link to="/appointment" className="btn btn-outline-primary w-100">
                                         <i className="fas fa-calendar-plus me-2"></i>
