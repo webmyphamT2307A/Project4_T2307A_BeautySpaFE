@@ -11,8 +11,9 @@ import usePrivateRoute from './../hooks/usePrivateRoute';
 import SalaryManagement from '../pages/salary/salary';
 import ReviewList from '../pages/review/review';
 import FeedbackManager from '../pages/feedback/feedback';
-import path from 'path';
+import TimeSlotManagement from '../pages/timeslot/timeslot';
 import SkillManagement from '../pages/spa/skill';
+import path from 'path';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
@@ -109,6 +110,7 @@ const MainRoutes = {
     ]
     
   },
+  
   {
     path: 'feedback',
     children: [
@@ -117,6 +119,10 @@ const MainRoutes = {
         element: <ProtectedRoute element={<FeedbackManager />} />
       }
     ]
+  },
+  {
+    path: 'timeslot',
+    element: <ProtectedRoute element={<TimeSlotManagement />} />
   },
     {
       path: 'typography',
@@ -135,7 +141,7 @@ const MainRoutes = {
       element: <ProtectedRoute element={<SamplePage />} />
     },
     {
-      path: 'account',
+      path: 'admin',
       children: [
         {
           path: 'user',

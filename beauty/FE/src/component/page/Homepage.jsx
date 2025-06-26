@@ -33,10 +33,10 @@ const Homepage = () => {
           wrap: true
         });
         
-        // console.log('🎠 Carousel initialized successfully');
+        console.log('🎠 Carousel initialized successfully');
         return carousel;
       } else {
-        // console.warn('⚠️ Carousel element or Bootstrap not found');
+        console.warn('⚠️ Carousel element or Bootstrap not found');
         return null;
       }
     };

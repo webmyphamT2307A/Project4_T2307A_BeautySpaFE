@@ -3,6 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { vi } from 'date-fns/locale/vi';
+import { format } from 'date-fns';
+
+registerLocale('vi', vi);
+
+const CustomDateInput = React.forwardRef(({ value, onClick, placeholder }, ref) => (
+    <div className="input-group" onClick={onClick} ref={ref} style={{ cursor: 'pointer' }}>
+        <input
+            type="text"
+            className="form-control py-2 border-white bg-transparent text-white"
+            value={value}
+            placeholder={placeholder}
+            readOnly
+            style={{ height: '45px' }}
+        />
+        <span className="input-group-text bg-transparent border-white text-white">
+            <i className="fas fa-calendar-alt"></i>
+        </span>
+    </div>
+));
 
 const validateVietnamesePhone = (phone) => {
     const cleanPhone = phone.replace(/[\s-().]/g, '');
@@ -362,6 +384,13 @@ const Appointment = () => {
         setFormData(newFormData);
     };
 
+    const handleDateChange = (date) => {
+        // Backend expects 'yyyy-MM-dd'
+        const formattedDate = date ? format(date, 'yyyy-MM-dd') : '';
+        setFormData(prev => ({ ...prev, appointmentDate: formattedDate }));
+        validateField('appointmentDate', formattedDate);
+    };
+
     const handleStaffSelect = (staffId, event) => {
         event?.preventDefault();
         const isBusy = staffAvailabilities[staffId]?.isAvailable === false;
@@ -416,12 +445,6 @@ const Appointment = () => {
                 return;
             }
 
-            let formattedDate = formData.appointmentDate;
-            if (formattedDate && formattedDate.includes('-')) {
-                const [year, month, day] = formattedDate.split('-');
-                formattedDate = `${day}/${month}/${year}`;
-            }
-
             let customerIdToSubmit = formData.customerId;
 
             if (!customerIdToSubmit && (formData.fullName && formData.phoneNumber)) {
@@ -437,12 +460,19 @@ const Appointment = () => {
                     return;
                 }
             }
+            
+            // Re-format date to dd/MM/yyyy for backend submission
+            let formattedDate = formData.appointmentDate;
+            if (formattedDate && formattedDate.includes('-')) {
+                const [year, month, day] = formattedDate.split('-');
+                formattedDate = `${day}/${month}/${year}`;
+            }
 
             const submitData = {
                 ...formData,
                 customerId: customerIdToSubmit,
                 status: formData.status || 'pending',
-                appointmentDate: formattedDate,
+                appointmentDate: formattedDate, // Use the correctly formatted date
                 branchId: formData.branchId || 1,
                 timeSlotId: formData.timeSlotId,
                 price: formData.price,
@@ -784,14 +814,16 @@ const Appointment = () => {
                     <label className="form-label text-white fw-bold">
                         <i className="fas fa-calendar me-2"></i>Chọn Ngày *
                     </label>
-                    <input
-                        type="date"
-                        name="appointmentDate"
-                        value={formData.appointmentDate}
-                        onChange={handleInputChange}
-                        className="form-control py-2 border-white bg-transparent text-white custom-date-picker"
-                        min={new Date().toISOString().split("T")[0]}
-                        style={{ height: '45px' }}
+                    <DatePicker
+                        locale="vi"
+                        dateFormat="dd/MM/yyyy"
+                        selected={formData.appointmentDate ? new Date(formData.appointmentDate.replace(/-/g, "/")) : null}
+                        onChange={handleDateChange}
+                        minDate={new Date()}
+                        customInput={<CustomDateInput placeholder="dd/MM/yyyy" />}
+                        wrapperClassName="w-100"
+                        calendarClassName="custom-calendar" // for custom styling
+                        popperPlacement="bottom-end"
                     />
                 </div>
 
@@ -1101,22 +1133,6 @@ const Appointment = () => {
                                                 <span className="text-white-50" style={{ fontSize: '0.65rem' }}>
                                                     ({staff.totalReviews || 0})
                                                 </span>
-                                            </div>
-
-                                            {/* Review Link */}
-                                            <div className="text-center mb-3">
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-link p-0 text-decoration-none"
-                                                    style={{ fontSize: '0.7rem', color: '#ffc107', border: 'none', background: 'none' }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/staff-review/${staff.id}`);
-                                                    }}
-                                                >
-                                                    <i className="fas fa-star me-1"></i>
-                                                    Xem đánh giá
-                                                </button>
                                             </div>
 
                                             {/* Select Button */}

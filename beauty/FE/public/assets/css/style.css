@@ -141,8 +141,8 @@
 }
 
 .dropdown .dropdown-menu a:hover {
-    background: #f0f0f0 !important;
-    /* color: #fff; */
+    background: #a63f52 !important;
+    color: #fff;
 }
 
 .navbar .nav-item:hover .dropdown-menu {
@@ -239,7 +239,7 @@
 }
 
 .services .services-item:hover {
-    background: linear-gradient(135deg, #ffd0d9, #ffaebdd8) !important;
+    background: var(--bs-primary) !important;
     border-color: #a63f52 !important;
 }
 
