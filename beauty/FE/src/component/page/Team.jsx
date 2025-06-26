@@ -19,10 +19,10 @@ const Team = () => {
             <p className="mb-0 text-white">Chuyên gia Spa &amp; Làm đẹp</p>
           </div>
           <div className="team-social">
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-facebook-f" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-linkedin-in" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle" href="#"><i className="fab fa-instagram" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-facebook-f" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-linkedin-in" /></a>
+            <a className="btn btn-light btn-square rounded-circle" href="#"><i className="fab fa-instagram" /></a>
           </div>
         </div>
       </div>
@@ -36,10 +36,10 @@ const Team = () => {
             <p className="mb-0 text-white">Chuyên gia Spa &amp; Làm đẹp</p>
           </div>
           <div className="team-social">
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-facebook-f" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-linkedin-in" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle" href="#"><i className="fab fa-instagram" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-facebook-f" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-linkedin-in" /></a>
+            <a className="btn btn-light btn-square rounded-circle" href="#"><i className="fab fa-instagram" /></a>
           </div>
         </div>
       </div>
@@ -53,10 +53,10 @@ const Team = () => {
             <p className="mb-0 text-white">Chuyên gia Spa &amp; Làm đẹp</p>
           </div>
           <div className="team-social">
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-facebook-f" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-linkedin-in" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle" href="#"><i className="fab fa-instagram" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-facebook-f" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-linkedin-in" /></a>
+            <a className="btn btn-light btn-square rounded-circle" href="#"><i className="fab fa-instagram" /></a>
           </div>
         </div>
       </div>
@@ -70,10 +70,10 @@ const Team = () => {
             <p className="mb-0 text-white">Chuyên gia Spa &amp; Làm đẹp</p>
           </div>
           <div className="team-social">
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-facebook-f" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle mb-2" href="#"><i className="fab fa-linkedin-in" /></a>
-            <a className="btn btn-light btn-light-outline-0 btn-square rounded-circle" href="#"><i className="fab fa-instagram" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-twitter" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-facebook-f" /></a>
+            <a className="btn btn-light btn-square rounded-circle mb-2" href="#"><i className="fab fa-linkedin-in" /></a>
+            <a className="btn btn-light btn-square rounded-circle" href="#"><i className="fab fa-instagram" /></a>
           </div>
         </div>
       </div>

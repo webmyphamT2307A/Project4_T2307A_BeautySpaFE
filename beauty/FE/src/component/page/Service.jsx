@@ -3,201 +3,217 @@ import { Link, useNavigate } from "react-router-dom";
 import DatLichButton from "../shared/DatLichButton";
 
 const Service = () => {
-    const [servicesData, setServicesData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
+  const [servicesData, setServicesData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
-    useEffect(() => {
-        const fetchServices = async () => {
-            try {
-                const response = await fetch('http://localhost:8080/api/v1/services');
-                const result = await response.json();
-                if (result.status === 'SUCCESS') {
-                    // Lấy tối đa 6 services
-                    setServicesData(result.data.slice(0, 6));
-                } else {
-                    console.error('Failed to fetch services:', result.message);
-                }
-            } catch (error) {
-                console.error('Error fetching services:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchServices();
-    }, []);
-
-    const handleImageClick = (serviceId) => {
-        navigate(`/ServicePage/${serviceId}`);
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/v1/services');
+        const result = await response.json();
+        if (result.status === 'SUCCESS') {
+          // Lấy tối đa 6 services
+          setServicesData(result.data.slice(0, 6));
+        } else {
+          console.error('Failed to fetch services:', result.message);
+        }
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    if (loading) {
-        return (
-            <div className="container-fluid services py-5">
-                <div className="container py-5">
-                    <div className="text-center">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Đang tải...</span>
-                        </div>
-                        <p className="mt-2">Đang tải dịch vụ...</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    fetchServices();
+  }, []);
 
-    return(
-        <>
-<div className="container-fluid services py-5">
-  <div className="container py-5">
-    <div className="mx-auto text-center mb-5" style={{maxWidth: 800}}>
-      <p className="fs-4 text-uppercase text-center text-primary">Dịch Vụ Của Chúng Tôi</p>
-      <h1 className="display-3">Dịch Vụ Spa &amp; Làm Đẹp</h1>
-    </div>
-    <div className="row g-4">
-      {servicesData.map((service, index) => {
-        const isEven = index % 2 === 0;
-        return (
-          <div className="col-lg-6" key={service.id}>
-            <div className={`services-item bg-light border-4 ${isEven ? 'border-end' : 'border-start'} border-primary rounded p-4`}>
-              <div className="row align-items-center">
-                {isEven ? (
-                  <>
-                    <div className="col-8">
-                      <div className="services-content text-end">
-                        <h3 className="text-truncate">{service.name}</h3>
-                        <p style={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical',
-                          minHeight: '72px'
-                        }}>
-                          {service.description}
-                        </p>
-                        
-                        <DatLichButton 
-                          onClick={() => {
-                            setTimeout(() => {
-                              const appointmentSection = document.getElementById('appointment');
-                              if (appointmentSection) {
-                                const yOffset = -50;
-                                const y = appointmentSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                                window.scrollTo({ top: y, behavior: 'smooth' });
-                              }
-                            }, 100);
-                          }}
-                        />
-                      </div>
+  const handleImageClick = (serviceId) => {
+    navigate(`/ServicePage/${serviceId}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="container-fluid services py-5">
+        <div className="container py-5">
+          <div className="text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Đang tải...</span>
+            </div>
+            <p className="mt-2">Đang tải dịch vụ...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="container-fluid services py-5">
+        <div className="container py-5">
+          <div className="mx-auto text-center mb-5" style={{ maxWidth: 800 }}>
+            <p className="fs-4 text-uppercase text-center text-primary">Dịch Vụ Của Chúng Tôi</p>
+            <h1 className="display-3">Dịch Vụ Spa &amp; Làm Đẹp</h1>
+          </div>
+          <div className="row g-4">
+            {servicesData.map((service, index) => {
+              const isEven = index % 2 === 0;
+              return (
+                <div className="col-lg-6" key={service.id}>
+                  <div className={`services-item bg-light border-4 ${isEven ? 'border-end' : 'border-start'} border-primary rounded p-4`}
+                       onMouseEnter={() => setHoveredIndex(index)}
+                       onMouseLeave={() => setHoveredIndex(null)}
+                  >
+                    <div className="row align-items-center">
+                      {isEven ? (
+                        <>
+                          <div className="col-8">
+                            <div className="services-content text-end">
+                              <h3 className="text-truncate">{service.name}</h3>
+                              <p style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: 'vertical',
+                                minHeight: '72px'
+                              }}>
+                                {service.description}
+                              </p>
+
+                              <DatLichButton
+                                onClick={() => {
+                                  setTimeout(() => {
+                                    const appointmentSection = document.getElementById('appointment');
+                                    if (appointmentSection) {
+                                      const yOffset = -50;
+                                      const y = appointmentSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                                      window.scrollTo({ top: y, behavior: 'smooth' });
+                                    }
+                                  }, 100);
+                                }}
+                                isHovered={hoveredIndex === index}
+                              />
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div
+                              className="services-img d-flex align-items-center justify-content-center rounded service-image-clickable"
+                              style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                              onClick={() => handleImageClick(service.id)}
+                              title="Click để xem chi tiết dịch vụ"
+                            >
+                              <img
+                                src={service.imageUrl || service.image_url || '/default-image.jpg'}
+                                className="img-fluid rounded"
+                                alt={service.name}
+                                style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                              />
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="col-4">
+                            <div
+                              className="services-img d-flex align-items-center justify-content-center rounded service-image-clickable"
+                              style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                              onClick={() => handleImageClick(service.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  handleImageClick(service.id);
+                                }
+                              }}
+                              tabIndex={0}
+                              role="button"
+                              aria-label={`Xem chi tiết dịch vụ ${service.name}`}
+                            >
+                              <img
+                                src={service.imageUrl || service.image_url || '/default-image.jpg'}
+                                className="img-fluid rounded"
+                                alt={service.name}
+                                style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                                onError={(e) => {
+                                  e.target.src = '/assets/img/default-service.jpg';
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div className="col-8">
+                            <div className="services-content text-start">
+                              <h3 className="text-truncate">{service.name}</h3>
+                              <p style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: 'vertical',
+                                minHeight: '72px'
+                              }}>
+                                {service.description}
+                              </p>
+
+                              <DatLichButton
+                                onClick={() => {
+                                  setTimeout(() => {
+                                    const appointmentSection = document.getElementById('appointment');
+                                    if (appointmentSection) {
+                                      const yOffset = -50;
+                                      const y = appointmentSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                                      window.scrollTo({ top: y, behavior: 'smooth' });
+                                    }
+                                  }, 100);
+                                }}
+                                isHovered={hoveredIndex === index}
+                              />
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
-                    <div className="col-4">
-                      <div 
-                        className="services-img d-flex align-items-center justify-content-center rounded service-image-clickable"
-                        style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
-                        onClick={() => handleImageClick(service.id)}
-                        title="Click để xem chi tiết dịch vụ"
-                      >
-                        <img 
-                          src={service.imageUrl || service.image_url || '/default-image.jpg'} 
-                          className="img-fluid rounded" 
-                          alt={service.name}
-                          style={{ width: '100%', height: '180px', objectFit: 'cover' }}
-                        />
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="col-4">
-                      <div 
-                        className="services-img d-flex align-items-center justify-content-center rounded service-image-clickable"
-                        style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
-                        onClick={() => handleImageClick(service.id)}
-                        title="Click để xem chi tiết dịch vụ"
-                      >
-                        <img 
-                          src={service.imageUrl || service.image_url || '/default-image.jpg'} 
-                          className="img-fluid rounded" 
-                          alt={service.name}
-                          style={{ width: '100%', height: '180px', objectFit: 'cover' }}
-                        />
-                      </div>
-                    </div>
-                    <div className="col-8">
-                      <div className="services-content text-start">
-                        <h3 className="text-truncate">{service.name}</h3>
-                        <p style={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical',
-                          minHeight: '72px'
-                        }}>
-                          {service.description}
-                        </p>
-                       
-                        <DatLichButton 
-                          onClick={() => {
-                            setTimeout(() => {
-                              const appointmentSection = document.getElementById('appointment');
-                              if (appointmentSection) {
-                                const yOffset = -50;
-                                const y = appointmentSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                                window.scrollTo({ top: y, behavior: 'smooth' });
-                              }
-                            }, 100);
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
+                  </div>
+                </div>
+              );
+            })}
+            <div className="col-12">
+              <div className="services-btn text-center">
+                <Link to="/ServicePage"
+                  style={{
+                    backgroundColor: '#FDB5B9',
+                    borderColor: '#FDB5B9',
+                    color: 'white',
+                    border: '1px solid #FDB5B9',
+                    borderRadius: '50px',
+                    padding: '12px 20px',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    textDecoration: 'none',
+                    display: 'inline-block',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#F7A8B8';
+                    e.target.style.borderColor = '#F7A8B8';
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#FDB5B9';
+                    e.target.style.borderColor = '#FDB5B9';
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                >
+                  Xem Thêm Dịch Vụ
+                </Link>
               </div>
             </div>
           </div>
-        );
-      })}
-      <div className="col-12">
-        <div className="services-btn text-center">
-          <Link to="/ServicePage" 
-                style={{
-                  backgroundColor: '#FDB5B9',
-                  borderColor: '#FDB5B9',
-                  color: 'white',
-                  border: '1px solid #FDB5B9',
-                  borderRadius: '50px',
-                  padding: '12px 20px',
-                  fontSize: '16px',
-                  fontWeight: '500',
-                  textDecoration: 'none',
-                  display: 'inline-block',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#F7A8B8';
-                  e.target.style.borderColor = '#F7A8B8';
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = '#FDB5B9';
-                  e.target.style.borderColor = '#FDB5B9';
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = 'none';
-                }}
-          >
-            Xem Thêm Dịch Vụ
-          </Link>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
-<style jsx>{`
+      <style jsx>{`
   .service-image-clickable {
     cursor: pointer;
     transition: all 0.3s ease-in-out;
@@ -291,7 +307,7 @@ const Service = () => {
     left: 100%;
   }
 `}</style>
-        </>
-    )
+    </>
+  )
 }
 export default Service;
