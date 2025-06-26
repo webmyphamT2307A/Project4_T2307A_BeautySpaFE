@@ -1,9 +1,20 @@
+/* Global styles */
+/*var*/
+:root{
+  --color-primary: #e7a9ac;
+  --color-primary-nav: #cedaea;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
 
 code, pre {
   font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
-
-
 
 /* HTML: <div class="loader"></div> */
 .loader {
