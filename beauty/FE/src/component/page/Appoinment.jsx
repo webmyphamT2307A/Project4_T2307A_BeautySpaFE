@@ -74,6 +74,18 @@ const Appointment = () => {
             .catch(() => setServices([]));
     }, []);
 
+    // Fetch time slots
+    useEffect(() => {
+        axios.get('http://localhost:8080/api/v1/timeslot')
+            .then(res => {
+                const allSlots = Array.isArray(res.data) ? res.data : res.data.data || [];
+                // Lọc chỉ những time slot có isActive là 1 hoặc true
+                const activeSlots = allSlots.filter(slot => slot.isActive === 1 || slot.isActive === true);
+                setTimeSlots(activeSlots);
+            })
+            .catch(() => setTimeSlots([]));
+    }, []);
+
     // Fetch staff list based on selected service and date with schedule validation
     useEffect(() => {
         const fetchStaffList = async () => {
@@ -130,27 +142,17 @@ const Appointment = () => {
                             }
                         });
 
-                        // Check if API URL is correctly formed
-                        const apiUrl = scheduleResponse.config.url;
-                        const apiParams = scheduleResponse.config.params;
-
                         const schedules = Array.isArray(scheduleResponse.data?.data)
                             ? scheduleResponse.data.data
                             : (Array.isArray(scheduleResponse.data) ? scheduleResponse.data : []);
 
-
-                        if (schedules.length === 0) {
-                        } else {
-                            schedules.forEach((schedule, index) => {
-                            });
-                        }
-
                         // Get list of staff IDs who have schedules on this date
                         const staffIdsWithSchedule = schedules
                             .filter(schedule => {
-                                const workDate = schedule.workDate;
-                                const requestedDate = formData.appointmentDate;
-                                const isDateMatch = workDate === requestedDate;
+                                const workDate = schedule.workDate; // Format can be "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm:ss"
+                                const requestedDate = formData.appointmentDate; // Format is "YYYY-MM-DD"
+                                // FIX: Use startsWith to handle potential time parts in the date string from backend
+                                const isDateMatch = workDate && workDate.startsWith(requestedDate);
                                 const isActive = schedule.isActive === true;
                                 const isNotCompleted = schedule.status !== 'completed';
 
@@ -162,38 +164,15 @@ const Appointment = () => {
                                         schedule.shift.toLowerCase() === 'full day' ||
                                         schedule.shift.toLowerCase() === 'cả ngày';
                                 }
-
-
                                 return isDateMatch && isActive && isNotCompleted && isShiftMatch;
                             })
-                            .map(schedule => {
-                                return schedule.userId;
-                            });
-
-
-                        // Check if we have schedules but none match the requested date
-                        const schedulesButWrongDate = schedules.filter(s =>
-                            s.isActive === true &&
-                            s.status !== 'completed' &&
-                            s.workDate !== formData.appointmentDate
-                        );
-
-                        if (schedulesButWrongDate.length > 0) {
-                            console.warn("⚠️ Found schedules but for different dates:");
-                            schedulesButWrongDate.forEach(schedule => {
-                                console.warn(`   - User ${schedule.userId} (${schedule.userName}) has schedule on ${schedule.workDate}, not ${formData.appointmentDate}`);
-                            });
-                        }
+                            .map(schedule => schedule.userId);
 
                         // Filter staff list to only include those with schedules
-                        if (staffIdsWithSchedule.length === 0) {
-                            console.warn("⚠️ No staff found with schedules on this date. Showing empty list.");
-                            staffWithSchedule = []; // Show no staff if no schedules found
+                        if (staffIdsWithSchedule.length > 0) {
+                             staffWithSchedule = rawStaffList.filter(staff => staffIdsWithSchedule.includes(staff.id));
                         } else {
-                            staffWithSchedule = rawStaffList.filter(staff => {
-                                const hasSchedule = staffIdsWithSchedule.includes(staff.id);
-                                return hasSchedule;
-                            });
+                            staffWithSchedule = []; // Show no staff if no schedules found
                         }
 
                     } catch (scheduleError) {
@@ -223,187 +202,46 @@ const Appointment = () => {
                             const selectedService = services.find(s => String(s.id) === formData.serviceId);
                             if (selectedService) {
                                 const serviceName = String(selectedService.name || '').toLowerCase();
-                                const roleName = String(staff.roleName || '').toLowerCase();
-                                const roleLevel = String(staff.roleLevel || '').toLowerCase();
                                 const skillsText = String(staff.skillsText || '').toLowerCase();
-                                const fullName = String(staff.fullName || '').toLowerCase();
+                                const roleName = String(staff.roleName || '').toLowerCase();
 
-                                // Define service-skill mapping
+                                // Basic check: if skillsText or roleName contains the service name, it's a match.
+                                if (skillsText.includes(serviceName) || roleName.includes(serviceName)) {
+                                    return true;
+                                }
+
+                                // If not direct match, check for related keywords
                                 const serviceSkillMapping = {
-                                    // Facial services
-                                    'facial': ['facial', 'skin', 'skincare', 'beauty', 'face', 'chăm sóc da', 'làm đẹp'],
-                                    'skincare': ['facial', 'skin', 'skincare', 'beauty', 'face', 'chăm sóc da'],
-                                    'chăm sóc da': ['facial', 'skin', 'skincare', 'beauty', 'face', 'chăm sóc da'],
-                                    'làm sạch da': ['facial', 'skin', 'skincare', 'beauty', 'face', 'chăm sóc da'],
-
-                                    // Hair removal services - TRIỆT LÔNG
-                                    'triệt lông': ['triệt lông', 'laser', 'hair removal', 'wax', 'waxing', 'epilazione', 'depilação'],
-                                    'laser': ['triệt lông', 'laser', 'hair removal', 'ipl', 'laser hair removal'],
-                                    'wax': ['triệt lông', 'wax', 'waxing', 'hair removal', 'brazilian'],
-                                    'waxing': ['triệt lông', 'wax', 'waxing', 'hair removal'],
-                                    'hair removal': ['triệt lông', 'laser', 'hair removal', 'wax', 'waxing'],
-
-                                    // Massage services
-                                    'massage': ['massage', 'therapy', 'body', 'relaxation', 'mát xa', 'trị liệu'],
-                                    'mát xa': ['massage', 'therapy', 'body', 'relaxation', 'mát xa', 'trị liệu'],
-                                    'body': ['massage', 'therapy', 'body', 'relaxation', 'mát xa', 'body care'],
-                                    'thư giãn': ['massage', 'therapy', 'relaxation', 'mát xa', 'thư giãn'],
-
-                                    // Hair services  
-                                    'hair': ['hair', 'hairstyle', 'cut', 'color', 'tóc', 'cắt tóc', 'nhuộm'],
-                                    'tóc': ['hair', 'hairstyle', 'cut', 'color', 'tóc', 'cắt tóc', 'nhuộm'],
-                                    'cắt tóc': ['hair', 'hairstyle', 'cut', 'tóc', 'cắt tóc'],
-                                    'nhuộm tóc': ['hair', 'color', 'tóc', 'nhuộm', 'màu'],
-
-                                    // Nail services
-                                    'nail': ['nail', 'manicure', 'pedicure', 'móng', 'nail art'],
-                                    'manicure': ['nail', 'manicure', 'móng tay', 'nail care'],
-                                    'pedicure': ['nail', 'pedicure', 'móng chân', 'foot care'],
-                                    'móng': ['nail', 'manicure', 'pedicure', 'móng', 'nail art'],
-
-                                    // Spa treatment
-                                    'spa': ['spa', 'treatment', 'wellness', 'beauty', 'relaxation', 'therapy'],
-                                    'treatment': ['spa', 'treatment', 'therapy', 'healing', 'trị liệu'],
-                                    'trị liệu': ['spa', 'treatment', 'therapy', 'healing', 'trị liệu']
+                                     'facial': ['facial', 'skin', 'skincare', 'chăm sóc da'],
+                                     'triệt lông': ['triệt lông', 'laser', 'hair removal', 'waxing'],
+                                     'massage': ['massage', 'therapy', 'mát xa', 'trị liệu'],
+                                     'hair': ['hair', 'hairstyle', 'tóc', 'cắt tóc', 'nhuộm'],
+                                     'nail': ['nail', 'manicure', 'pedicure', 'móng'],
+                                     'spa': ['spa', 'treatment', 'wellness', 'beauty']
                                 };
 
-                                // Find matching skills for the selected service
                                 let requiredSkills = [];
                                 for (const [key, skills] of Object.entries(serviceSkillMapping)) {
                                     if (serviceName.includes(key)) {
-                                        requiredSkills = [...requiredSkills, ...skills];
+                                        requiredSkills = skills;
+                                        break; // Found the category
                                     }
                                 }
 
-                                // If no specific skills found, use generic spa skills
-                                if (requiredSkills.length === 0) {
-                                    requiredSkills = ['spa', 'beauty', 'wellness', 'service', 'customer'];
-                                    console.warn(`⚠️ No specific skills found for "${serviceName}", using generic: [${requiredSkills.join(', ')}]`);
-                                } else {
-                                }
-
-                                // STRICT skill matching - only show staff with relevant skills
-                                const hasRequiredSkill = requiredSkills.some(skill =>
-                                    skillsText.includes(skill) ||
-                                    roleName.includes(skill) ||
-                                    fullName.includes(skill)
-                                );
-
-                                // For managers/seniors, still require some relevant skill match
-                                const isManagerOrSeniorWithSkill =
-                                    (roleName.includes('manager') ||
-                                        roleName.includes('giám đốc') ||
-                                        roleName.includes('quản lý') ||
-                                        roleName.includes('senior') ||
-                                        roleName.includes('chuyên gia') ||
-                                        roleLevel.includes('expert') ||
-                                        roleLevel.includes('senior') ||
-                                        roleLevel.includes('advanced')) && hasRequiredSkill;
-
-                                // Enhanced skill checking for spa services
-                                const hasGeneralSpaExperience =
-                                    skillsText.includes('spa') ||
-                                    skillsText.includes('beauty') ||
-                                    skillsText.includes('wellness') ||
-                                    skillsText.includes('treatment') ||
-                                    roleName.includes('spa') ||
-                                    roleName.includes('beauty') ||
-                                    roleName.includes('wellness');
-
-                                // More specific skill matching
-                                const hasSpecificServiceSkill = (() => {
-                                    // Direct service name match in skills/role
-                                    if (skillsText.includes(serviceName) || roleName.includes(serviceName)) {
-                                        return true;
-                                    }
-
-                                    // Hair removal / Triệt lông specific matching
-                                    if (serviceName.includes('triệt lông') || serviceName.includes('laser') ||
-                                        serviceName.includes('hair removal') || serviceName.includes('wax')) {
-                                        return skillsText.includes('triệt lông') ||
-                                            skillsText.includes('laser') ||
-                                            skillsText.includes('hair removal') ||
-                                            skillsText.includes('wax') ||
-                                            skillsText.includes('waxing') ||
-                                            roleName.includes('triệt lông') ||
-                                            roleName.includes('laser') ||
-                                            roleName.includes('hair removal');
-                                    }
-
-                                    // Specific service category matching
-                                    if (serviceName.includes('massage') || serviceName.includes('mát xa')) {
-                                        return skillsText.includes('massage') ||
-                                            skillsText.includes('mát xa') ||
-                                            skillsText.includes('therapy') ||
-                                            skillsText.includes('trị liệu') ||
-                                            roleName.includes('massage') ||
-                                            roleName.includes('therapy');
-                                    }
-
-                                    if (serviceName.includes('facial') || serviceName.includes('skin') || serviceName.includes('da')) {
-                                        return skillsText.includes('facial') ||
-                                            skillsText.includes('skin') ||
-                                            skillsText.includes('skincare') ||
-                                            skillsText.includes('chăm sóc da') ||
-                                            roleName.includes('facial') ||
-                                            roleName.includes('skin');
-                                    }
-
-                                    if (serviceName.includes('hair') || serviceName.includes('tóc')) {
-                                        return skillsText.includes('hair') ||
-                                            skillsText.includes('tóc') ||
-                                            skillsText.includes('hairstyle') ||
-                                            roleName.includes('hair') ||
-                                            roleName.includes('tóc');
-                                    }
-
-                                    if (serviceName.includes('nail') || serviceName.includes('móng')) {
-                                        return skillsText.includes('nail') ||
-                                            skillsText.includes('móng') ||
-                                            skillsText.includes('manicure') ||
-                                            skillsText.includes('pedicure') ||
-                                            roleName.includes('nail') ||
-                                            roleName.includes('móng');
-                                    }
-
-                                    return false;
-                                })();
-
-                                // Final qualification: More intelligent filtering 
-                                const isQualified = !strictFiltering || // If not strict, accept all
-                                    hasRequiredSkill ||
-                                    isManagerOrSeniorWithSkill ||
-                                    hasSpecificServiceSkill ||
-                                    hasGeneralSpaExperience; // Remove the "accept all" fallback
-
-                                if (!isQualified) {
-
-                                    return false;
-                                } else {
+                                if (requiredSkills.length > 0) {
+                                    const hasRequiredSkill = requiredSkills.some(skill => skillsText.includes(skill) || roleName.includes(skill));
+                                    if (!hasRequiredSkill) return false;
                                 }
                             }
                         }
-
                         return true;
                     } catch (error) {
                         console.error('Error filtering staff:', error, staff);
-                        // In case of error, include the staff member (failsafe)
-                        return true;
+                        return true; // Failsafe
                     }
                 });
-
-                // Shuffle to randomize order
+                
                 const shuffledStaff = [...filteredStaff].sort(() => 0.5 - Math.random());
-
-                // Final debug summary
-
-                if (formData.appointmentDate && scheduleFiltering) {
-                    console.warn(`   ⚠️  NOTE: Only staff with schedules on ${formData.appointmentDate} should be shown!`);
-                    if (shiftFiltering && requiredShift) {
-                        console.warn(`   ⚠️  NOTE: Only staff with ${requiredShift} shift should be shown!`);
-                    }
-                }
-
                 setStaffList(shuffledStaff);
             } catch (error) {
                 console.error("Error fetching staff list:", error);
@@ -414,16 +252,14 @@ const Appointment = () => {
         };
 
         fetchStaffList();
-    }, [formData.serviceId, formData.appointmentDate, formData.timeSlotId, services, timeSlots, scheduleFiltering, shiftFiltering]); // Re-fetch when any relevant parameter changes
+    }, [formData.serviceId, formData.appointmentDate, formData.timeSlotId, services, timeSlots, scheduleFiltering, shiftFiltering, strictFiltering]);
 
-    // Fetch available slots with actual staff count - CẬP NHẬT ĐIỀU KIỆN
+    // Fetch available slots
     useEffect(() => {
-        // THÊM ĐIỀU KIỆN: Chỉ fetch khi đã có đầy đủ thông tin
         if (!formData.appointmentDate || !formData.serviceId || !formData.timeSlotId) {
             setSlotInfo(null);
             return;
         }
-
 
         axios.get('http://localhost:8080/api/v1/timeslot/available', {
             params: {
@@ -432,126 +268,25 @@ const Appointment = () => {
                 timeSlotId: formData.timeSlotId
             }
         })
-            .then(res => {
-                if (res.data.data && res.data.data.availableSlot !== undefined) {
-                    setSlotInfo(res.data.data);
-                } else if (res.data.availableSlot !== undefined) {
-                    setSlotInfo(res.data);
-                } else {
-                    setSlotInfo(null);
-                }
-            })
-            .catch(() => setSlotInfo(null));
+        .then(res => {
+            const slotData = res.data.data;
+            if (slotData && slotData.totalSlots !== undefined && slotData.bookedSlots !== undefined) {
+                const booked = Math.max(0, slotData.bookedSlots);
+                const total = Math.max(booked, slotData.totalSlots);
+                setSlotInfo({ availableSlot: booked, totalSlot: total });
+            } else {
+                setSlotInfo(null);
+            }
+        })
+        .catch(() => setSlotInfo(null));
     }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
 
-    // Kiểm tra lịch rảnh cho TẤT CẢ nhân viên khi thông tin thay đổi - CẬP NHẬT ĐIỀU KIỆN
-    useEffect(() => {
-        const checkAllStaffAvailability = async () => {
-            // THÊM ĐIỀU KIỆN: Chỉ check khi đã có đầy đủ thông tin và có danh sách nhân viên
-            if (!formData.appointmentDate || !formData.timeSlotId || !formData.serviceId || staffList.length === 0) {
-                console.log("⏸️ Skipping staff availability check - Missing required fields or no staff:", {
-                    appointmentDate: formData.appointmentDate,
-                    timeSlotId: formData.timeSlotId,
-                    serviceId: formData.serviceId,
-                    staffListLength: staffList.length
-                });
-                setStaffAvailabilities({});
-                return;
-            }
-
-            console.log("🚀 Starting staff availability check with complete data");
-
-            setIsCheckingAvailabilities(true);
-            setStaffAvailabilities({});
-
-            const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
-            if (!selectedTimeSlot) {
-                setIsCheckingAvailabilities(false);
-                return;
-            }
-
-            const [slotHours, slotMinutes] = selectedTimeSlot.startTime.split(':').map(Number);
-            const [year, month, day] = formData.appointmentDate.split('-').map(Number);
-            const localDateTimeForSlot = new Date(year, month - 1, day, slotHours, slotMinutes);
-            const requestedDateTimeISO = localDateTimeForSlot.toISOString();
-            const availabilityChecks = staffList.map(staff => {
-                return axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
-                    params: {
-                        userId: staff.id,
-                        requestedDateTime: requestedDateTimeISO,
-                        durationMinutes: 60 // Cần thay đổi nếu dịch vụ có thời gian khác nhau
-                    }
-                }).then(res => ({
-                    staffId: staff.id,
-                    isAvailable: res.data?.data?.isAvailable || false,
-                    message: res.data?.data?.availabilityMessage || 'Không xác định'
-                }
-                )).catch(() => ({
-                    staffId: staff.id,
-                    isAvailable: false,
-                    message: 'Lỗi kiểm tra'
-                }));
-            });
-
-            const results = await Promise.all(availabilityChecks);
-            results.forEach(result => {
-                let countAvai = countStaffAvaiable
-                if (result.isAvailable) setCountStaffAvaiable(countAvai++);
-            });
-            const newAvailabilities = results.reduce((acc, result) => {
-                acc[result.staffId] = { isAvailable: result.isAvailable, message: result.message };
-                return acc;
-            }, {});
-
-            setStaffAvailabilities(newAvailabilities);
-            setIsCheckingAvailabilities(false);
-        };
-
-        checkAllStaffAvailability();
-    }, [formData.appointmentDate, formData.timeSlotId, formData.serviceId, staffList, timeSlots]);
-
-    // Fetch time slots
-    useEffect(() => {
-        axios.get('http://localhost:8080/api/v1/timeslot')
-            .then(res => {
-                const allSlots = Array.isArray(res.data) ? res.data : res.data.data || [];
-                // Lọc chỉ những time slot có isActive là 1 hoặc true
-                const activeSlots = allSlots.filter(slot => slot.isActive === 1 || slot.isActive === true);
-                setTimeSlots(activeSlots);
-            })
-            .catch(() => setTimeSlots([]));
-    }, []);
-
-    // Fetch available slots with actual staff count
-    useEffect(() => {
-        if (formData.appointmentDate && formData.serviceId && formData.timeSlotId) {
-            axios.get('http://localhost:8080/api/v1/timeslot/available', {
-                params: {
-                    date: formData.appointmentDate,
-                    serviceId: formData.serviceId,
-                    timeSlotId: formData.timeSlotId
-                }
-            })
-                .then(res => {
-                    if (res.data.data && res.data.data.availableSlot !== undefined) {
-                        setSlotInfo(res.data.data);
-                    } else if (res.data.availableSlot !== undefined) {
-                        setSlotInfo(res.data);
-                    } else {
-                        setSlotInfo(null);
-                    }
-                })
-                .catch(() => setSlotInfo(null));
-        } else {
-            setSlotInfo(null);
-        }
-    }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
-
-    // Kiểm tra lịch rảnh cho TẤT CẢ nhân viên khi thông tin thay đổi
+    // Check staff availability
     useEffect(() => {
         const checkAllStaffAvailability = async () => {
             if (!formData.appointmentDate || !formData.timeSlotId || !formData.serviceId || staffList.length === 0) {
                 setStaffAvailabilities({});
+                setCountStaffAvaiable(0);
                 return;
             }
 
@@ -566,31 +301,30 @@ const Appointment = () => {
 
             const [slotHours, slotMinutes] = selectedTimeSlot.startTime.split(':').map(Number);
             const [year, month, day] = formData.appointmentDate.split('-').map(Number);
-            const localDateTimeForSlot = new Date(year, month - 1, day, slotHours, slotMinutes);
-            const requestedDateTimeISO = localDateTimeForSlot.toISOString();
+            const requestedDateTimeISO = new Date(year, month - 1, day, slotHours, slotMinutes).toISOString();
 
-            const availabilityChecks = staffList.map(staff => {
-                return axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
+            const availabilityChecks = staffList.map(staff =>
+                axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
                     params: {
                         userId: staff.id,
                         requestedDateTime: requestedDateTimeISO,
-                        durationMinutes: 60 // Cần thay đổi nếu dịch vụ có thời gian khác nhau
+                        durationMinutes: 60 // Assume 60 mins, adjust if needed
                     }
                 }).then(res => ({
                     staffId: staff.id,
                     isAvailable: res.data?.data?.isAvailable || false,
-                    message: res.data?.data?.availabilityMessage || 'Không xác định'
                 })).catch(() => ({
                     staffId: staff.id,
                     isAvailable: false,
-                    message: 'Lỗi kiểm tra'
-                }));
-            });
+                }))
+            );
 
             const results = await Promise.all(availabilityChecks);
+            const availableStaffCount = results.filter(r => r.isAvailable).length;
+            setCountStaffAvaiable(availableStaffCount);
 
             const newAvailabilities = results.reduce((acc, result) => {
-                acc[result.staffId] = { isAvailable: result.isAvailable, message: result.message };
+                acc[result.staffId] = { isAvailable: result.isAvailable };
                 return acc;
             }, {});
 
@@ -601,104 +335,57 @@ const Appointment = () => {
         checkAllStaffAvailability();
     }, [formData.appointmentDate, formData.timeSlotId, formData.serviceId, staffList, timeSlots]);
 
-
-    // Validation functions
     const validateField = (name, value) => {
         let error = '';
-
         switch (name) {
             case 'fullName':
-                if (!value.trim()) {
-                    error = 'Họ tên không được để trống';
-                }
+                if (!value.trim()) error = 'Họ tên không được để trống';
                 break;
             case 'email':
-                if (!value.trim()) {
-                    error = 'Email không được để trống';
-                } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(value)) {
-                    error = 'Định dạng email không hợp lệ';
-                }
+                if (!value.trim()) error = 'Email không được để trống';
+                else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(value)) error = 'Định dạng email không hợp lệ';
                 break;
             case 'phoneNumber':
-                if (!value.trim()) {
-                    error = 'Số điện thoại không được để trống';
-                } else {
-                    const validationMessage = validateVietnamesePhone(value);
-                    if (validationMessage) {
-                        error = validationMessage;
-                    }
-                }
+                const validationMessage = validateVietnamesePhone(value);
+                if (validationMessage) error = validationMessage;
                 break;
             case 'notes':
-                if (value && value.length > 500) {
-                    error = 'Ghi chú không được vượt quá 500 ký tự';
-                } else if (value && value.length > 450) {
-                    error = 'Ghi chú sắp đạt giới hạn 500 ký tự';
-                }
+                if (value && value.length > 500) error = 'Ghi chú không được vượt quá 500 ký tự';
                 break;
             default:
                 break;
         }
-
-        setValidationErrors(prev => ({
-            ...prev,
-            [name]: error
-        }));
-
+        setValidationErrors(prev => ({ ...prev, [name]: error }));
         return error === '';
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-
         validateField(name, value);
-
+        const newFormData = { ...formData, [name]: value };
         if (name === 'serviceId') {
-            // --- BẮT ĐẦU THÊM VÀO ĐÂY ---
-            console.log("1. Đã chọn Service ID:", value);
             const selectedService = services.find(s => String(s.id) === value);
-            console.log("2. Dịch vụ tìm thấy:", selectedService); // In ra để xem có tìm thấy không
-            // --- KẾT THÚC THÊM VÀO ĐÂY ---
-
-            setFormData(prev => ({
-                ...prev,
-                serviceId: value,
-                price: selectedService ? selectedService.price : ''
-            }));
-        } else {
-            setFormData(prev => ({
-                ...prev,
-                [name]: value
-            }));
+            newFormData.price = selectedService ? selectedService.price : '';
         }
+        setFormData(newFormData);
     };
 
     const handleStaffSelect = (staffId, event) => {
-        if (event) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-
+        event?.preventDefault();
         const isBusy = staffAvailabilities[staffId]?.isAvailable === false;
         if (isBusy) {
             toast.warn('Nhân viên này đang bận, vui lòng chọn nhân viên khác!');
             return;
         }
-
-        // Toggle selection
-        if (selectedStaffId === staffId) {
-            setSelectedStaffId(null);
-            setFormData((prev) => ({ ...prev, userId: '' }));
-        } else {
-            setSelectedStaffId(staffId);
-            setFormData((prev) => ({ ...prev, userId: staffId }));
-        }
+        const newStaffId = selectedStaffId === staffId ? null : staffId;
+        setSelectedStaffId(newStaffId);
+        setFormData(prev => ({ ...prev, userId: newStaffId }));
     };
 
     const handleUseAccountInfo = () => {
         const storedUserInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (storedUserInfo) {
-            setFormData((prev) => ({
+            setFormData(prev => ({
                 ...prev,
                 fullName: storedUserInfo.fullName || '',
                 phoneNumber: storedUserInfo.phone || '',
