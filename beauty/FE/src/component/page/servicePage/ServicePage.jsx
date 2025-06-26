@@ -112,10 +112,10 @@ const ServicePage = () => {
         if (result.status === 'SUCCESS') {
           setServicesData(result.data);
         } else {
-          // console.error(result.message);
+          console.error(result.message);
         }
       } catch (error) {
-        // console.error('Lỗi khi fetch dữ liệu:', error);
+        console.error('Lỗi khi fetch dữ liệu:', error);
       } finally {
         setLoading(false);
       }
@@ -162,7 +162,7 @@ const ServicePage = () => {
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                   onFocus={() => searchTerm && setShowSuggestions(true)}
                   style={{
-                    border: '2px solid rgb(255, 164, 173)',
+                    border: '2px solid #e9ecef',
                     transition: 'all 0.3s ease',
                     fontSize: '1rem',
                     padding: '12px 50px 12px 20px'
@@ -315,12 +315,6 @@ const ServicePage = () => {
                                       }
                                     }, 100);
                                   }}
-                                  onMouseEnter={(e) => {
-                                    e.target.setAttribute('style', 'border: 1px solid grey !important; box-shadow: 0 4px 4px rgb(165 136 138 / 98%) !important;');
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.target.setAttribute('style', 'border: 2px solid #FDB5B9 !important; box-shadow: none !important;');
-                                  }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >
                                   Đặt Lịch
@@ -382,12 +376,6 @@ const ServicePage = () => {
                                         appointmentSection.scrollIntoView({ behavior: 'smooth' });
                                       }
                                     }, 100);
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.target.setAttribute('style', 'border: 1px solid grey !important; box-shadow: 0 4px 4px rgb(165 136 138 / 98%) !important;');
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.target.setAttribute('style', 'border: 2px solid #FDB5B9 !important; box-shadow: none !important;');
                                   }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >
@@ -642,8 +630,8 @@ const ServicePage = () => {
 
         /* Search input focus effect */
         .form-control:focus {
-          border-color: rgb(255, 164, 173) !important;
-          box-shadow: 0 0 0 0.2rem rgb(255, 226, 229) !important;
+          border-color: #007bff !important;
+          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
         }
 
         /* Search button hover effect - Keep original position */

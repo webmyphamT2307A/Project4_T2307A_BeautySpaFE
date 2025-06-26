@@ -14,7 +14,7 @@ const icons = {
 
 const role = {
   id: 'role',
-  title: 'Quản lý',
+  title: 'Vai Trò',
   type: 'group',
   children: [
     {
@@ -22,13 +22,6 @@ const role = {
       title: 'Quản Lý Vai Trò',
       type: 'item',
       url: '/role/service',
-      icon: icons.UserOutlined
-    },
-    {
-      id: 'skill-service',
-      title: 'Quản Lý Kỹ Năng',
-      type: 'item',
-      url: '/role/skill',
       icon: icons.UserOutlined
     }
   ]

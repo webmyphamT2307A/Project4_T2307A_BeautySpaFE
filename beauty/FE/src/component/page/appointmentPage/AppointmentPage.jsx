@@ -65,7 +65,7 @@ const AppointmentPage = () => {
                 setStaffList(shuffledStaff);
             })
             .catch((error) => {
-                // console.error("Error fetching staff list:", error);
+                console.error("Error fetching staff list:", error);
                 setStaffList([]);
                 toast.error("Không thể tải danh sách nhân viên.");
             });
@@ -319,7 +319,7 @@ const AppointmentPage = () => {
             
             return filtered;
         } catch (error) {
-            // console.error('Error in filteredStaffList:', error);
+            console.error('Error in filteredStaffList:', error);
             return [];
         }
     }, [staffList, staffSearchTerm, staffAvailabilities]);
@@ -699,54 +699,34 @@ const AppointmentPage = () => {
 
             {/* Global CSS */}
             <style jsx global>{`
-                .text-white-option {
-                    color: white !important;
-                }
-
-                .text-white-option option {
-                    color: black !important;
-                    background-color: white !important;
-                }
-
-                .text-white-option option:disabled {
-                    color: #999 !important;
-                }
-
-                .form-control::placeholder {
-                    color: #ccc;
-                    opacity: 1;
-                }
-
-                .form-control:-ms-input-placeholder {
-                    color: #ccc;
-                }
-
-                .form-control::-ms-input-placeholder {
-                    color: #ccc;
-                }
-
-                input[type="date"]::-webkit-calendar-picker-indicator {
-                    filter: invert(1);
-                }
-
+                .text-white-option { color: white !important; }
+                .text-white-option option { color: black !important; background-color: white !important; }
+                .text-white-option option:disabled { color: #999 !important; }
+                
+                .form-control::placeholder { color: #ccc; opacity: 1; }
+                .form-control:-ms-input-placeholder { color: #ccc; }
+                .form-control::-ms-input-placeholder { color: #ccc; }
+                
+                input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+                
                 .employee-card {
                     transition: all 0.3s ease-in-out;
-                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                    background: rgba(255, 255, 255, 0.05) !important;
+                    border: 1px solid rgba(255,255,255,0.2) !important;
+                    background: rgba(255,255,255,0.05) !important;
                     backdrop-filter: blur(10px);
                 }
-
+                
                 .employee-card:hover {
                     transform: translateY(-5px);
-                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
-                    border-color: rgba(255, 255, 255, 0.4) !important;
-                    background: rgba(255, 255, 255, 0.1) !important;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+                    border-color: rgba(255,255,255,0.4) !important;
+                    background: rgba(255,255,255,0.1) !important;
                 }
 
                 .employee-card.selected-card {
-                    border-color: #f89ca0 !important;
-                    background: rgba(248, 156, 160, 0.15) !important;
-                    box-shadow: 0 0 20px rgba(248, 156, 160, 0.3) !important;
+                    border-color: #0d6efd !important;
+                    background: rgba(13, 110, 253, 0.15) !important;
+                    box-shadow: 0 0 20px rgba(13, 110, 253, 0.3) !important;
                 }
 
                 .employee-card.busy-card {
@@ -760,17 +740,17 @@ const AppointmentPage = () => {
                 }
 
                 .staff-directory-grid::-webkit-scrollbar-track {
-                    background: rgba(255, 255, 255, 0.1);
+                    background: rgba(255,255,255,0.1);
                     border-radius: 3px;
                 }
 
                 .staff-directory-grid::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.3);
+                    background: rgba(255,255,255,0.3);
                     border-radius: 3px;
                 }
 
                 .staff-directory-grid::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255, 255, 255, 0.5);
+                    background: rgba(255,255,255,0.5);
                 }
             `}</style>
 

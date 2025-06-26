@@ -20,7 +20,7 @@ const parseDate = (dateString) => {
         const date = new Date(dateString);
         return isNaN(date.getTime()) ? null : date;
     } catch (e) {
-        // // console.error("Lỗi parse ngày:", dateString, e);
+        console.error("Lỗi parse ngày:", dateString, e);
         return null;
     }
 };
@@ -279,7 +279,7 @@ const ServiceHistoryPage = () => {
                     sessionStorage.removeItem('recentBooking');
                 }
             } catch (error) {
-                // console.error('❌ Error parsing recent booking:', error);
+                console.error('❌ Error parsing recent booking:', error);
                 sessionStorage.removeItem('recentBooking');
             }
         } else {
@@ -317,7 +317,7 @@ const ServiceHistoryPage = () => {
                 setError(response.data.message || `Không tìm thấy lịch hẹn với số điện thoại: ${phoneNumber}`);
             }
         } catch (err) {
-            // console.error('❌ Auto lookup error:', err);
+            console.error('❌ Auto lookup error:', err);
             setError('Lỗi kết nối hoặc không tìm thấy lịch hẹn dịch vụ.');
             setHistory([]);
             setCalculatedTotal(0);
@@ -483,10 +483,10 @@ const ServiceHistoryPage = () => {
                 setError(response.data.message || 'Không tìm thấy lịch hẹn.');
             }
         } catch (err) {
-            // console.error('❌ Error fetching history:', err);
-            // console.error('❌ Error response:', err.response);
-            // console.error('❌ Error status:', err.response?.status);
-            // console.error('❌ Error data:', err.response?.data);
+            console.error('❌ Error fetching history:', err);
+            console.error('❌ Error response:', err.response);
+            console.error('❌ Error status:', err.response?.status);
+            console.error('❌ Error data:', err.response?.data);
             setError('Lỗi kết nối hoặc không tìm thấy lịch hẹn dịch vụ.');
             setHistory([]);
         } finally {
@@ -867,7 +867,7 @@ const ServiceHistoryPage = () => {
                                         </div>
                                         <div>
                                             <div className="fw-bold text-primary">{item.serviceName}</div>
-                                            {/* <small className="text-muted">Mã dịch vụ: #{item.serviceId}</small> */}
+                                            <small className="text-muted">Mã dịch vụ: #{item.serviceId}</small>
                                         </div>
                                     </div>
                                 </td>
@@ -1037,7 +1037,7 @@ const ServiceHistoryPage = () => {
                                 ? 'Đây là danh sách lịch hẹn và dịch vụ của bạn tại spa của chúng tôi.'
                                 : 'Tra cứu lịch hẹn bằng số điện thoại (dành cho khách chưa đăng nhập).'}
                         </p>
-                        {/* {userInfo && (
+                        {userInfo && (
                             <div className="alert alert-info" role="alert">
                                 <i className="fas fa-info-circle me-2"></i>
                                 <strong>Lưu ý:</strong> Bạn có thể hủy các lịch hẹn sắp tới bằng cách nhấn nút "Hủy Lịch" trong bảng bên dưới.
@@ -1048,7 +1048,7 @@ const ServiceHistoryPage = () => {
                                     Chỉ hiển thị lịch hẹn hợp lệ (có giá tiền lớn hơn 0, tên dịch vụ và nhân viên không phải N/A).
                                 </small>
                             </div>
-                        )} */}
+                        )}
 
 
                         {/* Thông báo tự động tra cứu */}
@@ -1168,7 +1168,7 @@ const ServiceHistoryPage = () => {
                                                 disabled={isLoading || !lookupIdentifier.trim() || phoneError}
                                                 style={{
                                                     fontSize: '1.1rem',
-                                                    background: 'linear-gradient(135deg, #FDB5B9 0%,rgb(251, 164, 182) 100%)',
+                                                    background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
                                                     color: 'black',
                                                     boxShadow: '0 8px 25px rgba(253, 181, 185, 0.3)',
                                                     transition: 'all 0.3s ease',
