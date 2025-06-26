@@ -135,7 +135,7 @@ const MainRoutes = {
       element: <ProtectedRoute element={<SamplePage />} />
     },
     {
-      path: 'account',
+      path: 'admin',
       children: [
         {
           path: 'user',

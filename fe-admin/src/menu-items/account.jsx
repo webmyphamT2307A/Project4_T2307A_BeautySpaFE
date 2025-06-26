@@ -17,22 +17,22 @@ const icons = {
 // ==============================|| MENU ITEMS - ACCOUNT ||============================== //
 
 const account = {
-  id: 'account',
+  id: 'admin',
   title: 'Tài Khoản',
   type: 'group',
   children: [
     {
-      id: 'account-user',
+      id: 'admin-user',
       title: 'Người Dùng',
       type: 'item',
-      url: '/account/user',
+      url: '/admin/user',
       icon: icons.UserOutlined
     },
     {
-      id: 'account-admin',
+      id: 'admin-admin',
       title: 'Quản Trị Viên',
       type: 'item',
-      url: '/account/admin',
+      url: '/admin/admin',
       icon: icons.LockOutlined
     }
   ]

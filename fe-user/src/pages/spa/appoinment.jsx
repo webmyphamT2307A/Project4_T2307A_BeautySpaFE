@@ -17,7 +17,8 @@ import {
   FilterOutlined,
   FormOutlined,
   MailOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  ClearOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { useSearchParams } from 'react-router-dom';
@@ -27,6 +28,7 @@ import { useAppointmentFilter } from 'contexts/AppointmentFilterContext';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
 const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
+const API_SERVICE_URL = 'http://localhost:8080/api/v1/services/findAll';
 const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confirmation';
 
 const AppointmentManagement = () => {
@@ -44,6 +46,8 @@ const AppointmentManagement = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [serviceFilter, setServiceFilter] = useState('all');
+  const [staffFilter, setStaffFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState({
     startDate: '',
     endDate: ''
@@ -58,12 +62,19 @@ const AppointmentManagement = () => {
       if (filter.dateFilter) {
         setDateFilter(filter.dateFilter);
       }
+      if (filter.serviceId) {
+        setServiceFilter(filter.serviceId);
+      }
+      if (filter.staffId) {
+        setStaffFilter(filter.staffId);
+      }
       // Xóa filter trong context sau khi đã áp dụng để không bị lọc lại ở lần sau
       setFilter(null);
     }
   }, [filter, setFilter]);
 
   const [staffList, setStaffList] = useState([]);
+  const [serviceList, setServiceList] = useState([]);
   const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
   const [appointmentToEditDetails, setAppointmentToEditDetails] = useState(null);
   const [selectedStaffId, setSelectedStaffId] = useState(null);
@@ -128,6 +139,27 @@ const AppointmentManagement = () => {
     }
   };
 
+  const fetchFilterData = async () => {
+    const token = Cookies.get('staff_token');
+    try {
+      // Fetch staff
+      const staffRes = await fetch(API_STAFF_URL, { headers: { Authorization: `Bearer ${token}` } });
+      const staffData = await staffRes.json();
+      if (staffData.status === 'SUCCESS') setStaffList(staffData.data);
+
+      // Fetch services
+      const serviceRes = await fetch(API_SERVICE_URL, { headers: { Authorization: `Bearer ${token}` } });
+      const serviceData = await serviceRes.json();
+      if (serviceData.status === 'SUCCESS') setServiceList(serviceData.data);
+    } catch (error) {
+      toast.error("Lỗi khi tải dữ liệu cho bộ lọc.");
+    }
+  };
+
+  useEffect(() => {
+    fetchFilterData();
+  }, []);
+
   const fetchAppointments = async (silent = false) => {
     const token = Cookies.get('staff_token');
     const role = Cookies.get('staff_role');
@@ -189,7 +221,7 @@ const AppointmentManagement = () => {
               image: item.customerImageUrl || item.customerImage || '',
               email: item.customerEmail || item.email || item.userEmail || ''
             },
-            user: { name: item.userName, image: item.userImageUrl || '' },
+            user: { id: item.userId, name: item.userName, image: item.userImageUrl || '' },
             created_at: item.appointmentDate,
           }));
         } else {
@@ -252,10 +284,16 @@ const AppointmentManagement = () => {
   useEffect(() => {
     let results = [...appointments];
 
-    // Apply status filter
     if (statusFilter !== 'all') {
       results = results.filter(appointment => appointment.status === statusFilter);
-      console.log('Dữ liệu từ API:', appointments);
+    }
+
+    if (serviceFilter !== 'all') {
+        results = results.filter(appointment => appointment.service?.id === serviceFilter);
+    }
+
+    if (staffFilter !== 'all') {
+        results = results.filter(appointment => appointment.user?.id === staffFilter);
     }
 
     // Apply date range filter
@@ -288,7 +326,7 @@ const AppointmentManagement = () => {
 
     setFilteredAppointments(results);
     setPage(0);
-  }, [searchQuery, statusFilter, dateFilter, appointments]);
+  }, [searchQuery, statusFilter, dateFilter, appointments, serviceFilter, staffFilter]);
 
   // Handlers
   const handleChangePage = (event, newPage) => {
@@ -395,6 +433,15 @@ const AppointmentManagement = () => {
       });
   };
 
+  const handleClearFilters = () => {
+    setStatusFilter('all');
+    setServiceFilter('all');
+    setStaffFilter('all');
+    setDateFilter({ startDate: '', endDate: '' });
+    setSearchQuery('');
+    toast.info("Đã xóa tất cả bộ lọc.");
+  };
+
   // Helper functions
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
@@ -458,78 +505,6 @@ const AppointmentManagement = () => {
         };
     }
   };
-
-  // // Mock data generator function
-  // function generateMockAppointments(count) {
-  //   const statuses = ['pending', 'confirmed', 'completed', 'cancelled'];
-  //   const serviceNames = ['Haircut', 'Massage', 'Facial', 'Manicure', 'Pedicure', 'Hair Coloring', 'Spa Treatment'];
-  //   const branchNames = ['Main Branch', 'Downtown', 'Eastside', 'Westside'];
-  //   const slots = ['Morning', 'Afternoon', 'Evening'];
-  //   const customers = [
-  //     { id: 1, name: 'John Smith', phone: '555-123-4567', email: 'john@example.com', image: null },
-  //     { id: 2, name: 'Jane Doe', phone: '555-234-5678', email: 'jane@example.com', image: 'https://randomuser.me/api/portraits/women/43.jpg' },
-  //     { id: 3, name: 'Robert Johnson', phone: '555-345-6789', email: 'robert@example.com', image: 'https://randomuser.me/api/portraits/men/22.jpg' },
-  //     { id: 4, name: 'Emily Davis', phone: '555-456-7890', email: 'emily@example.com', image: 'https://randomuser.me/api/portraits/women/57.jpg' },
-  //     { id: 5, name: 'Michael Wilson', phone: '555-567-8901', email: 'michael@example.com', image: null }
-  //   ];
-
-  //   const staffMembers = [
-  //     { id: 1, name: 'Dr. Sarah Parker', image: 'https://randomuser.me/api/portraits/women/22.jpg' },
-  //     { id: 2, name: 'Thomas Lee', image: 'https://randomuser.me/api/portraits/men/33.jpg' },
-  //     { id: 3, name: 'Amanda Rodriguez', image: null }
-  //   ];
-
-  //   // Generate appointments
-  //   const appointments = [];
-  //   const now = new Date();
-
-  //   for (let i = 1; i <= count; i++) {
-  //     const randomDays = Math.floor(Math.random() * 30) - 15; // -15 to +14 days from now
-  //     const appointmentDate = new Date(now);
-  //     appointmentDate.setDate(now.getDate() + randomDays);
-  //     appointmentDate.setHours(8 + Math.floor(Math.random() * 8), Math.floor(Math.random() * 4) * 15, 0); // Between 8am and 4pm
-
-  //     const duration = Math.floor(Math.random() * 4 + 1) * 30; // 30, 60, 90, or 120 minutes
-  //     const endTime = new Date(appointmentDate);
-  //     endTime.setMinutes(appointmentDate.getMinutes() + duration);
-
-  //     const randomCustomer = customers[Math.floor(Math.random() * customers.length)];
-  //     const randomStaff = staffMembers[Math.floor(Math.random() * staffMembers.length)];
-  //     const serviceName = serviceNames[Math.floor(Math.random() * serviceNames.length)];
-  //     const price = Math.floor(Math.random() * 180) + 20; // $20 to $200
-
-  //     const appointment = {
-  //       appointment_id: i,
-  //       service_id: Math.floor(Math.random() * 10) + 1,
-  //       service: {
-  //         name: serviceName,
-  //         price: price,
-  //         duration: duration
-  //       },
-  //       user_id: randomStaff.id,
-  //       user: randomStaff,
-  //       customer_id: randomCustomer.id,
-  //       customer: randomCustomer,
-  //       appointment_date: appointmentDate.toISOString(),
-  //       end_time: endTime.toISOString(),
-  //       status: statuses[Math.floor(Math.random() * statuses.length)],
-  //       slot: slots[Math.floor(Math.random() * slots.length)],
-  //       notes: Math.random() > 0.7 ? "Special requests: " + serviceName + " with extra care" : "",
-  //       phone_number: randomCustomer.phone,
-  //       full_name: randomCustomer.name,
-  //       branch_id: Math.floor(Math.random() * 4) + 1,
-  //       branch: {
-  //         name: branchNames[Math.floor(Math.random() * branchNames.length)]
-  //       },
-  //       price: price,
-  //       created_at: new Date(appointmentDate.getTime() - Math.random() * 86400000 * 7).toISOString(), // Up to 7 days before appointment
-  //       is_active: true
-  //     };
-
-  //     appointments.push(appointment);
-  //   }
-
-
 
   // Get current page appointments
   const currentAppointments = filteredAppointments.slice(
@@ -599,6 +574,26 @@ const AppointmentManagement = () => {
             </Select>
           </FormControl>
 
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Dịch vụ</InputLabel>
+            <Select value={serviceFilter} label="Dịch vụ" onChange={(e) => setServiceFilter(e.target.value)}>
+              <MenuItem value="all">Tất cả dịch vụ</MenuItem>
+              {serviceList.map(service => (
+                <MenuItem key={service.id} value={service.id}>{service.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Nhân viên</InputLabel>
+            <Select value={staffFilter} label="Nhân viên" onChange={(e) => setStaffFilter(e.target.value)}>
+              <MenuItem value="all">Tất cả nhân viên</MenuItem>
+              {staffList.map(staff => (
+                <MenuItem key={staff.id} value={staff.id}>{staff.fullName}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <TextField
@@ -630,6 +625,12 @@ const AppointmentManagement = () => {
               </IconButton>
             )}
           </Box>
+
+          <Tooltip title="Xóa tất cả bộ lọc">
+            <IconButton onClick={handleClearFilters}>
+              <ClearOutlined />
+            </IconButton>
+          </Tooltip>
         </Grid>
 
         {/* Appointments Table */}

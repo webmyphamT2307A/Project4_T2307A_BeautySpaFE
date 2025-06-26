@@ -47,7 +47,7 @@ const MainRoutes = {
           path: 'spa',
           children: [
             { path: 'service', element: <ServicePage /> },
-            { path: 'appointment', element: <AppointmentPage /> },
+            { path: 'appointments', element: <AppointmentPage /> },
             { path: 'service-history', element: <ServiceHistoryPage /> }
           ]
         },

@@ -43,7 +43,7 @@ const root = createRoot(container);
 // ==============================|| MAIN - REACT DOM RENDER ||============================== //
 
 root.render(
-  <BrowserRouter basename="/staff">
+  <BrowserRouter basename={import.meta.env.VITE_APP_BASE_NAME}>
     <AuthProvider>
       <App />
     </AuthProvider>
