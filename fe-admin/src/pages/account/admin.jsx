@@ -54,21 +54,20 @@ const AdminAccount = () => {
   });
 
   const fetchUsers = () => {
-    setLoading(true);
-    fetch(`${API_URL}/find-all`)
-      .then(res => res.json())
-      .then(data => {
-        const usersData = data.data || [];
-        const sortedUsers = usersData.sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
-        setUsers(sortedUsers);
-        setFilteredUsers(sortedUsers);
-      })
-      .catch(err => {
-        console.error("Failed to fetch users:", err);
-        toast.error("Failed to load user data.");
-      })
-      .finally(() => setLoading(false));
-  };
+        setLoading(true);
+        fetch(`${API_URL}/find-all`)
+          .then(res => res.json())
+          .then(data => {
+            const usersData = data.data || [];
+            const sortedUsers = usersData.sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
+            setUsers(sortedUsers);
+          })
+          .catch(err => {
+            console.error("Failed to fetch users:", err);
+            toast.error("Failed to load user data.");
+          })
+          .finally(() => setLoading(false));
+      };
 
 
   useEffect(() => {
@@ -170,13 +169,15 @@ const AdminAccount = () => {
 
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
+    
+    // Luôn dùng functional update `prev => ({ ...prev, ... })` để đảm bảo state không bao giờ cũ
     if (name === 'isActive') {
-      setFormData({ ...formData, isActive: checked ? 1 : 0 });
+      setFormData(prev => ({ ...prev, isActive: checked ? 1 : 0 }));
     } else if (name === 'role') {
       const roleObj = roles.find(r => r.id === Number(value));
-      setFormData({ ...formData, role: roleObj });
+      setFormData(prev => ({ ...prev, role: roleObj }));
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
@@ -225,7 +226,7 @@ const AdminAccount = () => {
     const isUpdate = !!currentUser;
     const url = isUpdate ? `${API_URL}/update/${currentUser.id}` : `${API_URL}/create`;
     const method = isUpdate ? 'PUT' : 'POST';
-
+  
     const payload = {
       fullName: formData.fullName,
       email: formData.email,
@@ -234,15 +235,20 @@ const AdminAccount = () => {
       roleId: formData.role?.id,
       imageUrl: formData.imageUrl,
       skills: formData.skills,
+      isActive: formData.isActive
     };
-
+  
     if (isUpdate) {
-      payload.isActive = formData.isActive;
       if (formData.password) payload.password = formData.password;
     } else {
       payload.password = formData.password;
     }
-
+    
+    // =============================================================
+    // THÊM DÒNG NÀY VÀO ĐỂ KIỂM TRA DỮ LIỆU TRƯỚC KHI GỬI
+    console.log('DỮ LIỆU GỬI ĐI KHI NHẤN LƯU:', payload);
+    // =============================================================
+  
     try {
       const res = await fetch(url, {
         method,

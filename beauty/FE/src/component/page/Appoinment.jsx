@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { vi } from 'date-fns/locale/vi';
+import { format } from 'date-fns';
+
+registerLocale('vi', vi);
 
 const validateVietnamesePhone = (phone) => {
     const cleanPhone = phone.replace(/[\s-().]/g, '');
@@ -370,6 +376,13 @@ const Appointment = () => {
         setFormData(newFormData);
     };
 
+    const handleDateChange = (date) => {
+        // Backend expects 'yyyy-MM-dd'
+        const formattedDate = date ? format(date, 'yyyy-MM-dd') : '';
+        setFormData(prev => ({ ...prev, appointmentDate: formattedDate }));
+        validateField('appointmentDate', formattedDate);
+    };
+
     const handleStaffSelect = (staffId, event) => {
         event?.preventDefault();
         const isBusy = staffAvailabilities[staffId]?.isAvailable === false;
@@ -424,12 +437,6 @@ const Appointment = () => {
                 return;
             }
 
-            let formattedDate = formData.appointmentDate;
-            if (formattedDate && formattedDate.includes('-')) {
-                const [year, month, day] = formattedDate.split('-');
-                formattedDate = `${day}/${month}/${year}`;
-            }
-
             let customerIdToSubmit = formData.customerId;
 
             if (!customerIdToSubmit && (formData.fullName && formData.phoneNumber)) {
@@ -450,7 +457,6 @@ const Appointment = () => {
                 ...formData,
                 customerId: customerIdToSubmit,
                 status: formData.status || 'pending',
-                appointmentDate: formattedDate,
                 branchId: formData.branchId || 1,
                 timeSlotId: formData.timeSlotId,
                 price: formData.price,
@@ -792,14 +798,17 @@ const Appointment = () => {
                     <label className="form-label text-white fw-bold">
                         <i className="fas fa-calendar me-2"></i>Chọn Ngày *
                     </label>
-                    <input
-                        type="date"
-                        name="appointmentDate"
-                        value={formData.appointmentDate}
-                        onChange={handleInputChange}
-                        className="form-control py-2 border-white bg-transparent text-white custom-date-picker"
-                        min={new Date().toISOString().split("T")[0]}
-                        style={{ height: '45px' }}
+                    <DatePicker
+                        locale="vi"
+                        dateFormat="dd/MM/yyyy"
+                        selected={formData.appointmentDate ? new Date(formData.appointmentDate.replace(/-/g, "/")) : null}
+                        onChange={handleDateChange}
+                        minDate={new Date()}
+                        className="form-control py-2 border-white bg-transparent text-white"
+                        placeholderText="dd/MM/yyyy"
+                        wrapperClassName="w-100"
+                        calendarClassName="custom-calendar" // for custom styling
+                        popperPlacement="bottom-end"
                     />
                 </div>
 
@@ -817,10 +826,15 @@ const Appointment = () => {
                     >
                         <option value="" style={{ color: 'black' }}>Chọn khung giờ</option>
                         {timeSlots.map(slot => {
-                            const slotDateTimeStr = `${formData.appointmentDate}T${slot.endTime}:00`;
-                            const slotEnd = new Date(slotDateTimeStr);
                             const now = new Date();
-                            const isPast = formData.appointmentDate && slot.endTime ? slotEnd < now : false;
+                            const todayStr = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+                            const isToday = formData.appointmentDate === todayStr;
+
+                            let isPast = false;
+                            if (isToday && slot.startTime) {
+                                const slotStartDateTime = new Date(`${formData.appointmentDate}T${slot.startTime}`);
+                                isPast = slotStartDateTime < now;
+                            }
 
                             return (
                                 <option
@@ -2230,6 +2244,81 @@ const Appointment = () => {
                 border-color: #6c757d;
                 color: white;
               }
+
+              /* Custom DatePicker Styles */
+                .react-datepicker-wrapper {
+                width: 100%;
+                }
+                .react-datepicker-wrapper .react-datepicker__input-container input {
+                height: 45px;
+                color: white !important; /* Ensure text is white */
+                background-color: transparent !important;
+                }
+                .react-datepicker-wrapper .react-datepicker__input-container input::placeholder {
+                color: #ccc;
+                opacity: 1;
+                }
+
+                .react-datepicker-popper {
+                z-index: 10 !important; /* Ensure calendar appears on top */
+                }
+
+                .custom-calendar {
+                font-family: 'Arial', sans-serif;
+                border-radius: 10px;
+                box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+                border: 1px solid rgba(255,255,255,0.2);
+                background-color: #333;
+                }
+
+                .custom-calendar .react-datepicker__header {
+                background-color: #444;
+                border-bottom: 1px solid #555;
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+                padding: 15px;
+                }
+
+                .custom-calendar .react-datepicker__current-month,
+                .custom-calendar .react-datepicker-time__header,
+                .custom-calendar .react-datepicker__day-name {
+                color: #fff;
+                font-weight: bold;
+                }
+
+                .custom-calendar .react-datepicker__day {
+                color: #ddd;
+                transition: all 0.2s ease;
+                }
+
+                .custom-calendar .react-datepicker__day:hover {
+                background-color: #555;
+                border-radius: 50%;
+                color: #fff;
+                }
+
+                .custom-calendar .react-datepicker__day--selected,
+                .custom-calendar .react-datepicker__day--in-selecting-range,
+                .custom-calendar .react-datepicker__day--in-range {
+                background-color: #FDB5B9;
+                color: #333;
+                border-radius: 50%;
+                font-weight: bold;
+                }
+
+                .custom-calendar .react-datepicker__day--keyboard-selected {
+                background-color: #f89ca0;
+                color: #fff;
+                }
+
+                .custom-calendar .react-datepicker__day--disabled {
+                color: #777;
+                cursor: not-allowed;
+                }
+
+                .custom-calendar .react-datepicker__navigation-icon::before {
+                border-color: #fff;
+                }
 
               /* Mobile responsiveness for cancel modal */
               @media (max-width: 767.98px) {
