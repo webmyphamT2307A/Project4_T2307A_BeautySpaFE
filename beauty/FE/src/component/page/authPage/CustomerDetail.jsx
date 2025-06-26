@@ -4,7 +4,6 @@ import axios from 'axios';
 import Header from "../../shared/header";
 import Footer from "../../shared/footer";
 import sessionManager from '../../../utils/sessionManager';
-import { toast } from 'react-toastify';
 
 const CustomerDetail = () => {
     const [key, setKey] = useState('profile');
@@ -35,10 +34,6 @@ const CustomerDetail = () => {
     const [message, setMessage] = useState({ type: '', content: '' });
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-    // Loading states
-    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
-    const [isChangingPassword, setIsChangingPassword] = useState(false);
-
     useEffect(() => {
         const storedUser = localStorage.getItem('userInfo');
         if (storedUser) {
@@ -51,7 +46,7 @@ const CustomerDetail = () => {
                 }
                 setUser(parsedUser);
                 fetchUserDetails(parsedUser.id, parsedUser.token);
-                fetchServiceHistory(parsedUser.id, parsedUser.token);
+                fetchServiceHistory(parsedUser.id, parsedUser.token); // Sử dụng customerId
             } catch (error) {
                 localStorage.removeItem('userInfo');
                 window.location.href = '/';
@@ -60,6 +55,7 @@ const CustomerDetail = () => {
             window.location.href = '/';
         }
         
+        // Cleanup function to revoke preview URLs
         return () => {
             if (userInfo.imagePreview) {
                 URL.revokeObjectURL(userInfo.imagePreview);
@@ -84,7 +80,7 @@ const CustomerDetail = () => {
                 });
             }
         } catch (error) {
-            toast.error('Không thể tải thông tin người dùng!');
+            setMessage({ type: 'danger', content: 'Không thể tải thông tin người dùng!' });
         } finally {
             setLoading(false);
         }
@@ -97,7 +93,7 @@ const CustomerDetail = () => {
             });
             setServiceHistory(response.data.data || []);
         } catch (error) {
-            // console.error('Error fetching service history:', error);
+            console.error('Error fetching service history:', error);
         }
     };
 
@@ -106,6 +102,7 @@ const CustomerDetail = () => {
         if (name === "imageFile") {
             const file = files[0];
             if (file) {
+                // Create preview URL for immediate display
                 const previewUrl = URL.createObjectURL(file);
                 setUserInfo({ ...userInfo, imageFile: file, imagePreview: previewUrl });
             }
@@ -121,9 +118,7 @@ const CustomerDetail = () => {
 
     const handleProfileSubmit = async (e) => {
         e.preventDefault();
-        setIsUpdatingProfile(true);
-        
-        const loadingToast = toast.loading('Đang cập nhật thông tin...');
+        setMessage({ type: '', content: '' });
 
         try {
             const formData = new FormData();
@@ -137,57 +132,38 @@ const CustomerDetail = () => {
             if (userInfo.imageFile) {
                 formData.append('file', userInfo.imageFile);
             }
-            
             const response = await axios.put(
                 `http://localhost:8080/api/v1/customer/update-info/${user.id}`,
                 formData,
                 { headers: { 'Authorization': `Bearer ${user.token}` } }
             );
-            
             if (response.data && response.data.status === 'SUCCESS') {
                 const updatedUserInfo = { ...user, ...userInfo, imageUrl: response.data.data.imageUrl || userInfo.imageUrl };
                 localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
                 
+                // Dispatch custom event to notify Header component
                 window.dispatchEvent(new CustomEvent('userInfoUpdated'));
                 
-                toast.update(loadingToast, {
-                    render: 'Cập nhật thông tin thành công! 🎉',
-                    type: "success",
-                    isLoading: false,
-                    autoClose: 3000,
-                });
+                setMessage({ type: 'success', content: 'Cập nhật thông tin thành công!' });
                 
+                // Update local state to show new image immediately
                 setUserInfo(prev => ({ ...prev, imageUrl: response.data.data.imageUrl || prev.imageUrl }));
             } else {
-                toast.update(loadingToast, {
-                    render: 'Có lỗi xảy ra khi cập nhật!',
-                    type: "error",
-                    isLoading: false,
-                    autoClose: 3000,
-                });
+                setMessage({ type: 'danger', content: 'Có lỗi xảy ra!' });
             }
         } catch (error) {
-            toast.update(loadingToast, {
-                render: 'Có lỗi xảy ra khi cập nhật thông tin!',
-                type: "error",
-                isLoading: false,
-                autoClose: 3000,
-            });
-        } finally {
-            setIsUpdatingProfile(false);
+            setMessage({ type: 'danger', content: 'Có lỗi xảy ra khi cập nhật thông tin!' });
         }
     };
 
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
-        
+        setMessage({ type: '', content: '' });
+
         if (passwordInfo.newPassword !== passwordInfo.confirmPassword) {
-            toast.error('Mật khẩu mới và xác nhận mật khẩu không khớp!');
+            setMessage({ type: 'danger', content: 'Mật khẩu mới và xác nhận mật khẩu không khớp!' });
             return;
         }
-
-        setIsChangingPassword(true);
-        const loadingToast = toast.loading('Đang đổi mật khẩu...');
 
         try {
             const response = await axios.put(
@@ -195,210 +171,133 @@ const CustomerDetail = () => {
                 passwordInfo,
                 { headers: { 'Authorization': `Bearer ${user.token}` } }
             );
-            
             if (response.data && response.data.status === 'SUCCESS') {
-                toast.update(loadingToast, {
-                    render: 'Đổi mật khẩu thành công! 🔒',
-                    type: "success",
-                    isLoading: false,
-                    autoClose: 3000,
-                });
+                setMessage({ type: 'success', content: 'Đổi mật khẩu thành công!' });
                 setPasswordInfo({ oldPassword: '', newPassword: '', confirmPassword: '' });
             } else {
-                toast.update(loadingToast, {
-                    render: 'Đổi mật khẩu thất bại!',
-                    type: "error",
-                    isLoading: false,
-                    autoClose: 3000,
-                });
+                setMessage({ type: 'danger', content: 'Đổi mật khẩu thất bại!' });
             }
         } catch (error) {
-            toast.update(loadingToast, {
-                render: 'Có lỗi xảy ra khi đổi mật khẩu!',
-                type: "error",
-                isLoading: false,
-                autoClose: 3000,
-            });
-        } finally {
-            setIsChangingPassword(false);
+            setMessage({ type: 'danger', content: 'Có lỗi xảy ra khi đổi mật khẩu!' });
         }
     };
 
     const handleLogout = () => {
-        if (isLoggingOut) return;
+        if (isLoggingOut) return; // Prevent multiple clicks
         
         setIsLoggingOut(true);
-        toast.info('Đang đăng xuất...');
         
+        // IMMEDIATE logout - no waiting, no async
+        // Clear all user data instantly
         localStorage.removeItem('userInfo');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         
+        // Redirect immediately
+        window.location.href = '/';
+        
+        // Call logout API in background after redirect (fire and forget)
         setTimeout(() => {
-            toast.success('Đã đăng xuất thành công! 👋');
-            window.location.href = '/';
-        }, 1000);
+            if (user.token) {
+                fetch('http://localhost:8080/api/v1/customer/logout', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${user.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                }).catch(error => {
+                    console.error('Background logout API call failed:', error);
+                });
+            }
+        }, 100);
+    };
+
+    const handleViewDetails = (history) => {
+        setSelectedHistory(history);
+    };
+
+    const handleCloseDetails = () => {
+        setSelectedHistory(null);
+    };
+
+    // Pagination calculations for service history
+    const totalHistoryPages = Math.ceil(serviceHistory.length / historyPerPage);
+    const startHistoryIndex = (currentHistoryPage - 1) * historyPerPage;
+    const endHistoryIndex = startHistoryIndex + historyPerPage;
+    const currentHistoryItems = serviceHistory.slice(startHistoryIndex, endHistoryIndex);
+
+    // Handle history page change
+    const handleHistoryPageChange = (pageNumber) => {
+        setCurrentHistoryPage(pageNumber);
     };
 
     if (loading) {
-        return (
-            <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-                <div className="text-center">
-                    <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }}>
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <h5 className="text-muted">Đang tải thông tin...</h5>
-                </div>
-            </div>
-        );
+        return <div className="text-center p-5">Đang tải...</div>;
     }
 
     return (
         <>
             <Header />
-            {/* Hero Section với gradient đẹp */}
-            <div className="container-fluid py-5" style={{
-                background: 'linear-gradient(135deg, #FDB5B9 0%,rgb(211, 177, 187) 100%)',
-                position: 'relative',
-                overflow: 'hidden'
-            }}>
-                {/* Decorative elements */}
-                <div className="position-absolute top-0 start-0 w-100 h-100" style={{
-                    background: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='7' cy='7' r='7'/%3E%3Ccircle cx='53' cy='53' r='7'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                    opacity: 0.3
-                }}></div>
-                
-                <div className="container text-center py-5 position-relative">
-                    <div className="row justify-content-center">
-                        <div className="col-lg-8">
-                            <h1 className="display-4 mb-4 fw-bold" style={{
-                                color: ' rgba(26, 26, 26)',
-                                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-                            }}>
-                                <i className="fas fa-user-circle me-3"></i>
-                                Thông Tin Tài Khoản
-                            </h1>
-                            <p className="text-white-50 fs-5 mb-4">
-                                Quản lý thông tin cá nhân và bảo mật tài khoản của bạn
-                            </p>
-                            <nav aria-label="breadcrumb">
-                                <ol className="breadcrumb justify-content-center mb-0">
-                                    <li className="breadcrumb-item">
-                                        <a href="/" className="text-white-50 text-decoration-none">
-                                            <i className="fas fa-home me-1"></i>Trang chủ
-                                        </a>
-                                    </li>
-                                    <li className="breadcrumb-item active text-white">Thông tin cá nhân</li>
-                                </ol>
-                            </nav>
-                        </div>
-                    </div>
+            <div className="container-fluid bg-breadcrumb py-5">
+                <div className="container text-center py-5">
+                    <h3 className="text-white display-3 mb-4">Thông tin tài khoản</h3>
+                    <ol className="breadcrumb justify-content-center mb-0">
+                        <li className="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                        <li className="breadcrumb-item active text-white">Thông tin cá nhân</li>
+                    </ol>
                 </div>
             </div>
 
             <div className="container py-5">
-                <div className="row g-4">
-                    {/* Sidebar với thiết kế card đẹp */}
-                    <div className="col-lg-4 col-xl-3">
-                        <div className="card border-0 shadow-lg rounded-4 overflow-hidden" style={{
-                            background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,249,250,0.95) 100%)',
-                            backdropFilter: 'blur(20px)'
-                        }}>
-                            {/* Profile Header */}
-                            <div className="card-header border-0 text-center py-4" style={{
-                                background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)'
-                            }}>
-                                <div className="position-relative d-inline-block mb-3">
-                                    <img
-                                        src={
-                                            userInfo.imagePreview || (
-                                                userInfo.imageUrl
-                                                    ? userInfo.imageUrl.startsWith('http')
-                                                        ? userInfo.imageUrl
-                                                        : `http://localhost:8080/${userInfo.imageUrl.replace(/^\/?/, '')}`
-                                                    : "/assets/img/default-avatar.jpg"
-                                            )
-                                        }
-                                        alt="Ảnh đại diện"
-                                        className="img-fluid rounded-circle border border-4 border-white shadow"
-                                        style={{ width: "120px", height: "120px", objectFit: "cover" }}
-                                    />
-                                    <div className="position-absolute bottom-0 end-0 bg-success rounded-circle border border-3 border-white" style={{
-                                        width: '24px',
-                                        height: '24px'
-                                    }}></div>
-                                </div>
-                                <h5 className="text-white fw-bold mb-1" style={{
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-                                }}>
-                                    {userInfo.fullName || userInfo.email}
-                                </h5>
-                                <p className="text-white-50 mb-0 small">
-                                    <i className="fas fa-crown me-1"></i>Khách hàng
-                                </p>
+                <div className="row">
+                    <div className="col-lg-3 mb-5">
+                        <div className="bg-light p-4 rounded">
+                            <div className="text-center mb-4">
+                                <img
+                                    src={
+                                        userInfo.imagePreview || (
+                                            userInfo.imageUrl
+                                                ? userInfo.imageUrl.startsWith('http')
+                                                    ? userInfo.imageUrl
+                                                    : `http://localhost:8080/${userInfo.imageUrl.replace(/^\/?/, '')}`
+                                                : "/assets/img/default-avatar.jpg"
+                                        )
+                                    }
+                                    alt="Ảnh đại diện"
+                                    className="img-fluid rounded-circle"
+                                    style={{ width: "150px", height: "150px", objectFit: "cover" }}
+                                />
+                                <h4 className="mt-3">{userInfo.fullName || userInfo.email}</h4>
                             </div>
-
-                            {/* Navigation Menu */}
-                            <div className="card-body p-0">
-                                <div className="list-group list-group-flush">
-                                    <button
-                                        className={`list-group-item list-group-item-action border-0 py-3 px-4 ${key === 'profile' ? 'active' : ''}`}
-                                        onClick={() => setKey('profile')}
-                                        style={{
-                                            background: key === 'profile' ? 'linear-gradient(135deg, rgba(253, 181, 185, 0.2) 0%, rgba(247, 168, 184, 0.1) 100%)' : 'transparent',
-                                            borderLeft: key === 'profile' ? '4px solid #FDB5B9' : '4px solid transparent',
-                                            transition: 'all 0.3s ease'
-                                        }}
-                                    >
-                                        <i className="fas fa-user me-3 text-" style={{ color: '#FDB5B9', width: '20px' }}></i>
-                                        <span className="fw-medium text-dark">Thông tin cá nhân</span>
-                                    </button>
-                                    <button
-                                        className={`list-group-item list-group-item-action border-0 py-3 px-4 ${key === 'password' ? 'active' : ''}`}
-                                        onClick={() => setKey('password')}
-                                        style={{
-                                            background: key === 'password' ? 'linear-gradient(135deg, rgba(253, 181, 185, 0.2) 0%, rgba(247, 168, 184, 0.1) 100%)' : 'transparent',
-                                            borderLeft: key === 'password' ? '4px solid #FDB5B9' : '4px solid transparent',
-                                            transition: 'all 0.3s ease'
-                                        }}
-                                    >
-                                        <i className="fas fa-lock me-3" style={{ color: '#FDB5B9', width: '20px' }}></i>
-                                        <span className="fw-medium text-dark">Đổi mật khẩu</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Logout Button */}
-                            <div className="card-footer border-0 p-4" style={{
-                                background: 'linear-gradient(135deg, rgba(248,249,250,0.8) 0%, rgba(233,236,239,0.6) 100%)'
-                            }}>
-                                <button
-                                    className={`btn w-100 py-3 rounded-3 border-0 fw-medium ${isLoggingOut ? 'disabled' : ''}`}
-                                    onClick={handleLogout}
-                                    disabled={isLoggingOut}
-                                    style={{
-                                        background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
-                                        color: 'white',
-                                        transition: 'all 0.3s ease',
+                            <div className="list-group">
+                                <a
+                                    href="#"
+                                    className={`list-group-item list-group-item-action ${key === 'profile' ? 'active' : ''}`}
+                                    onClick={(e) => { e.preventDefault(); setKey('profile') }}
+                                >
+                                    Thông tin cá nhân
+                                </a>
+                                <a
+                                    href="#"
+                                    className={`list-group-item list-group-item-action ${key === 'password' ? 'active' : ''}`}
+                                    onClick={(e) => { e.preventDefault(); setKey('password') }}
+                                >
+                                    Đổi mật khẩu
+                                </a>
+                               
+                                <a
+                                    href="#"
+                                    className={`list-group-item list-group-item-action ${isLoggingOut ? 'disabled' : ''}`}
+                                    onClick={(e) => { e.preventDefault(); handleLogout() }}
+                                    style={{ 
                                         opacity: isLoggingOut ? 0.6 : 1,
-                                        transform: isLoggingOut ? 'scale(0.98)' : 'scale(1)'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (!isLoggingOut) {
-                                            e.target.style.transform = 'translateY(-2px)';
-                                            e.target.style.boxShadow = '0 8px 25px rgba(220, 53, 69, 0.3)';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.target.style.transform = 'translateY(0)';
-                                        e.target.style.boxShadow = 'none';
+                                        cursor: isLoggingOut ? 'not-allowed' : 'pointer'
                                     }}
                                 >
                                     {isLoggingOut ? (
                                         <>
-                                            <div className="spinner-border spinner-border-sm me-2" role="status">
-                                                <span className="visually-hidden">Loading...</span>
-                                            </div>
+                                            <i className="fas fa-spinner fa-spin me-2"></i>
                                             Đang đăng xuất...
                                         </>
                                     ) : (
@@ -407,367 +306,120 @@ const CustomerDetail = () => {
                                             Đăng xuất
                                         </>
                                     )}
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
+                    <div className="col-lg-9">
+                        <div className="bg-light p-4 rounded">
+                            {message.content && (
+                                <div className={`alert alert-${message.type}`} role="alert">
+                                    {message.content}
+                                </div>
+                            )}
 
-                    {/* Main Content */}
-                    <div className="col-lg-8 col-xl-9">
-                        <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
                             <Tab.Container activeKey={key} onSelect={(k) => setKey(k)}>
                                 <Tab.Content>
-                                    {/* Profile Tab */}
                                     <Tab.Pane eventKey="profile">
-                                        <div className="card-header border-0 py-4" style={{
-                                            background: 'linear-gradient(135deg, rgba(253, 181, 185, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)'
-                                        }}>
-                                            <h4 className="mb-0 fw-bold d-flex align-items-center">
-                                                <i className="fas fa-user-edit me-3" style={{ color: '#FDB5B9' }}></i>
-                                                Thông tin cá nhân
-                                            </h4>
-                                            <p className="text-muted mb-0 mt-2">Cập nhật thông tin cá nhân của bạn</p>
-                                        </div>
-                                        <div className="card-body p-5">
-                                            <form onSubmit={handleProfileSubmit}>
-                                                <div className="row g-4">
-                                                    <div className="col-md-6">
-                                                        <label className="form-label fw-bold mb-3">
-                                                            <i className="fas fa-signature me-2" style={{ color: '#FDB5B9' }}></i>
-                                                            Họ và tên
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            className="form-control form-control-lg rounded-3 border-2"
-                                                            name="fullName"
-                                                            value={userInfo.fullName}
-                                                            onChange={handleProfileChange}
-                                                            placeholder="Nhập họ và tên"
-                                                            style={{
-                                                                borderColor: '#e9ecef',
-                                                                fontSize: '1rem',
-                                                                transition: 'all 0.3s ease'
-                                                            }}
-                                                            onFocus={(e) => {
-                                                                e.target.style.borderColor = '#FDB5B9';
-                                                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
-                                                            }}
-                                                            onBlur={(e) => {
-                                                                e.target.style.borderColor = '#e9ecef';
-                                                                e.target.style.boxShadow = 'none';
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="col-md-6">
-                                                        <label className="form-label fw-bold mb-3">
-                                                            <i className="fas fa-envelope me-2" style={{ color: '#FDB5B9' }}></i>
-                                                            Email
-                                                        </label>
-                                                        <input
-                                                            type="email"
-                                                            className="form-control form-control-lg rounded-3 border-2"
-                                                            name="email"
-                                                            value={userInfo.email}
-                                                            onChange={handleProfileChange}
-                                                            placeholder="Nhập email"
-                                                            style={{
-                                                                borderColor: '#e9ecef',
-                                                                fontSize: '1rem',
-                                                                transition: 'all 0.3s ease'
-                                                            }}
-                                                            onFocus={(e) => {
-                                                                e.target.style.borderColor = '#FDB5B9';
-                                                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
-                                                            }}
-                                                            onBlur={(e) => {
-                                                                e.target.style.borderColor = '#e9ecef';
-                                                                e.target.style.boxShadow = 'none';
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="col-md-6">
-                                                        <label className="form-label fw-bold mb-3">
-                                                            <i className="fas fa-phone me-2" style={{ color: '#FDB5B9' }}></i>
-                                                            Số điện thoại
-                                                        </label>
-                                                        <input
-                                                            type="tel"
-                                                            className="form-control form-control-lg rounded-3 border-2"
-                                                            name="phone"
-                                                            value={userInfo.phone}
-                                                            onChange={handleProfileChange}
-                                                            placeholder="Nhập số điện thoại"
-                                                            style={{
-                                                                borderColor: '#e9ecef',
-                                                                fontSize: '1rem',
-                                                                transition: 'all 0.3s ease'
-                                                            }}
-                                                            onFocus={(e) => {
-                                                                e.target.style.borderColor = '#FDB5B9';
-                                                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
-                                                            }}
-                                                            onBlur={(e) => {
-                                                                e.target.style.borderColor = '#e9ecef';
-                                                                e.target.style.boxShadow = 'none';
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="col-md-6">
-                                                        <label className="form-label fw-bold mb-3">
-                                                            <i className="fas fa-map-marker-alt me-2" style={{ color: '#FDB5B9' }}></i>
-                                                            Địa chỉ
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            className="form-control form-control-lg rounded-3 border-2"
-                                                            name="address"
-                                                            value={userInfo.address}
-                                                            onChange={handleProfileChange}
-                                                            placeholder="Nhập địa chỉ"
-                                                            style={{
-                                                                borderColor: '#e9ecef',
-                                                                fontSize: '1rem',
-                                                                transition: 'all 0.3s ease'
-                                                            }}
-                                                            onFocus={(e) => {
-                                                                e.target.style.borderColor = '#FDB5B9';
-                                                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
-                                                            }}
-                                                            onBlur={(e) => {
-                                                                e.target.style.borderColor = '#e9ecef';
-                                                                e.target.style.boxShadow = 'none';
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="col-12">
-                                                        <label className="form-label fw-bold mb-3">
-                                                            <i className="fas fa-camera me-2" style={{ color: '#FDB5B9' }}></i>
-                                                            Ảnh đại diện
-                                                        </label>
-                                                        <input
-                                                            type="file"
-                                                            className="form-control form-control-lg rounded-3 border-2"
-                                                            name="imageFile"
-                                                            onChange={handleProfileChange}
-                                                            accept="image/*"
-                                                            style={{
-                                                                borderColor: '#e9ecef',
-                                                                fontSize: '1rem',
-                                                                transition: 'all 0.3s ease'
-                                                            }}
-                                                            onFocus={(e) => {
-                                                                e.target.style.borderColor = '#FDB5B9';
-                                                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
-                                                            }}
-                                                            onBlur={(e) => {
-                                                                e.target.style.borderColor = '#e9ecef';
-                                                                e.target.style.boxShadow = 'none';
-                                                            }}
-                                                        />
-                                                        <small className="text-muted d-block mt-2">
-                                                            <i className="fas fa-info-circle me-1"></i>
-                                                            Chọn file ảnh (JPG, PNG, GIF) tối đa 5MB
-                                                        </small>
-                                                    </div>
+                                        <h4 className="mb-4">Thông tin cá nhân</h4>
+                                        <form onSubmit={handleProfileSubmit}>
+                                            <div className="row mb-3">
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Họ tên</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        name="fullName"
+                                                        value={userInfo.fullName}
+                                                        onChange={handleProfileChange}
+                                                    />
                                                 </div>
-                                                <div className="mt-5 d-flex justify-content-end">
-                                                    <button 
-                                                        type="submit" 
-                                                        className="btn btn-lg px-5 py-3 rounded-3 border-0 fw-bold"
-                                                        disabled={isUpdatingProfile}
-                                                        style={{
-                                                            background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
-                                                            color: 'white',
-                                                            fontSize: '1.1rem',
-                                                            transition: 'all 0.3s ease',
-                                                            opacity: isUpdatingProfile ? 0.7 : 1
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            if (!isUpdatingProfile) {
-                                                                e.target.style.transform = 'translateY(-2px)';
-                                                                e.target.style.boxShadow = '0 8px 25px rgba(253, 181, 185, 0.4)';
-                                                            }
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.target.style.transform = 'translateY(0)';
-                                                            e.target.style.boxShadow = 'none';
-                                                        }}
-                                                    >
-                                                        {isUpdatingProfile ? (
-                                                            <>
-                                                                <div className="spinner-border spinner-border-sm me-2" role="status">
-                                                                    <span className="visually-hidden">Loading...</span>
-                                                                </div>
-                                                                Đang cập nhật...
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <i className="fas fa-save me-2"></i>
-                                                                Cập nhật thông tin
-                                                            </>
-                                                        )}
-                                                    </button>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Email</label>
+                                                    <input
+                                                        type="email"
+                                                        className="form-control"
+                                                        name="email"
+                                                        value={userInfo.email}
+                                                        onChange={handleProfileChange}
+                                                    />
                                                 </div>
-                                            </form>
-                                        </div>
+                                            </div>
+                                            <div className="row mb-3">
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Số điện thoại</label>
+                                                    <input
+                                                        type="tel"
+                                                        className="form-control"
+                                                        name="phone"
+                                                        value={userInfo.phone}
+                                                        onChange={handleProfileChange}
+                                                    />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Địa chỉ</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        name="address"
+                                                        value={userInfo.address}
+                                                        onChange={handleProfileChange}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="mb-3">
+                                                <label className="form-label">Link ảnh đại diện</label>
+                                                <input
+                                                    type="file"
+                                                    className="form-control"
+                                                    name="imageFile"
+                                                    onChange={handleProfileChange}
+                                                    accept="image/*"
+                                                />
+                                            </div>
+                                            <button type="submit" className="btn btn-primary">Cập nhật thông tin</button>
+                                        </form>
                                     </Tab.Pane>
-
-                                    {/* Password Tab */}
                                     <Tab.Pane eventKey="password">
-                                        <div className="card-header border-0 py-4" style={{
-                                            background: 'linear-gradient(135deg, rgba(253, 181, 185, 0.1) 0%, rgba(247, 168, 184, 0.05) 100%)'
-                                        }}>
-                                            <h4 className="mb-0 fw-bold d-flex align-items-center">
-                                                <i className="fas fa-key me-3" style={{ color: '#FDB5B9' }}></i>
-                                                Đổi mật khẩu
-                                            </h4>
-                                            <p className="text-muted mb-0 mt-2">Cập nhật mật khẩu để bảo mật tài khoản</p>
-                                        </div>
-                                        <div className="card-body p-5">
-                                            <form onSubmit={handlePasswordSubmit}>
-                                                <div className="row g-4">
-                                                    <div className="col-12">
-                                                        <label className="form-label fw-bold mb-3">
-                                                            <i className="fas fa-lock me-2" style={{ color: '#FDB5B9' }}></i>
-                                                            Mật khẩu hiện tại
-                                                        </label>
-                                                        <input
-                                                            type="password"
-                                                            className="form-control form-control-lg rounded-3 border-2"
-                                                            name="oldPassword"
-                                                            value={passwordInfo.oldPassword}
-                                                            onChange={handlePasswordChange}
-                                                            placeholder="Nhập mật khẩu hiện tại"
-                                                            required
-                                                            style={{
-                                                                borderColor: '#e9ecef',
-                                                                fontSize: '1rem',
-                                                                transition: 'all 0.3s ease'
-                                                            }}
-                                                            onFocus={(e) => {
-                                                                e.target.style.borderColor = '#FDB5B9';
-                                                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
-                                                            }}
-                                                            onBlur={(e) => {
-                                                                e.target.style.borderColor = '#e9ecef';
-                                                                e.target.style.boxShadow = 'none';
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="col-md-6">
-                                                        <label className="form-label fw-bold mb-3">
-                                                            <i className="fas fa-key me-2" style={{ color: '#FDB5B9' }}></i>
-                                                            Mật khẩu mới
-                                                        </label>
-                                                        <input
-                                                            type="password"
-                                                            className="form-control form-control-lg rounded-3 border-2"
-                                                            name="newPassword"
-                                                            value={passwordInfo.newPassword}
-                                                            onChange={handlePasswordChange}
-                                                            placeholder="Nhập mật khẩu mới"
-                                                            required
-                                                            style={{
-                                                                borderColor: '#e9ecef',
-                                                                fontSize: '1rem',
-                                                                transition: 'all 0.3s ease'
-                                                            }}
-                                                            onFocus={(e) => {
-                                                                e.target.style.borderColor = '#FDB5B9';
-                                                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
-                                                            }}
-                                                            onBlur={(e) => {
-                                                                e.target.style.borderColor = '#e9ecef';
-                                                                e.target.style.boxShadow = 'none';
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="col-md-6">
-                                                        <label className="form-label fw-bold mb-3">
-                                                            <i className="fas fa-check-circle me-2" style={{ color: '#FDB5B9' }}></i>
-                                                            Xác nhận mật khẩu mới
-                                                        </label>
-                                                        <input
-                                                            type="password"
-                                                            className="form-control form-control-lg rounded-3 border-2"
-                                                            name="confirmPassword"
-                                                            value={passwordInfo.confirmPassword}
-                                                            onChange={handlePasswordChange}
-                                                            placeholder="Nhập lại mật khẩu mới"
-                                                            required
-                                                            style={{
-                                                                borderColor: '#e9ecef',
-                                                                fontSize: '1rem',
-                                                                transition: 'all 0.3s ease'
-                                                            }}
-                                                            onFocus={(e) => {
-                                                                e.target.style.borderColor = '#FDB5B9';
-                                                                e.target.style.boxShadow = '0 0 0 0.2rem rgba(253, 181, 185, 0.25)';
-                                                            }}
-                                                            onBlur={(e) => {
-                                                                e.target.style.borderColor = '#e9ecef';
-                                                                e.target.style.boxShadow = 'none';
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                
-                                                {/* Password requirements */}
-                                                <div className="alert alert-info bg-transparent border-info mt-4">
-                                                    <div className="d-flex align-items-start">
-                                                        <i className="fas fa-info-circle me-2 mt-1 text-info"></i>
-                                                        <div>
-                                                            <strong>Yêu cầu mật khẩu:</strong>
-                                                            <ul className="mb-0 mt-2" style={{ fontSize: '0.9rem' }}>
-                                                                <li>Ít nhất 8 ký tự</li>
-                                                                <li>Bao gồm chữ hoa và chữ thường</li>
-                                                                <li>Ít nhất 1 số và 1 ký tự đặc biệt</li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="mt-5 d-flex justify-content-end">
-                                                    <button 
-                                                        type="submit" 
-                                                        className="btn btn-lg px-5 py-3 rounded-3 border-0 fw-bold"
-                                                        disabled={isChangingPassword}
-                                                        style={{
-                                                            background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
-                                                            color: 'white',
-                                                            fontSize: '1.1rem',
-                                                            transition: 'all 0.3s ease',
-                                                            opacity: isChangingPassword ? 0.7 : 1
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            if (!isChangingPassword) {
-                                                                e.target.style.transform = 'translateY(-2px)';
-                                                                e.target.style.boxShadow = '0 8px 25px rgba(40, 167, 69, 0.4)';
-                                                            }
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.target.style.transform = 'translateY(0)';
-                                                            e.target.style.boxShadow = 'none';
-                                                        }}
-                                                    >
-                                                        {isChangingPassword ? (
-                                                            <>
-                                                                <div className="spinner-border spinner-border-sm me-2" role="status">
-                                                                    <span className="visually-hidden">Loading...</span>
-                                                                </div>
-                                                                Đang đổi mật khẩu...
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <i className="fas fa-shield-alt me-2"></i>
-                                                                Đổi mật khẩu
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
+                                        <h4 className="mb-4">Đổi mật khẩu</h4>
+                                        <form onSubmit={handlePasswordSubmit}>
+                                            <div className="mb-3">
+                                                <label className="form-label">Mật khẩu hiện tại</label>
+                                                <input
+                                                    type="password"
+                                                    className="form-control"
+                                                    name="oldPassword"
+                                                    value={passwordInfo.oldPassword}
+                                                    onChange={handlePasswordChange}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="mb-3">
+                                                <label className="form-label">Mật khẩu mới</label>
+                                                <input
+                                                    type="password"
+                                                    className="form-control"
+                                                    name="newPassword"
+                                                    value={passwordInfo.newPassword}
+                                                    onChange={handlePasswordChange}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="mb-3">
+                                                <label className="form-label">Xác nhận mật khẩu mới</label>
+                                                <input
+                                                    type="password"
+                                                    className="form-control"
+                                                    name="confirmPassword"
+                                                    value={passwordInfo.confirmPassword}
+                                                    onChange={handlePasswordChange}
+                                                    required
+                                                />
+                                            </div>
+                                            <button type="submit" className="btn btn-primary">Đổi mật khẩu</button>
+                                        </form>
                                     </Tab.Pane>
+                                   
                                 </Tab.Content>
                             </Tab.Container>
                         </div>
@@ -775,6 +427,7 @@ const CustomerDetail = () => {
                 </div>
             </div>
 
+            
             <Footer />
         </>
     );
