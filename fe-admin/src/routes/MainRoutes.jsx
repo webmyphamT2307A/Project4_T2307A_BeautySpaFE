@@ -12,6 +12,7 @@ import SalaryManagement from '../pages/salary/salary';
 import ReviewList from '../pages/review/review';
 import FeedbackManager from '../pages/feedback/feedback';
 import TimeSlotManagement from '../pages/timeslot/timeslot';
+import SkillManagement from '../pages/spa/skill';
 import path from 'path';
 
 // render- Dashboard
@@ -74,6 +75,10 @@ const MainRoutes = {
           element: <ProtectedRoute element={<RoleManger />} />
         }
       ]
+    },
+    {
+      path: 'skill',
+      element: <ProtectedRoute element={<SkillManagement />} />
     },
     {
       path: 'userschedule',
