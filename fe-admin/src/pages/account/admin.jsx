@@ -61,7 +61,7 @@ const AdminAccount = () => {
         const usersData = data.data || [];
         const sortedUsers = usersData.sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
         setUsers(sortedUsers);
-        setFilteredUsers(sortedUsers); 
+        setFilteredUsers(sortedUsers);
       })
       .catch(err => {
         console.error("Failed to fetch users:", err);
@@ -74,31 +74,31 @@ const AdminAccount = () => {
   useEffect(() => {
     fetch(`${ROLE_URL}`).then(res => res.json()).then(data => setRoles(data.data || []));
     fetch(`${SKILL_URL}`).then(res => res.json()).then(data => setSkills(data.data || []));
-    fetchUsers(); 
+    fetchUsers();
   }, []);
 
-useEffect(() => {
-  setLoading(true);
+  useEffect(() => {
+    setLoading(true);
 
-  const endpoint = statusFilter === -1
-    ? `${API_URL}/find-all-deleted` 
-    : `${API_URL}/find-all`;
+    const endpoint = statusFilter === -1
+      ? `${API_URL}/find-all-deleted`
+      : `${API_URL}/find-all`;
 
-  fetch(endpoint)
-    .then(res => res.json())
-    .then(data => {
-      const usersData = data.data || [];
-      const sortedUsers = usersData.sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
-      
-      setUsers(sortedUsers);
-    })
-    .catch(err => {
-      console.error("Failed to fetch users:", err);
-      toast.error("Không thể tải dữ liệu người dùng.");
-    })
-    .finally(() => setLoading(false));
+    fetch(endpoint)
+      .then(res => res.json())
+      .then(data => {
+        const usersData = data.data || [];
+        const sortedUsers = usersData.sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
 
-}, [statusFilter]);
+        setUsers(sortedUsers);
+      })
+      .catch(err => {
+        console.error("Failed to fetch users:", err);
+        toast.error("Không thể tải dữ liệu người dùng.");
+      })
+      .finally(() => setLoading(false));
+
+  }, [statusFilter]);
 
   useEffect(() => {
     let results = [...users];
@@ -138,7 +138,7 @@ useEffect(() => {
         address: user.address || '',
         role: selectedRole || null,
         skills: user.skills || [],
-        isActive: user.isActive 
+        isActive: user.isActive
       });
       setImagePreview(user.imageUrl || null);
     } else {
@@ -153,14 +153,14 @@ useEffect(() => {
     }
     setOpen(true);
   };
-  
+
   const handleViewOpen = (user) => {
     setCurrentUser(user);
     setViewOpen(true);
   };
-  
+
   const handleViewClose = () => setViewOpen(false);
-  
+
   const handleOpenEditFromView = () => {
     handleViewClose();
     handleOpen(currentUser);
@@ -179,101 +179,110 @@ useEffect(() => {
       setFormData({ ...formData, [name]: value });
     }
   };
-  
- const uploadImageToServer = async (file) => {
-  const formData = new FormData();
-  formData.append('file', file);
 
-  const res = await fetch('http://localhost:8080/api/v1/upload', {
-    method: 'POST',
-    body: formData,
-  });
-  if (!res.ok) throw new Error('Upload failed');
-  const data = await res.json();
-  return data.url;
-};
+  const uploadImageToServer = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
 
-const handleImageChange = async (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    setImagePreview(URL.createObjectURL(file));
-    try {
-      const url = await uploadImageToServer(file);
-      setFormData({ ...formData, imageUrl: url });
-    } catch (err) {
-      toast.error("Upload ảnh thất bại!");
+    const res = await fetch('http://localhost:8080/api/v1/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Upload failed');
+    const data = await res.json();
+    return data.url;
+  };
+
+  const handleImageChange = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImagePreview(URL.createObjectURL(file));
+      try {
+        const url = await uploadImageToServer(file);
+
+        // THÊM DÒNG NÀY VÀO
+        console.log('1. URL trả về từ ImageKit:', url);
+
+        setFormData(prevFormData => ({
+          ...prevFormData,
+          imageUrl: url
+        }));
+        toast.success("Tải ảnh lên thành công, hãy nhấn Lưu để cập nhật.");
+      } catch (err) {
+        toast.error("Upload ảnh thất bại!");
+        setImagePreview(formData.imageUrl || null);
+      }
     }
-  }
-};
+  };
 
   const handleUploadClick = () => fileInputRef.current.click();
   const handleClearField = (fieldName) => {
     if (fieldName === 'imageUrl') setImagePreview(null);
     setFormData({ ...formData, [fieldName]: '' });
   };
-  
-  const handleSave = async () => {
-  const isUpdate = !!currentUser;
-  const url = isUpdate ? `${API_URL}/update/${currentUser.id}` : `${API_URL}/create`;
-  const method = isUpdate ? 'PUT' : 'POST';
 
-  const payload = {
-    fullName: formData.fullName,
-    email: formData.email,
-    phone: formData.phone,
-    address: formData.address,
-    roleId: formData.role?.id,
-    imageUrl: formData.imageUrl,
-    skills: formData.skills,
+  const handleSave = async () => {
+    const isUpdate = !!currentUser;
+    const url = isUpdate ? `${API_URL}/update/${currentUser.id}` : `${API_URL}/create`;
+    const method = isUpdate ? 'PUT' : 'POST';
+
+    const payload = {
+      fullName: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      roleId: formData.role?.id,
+      imageUrl: formData.imageUrl,
+      skills: formData.skills,
+    };
+
+    if (isUpdate) {
+      payload.isActive = formData.isActive;
+      if (formData.password) payload.password = formData.password;
+    } else {
+      payload.password = formData.password;
+    }
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        toast.success(result.message || (isUpdate ? 'Cập nhật thành công!' : 'Tạo mới thành công!'));
+        fetchUsers();
+        handleClose();
+
+        if (!isUpdate && result.token && result.user && result.roleName) {
+          const { token, user, roleName } = result;
+          if (roleName === 'ROLE_ADMIN') {
+            Cookies.set('admin_token', token, { path: '/admin', sameSite: 'Strict', expires: 7 });
+            Cookies.set('admin_role', roleName, { path: '/admin', sameSite: 'Strict', expires: 7 });
+            Cookies.set('admin_userId', user.id, { path: '/admin', sameSite: 'Strict', expires: 7 });
+            console.log('Admin cookie set:', Cookies.get('admin_token'), Cookies.get('admin_role'));
+          } else if (roleName === 'ROLE_STAFF') {
+            Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
+            Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
+            Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 });
+            console.log('Staff cookie set:', Cookies.get('staff_token'), Cookies.get('staff_role'), Cookies.get('staff_userId'));
+          } else if (roleName === 'ROLE_MANAGER') {
+            Cookies.set('manager_token', token, { path: '/manager', sameSite: 'Strict', expires: 7 });
+            Cookies.set('manager_role', roleName, { path: '/manager', sameSite: 'Strict', expires: 7 });
+            Cookies.set('manager_userId', user.id, { path: '/manager', sameSite: 'Strict', expires: 7 });
+            console.log('Manager cookie set:', Cookies.get('manager_token'), Cookies.get('manager_role'), Cookies.get('manager_userId'));
+          }
+        }
+      } else {
+        toast.error(result.message || (isUpdate ? 'Cập nhật thất bại!' : 'Tạo mới thất bại!'));
+      }
+    } catch (err) {
+      toast.error("An error occurred. Please try again.");
+    }
   };
 
-  if (isUpdate) {
-    payload.isActive = formData.isActive;
-    if (formData.password) payload.password = formData.password;
-  } else {
-    payload.password = formData.password;
-  }
-  
-  try {
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    
-    const result = await res.json();
-    if (res.ok) {
-      toast.success(result.message || (isUpdate ? 'Cập nhật thành công!' : 'Tạo mới thành công!'));
-      fetchUsers();
-      handleClose();
-
-      if (!isUpdate && result.token && result.user && result.roleName) {
-        const { token, user, roleName } = result;
-        if (roleName === 'ROLE_ADMIN') {
-          Cookies.set('admin_token', token, { path: '/admin', sameSite: 'Strict', expires: 7 });
-          Cookies.set('admin_role', roleName, { path: '/admin', sameSite: 'Strict', expires: 7 });
-          Cookies.set('admin_userId', user.id, { path: '/admin', sameSite: 'Strict', expires: 7 });
-          console.log('Admin cookie set:', Cookies.get('admin_token'), Cookies.get('admin_role'));
-        } else if (roleName === 'ROLE_STAFF') {
-          Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
-          Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
-          Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 });
-          console.log('Staff cookie set:', Cookies.get('staff_token'), Cookies.get('staff_role'), Cookies.get('staff_userId'));
-        } else if (roleName === 'ROLE_MANAGER') {
-          Cookies.set('manager_token', token, { path: '/manager', sameSite: 'Strict', expires: 7 });
-          Cookies.set('manager_role', roleName, { path: '/manager', sameSite: 'Strict', expires: 7 });
-          Cookies.set('manager_userId', user.id, { path: '/manager', sameSite: 'Strict', expires: 7 });
-          console.log('Manager cookie set:', Cookies.get('manager_token'), Cookies.get('manager_role'), Cookies.get('manager_userId'));
-        }
-      }
-    } else {
-      toast.error(result.message || (isUpdate ? 'Cập nhật thất bại!' : 'Tạo mới thất bại!'));
-    }
-  } catch(err) {
-    toast.error("An error occurred. Please try again.");
-  }
-};
-  
   const handleDelete = async (id) => {
     if (!confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
       toast.info('Đã hủy xóa tài khoản.');
@@ -283,18 +292,18 @@ const handleImageChange = async (event) => {
     try {
       const res = await fetch(`${API_URL}/delete/${id}`, { method: 'PUT' });
       const result = await res.json();
-      
+
       if (res.ok) {
         toast.success(result.message || 'Xóa thành công!');
         setUsers(prevUsers => prevUsers.filter(user => user.id !== id));
       } else {
         toast.error(result.message || 'Xóa thất bại!');
       }
-    } catch(err) {
+    } catch (err) {
       toast.error("An error occurred. Please try again.");
     }
   };
-  
+
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
@@ -303,19 +312,19 @@ const handleImageChange = async (event) => {
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
   const handleStatusFilterChange = (e) => setStatusFilter(e.target.value);
   const handleRoleFilterChange = (e) => setRoleFilter(e.target.value);
-  
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
   };
-  
+
   const getRoleName = (user) => {
     if (user.role?.name) return user.role.name;
     const found = roles.find(r => Number(r.id) === Number(user.role?.id || user.roleId));
     return found ? found.name : 'N/A';
   };
-  
+
 
 
   const currentUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -353,7 +362,7 @@ const handleImageChange = async (event) => {
                 <MenuItem value="all">Tất Cả Trạng Thái</MenuItem>
                 <MenuItem value={1}>Hoạt Động</MenuItem>
                 <MenuItem value={0}>Không Hoạt Động</MenuItem>
-                <MenuItem value={-1}>Đã Xóa</MenuItem> 
+                <MenuItem value={-1}>Đã Xóa</MenuItem>
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -406,9 +415,8 @@ const handleImageChange = async (event) => {
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Avatar
-                              src={user.imageUrl && !user.imageUrl.startsWith('http') ? `http://localhost:8080${user.imageUrl}` : user.imageUrl}
+                              src={user.imageUrl}
                               alt={user.fullName}
-                              sx={{ width: 32, height: 32 }}
                             >
                               {!user.imageUrl && <UserOutlined />}
                             </Avatar>
@@ -429,17 +437,17 @@ const handleImageChange = async (event) => {
                         <TableCell>
                           <Chip
                             label={
-                              user.isActive === 1   ? "Hoạt Động" :
-                              user.isActive === 0   ? "Không Hoạt Động" :
-                              user.isActive === -1  ? "Đã Xóa" :
-                              ""
+                              user.isActive === 1 ? "Hoạt Động" :
+                                user.isActive === 0 ? "Không Hoạt Động" :
+                                  user.isActive === -1 ? "Đã Xóa" :
+                                    ""
                             }
                             size="small"
                             color={
-                              user.isActive === 1   ? "success" :
-                              user.isActive === 0   ? "default" :
-                              user.isActive === -1  ? "error" :
-                              "default"
+                              user.isActive === 1 ? "success" :
+                                user.isActive === 0 ? "default" :
+                                  user.isActive === -1 ? "error" :
+                                    "default"
                             }
                             sx={{
                               borderRadius: '16px',
@@ -469,11 +477,11 @@ const handleImageChange = async (event) => {
                       </TableRow>
                     ))
                   ) :
-                   (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center">Không tìm thấy admin nào</TableCell>
-                    </TableRow>
-                  )}
+                    (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">Không tìm thấy admin nào</TableCell>
+                      </TableRow>
+                    )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -595,32 +603,32 @@ const handleImageChange = async (event) => {
               ) : null
             }}
           />
-            <TextField
-              margin="dense"
-              name="password"
+          <TextField
+            margin="dense"
+            name="password"
             label={currentUser ? "Mật Khẩu Mới (để trống nếu không thay đổi)" : "Mật Khẩu"}
-              type={showPassword ? "text" : "password"}
-              fullWidth
-              value={formData.password}
-              onChange={handleChange}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {formData.password && (
-                      <IconButton size="small" onClick={() => handleClearField('password')}>
-                        <CloseOutlined style={{ fontSize: 16 }} />
-                      </IconButton>
-                    )}
+            type={showPassword ? "text" : "password"}
+            fullWidth
+            value={formData.password}
+            onChange={handleChange}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {formData.password && (
+                    <IconButton size="small" onClick={() => handleClearField('password')}>
+                      <CloseOutlined style={{ fontSize: 16 }} />
+                    </IconButton>
+                  )}
                   <IconButton
                     size="small"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-                    </IconButton>
-                  </InputAdornment>
-                )
-              }}
-            />
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
           <FormControl fullWidth margin="dense">
             <InputLabel>Vai Trò</InputLabel>
             <Select
@@ -707,17 +715,17 @@ const handleImageChange = async (event) => {
                   </Typography>
                   <Chip
                     label={
-                      currentUser.isActive === 1   ? "Hoạt Động" :
-                      currentUser.isActive === 0   ? "Không Hoạt Động" :
-                      currentUser.isActive === -1  ? "Đã Xóa" :
-                      ""
+                      currentUser.isActive === 1 ? "Hoạt Động" :
+                        currentUser.isActive === 0 ? "Không Hoạt Động" :
+                          currentUser.isActive === -1 ? "Đã Xóa" :
+                            ""
                     }
                     size="small"
                     color={
-                      currentUser.isActive === 1   ? "success" :
-                      currentUser.isActive === 0   ? "default" :
-                      currentUser.isActive === -1  ? "error" :
-                      "default"
+                      currentUser.isActive === 1 ? "success" :
+                        currentUser.isActive === 0 ? "default" :
+                          currentUser.isActive === -1 ? "error" :
+                            "default"
                     }
                     sx={{ mt: 0.5, borderRadius: '16px' }}
                   />
