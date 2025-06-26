@@ -416,12 +416,6 @@ const Appointment = () => {
                 return;
             }
 
-            let formattedDate = formData.appointmentDate;
-            if (formattedDate && formattedDate.includes('-')) {
-                const [year, month, day] = formattedDate.split('-');
-                formattedDate = `${day}/${month}/${year}`;
-            }
-
             let customerIdToSubmit = formData.customerId;
 
             if (!customerIdToSubmit && (formData.fullName && formData.phoneNumber)) {
@@ -437,12 +431,19 @@ const Appointment = () => {
                     return;
                 }
             }
+            
+            // Re-format date to dd/MM/yyyy for backend submission
+            let formattedDate = formData.appointmentDate;
+            if (formattedDate && formattedDate.includes('-')) {
+                const [year, month, day] = formattedDate.split('-');
+                formattedDate = `${day}/${month}/${year}`;
+            }
 
             const submitData = {
                 ...formData,
                 customerId: customerIdToSubmit,
                 status: formData.status || 'pending',
-                appointmentDate: formattedDate,
+                appointmentDate: formattedDate, // Use the correctly formatted date
                 branchId: formData.branchId || 1,
                 timeSlotId: formData.timeSlotId,
                 price: formData.price,
@@ -784,15 +785,20 @@ const Appointment = () => {
                     <label className="form-label text-white fw-bold">
                         <i className="fas fa-calendar me-2"></i>Chọn Ngày *
                     </label>
-                    <input
-                        type="date"
-                        name="appointmentDate"
-                        value={formData.appointmentDate}
-                        onChange={handleInputChange}
-                        className="form-control py-2 border-white bg-transparent text-white custom-date-picker"
-                        min={new Date().toISOString().split("T")[0]}
-                        style={{ height: '45px' }}
-                    />
+                    <div className="input-group">
+                        <input
+                            type="date"
+                            name="appointmentDate"
+                            value={formData.appointmentDate}
+                            onChange={handleInputChange}
+                            className="form-control py-2 border-white bg-transparent text-white custom-date-picker"
+                            min={new Date().toISOString().split("T")[0]}
+                            style={{ height: '45px' }}
+                        />
+                        <span className="input-group-text bg-transparent border-white text-white">
+                            <i className="fas fa-calendar-alt"></i>
+                        </span>
+                    </div>
                 </div>
 
                 <div className="col-12">
@@ -1101,22 +1107,6 @@ const Appointment = () => {
                                                 <span className="text-white-50" style={{ fontSize: '0.65rem' }}>
                                                     ({staff.totalReviews || 0})
                                                 </span>
-                                            </div>
-
-                                            {/* Review Link */}
-                                            <div className="text-center mb-3">
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-link p-0 text-decoration-none"
-                                                    style={{ fontSize: '0.7rem', color: '#ffc107', border: 'none', background: 'none' }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/staff-review/${staff.id}`);
-                                                    }}
-                                                >
-                                                    <i className="fas fa-star me-1"></i>
-                                                    Xem đánh giá
-                                                </button>
                                             </div>
 
                                             {/* Select Button */}

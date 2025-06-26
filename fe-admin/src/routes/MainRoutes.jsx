@@ -73,12 +73,12 @@ const MainRoutes = {
         {
           path: 'service',
           element: <ProtectedRoute element={<RoleManger />} />
+        },
+        {
+          path: 'skill',
+          element: <ProtectedRoute element={<SkillManagement />} />
         }
       ]
-    },
-    {
-      path: 'skill',
-      element: <ProtectedRoute element={<SkillManagement />} />
     },
     {
       path: 'userschedule',
