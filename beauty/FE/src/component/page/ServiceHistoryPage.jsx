@@ -20,7 +20,7 @@ const parseDate = (dateString) => {
         const date = new Date(dateString);
         return isNaN(date.getTime()) ? null : date;
     } catch (e) {
-        console.error("Lỗi parse ngày:", dateString, e);
+        // // console.error("Lỗi parse ngày:", dateString, e);
         return null;
     }
 };
@@ -279,7 +279,7 @@ const ServiceHistoryPage = () => {
                     sessionStorage.removeItem('recentBooking');
                 }
             } catch (error) {
-                console.error('❌ Error parsing recent booking:', error);
+                // console.error('❌ Error parsing recent booking:', error);
                 sessionStorage.removeItem('recentBooking');
             }
         } else {
@@ -317,7 +317,7 @@ const ServiceHistoryPage = () => {
                 setError(response.data.message || `Không tìm thấy lịch hẹn với số điện thoại: ${phoneNumber}`);
             }
         } catch (err) {
-            console.error('❌ Auto lookup error:', err);
+            // console.error('❌ Auto lookup error:', err);
             setError('Lỗi kết nối hoặc không tìm thấy lịch hẹn dịch vụ.');
             setHistory([]);
             setCalculatedTotal(0);
@@ -483,10 +483,10 @@ const ServiceHistoryPage = () => {
                 setError(response.data.message || 'Không tìm thấy lịch hẹn.');
             }
         } catch (err) {
-            console.error('❌ Error fetching history:', err);
-            console.error('❌ Error response:', err.response);
-            console.error('❌ Error status:', err.response?.status);
-            console.error('❌ Error data:', err.response?.data);
+            // console.error('❌ Error fetching history:', err);
+            // console.error('❌ Error response:', err.response);
+            // console.error('❌ Error status:', err.response?.status);
+            // console.error('❌ Error data:', err.response?.data);
             setError('Lỗi kết nối hoặc không tìm thấy lịch hẹn dịch vụ.');
             setHistory([]);
         } finally {
@@ -867,7 +867,7 @@ const ServiceHistoryPage = () => {
                                         </div>
                                         <div>
                                             <div className="fw-bold text-primary">{item.serviceName}</div>
-                                            <small className="text-muted">Mã dịch vụ: #{item.serviceId}</small>
+                                            {/* <small className="text-muted">Mã dịch vụ: #{item.serviceId}</small> */}
                                         </div>
                                     </div>
                                 </td>

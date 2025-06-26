@@ -239,7 +239,7 @@
 }
 
 .services .services-item:hover {
-    background: var(--bs-primary) !important;
+    background: linear-gradient(135deg, #ffd0d9, #ffaebdd8) !important;
     border-color: #a63f52 !important;
 }
 

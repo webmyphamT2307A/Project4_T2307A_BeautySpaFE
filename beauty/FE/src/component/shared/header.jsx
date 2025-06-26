@@ -68,7 +68,7 @@ const Header = () => {
                 setServicesData(response.data.data);
             }
         } catch (error) {
-            console.error('Error fetching services:', error);
+            // console.error('Error fetching services:', error);
         }
     };
 
@@ -287,7 +287,7 @@ const Header = () => {
 
             }
         } catch (error) {
-            console.error('Error logging in:', error);
+            // console.error('Error logging in:', error);
             
             let errorMessage = 'Email hoặc mật khẩu không chính xác!';
             
@@ -428,7 +428,7 @@ const Header = () => {
                 setRegisterMessage(response.data.message || 'Đăng ký thất bại!');
             }
         } catch (error) {
-            console.error('Register error:', error);
+            // console.error('Register error:', error);
             
             let errorMessage = 'Đăng ký thất bại! Vui lòng thử lại.';
             
@@ -497,7 +497,7 @@ const Header = () => {
                     },
                     body: JSON.stringify({})
                 }).catch(error => {
-                    console.error('Background logout API call failed:', error);
+                    // console.error('Background logout API call failed:', error);
                 });
             }
         }, 100);

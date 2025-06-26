@@ -81,7 +81,7 @@ const StaffReviewPage = () => {
                 setIsAuthenticated(true);
                 setUser(parsedUser);
             } catch (error) {
-                console.error('❌ Error parsing userInfo:', error);
+                // console.error('❌ Error parsing userInfo:', error);
             }
         } else {
             console.log('⚠️ User not authenticated');
@@ -140,11 +140,11 @@ const StaffReviewPage = () => {
                 console.log('✅ Found staff via staff list API:', foundStaff.fullName);
                 setStaff(foundStaff);
             } else {
-                console.error('❌ Staff not found. Available IDs:', staffList.map(s => s.id));
+                // console.error('❌ Staff not found. Available IDs:', staffList.map(s => s.id));
                 toast.error(`Không tìm thấy nhân viên với ID: ${staffId}`);
             }
         } catch (error) {
-            console.error('❌ All API attempts failed:', error);
+            // console.error('❌ All API attempts failed:', error);
             toast.error('Không thể tải thông tin nhân viên. Vui lòng thử lại sau.');
         }
     };
@@ -170,7 +170,7 @@ const StaffReviewPage = () => {
                 }
             }
         } catch (error) {
-            console.error('Error fetching staff reviews:', error);
+            // console.error('Error fetching staff reviews:', error);
             setReviews([]);
         }
     };
@@ -269,7 +269,7 @@ const StaffReviewPage = () => {
                 fetchStaffReviews(0); // Refresh reviews
             }
         } catch (error) {
-            console.error('Error submitting staff review:', error);
+            // console.error('Error submitting staff review:', error);
             const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá';
             toast.error(errorMessage);
         } finally {
@@ -433,7 +433,7 @@ const StaffReviewPage = () => {
                         </div>
 
                         {/* Review Form */}
-                        {isAuthenticated ? (
+                        {/* {isAuthenticated ? (
                             <div className="card mb-4">
                                 <div className="card-body">
                                     <h5 className="card-title">Đánh Giá Nhân Viên</h5>
@@ -501,7 +501,7 @@ const StaffReviewPage = () => {
                                     Vui lòng <Link to="/login" className="fw-bold">đăng nhập</Link> để đánh giá nhân viên.
                                 </p>
                             </div>
-                        )}
+                        )} */}
 
                         {/* Reviews List */}
                         <div className="card">

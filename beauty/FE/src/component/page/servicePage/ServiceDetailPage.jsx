@@ -23,7 +23,7 @@ const useAuth = () => {
       }
     } catch (error) {
       // Nếu có lỗi khi đọc/parse JSON (dữ liệu bị hỏng), xóa đi để đảm bảo an toàn
-      console.error("Failed to parse user data from localStorage", error);
+      // console.error("Failed to parse user data from localStorage", error);
       localStorage.removeItem('user');
       localStorage.removeItem('token');
     }
@@ -79,11 +79,11 @@ const ServiceDetailPage = () => {
         if (result.status === 'SUCCESS') {
           setService(result.data);
         } else {
-          console.error("Failed to fetch service:", result.message);
+          // console.error("Failed to fetch service:", result.message);
           setService(null);
         }
       } catch (error) {
-        console.error('Error fetching service:', error);
+        // console.error('Error fetching service:', error);
       }
     };
 
@@ -98,7 +98,7 @@ const ServiceDetailPage = () => {
           setRelatedServices(filtered);
         }
       } catch (error) {
-        console.error('Error fetching related services:', error);
+        // console.error('Error fetching related services:', error);
       }
     };
 
@@ -110,10 +110,10 @@ const ServiceDetailPage = () => {
         if (result.status === 'SUCCESS' && result.data.content) {
           setReviews(result.data.content);
         } else {
-          console.error("Failed to fetch reviews:", result.message);
+          // console.error("Failed to fetch reviews:", result.message);
         }
       } catch (error) {
-        console.error('Error fetching reviews:', error);
+        // console.error('Error fetching reviews:', error);
       }
     };
 
@@ -312,7 +312,7 @@ const ServiceDetailPage = () => {
         });
       }
     } catch (error) {
-      console.error('Error submitting review:', error);
+      // console.error('Error submitting review:', error);
       Swal.fire({
         title: 'Lỗi!',
         text: 'Đã xảy ra lỗi. Vui lòng thử lại.',

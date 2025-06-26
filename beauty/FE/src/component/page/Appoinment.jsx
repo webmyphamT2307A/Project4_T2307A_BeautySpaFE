@@ -176,7 +176,7 @@ const Appointment = () => {
                         }
 
                     } catch (scheduleError) {
-                        console.error("❌ Error fetching schedules:", scheduleError);
+                        // console.error("❌ Error fetching schedules:", scheduleError);
                         // If schedule API fails, show all staff (fallback)
                         staffWithSchedule = rawStaffList;
                     } finally {
@@ -236,7 +236,7 @@ const Appointment = () => {
                         }
                         return true;
                     } catch (error) {
-                        console.error('Error filtering staff:', error, staff);
+                        // console.error('Error filtering staff:', error, staff);
                         return true; // Failsafe
                     }
                 });
@@ -244,7 +244,7 @@ const Appointment = () => {
                 const shuffledStaff = [...filteredStaff].sort(() => 0.5 - Math.random());
                 setStaffList(shuffledStaff);
             } catch (error) {
-                console.error("Error fetching staff list:", error);
+                // console.error("Error fetching staff list:", error);
                 setStaffList([]);
                 setCountStaffAvaiable(0);
                 toast.error("Không thể tải danh sách nhân viên.");
@@ -547,7 +547,7 @@ const Appointment = () => {
 
             return filtered;
         } catch (error) {
-            console.error('Error in filteredStaffList:', error);
+            // console.error('Error in filteredStaffList:', error);
             return [];
         }
     }, [staffList, staffSearchTerm, staffAvailabilities]);
@@ -566,7 +566,7 @@ const Appointment = () => {
 
     // Step validation
     const canProceedToStep = (step) => {
-        console.log("step: ", step);
+        // console.log("step: ", step);
         switch (step) {
             case 2:
                 return formData.serviceId !== '' && formData.appointmentDate !== '' && formData.timeSlotId !== '' && (countStaffAvaiable > 0) && (slotInfo.availableSlot < slotInfo.totalSlot);
@@ -593,20 +593,20 @@ const Appointment = () => {
                     hasUserId && hasFullName && hasPhoneNumber && hasEmail &&
                     noNameError && noPhoneError && noEmailError;
 
-                console.log("🔍 Step 4 Validation DETAILED:", {
-                    serviceId: `"${formData.serviceId}" -> ${hasServiceId}`,
-                    appointmentDate: `"${formData.appointmentDate}" -> ${hasAppointmentDate}`,
-                    timeSlotId: `"${formData.timeSlotId}" -> ${hasTimeSlotId}`,
-                    userId: `${formData.userId} (type: ${typeof formData.userId}) -> ${hasUserId}`,
-                    fullName: `"${formData.fullName}" -> ${hasFullName}`,
-                    phoneNumber: `"${formData.phoneNumber}" -> ${hasPhoneNumber}`,
-                    email: `"${formData.email}" -> ${hasEmail}`,
-                    validationErrors: validationErrors,
-                    noNameError: noNameError,
-                    noPhoneError: noPhoneError,
-                    noEmailError: noEmailError,
-                    FINAL_RESULT: step4Valid
-                });
+                // console.log("🔍 Step 4 Validation DETAILED:", {
+                //     serviceId: `"${formData.serviceId}" -> ${hasServiceId}`,
+                //     appointmentDate: `"${formData.appointmentDate}" -> ${hasAppointmentDate}`,
+                //     timeSlotId: `"${formData.timeSlotId}" -> ${hasTimeSlotId}`,
+                //     userId: `${formData.userId} (type: ${typeof formData.userId}) -> ${hasUserId}`,
+                //     fullName: `"${formData.fullName}" -> ${hasFullName}`,
+                //     phoneNumber: `"${formData.phoneNumber}" -> ${hasPhoneNumber}`,
+                //     email: `"${formData.email}" -> ${hasEmail}`,
+                //     validationErrors: validationErrors,
+                //     noNameError: noNameError,
+                //     noPhoneError: noPhoneError,
+                //     noEmailError: noEmailError,
+                //     FINAL_RESULT: step4Valid
+                // });
 
                 // Show which field is failing
                 if (!step4Valid) {
@@ -622,7 +622,7 @@ const Appointment = () => {
                     if (!noPhoneError) failedFields.push('phoneNumber validation error');
                     if (!noEmailError) failedFields.push('email validation error');
 
-                    console.error("❌ Step 4 FAILED - Missing fields:", failedFields);
+                    // console.error("❌ Step 4 FAILED - Missing fields:", failedFields);
                 }
 
                 return step4Valid;
@@ -647,10 +647,10 @@ const Appointment = () => {
         });
 
         if (canProceedToStep(currentStep + 1)) {
-            console.log("✅ Proceeding to next step");
+            // console.log("✅ Proceeding to next step");
             setCurrentStep(prev => Math.min(prev + 1, totalSteps));
         } else {
-            console.log("❌ Cannot proceed - showing error message");
+            // console.log("❌ Cannot proceed - showing error message");
             // Show specific error message based on current step
             switch (currentStep) {
                 case 1:
@@ -843,7 +843,7 @@ const Appointment = () => {
                                 <div className="d-flex flex-column gap-2">
                                     <div className="d-flex align-items-center">
                                         <i className="fas fa-user-friends me-2"></i>
-                                        <strong>Nhân viên:</strong>
+                                        <strong>Nhân viên sẵn sàng phục vụ:</strong>
                                         <span className={`badge ms-2 px-2 py-1 rounded-pill ${countStaffAvaiable > 2 ? 'bg-success' :
                                             countStaffAvaiable > 0 ? 'bg-warning text-dark' :
                                                 'bg-danger'

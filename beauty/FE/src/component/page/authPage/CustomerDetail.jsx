@@ -97,7 +97,7 @@ const CustomerDetail = () => {
             });
             setServiceHistory(response.data.data || []);
         } catch (error) {
-            console.error('Error fetching service history:', error);
+            // console.error('Error fetching service history:', error);
         }
     };
 

@@ -112,10 +112,10 @@ const ServicePage = () => {
         if (result.status === 'SUCCESS') {
           setServicesData(result.data);
         } else {
-          console.error(result.message);
+          // console.error(result.message);
         }
       } catch (error) {
-        console.error('Lỗi khi fetch dữ liệu:', error);
+        // console.error('Lỗi khi fetch dữ liệu:', error);
       } finally {
         setLoading(false);
       }

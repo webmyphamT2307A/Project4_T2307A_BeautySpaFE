@@ -12,7 +12,7 @@ const useAuth = () => {
                 return { isAuthenticated: true, user: JSON.parse(userString), token };
             }
         } catch (error) {
-            console.error("Failed to parse user data from localStorage", error);
+            // console.error("Failed to parse user data from localStorage", error);
             localStorage.removeItem('user');
             localStorage.removeItem('token');
         }
@@ -195,7 +195,7 @@ const Contact = () => {
         } catch (error) {
             const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
             setStatusMessage(errorMessage);
-            console.error("Error sending feedback:", error);
+            // console.error("Error sending feedback:", error);
         } finally {
             setIsSubmitting(false);
         }

@@ -179,7 +179,7 @@ const ContactPage = () => {
                 }
             }
         } catch (error) {
-            console.error('Error sending feedback:', error);
+            // console.error('Error sending feedback:', error);
             if (error.response?.status === 400) {
                 setMessage('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin');
             } else if (error.response?.status === 500) {

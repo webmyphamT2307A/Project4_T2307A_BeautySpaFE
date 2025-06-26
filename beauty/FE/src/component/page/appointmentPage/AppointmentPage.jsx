@@ -65,7 +65,7 @@ const AppointmentPage = () => {
                 setStaffList(shuffledStaff);
             })
             .catch((error) => {
-                console.error("Error fetching staff list:", error);
+                // console.error("Error fetching staff list:", error);
                 setStaffList([]);
                 toast.error("Không thể tải danh sách nhân viên.");
             });
@@ -319,7 +319,7 @@ const AppointmentPage = () => {
             
             return filtered;
         } catch (error) {
-            console.error('Error in filteredStaffList:', error);
+            // console.error('Error in filteredStaffList:', error);
             return [];
         }
     }, [staffList, staffSearchTerm, staffAvailabilities]);
