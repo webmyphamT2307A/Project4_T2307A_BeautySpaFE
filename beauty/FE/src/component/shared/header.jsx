@@ -512,7 +512,7 @@ const Header = () => {
                             <div className="col-lg-8">
                                 <div className="d-flex flex-wrap">
                                     <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Tìm Địa Điểm</a>
-                                    <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+01234567890</a>
+                                    <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+09150011110</a>
                                     <a href="#"><i className="fas fa-envelope me-2" />info@sparlex.com</a>
                                 </div>
                             </div>
@@ -659,16 +659,16 @@ const Header = () => {
                                             <a href="#" className="nav-link dropdown-toggle d-flex align-items-center p-2 rounded-pill" data-bs-toggle="dropdown" style={{
                                                 border: '2px solid #FDB5B9',
                                                 transition: 'all 0.3s ease',
-                                                background: 'rgba(253, 181, 185, 0.1)'
+                                                background: 'rgba(255, 228, 230, 0.1)'
                                             }}
                                                 onMouseEnter={(e) => {
-                                                    e.target.style.background = 'rgba(253, 181, 185, 0.2)';
+                                                    e.target.style.background = 'rgba(255, 240, 241, 0.2)';
                                                     e.target.style.borderColor = '#F7A8B8';
                                                     e.target.style.transform = 'translateY(-2px)';
                                                     e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.3)';
                                                 }}
                                                 onMouseLeave={(e) => {
-                                                    e.target.style.background = 'rgba(253, 181, 185, 0.1)';
+                                                    e.target.style.background = 'rgba(255, 240, 241, 0.1)';
                                                     e.target.style.borderColor = '#FDB5B9';
                                                     e.target.style.transform = 'translateY(0)';
                                                     e.target.style.boxShadow = 'none';
@@ -690,7 +690,7 @@ const Header = () => {
                                                 </span>
                                             </a>
                                             <div className="dropdown-menu m-0 bg-white rounded-3 shadow-lg border-0" style={{ minWidth: '200px', marginTop: '10px !important' }}>
-                                                <Link to="/CustomerDetail" className="dropdown-item py-2 px-3 d-flex align-items-center" style={{ fontWeight: '500' }}>
+                                                <Link to="/CustomerDetail" className="dropdown-item py-2 px-3 d-flex align-items-center" style={{ fontWeight: '500', color: '#333'}}>
                                                     <i className="fas fa-user-circle me-2" style={{ color: '#FDB5B9' }}></i>
                                                     Thông tin cá nhân
                                                 </Link>

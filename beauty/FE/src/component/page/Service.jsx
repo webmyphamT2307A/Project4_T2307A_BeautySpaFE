@@ -93,7 +93,12 @@ const Service = () => {
                                     }
                                   }, 100);
                                 }}
-                                isHovered={hoveredIndex === index}
+                                onMouseEnter={(e) => {
+                                    e.target.setAttribute('style', 'border: 1px solid grey !important; box-shadow: 0 4px 4px rgb(165 136 138 / 98%) !important;');
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.setAttribute('style', 'border: 2px solid #FDB5B9 !important; box-shadow: none !important;');
+                                  }}
                               />
                             </div>
                           </div>

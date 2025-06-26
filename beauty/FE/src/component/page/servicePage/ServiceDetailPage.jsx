@@ -36,7 +36,7 @@ const useAuth = () => {
     };
   });
 
- 
+
 
   return authInfo;
 };
@@ -46,7 +46,7 @@ const ServiceDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, user, token } = useAuth();
-  
+
   // Debug removed - allowing all users to reply
 
   const [editingReviewId, setEditingReviewId] = useState(null);
@@ -57,11 +57,11 @@ const ServiceDetailPage = () => {
   const [reviews, setReviews] = useState([]);
   const [relatedServices, setRelatedServices] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Pagination state for reviews
   const [currentPage, setCurrentPage] = useState(1);
   const reviewsPerPage = 5;
-  
+
   // Reply system states - REMOVED: Staff replies managed via admin panel
 
   // State đã được đơn giản hóa, không còn thông tin khách
@@ -397,8 +397,8 @@ const ServiceDetailPage = () => {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '8px' }}>
-              <strong style={{ 
-                color: '#28a745', 
+              <strong style={{
+                color: '#28a745',
                 fontSize: '1.1rem'
               }}>
                 {reply.authorName}
@@ -428,9 +428,9 @@ const ServiceDetailPage = () => {
           border: '1px solid rgba(40, 167, 69, 0.3)',
           boxShadow: '0 1px 3px rgba(40, 167, 69, 0.1)'
         }}>
-          <p style={{ 
-            margin: 0, 
-            color: '#333', 
+          <p style={{
+            margin: 0,
+            color: '#333',
             fontSize: '1rem',
             lineHeight: '1.6',
             wordWrap: 'break-word',
@@ -469,11 +469,45 @@ const ServiceDetailPage = () => {
   return (
     <div>
       <Header />
-      
+
       {/* Main Content Container - Full Width */}
-      <div className="container-fluid py-4" style={{ backgroundColor: '#fafafa', minHeight: '100vh' }}>
+      <div className="container-fluid py-4" style={{ minHeight: '100vh' }}>
         <div className="container">
-          <Link to="/ServicePage" style={{ marginBottom: 20, display: 'inline-block', border: '1px solid #f8a4c1', padding: '8px 16px', color: '#333', textDecoration: 'none', fontWeight: 'bold', transition: 'background-color 0.3s, color 0.3s', borderRadius: '999px' }}>
+          <Link
+            to="/ServicePage"
+            style={{
+              marginBottom: 30,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              border: '2px solid rgb(253, 181, 185)',
+              padding: '12px 24px',
+              color: 'black',
+              textDecoration: 'none',
+              fontWeight: '600',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              borderRadius: '25px',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,249,250,0.95) 100%)',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0px 2px 6px rgba(253, 181, 185, 0.3)',
+              fontSize: '1rem',
+              letterSpacing: '0.3px'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgb(253, 181, 185)';
+              e.target.style.color = 'white';
+              e.target.style.transform = 'translateY(-2px) scale(1.02)';
+              e.target.style.boxShadow = '0px 2px 6px rgba(253, 181, 185, 0.3)';
+              e.target.style.borderColor = '#FDB8BC';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,249,250,0.95) 100%)';
+              e.target.style.color = 'black';
+              e.target.style.transform = 'translateY(0) scale(1)';
+              e.target.style.boxShadow = '0px 2px 6px rgba(253, 181, 185, 0.3)';
+              e.target.style.borderColor = '#FDB8BC';
+            }}
+          >
             ← Quay lại Dịch vụ
           </Link>
 
@@ -499,7 +533,7 @@ const ServiceDetailPage = () => {
                 {service.price ? `${service.price.toLocaleString()}VNĐ` : 'N/A'}
               </p>
               <p style={{ whiteSpace: 'pre-line' }}>{service.description}</p>
-              <button 
+              <button
                 onClick={() => {
                   navigate('/');
                   setTimeout(() => {
@@ -511,24 +545,24 @@ const ServiceDetailPage = () => {
                     }
                   }, 1000);
                 }}
-                                  style={{
-                    background: 'linear-gradient(90deg, #f09397 0%, #f5576c 100%)',
-                    color: 'white',
-                    fontWeight: '700',
-                    borderRadius: 30,
-                    padding: '15px 45px',
-                    display: 'inline-block',
-                    marginTop: 20,
-                    textDecoration: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 8px 25px rgba(240, 147, 151, 0.4)',
-                    fontSize: '1.1rem',
-                    letterSpacing: '0.5px',
-                    position: 'relative',
-                    zIndex: 2
-                  }}
+                style={{
+                  background: 'linear-gradient(90deg, #f09397 0%,rgb(255, 114, 133) 100%)',
+                  color: 'white',
+                  fontWeight: '700',
+                  borderRadius: 30,
+                  padding: '15px 45px',
+                  display: 'inline-block',
+                  marginTop: 20,
+                  textDecoration: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 8px 25px rgba(240, 147, 151, 0.4)',
+                  fontSize: '1.1rem',
+                  letterSpacing: '0.5px',
+                  position: 'relative',
+                  zIndex: 2
+                }}
                 onMouseEnter={(e) => {
                   e.target.style.transform = 'translateY(-4px) scale(1.05)';
                   e.target.style.boxShadow = '0 15px 35px rgba(240, 147, 151, 0.6)';
@@ -551,10 +585,10 @@ const ServiceDetailPage = () => {
                 boxShadow: '0 15px 40px rgba(255, 154, 158, 0.3)',
                 border: '1px solid rgba(255, 154, 158, 0.2)'
               }}>
-                <h3 style={{ 
-                  fontSize: '1.8rem', 
-                  color: '#d6336c', 
-                  fontWeight: 700, 
+                <h3 style={{
+                  fontSize: '1.8rem',
+                  color: '#d6336c',
+                  fontWeight: 700,
                   marginBottom: '25px',
                   textAlign: 'center',
                   position: 'relative'
@@ -577,7 +611,7 @@ const ServiceDetailPage = () => {
                     boxShadow: '0 2px 8px rgba(255, 255, 255, 0.6)'
                   }}></div>
                 </h3>
-                
+
                 <div className="row g-2">
                   {relatedServices.map((relatedService, index) => (
                     <div key={relatedService.id} className="col-6">
@@ -596,19 +630,19 @@ const ServiceDetailPage = () => {
                         flexDirection: 'column',
                         justifyContent: 'space-between'
                       }}
-                      onMouseEnter={(e) => {
-                        const card = e.currentTarget;
-                        card.style.transform = 'translateY(-8px) scale(1.02)';
-                        card.style.boxShadow = '0 15px 35px rgba(214, 51, 108, 0.2)';
-                        card.style.borderColor = '#d6336c';
-                      }}
-                      onMouseLeave={(e) => {
-                        const card = e.currentTarget;
-                        card.style.transform = 'translateY(0) scale(1)';
-                        card.style.boxShadow = 'none';
-                        card.style.borderColor = 'rgba(214, 51, 108, 0.1)';
-                      }}
-                      onClick={() => navigate(`/ServicePage/${relatedService.id}`)}
+                        onMouseEnter={(e) => {
+                          const card = e.currentTarget;
+                          card.style.transform = 'translateY(-2px) scale(1.02)';
+                          card.style.boxShadow = '0 15px 35px rgba(214, 51, 108, 0.2)';
+                          card.style.borderColor = '#d6336c';
+                        }}
+                        onMouseLeave={(e) => {
+                          const card = e.currentTarget;
+                          card.style.transform = 'translateY(0) scale(1)';
+                          card.style.boxShadow = 'none';
+                          card.style.borderColor = 'rgba(214, 51, 108, 0.1)';
+                        }}
+                        onClick={() => navigate(`/ServicePage/${relatedService.id}`)}
                       >
                         <div style={{
                           position: 'absolute',
@@ -619,7 +653,7 @@ const ServiceDetailPage = () => {
                           background: 'linear-gradient(135deg, rgba(214, 51, 108, 0.05), rgba(245, 87, 108, 0.05))',
                           zIndex: 1
                         }}></div>
-                        
+
                         <div style={{ position: 'relative', zIndex: 2 }}>
                           <img
                             src={relatedService.imageUrl || relatedService.image_url || '/default-image.jpg'}
@@ -634,10 +668,10 @@ const ServiceDetailPage = () => {
                               transition: 'all 0.3s ease'
                             }}
                           />
-                          
-                          <h6 style={{ 
-                            fontSize: '0.75rem', 
-                            fontWeight: '700', 
+
+                          <h6 style={{
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
                             margin: '0 0 4px 0',
                             color: '#333',
                             lineHeight: '1.1',
@@ -649,10 +683,10 @@ const ServiceDetailPage = () => {
                           }}>
                             {relatedService.name}
                           </h6>
-                          
-                          <p style={{ 
-                            fontSize: '0.65rem', 
-                            color: '#888', 
+
+                          <p style={{
+                            fontSize: '0.65rem',
+                            color: '#888',
                             margin: '0',
                             height: '36px',
                             overflow: 'hidden',
@@ -686,10 +720,10 @@ const ServiceDetailPage = () => {
                     </div>
                   ))}
                 </div>
-                
+
                 {/* View All Services Button - Enhanced */}
                 <div style={{ marginTop: '25px' }}>
-                  <button 
+                  <button
                     onClick={() => navigate('/ServicePage')}
                     style={{
                       display: 'block',
@@ -768,7 +802,7 @@ const ServiceDetailPage = () => {
             {/* PHẦN FORM REVIEW - Đã cập nhật */}
             <div style={{ marginTop: 40, borderTop: '1px solid #eee', paddingTop: 30 }}>
               <h4 style={{ marginBottom: 15 }}>Chia sẻ đánh giá của bạn</h4>
-              
+
               {/* Thông báo về chính sách phản hồi */}
               <div style={{
                 background: 'linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%)',
@@ -782,7 +816,7 @@ const ServiceDetailPage = () => {
               }}>
                 <i className="fas fa-info-circle" style={{ color: '#28a745', fontSize: '1.1rem' }}></i>
                 <div style={{ fontSize: '0.9rem', color: '#155724' }}>
-                  <strong>Chính sách phản hồi:</strong> Đội ngũ chăm sóc khách hàng của chúng tôi sẽ phản hồi các đánh giá quan trọng. 
+                  <strong>Chính sách phản hồi:</strong> Đội ngũ chăm sóc khách hàng của chúng tôi sẽ phản hồi các đánh giá quan trọng.
                   Mọi phản hồi từ spa đều được xem xét kỹ lưỡng để đảm bảo chất lượng dịch vụ tốt nhất.
                 </div>
               </div>
@@ -792,16 +826,16 @@ const ServiceDetailPage = () => {
                   <div style={{ padding: '10px 15px', background: '#e9ecef', borderLeft: '4px solid #d6336c', marginBottom: 15, borderRadius: 4 }}>
                     <p style={{ margin: 0 }}>Bạn đang đánh giá với tư cách: <strong>{user.fullName}</strong></p>
                   </div>
-                                      <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Đánh giá của bạn *</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Đánh giá của bạn *</label>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 15 }}>
                     {[1, 2, 3, 4, 5].map((star) => (
                       <span key={star} onClick={() => setNewReview({ ...newReview, rating: star })} style={{ fontSize: 30, cursor: 'pointer', color: star <= newReview.rating ? '#f60' : '#ccc', marginRight: 5, userSelect: 'none' }}>★</span>
                     ))}
-                                          <span style={{ marginLeft: 10, fontSize: 14, color: '#555' }}>
-                        {newReview.rating === 0 ? 'Chưa chọn đánh giá' : { 1: 'Rất tệ', 2: 'Không hài lòng', 3: 'Trung bình', 4: 'Hài lòng', 5: 'Rất hài lòng' }[newReview.rating]}
-                      </span>
+                    <span style={{ marginLeft: 10, fontSize: 14, color: '#555' }}>
+                      {newReview.rating === 0 ? 'Chưa chọn đánh giá' : { 1: 'Rất tệ', 2: 'Không hài lòng', 3: 'Trung bình', 4: 'Hài lòng', 5: 'Rất hài lòng' }[newReview.rating]}
+                    </span>
                   </div>
-                                      <label style={{ fontWeight: 500 }}>Bình luận * (Tối đa 500 ký tự)</label>
+                  <label style={{ fontWeight: 500 }}>Bình luận * (Tối đa 500 ký tự)</label>
                   <textarea
                     value={newReview.comment}
                     onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
@@ -815,14 +849,69 @@ const ServiceDetailPage = () => {
                       {newReview.comment.length}/500 ký tự
                     </small>
                   </div>
-                                      <button type="submit" disabled={isSubmitting} style={{ backgroundColor: '#28a745', color: 'white', padding: '10px 20px', border: 'none', borderRadius: 5, fontWeight: 'bold', cursor: 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
-                      {isSubmitting ? 'Đang gửi...' : 'Gửi Đánh Giá'}
-                    </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    style={{
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      padding: '12px 24px',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                      opacity: isSubmitting ? 0.7 : 1,
+                      fontSize: '1rem',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 2px 8px rgba(40, 167, 69, 0.2)',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSubmitting) {
+                        e.target.style.backgroundColor = '#218838';
+                        e.target.style.transform = 'translateY(-2px)';
+                        e.target.style.boxShadow = '0 4px 15px rgba(40, 167, 69, 0.3)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSubmitting) {
+                        e.target.style.backgroundColor = '#28a745';
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 2px 8px rgba(40, 167, 69, 0.2)';
+                      }
+                    }}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin me-2"></i>
+                        Đang gửi...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-paper-plane me-2"></i>
+                        Gửi Đánh Giá
+                      </>
+                    )}
+                  </button>
                 </form>
               ) : (
                 <div style={{ padding: '20px', textAlign: 'center', background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 5 }}>
                   <p style={{ margin: 0 }}>
-                    Vui lòng <Link to="/login" style={{ fontWeight: 'bold', color: '#d6336c' }}>đăng nhập</Link>  để lại đánh giá.
+                    Vui lòng <button
+                      onClick={() => {
+                        const loginModal = new window.bootstrap.Modal(document.getElementById('loginModal'));
+                        loginModal.show();
+                      }}
+                      style={{
+                        background: 'none',
+                        color: '#d6336c',
+                        border: 'none',
+                        fontSize: '1rem'
+                      }}
+                    >
+                      Đăng nhập
+                    </button>  để lại đánh giá.
                   </p>
                 </div>
               )}
@@ -840,9 +929,9 @@ const ServiceDetailPage = () => {
             </div>
             {currentReviews.length > 0 ? (
               currentReviews.map((r) => (
-                <div key={r.id} style={{ 
-                  borderBottom: '1px solid #f0f0f0', 
-                  paddingBottom: 20, 
+                <div key={r.id} style={{
+                  borderBottom: '1px solid #f0f0f0',
+                  paddingBottom: 20,
                   marginBottom: 20,
                   background: 'white',
                   borderRadius: '12px',
@@ -896,11 +985,11 @@ const ServiceDetailPage = () => {
                             <strong style={{ color: '#d6336c', fontSize: '1.1rem', display: 'block' }}>{r.authorName}</strong>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
                               <span style={{ color: '#f5a623', fontSize: '1.1rem' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
-                              <span style={{ 
-                                background: '#f5f5f5', 
-                                color: '#666', 
-                                padding: '2px 8px', 
-                                borderRadius: '10px', 
+                              <span style={{
+                                background: '#f5f5f5',
+                                color: '#666',
+                                padding: '2px 8px',
+                                borderRadius: '10px',
                                 fontSize: '0.8rem',
                                 fontWeight: '500'
                               }}>
@@ -965,16 +1054,16 @@ const ServiceDetailPage = () => {
                         margin: '10px 0',
                         border: '1px solid #f0f0f0'
                       }}>
-                        <p style={{ 
-                          margin: 0, 
-                          color: '#333', 
+                        <p style={{
+                          margin: 0,
+                          color: '#333',
                           fontSize: '1rem',
                           lineHeight: '1.6'
                         }}>{r.comment}</p>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                        <small style={{ 
-                          color: '#888', 
+                        <small style={{
+                          color: '#888',
                           fontSize: '0.9rem',
                           display: 'flex',
                           alignItems: 'center',
@@ -984,9 +1073,9 @@ const ServiceDetailPage = () => {
                           {new Date(r.createdAt).toLocaleString('vi-VN')}
                         </small>
                       </div>
-                      
+
                       {/* REPLY FORM REMOVED - Staff replies managed via admin panel */}
-                      
+
                       {/* HIỂN THỊ TẤT CẢ BUSINESS REPLIES */}
                       {r.replies && renderReplies(r.replies)}
                     </>
@@ -1000,12 +1089,12 @@ const ServiceDetailPage = () => {
 
             {/* Pagination UI */}
             {totalPages > 1 && (
-              <div style={{ 
-                marginTop: 30, 
-                paddingTop: 20, 
-                borderTop: '1px solid #f0f0f0', 
-                display: 'flex', 
-                justifyContent: 'center', 
+              <div style={{
+                marginTop: 30,
+                paddingTop: 20,
+                borderTop: '1px solid #f0f0f0',
+                display: 'flex',
+                justifyContent: 'center',
                 alignItems: 'center',
                 gap: '10px'
               }}>
@@ -1107,7 +1196,7 @@ const ServiceDetailPage = () => {
         </div>
 
       </div>
-      
+
       {/* Custom CSS for hover effects */}
       <style jsx>{`
         .related-service-card:hover .hover-icon {

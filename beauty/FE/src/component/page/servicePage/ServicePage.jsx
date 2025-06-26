@@ -318,6 +318,9 @@ const ServicePage = () => {
                                   onMouseEnter={(e) => {
                                     e.target.setAttribute('style', 'border: 1px solid grey !important; box-shadow: 0 4px 4px rgb(165 136 138 / 98%) !important;');
                                   }}
+                                  onMouseLeave={(e) => {
+                                    e.target.setAttribute('style', 'border: 2px solid #FDB5B9 !important; box-shadow: none !important;');
+                                  }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >
                                   Đặt Lịch
@@ -379,6 +382,12 @@ const ServicePage = () => {
                                         appointmentSection.scrollIntoView({ behavior: 'smooth' });
                                       }
                                     }, 100);
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.target.setAttribute('style', 'border: 1px solid grey !important; box-shadow: 0 4px 4px rgb(165 136 138 / 98%) !important;');
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.setAttribute('style', 'border: 2px solid #FDB5B9 !important; box-shadow: none !important;');
                                   }}
                                   className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
                                 >

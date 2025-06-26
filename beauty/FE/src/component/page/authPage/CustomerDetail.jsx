@@ -258,7 +258,7 @@ const CustomerDetail = () => {
             <Header />
             {/* Hero Section với gradient đẹp */}
             <div className="container-fluid py-5" style={{
-                background: 'linear-gradient(135deg,#FCB2B9 0%,rgb(192, 112, 136) 100%)',
+                background: 'linear-gradient(135deg, #FDB5B9 0%,rgb(211, 177, 187) 100%)',
                 position: 'relative',
                 overflow: 'hidden'
             }}>

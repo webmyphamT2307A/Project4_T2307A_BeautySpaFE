@@ -1037,7 +1037,7 @@ const ServiceHistoryPage = () => {
                                 ? 'Đây là danh sách lịch hẹn và dịch vụ của bạn tại spa của chúng tôi.'
                                 : 'Tra cứu lịch hẹn bằng số điện thoại (dành cho khách chưa đăng nhập).'}
                         </p>
-                        {userInfo && (
+                        {/* {userInfo && (
                             <div className="alert alert-info" role="alert">
                                 <i className="fas fa-info-circle me-2"></i>
                                 <strong>Lưu ý:</strong> Bạn có thể hủy các lịch hẹn sắp tới bằng cách nhấn nút "Hủy Lịch" trong bảng bên dưới.
@@ -1048,7 +1048,7 @@ const ServiceHistoryPage = () => {
                                     Chỉ hiển thị lịch hẹn hợp lệ (có giá tiền lớn hơn 0, tên dịch vụ và nhân viên không phải N/A).
                                 </small>
                             </div>
-                        )}
+                        )} */}
 
 
                         {/* Thông báo tự động tra cứu */}
@@ -1168,7 +1168,7 @@ const ServiceHistoryPage = () => {
                                                 disabled={isLoading || !lookupIdentifier.trim() || phoneError}
                                                 style={{
                                                     fontSize: '1.1rem',
-                                                    background: 'linear-gradient(135deg, #FDB5B9 0%, #F7A8B8 100%)',
+                                                    background: 'linear-gradient(135deg, #FDB5B9 0%,rgb(251, 164, 182) 100%)',
                                                     color: 'black',
                                                     boxShadow: '0 8px 25px rgba(253, 181, 185, 0.3)',
                                                     transition: 'all 0.3s ease',
