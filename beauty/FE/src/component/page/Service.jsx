@@ -62,8 +62,8 @@ const Service = () => {
               return (
                 <div className="col-lg-6" key={service.id}>
                   <div className={`services-item bg-light border-4 ${isEven ? 'border-end' : 'border-start'} border-primary rounded p-4`}
-                       onMouseEnter={() => setHoveredIndex(index)}
-                       onMouseLeave={() => setHoveredIndex(null)}
+                    onMouseEnter={() => setHoveredIndex(index)}
+                    onMouseLeave={() => setHoveredIndex(null)}
                   >
                     <div className="row align-items-center">
                       {isEven ? (
@@ -93,7 +93,12 @@ const Service = () => {
                                     }
                                   }, 100);
                                 }}
-                                isHovered={hoveredIndex === index}
+                                onMouseEnter={(e) => {
+                                  e.target.setAttribute('style', 'border: 1px solid grey !important; box-shadow: 0 4px 4px rgb(165 136 138 / 98%) !important;');
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.setAttribute('style', 'border: 2px solid #FDB5B9 !important; box-shadow: none !important;');
+                                }}
                               />
                             </div>
                           </div>
@@ -165,7 +170,12 @@ const Service = () => {
                                     }
                                   }, 100);
                                 }}
-                                isHovered={hoveredIndex === index}
+                                onMouseEnter={(e) => {
+                                  e.target.setAttribute('style', 'border: 1px solid grey !important; box-shadow: 0 4px 4px rgb(165 136 138 / 98%) !important;');
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.setAttribute('style', 'border: 2px solid #FDB5B9 !important; box-shadow: none !important;');
+                                }}
                               />
                             </div>
                           </div>
