@@ -1130,22 +1130,6 @@ const Appointment = () => {
                                                 </span>
                                             </div>
 
-                                            {/* Review Link */}
-                                            <div className="text-center mb-3">
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-link p-0 text-decoration-none"
-                                                    style={{ fontSize: '0.7rem', color: '#ffc107', border: 'none', background: 'none' }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/staff-review/${staff.id}`);
-                                                    }}
-                                                >
-                                                    <i className="fas fa-star me-1"></i>
-                                                    Xem đánh giá
-                                                </button>
-                                            </div>
-
                                             {/* Select Button */}
                                             <button
                                                 type="button"
