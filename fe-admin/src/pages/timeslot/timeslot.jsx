@@ -32,6 +32,7 @@ const API_URL = 'http://localhost:8080/api/v1/timeslot';
 
 const TimeSlotManagement = () => {
   const [timeslots, setTimeslots] = useState([]);
+  const [filteredTimeslots, setFilteredTimeslots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -42,10 +43,23 @@ const TimeSlotManagement = () => {
     endTime: '',
     shift: ''
   });
+  const [shiftFilter, setShiftFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('active');
 
   useEffect(() => {
     fetchTimeSlots();
   }, []);
+
+  useEffect(() => {
+    let results = [...timeslots];
+    if (shiftFilter !== 'all') {
+      results = results.filter((ts) => ts.shift === shiftFilter);
+    }
+    if (statusFilter !== 'all') {
+      results = results.filter((ts) => ts.isActive === (statusFilter === 'active'));
+    }
+    setFilteredTimeslots(results);
+  }, [timeslots, shiftFilter, statusFilter]);
 
   const fetchTimeSlots = () => {
     setLoading(true);
@@ -59,8 +73,8 @@ const TimeSlotManagement = () => {
       })
       .then((data) => {
         if (data.status === 'SUCCESS') {
-          // Lọc ra các timeslot đang active để hiển thị ban đầu
-          setTimeslots(data.data.filter(t => t.isActive).sort((a, b) => a.slotId - b.slotId));
+          // Lấy tất cả timeslot, không lọc ở đây
+          setTimeslots(data.data.sort((a, b) => a.slotId - b.slotId));
         } else {
           throw new Error(data.message || 'Failed to fetch timeslots');
         }
@@ -151,10 +165,28 @@ const TimeSlotManagement = () => {
 
   return (
     <MainCard title="Quản Lý Khung Giờ">
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Button variant="contained" startIcon={<PlusOutlined />} onClick={handleOpenCreateDialog}>
           Tạo Khung Giờ Mới
         </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+                <InputLabel>Ca làm việc</InputLabel>
+                <Select value={shiftFilter} label="Ca làm việc" onChange={(e) => setShiftFilter(e.target.value)}>
+                    <MenuItem value="all">Tất cả</MenuItem>
+                    <MenuItem value="Sáng">Sáng</MenuItem>
+                    <MenuItem value="Chiều">Chiều</MenuItem>
+                </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+                <InputLabel>Trạng thái</InputLabel>
+                <Select value={statusFilter} label="Trạng thái" onChange={(e) => setStatusFilter(e.target.value)}>
+                    <MenuItem value="all">Tất cả</MenuItem>
+                    <MenuItem value="active">Đang hoạt động</MenuItem>
+                    <MenuItem value="inactive">Đã xóa</MenuItem>
+                </Select>
+            </FormControl>
+        </Box>
       </Box>
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
@@ -176,7 +208,7 @@ const TimeSlotManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {timeslots.map((timeslot) => (
+              {filteredTimeslots.map((timeslot) => (
                 <TableRow key={timeslot.slotId} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                   <TableCell>#{timeslot.slotId}</TableCell>
                   <TableCell>{timeslot.shift}</TableCell>
