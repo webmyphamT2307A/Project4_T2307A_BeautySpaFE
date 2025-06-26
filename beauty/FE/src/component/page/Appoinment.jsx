@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
@@ -24,6 +24,7 @@ const validateVietnamesePhone = (phone) => {
 
 const Appointment = () => {
     const navigate = useNavigate();
+    const datePickerRef = useRef(null);
 
     // Step management
     const [currentStep, setCurrentStep] = useState(1);
@@ -798,18 +799,26 @@ const Appointment = () => {
                     <label className="form-label text-white fw-bold">
                         <i className="fas fa-calendar me-2"></i>Chọn Ngày *
                     </label>
-                    <DatePicker
-                        locale="vi"
-                        dateFormat="dd/MM/yyyy"
-                        selected={formData.appointmentDate ? new Date(formData.appointmentDate.replace(/-/g, "/")) : null}
-                        onChange={handleDateChange}
-                        minDate={new Date()}
-                        className="form-control py-2 border-white bg-transparent text-white"
-                        placeholderText="dd/MM/yyyy"
-                        wrapperClassName="w-100"
-                        calendarClassName="custom-calendar" // for custom styling
-                        popperPlacement="bottom-end"
-                    />
+                    <div className="position-relative">
+                        <DatePicker
+                            ref={datePickerRef}
+                            locale="vi"
+                            dateFormat="dd/MM/yyyy"
+                            selected={formData.appointmentDate ? new Date(formData.appointmentDate.replace(/-/g, "/")) : null}
+                            onChange={handleDateChange}
+                            minDate={new Date()}
+                            className="form-control py-2 border-white bg-transparent text-white"
+                            placeholderText="dd/MM/yyyy"
+                            wrapperClassName="w-100"
+                            calendarClassName="custom-calendar" // for custom styling
+                            popperPlacement="bottom-end"
+                        />
+                        <i
+                            className="fas fa-calendar-alt text-white-50 position-absolute top-50 end-0 translate-middle-y me-3"
+                            style={{ cursor: 'pointer', zIndex: 3 }}
+                            onClick={() => datePickerRef.current && datePickerRef.current.setOpen(true)}
+                        ></i>
+                    </div>
                 </div>
 
                 <div className="col-12">

@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 
 // style.scss
 import 'assets/style.css';
@@ -33,6 +34,7 @@ import '@fontsource/public-sans/700.css';
 
 // project imports
 import App from './App';
+import { AuthProvider } from 'contexts/AuthContext';
 import reportWebVitals from './reportWebVitals';
 
 const container = document.getElementById('root');
@@ -40,7 +42,13 @@ const root = createRoot(container);
 
 // ==============================|| MAIN - REACT DOM RENDER ||============================== //
 
-root.render(<App />);
+root.render(
+  <BrowserRouter basename="/staff">
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </BrowserRouter>
+);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
