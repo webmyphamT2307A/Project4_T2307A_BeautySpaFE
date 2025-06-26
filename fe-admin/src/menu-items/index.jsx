@@ -15,7 +15,7 @@ import review from './review';
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [dashboard, pages, account, spa, role, userschedule,feedback, review, salary]
+  items: [dashboard, pages, account, spa, role,timeslot, userschedule,feedback, review, salary]
 };
 
 export default menuItems;
