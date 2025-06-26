@@ -11,6 +11,7 @@ import usePrivateRoute from './../hooks/usePrivateRoute';
 import SalaryManagement from '../pages/salary/salary';
 import ReviewList from '../pages/review/review';
 import FeedbackManager from '../pages/feedback/feedback';
+import TimeSlotManagement from '../pages/timeslot/timeslot';
 import path from 'path';
 
 // render- Dashboard
@@ -112,6 +113,10 @@ const MainRoutes = {
         element: <ProtectedRoute element={<FeedbackManager />} />
       }
     ]
+  },
+  {
+    path: 'timeslot',
+    element: <ProtectedRoute element={<TimeSlotManagement />} />
   },
     {
       path: 'typography',
