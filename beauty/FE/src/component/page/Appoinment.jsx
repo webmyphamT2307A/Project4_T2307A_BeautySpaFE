@@ -3,6 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { vi } from 'date-fns/locale/vi';
+import { format } from 'date-fns';
+
+registerLocale('vi', vi);
+
+const CustomDateInput = React.forwardRef(({ value, onClick, placeholder }, ref) => (
+    <div className="input-group" onClick={onClick} ref={ref} style={{ cursor: 'pointer' }}>
+        <input
+            type="text"
+            className="form-control py-2 border-white bg-transparent text-white"
+            value={value}
+            placeholder={placeholder}
+            readOnly
+            style={{ height: '45px' }}
+        />
+        <span className="input-group-text bg-transparent border-white text-white">
+            <i className="fas fa-calendar-alt"></i>
+        </span>
+    </div>
+));
 
 const validateVietnamesePhone = (phone) => {
     const cleanPhone = phone.replace(/[\s-().]/g, '');
@@ -360,6 +382,13 @@ const Appointment = () => {
             newFormData.price = selectedService ? selectedService.price : '';
         }
         setFormData(newFormData);
+    };
+
+    const handleDateChange = (date) => {
+        // Backend expects 'yyyy-MM-dd'
+        const formattedDate = date ? format(date, 'yyyy-MM-dd') : '';
+        setFormData(prev => ({ ...prev, appointmentDate: formattedDate }));
+        validateField('appointmentDate', formattedDate);
     };
 
     const handleStaffSelect = (staffId, event) => {
@@ -785,20 +814,17 @@ const Appointment = () => {
                     <label className="form-label text-white fw-bold">
                         <i className="fas fa-calendar me-2"></i>Chọn Ngày *
                     </label>
-                    <div className="input-group">
-                        <input
-                            type="date"
-                            name="appointmentDate"
-                            value={formData.appointmentDate}
-                            onChange={handleInputChange}
-                            className="form-control py-2 border-white bg-transparent text-white custom-date-picker"
-                            min={new Date().toISOString().split("T")[0]}
-                            style={{ height: '45px' }}
-                        />
-                        <span className="input-group-text bg-transparent border-white text-white">
-                            <i className="fas fa-calendar-alt"></i>
-                        </span>
-                    </div>
+                    <DatePicker
+                        locale="vi"
+                        dateFormat="dd/MM/yyyy"
+                        selected={formData.appointmentDate ? new Date(formData.appointmentDate.replace(/-/g, "/")) : null}
+                        onChange={handleDateChange}
+                        minDate={new Date()}
+                        customInput={<CustomDateInput placeholder="dd/MM/yyyy" />}
+                        wrapperClassName="w-100"
+                        calendarClassName="custom-calendar" // for custom styling
+                        popperPlacement="bottom-end"
+                    />
                 </div>
 
                 <div className="col-12">
