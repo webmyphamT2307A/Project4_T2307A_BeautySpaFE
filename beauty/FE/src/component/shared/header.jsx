@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import sessionManager from '../../utils/sessionManager';
 import SessionTimer from './SessionTimer';
+import { toast } from 'react-toastify';
 
 const Header = () => {
     // Khởi tạo hook useNavigate và useLocation
@@ -67,7 +68,7 @@ const Header = () => {
                 setServicesData(response.data.data);
             }
         } catch (error) {
-            console.error('Error fetching services:', error);
+            // console.error('Error fetching services:', error);
         }
     };
 
@@ -200,20 +201,51 @@ const Header = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        
+        // Validate input
+        if (!email.trim() || !password.trim()) {
+            toast.error('Vui lòng nhập đầy đủ email và mật khẩu!', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
+            return;
+        }
+
+        // Show loading toast
+        const loadingToast = toast.loading('Đang đăng nhập...', {
+            position: "top-right"
+        });
+
         try {
             const response = await axios.post('http://localhost:8080/api/v1/customer/login', {
                 email,
                 password
             });
+            
             const responseData = response.data;
+            
             if (responseData.status === 'SUCCESS') {
                 const customerData = responseData.data.customer;
                 let token = responseData.data.token;
 
                 if (!token || token.split('.').length !== 3) {
-                    alert('Token không hợp lệ từ server!');
+                    toast.update(loadingToast, {
+                        render: 'Token không hợp lệ từ server!',
+                        type: "error",
+                        isLoading: false,
+                        autoClose: 3000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                    });
                     return;
                 }
+                
                 token = token.trim();
 
                 localStorage.setItem('userInfo', JSON.stringify({
@@ -225,13 +257,61 @@ const Header = () => {
                 // Kích hoạt session manager khi đăng nhập thành công
                 sessionManager.onUserLogin();
 
-                // Dùng window.location.href để tải lại toàn bộ trang, cập nhật trạng thái login
-                window.location.href = "/CustomerDetail";
+                // Success toast
+                toast.update(loadingToast, {
+                    render: `Chào mừng ${customerData.fullName || 'bạn'}! Đăng nhập thành công! 🎉`,
+                    type: "success",
+                    isLoading: false,
+                    autoClose: 2000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                });
+
+                // Clear form
+                setEmail('');
+                setPassword('');
+
+                // Close modal
+                const modalElement = document.getElementById('loginModal');
+                const modal = window.bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+
+                // Delay navigation to show success message
+                setTimeout(() => {
+                    window.location.href = "/CustomerDetail";
+                }, 1500);
 
             }
         } catch (error) {
-            console.error('Error logging in:', error);
-            alert('Email hoặc mật khẩu không chính xác!');
+            // console.error('Error logging in:', error);
+            
+            let errorMessage = 'Email hoặc mật khẩu không chính xác!';
+            
+            // Handle specific error messages
+            if (error.response?.status === 401) {
+                errorMessage = 'Email hoặc mật khẩu không đúng!';
+            } else if (error.response?.status === 404) {
+                errorMessage = 'Tài khoản không tồn tại!';
+            } else if (error.response?.status === 403) {
+                errorMessage = 'Tài khoản đã bị khóa!';
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            }
+
+            toast.update(loadingToast, {
+                render: errorMessage,
+                type: "error",
+                isLoading: false,
+                autoClose: 4000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
         }
     };
 
@@ -245,20 +325,144 @@ const Header = () => {
     const handleRegister = async (e) => {
         e.preventDefault();
         setRegisterMessage('');
+        
+        // Validate input
+        if (!registerInfo.fullName.trim()) {
+            toast.error('Vui lòng nhập họ và tên!', {
+                position: "top-right",
+                autoClose: 3000,
+            });
+            return;
+        }
+        
+        if (!registerInfo.email.trim()) {
+            toast.error('Vui lòng nhập email!', {
+                position: "top-right",
+                autoClose: 3000,
+            });
+            return;
+        }
+        
+        if (!registerInfo.password.trim()) {
+            toast.error('Vui lòng nhập mật khẩu!', {
+                position: "top-right",
+                autoClose: 3000,
+            });
+            return;
+        }
+
+        // Password strength validation
+        if (registerInfo.password.length < 6) {
+            toast.error('Mật khẩu phải có ít nhất 6 ký tự!', {
+                position: "top-right",
+                autoClose: 3000,
+            });
+            return;
+        }
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(registerInfo.email)) {
+            toast.error('Email không đúng định dạng!', {
+                position: "top-right",
+                autoClose: 3000,
+            });
+            return;
+        }
+
+        // Show loading toast
+        const loadingToast = toast.loading('Đang tạo tài khoản...', {
+            position: "top-right"
+        });
+
         try {
             const response = await axios.post('http://localhost:8080/api/v1/customer/register', registerInfo);
+            
             if (response.data.status === 'SUCCESS') {
-                setRegisterMessage('Đăng ký thành công! Vui lòng đăng nhập.');
-                setRegisterInfo({ fullName: '', email: '', password: '', phone: '', address: '' });
+                // Success toast
+                toast.update(loadingToast, {
+                    render: 'Đăng ký thành công! 🎉 Vui lòng đăng nhập để tiếp tục.',
+                    type: "success",
+                    isLoading: false,
+                    autoClose: 4000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                });
+
+                // Clear form
+                setRegisterInfo({ 
+                    fullName: '', 
+                    email: '', 
+                    password: '', 
+                    phone: '', 
+                    address: '' 
+                });
+
+                // Close register modal and open login modal
+                setTimeout(() => {
+                    const registerModalElement = document.getElementById('registerModal');
+                    const registerModal = window.bootstrap.Modal.getInstance(registerModalElement);
+                    if (registerModal) {
+                        registerModal.hide();
+                    }
+                    
+                    // Auto-fill email in login form
+                    setEmail(response.data.data?.email || registerInfo.email);
+                    
+                    setTimeout(() => {
+                        const loginModalElement = document.getElementById('loginModal');
+                        const loginModal = new window.bootstrap.Modal(loginModalElement);
+                        loginModal.show();
+                    }, 500);
+                }, 1000);
+                
             } else {
+                toast.update(loadingToast, {
+                    render: response.data.message || 'Đăng ký thất bại!',
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 4000,
+                });
                 setRegisterMessage(response.data.message || 'Đăng ký thất bại!');
             }
         } catch (error) {
-            setRegisterMessage(error.response?.data?.message || 'Đăng ký thất bại!');
+            // console.error('Register error:', error);
+            
+            let errorMessage = 'Đăng ký thất bại! Vui lòng thử lại.';
+            
+            // Handle specific error messages
+            if (error.response?.status === 409) {
+                errorMessage = 'Email đã được sử dụng! Vui lòng chọn email khác.';
+            } else if (error.response?.status === 400) {
+                errorMessage = 'Thông tin không hợp lệ! Vui lòng kiểm tra lại.';
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            }
+
+            toast.update(loadingToast, {
+                render: errorMessage,
+                type: "error",
+                isLoading: false,
+                autoClose: 4000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
+            
+            setRegisterMessage(errorMessage);
         }
     };
 
     const handleLogout = () => {
+        // Show logout toast
+        toast.info('Đang đăng xuất...', {
+            position: "top-right",
+            autoClose: 1500,
+        });
+
         // IMMEDIATE logout - no waiting, no delays
         // Clear all user data instantly
         localStorage.removeItem('userInfo');
@@ -268,8 +472,18 @@ const Header = () => {
         // Update state immediately
         setUserInfo(null);
 
+        // Success logout toast
+        setTimeout(() => {
+            toast.success('Đã đăng xuất thành công! Hẹn gặp lại! 👋', {
+                position: "top-right",
+                autoClose: 2000,
+            });
+        }, 500);
+
         // Redirect immediately to home page
-        window.location.href = '/';
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 1000);
 
         // Call logout API in background after redirect (fire and forget)
         setTimeout(() => {
@@ -283,7 +497,7 @@ const Header = () => {
                     },
                     body: JSON.stringify({})
                 }).catch(error => {
-                    console.error('Background logout API call failed:', error);
+                    // console.error('Background logout API call failed:', error);
                 });
             }
         }, 100);
@@ -298,7 +512,7 @@ const Header = () => {
                             <div className="col-lg-8">
                                 <div className="d-flex flex-wrap">
                                     <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Tìm Địa Điểm</a>
-                                    <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+01234567890</a>
+                                    <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+09150011110</a>
                                     <a href="#"><i className="fas fa-envelope me-2" />info@sparlex.com</a>
                                 </div>
                             </div>
@@ -445,16 +659,16 @@ const Header = () => {
                                             <a href="#" className="nav-link dropdown-toggle d-flex align-items-center p-2 rounded-pill" data-bs-toggle="dropdown" style={{
                                                 border: '2px solid #FDB5B9',
                                                 transition: 'all 0.3s ease',
-                                                background: 'rgba(253, 181, 185, 0.1)'
+                                                background: 'rgba(255, 228, 230, 0.1)'
                                             }}
                                                 onMouseEnter={(e) => {
-                                                    e.target.style.background = 'rgba(253, 181, 185, 0.2)';
+                                                    e.target.style.background = 'rgba(255, 240, 241, 0.2)';
                                                     e.target.style.borderColor = '#F7A8B8';
                                                     e.target.style.transform = 'translateY(-2px)';
                                                     e.target.style.boxShadow = '0 4px 12px rgba(253, 181, 185, 0.3)';
                                                 }}
                                                 onMouseLeave={(e) => {
-                                                    e.target.style.background = 'rgba(253, 181, 185, 0.1)';
+                                                    e.target.style.background = 'rgba(255, 240, 241, 0.1)';
                                                     e.target.style.borderColor = '#FDB5B9';
                                                     e.target.style.transform = 'translateY(0)';
                                                     e.target.style.boxShadow = 'none';
@@ -476,7 +690,7 @@ const Header = () => {
                                                 </span>
                                             </a>
                                             <div className="dropdown-menu m-0 bg-white rounded-3 shadow-lg border-0" style={{ minWidth: '200px', marginTop: '10px !important' }}>
-                                                <Link to="/CustomerDetail" className="dropdown-item py-2 px-3 d-flex align-items-center" style={{ fontWeight: '500' }}>
+                                                <Link to="/CustomerDetail" className="dropdown-item py-2 px-3 d-flex align-items-center" style={{ fontWeight: '500', color: '#333'}}>
                                                     <i className="fas fa-user-circle me-2" style={{ color: '#FDB5B9' }}></i>
                                                     Thông tin cá nhân
                                                 </Link>

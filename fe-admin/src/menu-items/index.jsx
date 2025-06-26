@@ -16,6 +16,7 @@ import review from './review';
 
 const menuItems = {
   items: [dashboard, pages, account, spa, role, userschedule,timeslot,feedback, review, salary, utilities, support]
+
 };
 
 export default menuItems;

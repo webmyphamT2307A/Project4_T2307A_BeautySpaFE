@@ -12,7 +12,7 @@ const useAuth = () => {
                 return { isAuthenticated: true, user: JSON.parse(userString), token };
             }
         } catch (error) {
-            console.error("Failed to parse user data from localStorage", error);
+            // console.error("Failed to parse user data from localStorage", error);
             localStorage.removeItem('user');
             localStorage.removeItem('token');
         }
@@ -195,7 +195,7 @@ const Contact = () => {
         } catch (error) {
             const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
             setStatusMessage(errorMessage);
-            console.error("Error sending feedback:", error);
+            // console.error("Error sending feedback:", error);
         } finally {
             setIsSubmitting(false);
         }
@@ -319,7 +319,7 @@ const Contact = () => {
                                             style={{
                                                 background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%)',
                                                 border: 'none',
-                                                color: 'white',
+                                                color: 'black',
                                                 fontWeight: '600',
                                                 borderRadius: '25px',
                                                 transition: 'all 0.3s ease',
@@ -370,7 +370,7 @@ const Contact = () => {
                                     marginBottom: '-6px',
                                     filter: 'brightness(1.1) contrast(1.1) saturate(1.2)',
                                 }}
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.324408746655!2d106.69749831533343!3d10.78231859230824!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f38f9ed887b%3A0x14aded5703768989!2zQsOgaSBYw6AgRHXDom4gQ2jDrG0!5e0!3m2!1svi!2s!4v1645678901234!5m2!1svi!2s"
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d5369.899261663397!2d105.83506300373577!3d21.005383253191777!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ac778d04e3e1%3A0xd211a8690f6ae0d1!2zMjIgxJAuIEdp4bqjaSBQaMOzbmcsIFBoxrDGoW5nIE1haSwgxJDhu5FuZyDEkGEsIEjDoCBO4buZaSwgVmlldG5hbQ!5e0!3m2!1sen!2s!4v1750920564839!5m2!1sen!2s"
                                 loading="lazy"
                                 referrerPolicy="no-referrer-when-downgrade"
                             />

@@ -179,7 +179,7 @@ const ContactPage = () => {
                 }
             }
         } catch (error) {
-            console.error('Error sending feedback:', error);
+            // console.error('Error sending feedback:', error);
             if (error.response?.status === 400) {
                 setMessage('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin');
             } else if (error.response?.status === 500) {
@@ -310,7 +310,7 @@ const ContactPage = () => {
                                                 style={{ 
                                                     background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%, #fee2e2 100%)',
                                                     border: 'none',
-                                                    color: 'white',
+                                                    color: 'black',
                                                     fontWeight: '600',
                                                     borderRadius: '25px',
                                                     transition: 'all 0.3s ease',
@@ -354,7 +354,7 @@ const ContactPage = () => {
                                         <i className="fas fa-map-marker-alt fa-2x me-4" style={{ color: '#fdb5b9' }} />
                                         <div>
                                             <h4>Địa Chỉ</h4>
-                                            <p className="mb-0">123 Đường ABC, Quận 1, TP.HCM</p>
+                                            <p className="mb-0">22 Giải Phóng, Hai Bà Trưng, Hà Nội</p>
                                         </div>
                                     </div>
                                 </div>
@@ -378,7 +378,7 @@ const ContactPage = () => {
                                         <i className="fa fa-phone-alt fa-2x me-4" style={{ color: '#fdb5b9' }} />
                                         <div>
                                             <h4>Điện Thoại</h4>
-                                            <p className="mb-0">(+84) 0123456789</p>
+                                            <p className="mb-0">(+84) 0915001111</p>
                                         </div>
                                     </div>
                                 </div>
@@ -386,7 +386,7 @@ const ContactPage = () => {
                         </div>
                         <div className="col-12">
                             <div className="rounded">
-                                <iframe className="rounded-top w-100" style={{ height: 450, marginBottom: '-6px' }} src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.324408746655!2d106.69749831533343!3d10.78231859230824!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f38f9ed887b%3A0x14aded5703768989!2zQsOgaSBYw6AgRHXDom4gQ2jDrG0!5e0!3m2!1svi!2s!4v1645678901234!5m2!1svi!2s" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                                <iframe className="rounded-top w-100" style={{ height: 450, marginBottom: '-6px' }} src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d5369.899261663397!2d105.83506300373577!3d21.005383253191777!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ac778d04e3e1%3A0xd211a8690f6ae0d1!2zMjIgxJAuIEdp4bqjaSBQaMOzbmcsIFBoxrDGoW5nIE1haSwgxJDhu5FuZyDEkGEsIEjDoCBO4buZaSwgVmlldG5hbQ!5e0!3m2!1sen!2s!4v1750920564839!5m2!1sen!2s" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
                             </div>
                             <div className=" text-center p-4 rounded-bottom" style={{
                                 background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%, #fee2e2 100%)'
