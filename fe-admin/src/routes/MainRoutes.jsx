@@ -12,6 +12,7 @@ import SalaryManagement from '../pages/salary/salary';
 import ReviewList from '../pages/review/review';
 import FeedbackManager from '../pages/feedback/feedback';
 import path from 'path';
+import SkillManagement from '../pages/spa/skill';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
@@ -71,6 +72,10 @@ const MainRoutes = {
         {
           path: 'service',
           element: <ProtectedRoute element={<RoleManger />} />
+        },
+        {
+          path: 'skill',
+          element: <ProtectedRoute element={<SkillManagement />} />
         }
       ]
     },
