@@ -227,65 +227,47 @@ const AdminAccount = () => {
     const url = isUpdate ? `${API_URL}/update/${currentUser.id}` : `${API_URL}/create`;
     const method = isUpdate ? 'PUT' : 'POST';
   
+    // Đảm bảo payload luôn lấy dữ liệu mới nhất từ formData
     const payload = {
       fullName: formData.fullName,
       email: formData.email,
       phone: formData.phone,
       address: formData.address,
       roleId: formData.role?.id,
-      imageUrl: formData.imageUrl,
+      imageUrl: formData.imageUrl, // Lấy trực tiếp từ formData
       skills: formData.skills,
       isActive: formData.isActive
     };
   
     if (isUpdate) {
-      if (formData.password) payload.password = formData.password;
+      if (formData.password) {
+        payload.password = formData.password;
+      }
     } else {
       payload.password = formData.password;
     }
     
-    // =============================================================
-    // THÊM DÒNG NÀY VÀO ĐỂ KIỂM TRA DỮ LIỆU TRƯỚC KHI GỬI
     console.log('DỮ LIỆU GỬI ĐI KHI NHẤN LƯU:', payload);
-    // =============================================================
-  
+
     try {
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Cookies.get('token')}`,
+        },
         body: JSON.stringify(payload)
       });
-
-      const result = await res.json();
-      if (res.ok) {
-        toast.success(result.message || (isUpdate ? 'Cập nhật thành công!' : 'Tạo mới thành công!'));
-        fetchUsers();
+      const data = await res.json();
+      if (data.status === "SUCCESS") {
+        toast.success(isUpdate ? 'Cập nhật tài khoản thành công!' : 'Tạo tài khoản thành công!');
         handleClose();
-
-        if (!isUpdate && result.token && result.user && result.roleName) {
-          const { token, user, roleName } = result;
-          if (roleName === 'ROLE_ADMIN') {
-            Cookies.set('admin_token', token, { path: '/admin', sameSite: 'Strict', expires: 7 });
-            Cookies.set('admin_role', roleName, { path: '/admin', sameSite: 'Strict', expires: 7 });
-            Cookies.set('admin_userId', user.id, { path: '/admin', sameSite: 'Strict', expires: 7 });
-            console.log('Admin cookie set:', Cookies.get('admin_token'), Cookies.get('admin_role'));
-          } else if (roleName === 'ROLE_STAFF') {
-            Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
-            Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
-            Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 });
-            console.log('Staff cookie set:', Cookies.get('staff_token'), Cookies.get('staff_role'), Cookies.get('staff_userId'));
-          } else if (roleName === 'ROLE_MANAGER') {
-            Cookies.set('manager_token', token, { path: '/manager', sameSite: 'Strict', expires: 7 });
-            Cookies.set('manager_role', roleName, { path: '/manager', sameSite: 'Strict', expires: 7 });
-            Cookies.set('manager_userId', user.id, { path: '/manager', sameSite: 'Strict', expires: 7 });
-            console.log('Manager cookie set:', Cookies.get('manager_token'), Cookies.get('manager_role'), Cookies.get('manager_userId'));
-          }
-        }
+        fetchUsers();
       } else {
-        toast.error(result.message || (isUpdate ? 'Cập nhật thất bại!' : 'Tạo mới thất bại!'));
+        toast.error(data.message || `Đã xảy ra lỗi khi ${isUpdate ? 'cập nhật' : 'tạo'} tài khoản.`);
       }
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      toast.error('Không thể kết nối đến máy chủ.');
     }
   };
 
