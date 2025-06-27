@@ -24,7 +24,6 @@ import MainCard from 'components/MainCard';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Cookies from 'js-cookie';
-import { useAppointmentFilter } from 'contexts/AppointmentFilterContext';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
 const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
@@ -33,7 +32,6 @@ const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confi
 
 const AppointmentManagement = () => {
   // States
-  const { filter, setFilter } = useAppointmentFilter();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [userRole, setUserRole] = useState('');
@@ -52,26 +50,26 @@ const AppointmentManagement = () => {
     startDate: '',
     endDate: ''
   });
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Áp dụng filter từ Context khi nó thay đổi
+  // Đọc filter từ URL params khi component được tải
   useEffect(() => {
-    if (filter) {
-      if (filter.status) {
-        setStatusFilter(filter.status);
-      }
-      if (filter.dateFilter) {
-        setDateFilter(filter.dateFilter);
-      }
-      if (filter.serviceId) {
-        setServiceFilter(filter.serviceId);
-      }
-      if (filter.staffId) {
-        setStaffFilter(filter.staffId);
-      }
-      // Xóa filter trong context sau khi đã áp dụng để không bị lọc lại ở lần sau
-      setFilter(null);
+    const serviceId = searchParams.get('serviceId');
+    const staffId = searchParams.get('staffId');
+
+    if (serviceId) {
+      setServiceFilter(serviceId);
+      // Xóa param khỏi URL để không bị lọc lại ở lần sau
+      searchParams.delete('serviceId');
+      setSearchParams(searchParams, { replace: true });
     }
-  }, [filter, setFilter]);
+
+    if (staffId) {
+      setStaffFilter(staffId);
+      searchParams.delete('staffId');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []); // Chỉ chạy một lần khi component mount
 
   const [staffList, setStaffList] = useState([]);
   const [serviceList, setServiceList] = useState([]);
@@ -174,7 +172,6 @@ const AppointmentManagement = () => {
     }
 
     if (!token || (role !== 'ROLE_STAFF' && role !== 'ROLE_MANAGE')) {
-      console.error('Người dùng chưa đăng nhập hoặc không có quyền truy cập');
       if (!silent) toast.error('Vui lòng đăng nhập lại.');
       return;
     }
@@ -192,7 +189,6 @@ const AppointmentManagement = () => {
       }
 
       const data = await response.json();
-      console.log('🔍 Raw API Data:', data.data); // Debug log
       if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
         let mappedAppointments;
         if (role === 'ROLE_MANAGE') {
@@ -248,11 +244,6 @@ const AppointmentManagement = () => {
             },
           }));
         }
-        console.log('📧 Mapped Appointments with emails:', mappedAppointments.map(a => ({ 
-          id: a.appointment_id, 
-          customerName: a.customer.name, 
-          customerEmail: a.customer.email 
-        }))); // Debug log
         setAppointments(mappedAppointments);
         setFilteredAppointments(mappedAppointments);
       } else {
@@ -289,11 +280,11 @@ const AppointmentManagement = () => {
     }
 
     if (serviceFilter !== 'all') {
-        results = results.filter(appointment => appointment.service?.id === serviceFilter);
+        results = results.filter(appointment => appointment.service?.id == serviceFilter);
     }
 
     if (staffFilter !== 'all') {
-        results = results.filter(appointment => appointment.user?.id === staffFilter);
+        results = results.filter(appointment => appointment.user?.id == staffFilter);
     }
 
     // Apply date range filter
