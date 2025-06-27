@@ -46,6 +46,28 @@ const TimeSlotManagement = () => {
   const [shiftFilter, setShiftFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('active');
 
+  // Function to format time to 24h format (HH:MM)
+  const formatTime24h = (timeString) => {
+    if (!timeString) return '';
+    
+    // If already in HH:MM format, return as is
+    if (timeString.match(/^\d{2}:\d{2}$/)) {
+      return timeString;
+    }
+    
+    // If in HH:MM:SS format, return HH:MM
+    if (timeString.match(/^\d{2}:\d{2}:\d{2}$/)) {
+      return timeString.substring(0, 5);
+    }
+    
+    return timeString;
+  };
+
+  // Function to display time in 24h format
+  const displayTime = (timeString) => {
+    return formatTime24h(timeString);
+  };
+
   useEffect(() => {
     fetchTimeSlots();
   }, []);
@@ -73,8 +95,13 @@ const TimeSlotManagement = () => {
       })
       .then((data) => {
         if (data.status === 'SUCCESS') {
-          // Lấy tất cả timeslot, không lọc ở đây
-          setTimeslots(data.data.sort((a, b) => a.slotId - b.slotId));
+          // Format time to 24h when receiving data
+          const formattedData = data.data.map(slot => ({
+            ...slot,
+            startTime: formatTime24h(slot.startTime),
+            endTime: formatTime24h(slot.endTime)
+          }));
+          setTimeslots(formattedData.sort((a, b) => a.slotId - b.slotId));
         } else {
           throw new Error(data.message || 'Failed to fetch timeslots');
         }
@@ -103,8 +130,8 @@ const TimeSlotManagement = () => {
     setIsEditMode(true);
     setCurrentTimeslot({
         ...timeslot,
-        startTime: timeslot.startTime || '',
-        endTime: timeslot.endTime || '',
+        startTime: formatTime24h(timeslot.startTime) || '',
+        endTime: formatTime24h(timeslot.endTime) || '',
         shift: timeslot.shift || ''
     });
     setOpenDialog(true);
@@ -134,9 +161,10 @@ const TimeSlotManagement = () => {
     const url = isEditMode ? `${API_URL}/update/${currentTimeslot.slotId}` : `${API_URL}/create`;
     const method = isEditMode ? 'PUT' : 'POST';
 
+    // Ensure time is in 24h format before sending to backend
     const timeSlotDTO = {
-      startTime: currentTimeslot.startTime,
-      endTime: currentTimeslot.endTime,
+      startTime: formatTime24h(currentTimeslot.startTime),
+      endTime: formatTime24h(currentTimeslot.endTime),
       shift: currentTimeslot.shift
     };
 
@@ -211,9 +239,19 @@ const TimeSlotManagement = () => {
               {filteredTimeslots.map((timeslot) => (
                 <TableRow key={timeslot.slotId} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                   <TableCell>#{timeslot.slotId}</TableCell>
-                  <TableCell>{timeslot.shift}</TableCell>
-                  <TableCell>{timeslot.startTime}</TableCell>
-                  <TableCell>{timeslot.endTime}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      label={timeslot.shift} 
+                      color={timeslot.shift === 'Sáng' ? 'primary' : 'secondary'} 
+                      size="small" 
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <strong>{displayTime(timeslot.startTime)}</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>{displayTime(timeslot.endTime)}</strong>
+                  </TableCell>
                   <TableCell>
                     {timeslot.isActive ? (
                       <Chip label="Đang hoạt động" color="success" size="small" />
@@ -255,35 +293,52 @@ const TimeSlotManagement = () => {
               label="Ca làm việc"
               onChange={handleChange}
             >
-              <MenuItem value={'Sáng'}>Sáng</MenuItem>
-              <MenuItem value={'Chiều'}>Chiều</MenuItem>
+              <MenuItem value={'Sáng'}>🌅 Ca Sáng</MenuItem>
+              <MenuItem value={'Chiều'}>🌆 Ca Chiều</MenuItem>
             </Select>
           </FormControl>
+          
           <TextField
             margin="dense"
             name="startTime"
-            label="Thời gian bắt đầu"
+            label="Thời gian bắt đầu (24h)"
             type="time"
             fullWidth
             variant="outlined"
             value={currentTimeslot.startTime}
             onChange={handleChange}
             InputLabelProps={{ shrink: true }}
-            inputProps={{ step: 300 }} // 5 min
+            inputProps={{ 
+              step: 300, // 5 min steps
+              min: "00:00",
+              max: "23:59"
+            }}
             sx={{ mb: 2 }}
           />
+          
           <TextField
             margin="dense"
             name="endTime"
-            label="Thời gian kết thúc"
+            label="Thời gian kết thúc (24h)"
             type="time"
             fullWidth
             variant="outlined"
             value={currentTimeslot.endTime}
             onChange={handleChange}
             InputLabelProps={{ shrink: true }}
-            inputProps={{ step: 300 }} // 5 min
+            inputProps={{ 
+              step: 300, // 5 min steps
+              min: "00:00",
+              max: "23:59"
+            }}
           />
+
+          {/* Preview */}
+          {currentTimeslot.startTime && currentTimeslot.endTime && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+              <strong>Xem trước:</strong> {currentTimeslot.shift} ({displayTime(currentTimeslot.startTime)} - {displayTime(currentTimeslot.endTime)})
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Hủy</Button>
