@@ -76,8 +76,8 @@ const CustomerCalendar = ({
         }
       >
         <Box sx={{ p: 1 }}>
-          <TableContainer>
-            <Table size="small">
+          <TableContainer className="calendar-table-container">
+            <Table size="small" className="calendar-table">
               <TableHead>
                 <TableRow>
                   {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((d) => (
@@ -89,50 +89,108 @@ const CustomerCalendar = ({
                 {(() => {
                   const days = [...calendarData];
                   if (days.length === 0) return null;
+
                   const firstDay = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1).getDay();
+                  const daysInMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0).getDate();
+                  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+
                   const rows = [];
-                  let cells = [];
-                  for (let i = 0; i < firstDay; i++) {
-                    cells.push(<TableCell key={`empty-start-${i}`} />);
-                  }
-                  days.forEach((day, idx) => {
-                    cells.push(
-                      <TableCell
-                        key={day.date}
-                        align="center"
-                        onClick={() => handleDayClick(day)}
-                        sx={{
-                          cursor: day.totalCustomers > 0 ? 'pointer' : 'default',
-                          background: day.isWeekend ? '#fafafa' : '#fff',
-                          fontWeight: day.totalCustomers > 0 ? 600 : 400,
-                          color: day.totalCustomers > 0 ? 'primary.main' : 'text.primary',
-                          borderRadius: 1,
-                          border: day.date === format(new Date(), 'yyyy-MM-dd') ? '2px solid #1976d2' : '1px solid #f0f0f0',
-                          '&:hover': {
-                            background: day.totalCustomers > 0 ? '#e3f2fd' : undefined,
-                            boxShadow: day.totalCustomers > 0 ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
-                          },
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="body2">{day.dayOfMonth}</Typography>
-                          {day.totalCustomers > 0 && (
-                            <Chip
-                              size="small"
-                              color="primary"
-                              label={`${day.totalCustomers} khách`}
-                              sx={{ mt: 0.5, fontSize: 11 }}
-                            />
-                          )}
-                        </Box>
-                      </TableCell>
-                    );
-                    if ((cells.length === 7) || (idx === days.length - 1)) {
-                      rows.push(<TableRow key={`row-${idx}`}>{cells}</TableRow>);
-                      cells = [];
+                  let currentRowCells = [];
+
+                  // Create all cells for the calendar grid
+                  for (let i = 0; i < totalCells; i++) {
+                    const dayNumber = i - firstDay + 1;
+                    const isValidDay = dayNumber >= 1 && dayNumber <= daysInMonth;
+
+                    if (isValidDay) {
+                      // Find the corresponding day data
+                      const dayData = days.find(d => d.dayOfMonth === dayNumber) || {
+                        dayOfMonth: dayNumber,
+                        totalCustomers: 0,
+                        date: format(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), dayNumber), 'yyyy-MM-dd'),
+                        isWeekend: [0, 6].includes(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), dayNumber).getDay())
+                      };
+
+                      currentRowCells.push(
+                        <TableCell
+                          key={`day-${dayNumber}`}
+                          align="center"
+                          onClick={() => handleDayClick(dayData)}
+                          sx={{
+                            cursor: dayData.totalCustomers > 0 ? 'pointer' : 'default',
+                            background: dayData.isWeekend ? '#fafafa' : '#fff',
+                            fontWeight: dayData.totalCustomers > 0 ? 600 : 400,
+                            color: dayData.totalCustomers > 0 ? 'primary.main' : 'text.primary',
+                            borderRadius: 1,
+                            border: dayData.date === format(new Date(), 'yyyy-MM-dd') ? '2px solid #1976d2' : '1px solid #f0f0f0',
+                            height: 60,
+                            minHeight: 60,
+                            maxHeight: 60,
+                            width: `${100 / 7}%`,
+                            position: 'relative',
+                            verticalAlign: 'top',
+                            '&:hover': {
+                              background: dayData.totalCustomers > 0 ? '#e3f2fd' : (dayData.isWeekend ? '#f0f0f0' : '#f5f5f5'),
+                              boxShadow: dayData.totalCustomers > 0 ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                            },
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                            height: '100%',
+                            py: 0.5
+                          }}>
+                            <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
+                              {dayNumber}
+                            </Typography>
+                            {dayData.totalCustomers > 0 && (
+                              <Chip
+                                size="small"
+                                color="primary"
+                                label={`${dayData.totalCustomers}`}
+                                sx={{
+                                  mt: 0.5,
+                                  fontSize: 10,
+                                  height: 18,
+                                  '& .MuiChip-label': {
+                                    px: 0.5
+                                  }
+                                }}
+                              />
+                            )}
+                          </Box>
+                        </TableCell>
+                      );
+                    } else {
+                      // Empty cell for days outside the current month
+                      currentRowCells.push(
+                        <TableCell
+                          key={`empty-${i}`}
+                          sx={{
+                            height: 60,
+                            width: `${100 / 7}%`,
+                            border: '1px solid #f0f0f0',
+                            backgroundColor: '#fafafa'
+                          }}
+                        />
+                      );
                     }
-                  });
+
+                    // When we have 7 cells, create a new row
+                    if (currentRowCells.length === 7) {
+                      rows.push(
+                        <TableRow key={`week-${Math.floor(i / 7)}`}>
+                          {currentRowCells}
+                        </TableRow>
+                      );
+                      currentRowCells = [];
+                    }
+                  }
+
                   return rows;
                 })()}
               </TableBody>
@@ -223,8 +281,8 @@ const CustomerCalendar = ({
   );
 };
 
-const RevenueChart = ({ revenueTimeFrame, setRevenueTimeFrame, totalMonthlyRevenue, revenueGrowth, revenueLoading, revenueChartData }) => ( <MainCard title={ <Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <DollarOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Doanh Thu</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={revenueTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('month')}>Theo Tháng</Button> <Button variant={revenueTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box> } > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {revenueTimeFrame === 'month' ? `Phân tích doanh thu hàng tháng năm ${new Date().getFullYear()}` : 'So sánh doanh thu trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {revenueTimeFrame === 'month' ? `$${(totalMonthlyRevenue / 1000).toFixed(1)}K` : `${revenueGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {revenueLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <ReportAreaChart timeFrame={revenueTimeFrame} chartData={revenueChartData} /> </Box> </Box> </MainCard> );
-const CustomerChart = ({ customerTimeFrame, setCustomerTimeFrame, totalMonthlyCustomers, customerGrowth, customerLoading, customerChartData }) => ( <MainCard title={ <Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <TeamOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Khách Hàng</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={customerTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('month')}>Theo Tháng</Button> <Button variant={customerTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box> } > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {customerTimeFrame === 'month' ? `Số lượng khách hàng hàng tháng năm ${new Date().getFullYear()}` : 'Tăng trưởng khách hàng trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {customerTimeFrame === 'month' ? `${totalMonthlyCustomers.toLocaleString()} khách hàng` : `${customerGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {customerLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <MonthlyBarChart timeFrame={customerTimeFrame} chartData={customerChartData} /> </Box> </Box> </MainCard> );
+const RevenueChart = ({ revenueTimeFrame, setRevenueTimeFrame, totalMonthlyRevenue, revenueGrowth, revenueLoading, revenueChartData }) => (<MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <DollarOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Doanh Thu</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={revenueTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('month')}>Theo Tháng</Button> <Button variant={revenueTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box>} > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {revenueTimeFrame === 'month' ? `Phân tích doanh thu hàng tháng năm ${new Date().getFullYear()}` : 'So sánh doanh thu trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {revenueTimeFrame === 'month' ? `$${(totalMonthlyRevenue / 1000).toFixed(1)}K` : `${revenueGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {revenueLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <ReportAreaChart timeFrame={revenueTimeFrame} chartData={revenueChartData} /> </Box> </Box> </MainCard>);
+const CustomerChart = ({ customerTimeFrame, setCustomerTimeFrame, totalMonthlyCustomers, customerGrowth, customerLoading, customerChartData }) => (<MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <TeamOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Khách Hàng</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={customerTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('month')}>Theo Tháng</Button> <Button variant={customerTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box>} > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {customerTimeFrame === 'month' ? `Số lượng khách hàng hàng tháng năm ${new Date().getFullYear()}` : 'Tăng trưởng khách hàng trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {customerTimeFrame === 'month' ? `${totalMonthlyCustomers.toLocaleString()} khách hàng` : `${customerGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {customerLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <MonthlyBarChart timeFrame={customerTimeFrame} chartData={customerChartData} /> </Box> </Box> </MainCard>);
 
 // =================================================================
 // COMPONENT CHÍNH
@@ -294,10 +352,10 @@ const DashboardDefault = () => {
       setServedCustomers(summary.servedCustomersToday || 0);
       setTotalServices(summary.servicesPerformedThisMonth || 0);
       setOverallAverageRating(summary.overallAverageRating?.toFixed(1) || 'N/A');
-      setTodayRevenue(`$${summary.todayRevenue?.toLocaleString('en-US') || 0}`);
+      setTodayRevenue(`${summary.todayRevenue?.toLocaleString('en-US') || 0}₫`);
     }
   };
-   const handleNavigateToAppointments = () => {
+  const handleNavigateToAppointments = () => {
     if (selectedDayStats) {
       navigate(`/spa/appointments?date=${selectedDayStats.date}`);
     }
@@ -316,7 +374,7 @@ const DashboardDefault = () => {
           user_id: item.userId,
           full_name: item.userName,
           role_name: item.roleName || 'N/A',
-  
+
           check_in_time: item.checkInTime,
           status: item.status || 'On Time',
           shift: item.shift,
@@ -490,27 +548,27 @@ const DashboardDefault = () => {
     const today = formatApiDate(new Date());
     const startOfCurrentMonth = formatApiDate(startOfMonth(new Date()));
     const endOfCurrentMonth = formatApiDate(endOfMonth(new Date()));
-    
+
     switch (cardType) {
       case 'waiting':
         // Navigate to appointments page with pending status filter
-        navigate('/spa/appointments', { 
-          state: { 
+        navigate('/spa/appointments', {
+          state: {
             filterStatus: 'pending',
             filterDate: today,
             title: 'Khách Hàng Đang Chờ'
-          } 
+          }
         });
         break;
       case 'services':
         // Navigate to appointments page with completed status and current month filter
-        navigate('/spa/appointments', { 
-          state: { 
+        navigate('/spa/appointments', {
+          state: {
             filterStatus: 'completed',
             startDate: startOfCurrentMonth,
             endDate: endOfCurrentMonth,
             title: 'Dịch Vụ Đã Hoàn Thành Tháng Này'
-          } 
+          }
         });
         break;
       case 'rating':
@@ -519,12 +577,12 @@ const DashboardDefault = () => {
         break;
       case 'revenue':
         // Navigate to appointments page with completed status for today
-        navigate('/spa/appointments', { 
-          state: { 
+        navigate('/spa/appointments', {
+          state: {
             filterStatus: 'completed',
             filterDate: today,
             title: 'Doanh Thu Hôm Nay'
-          } 
+          }
         });
         break;
       default:
@@ -553,9 +611,9 @@ const DashboardDefault = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Box 
-            onClick={() => handleCardClick('waiting')} 
-            sx={{ 
+          <Box
+            onClick={() => handleCardClick('waiting')}
+            sx={{
               cursor: 'pointer',
               '&:hover': {
                 transform: 'translateY(-2px)',
@@ -567,19 +625,19 @@ const DashboardDefault = () => {
               transition: 'all 0.2s ease-in-out'
             }}
           >
-            <AnalyticEcommerce 
-              title="Khách Chờ" 
-              count={waitingCustomers} 
-              extra={`${servedCustomers} đã phục vụ hôm nay`} 
-              color="warning" 
-              icon={<UserOutlined />} 
+            <AnalyticEcommerce
+              title="Khách Chờ"
+              count={waitingCustomers}
+              extra={`${servedCustomers} đã phục vụ hôm nay`}
+              color="warning"
+              icon={<UserOutlined />}
             />
           </Box>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Box 
-            onClick={() => handleCardClick('services')} 
-            sx={{ 
+          <Box
+            onClick={() => handleCardClick('services')}
+            sx={{
               cursor: 'pointer',
               '&:hover': {
                 transform: 'translateY(-2px)',
@@ -591,18 +649,18 @@ const DashboardDefault = () => {
               transition: 'all 0.2s ease-in-out'
             }}
           >
-            <AnalyticEcommerce 
-              title="Dịch Vụ Tháng Này" 
-              count={totalServices} 
-              extra="Đã hoàn thành" 
-              icon={<ShopOutlined />} 
+            <AnalyticEcommerce
+              title="Dịch Vụ Tháng Này"
+              count={totalServices}
+              extra="Đã hoàn thành"
+              icon={<ShopOutlined />}
             />
           </Box>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Box 
-            onClick={() => handleCardClick('rating')} 
-            sx={{ 
+          <Box
+            onClick={() => handleCardClick('rating')}
+            sx={{
               cursor: 'pointer',
               '&:hover': {
                 transform: 'translateY(-2px)',
@@ -614,19 +672,19 @@ const DashboardDefault = () => {
               transition: 'all 0.2s ease-in-out'
             }}
           >
-            <AnalyticEcommerce 
-              title="Đánh Giá Trung Bình" 
-              count={overallAverageRating} 
-              extra="Đánh giá tổng thể nhân viên" 
-              color="success" 
-              icon={<StarOutlined />} 
+            <AnalyticEcommerce
+              title="Đánh Giá Trung Bình"
+              count={overallAverageRating}
+              extra="Đánh giá tổng thể nhân viên"
+              color="success"
+              icon={<StarOutlined />}
             />
           </Box>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Box 
-            onClick={() => handleCardClick('revenue')} 
-            sx={{ 
+          <Box
+            onClick={() => handleCardClick('revenue')}
+            sx={{
               cursor: 'pointer',
               '&:hover': {
                 transform: 'translateY(-2px)',
@@ -638,12 +696,12 @@ const DashboardDefault = () => {
               transition: 'all 0.2s ease-in-out'
             }}
           >
-            <AnalyticEcommerce 
-              title="Doanh Thu Hôm Nay" 
-              count={todayRevenue} 
-              extra="Từ các dịch vụ đã hoàn thành" 
-              color="primary" 
-              icon={<DollarOutlined />} 
+            <AnalyticEcommerce
+              title="Doanh Thu Hôm Nay"
+              count={todayRevenue}
+              extra="Từ các dịch vụ đã hoàn thành"
+              color="primary"
+              icon={<DollarOutlined />}
             />
           </Box>
         </Grid>
@@ -678,7 +736,7 @@ const DashboardDefault = () => {
               />
             </Grid>
             <Grid item xs={12}><MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"><Box display="flex" alignItems="center"><StarOutlined style={{ marginRight: 8 }} /><Typography variant="h5">Đánh Giá Nhân Viên</Typography></Box><ButtonGroup variant="outlined" size="small"><Button variant={ratingPeriod === 0 ? 'contained' : 'outlined'} onClick={() => setRatingPeriod(0)}>Tháng Này</Button><Button variant={ratingPeriod === 1 ? 'contained' : 'outlined'} onClick={() => setRatingPeriod(1)}>Tháng Trước</Button></ButtonGroup></Box>}><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Vai Trò</TableCell><TableCell>Đánh Giá</TableCell><TableCell align="right">Lượt Đánh Giá</TableCell></TableRow></TableHead><TableBody>{ratingData.map((item) => (<TableRow key={item.role_id}><TableCell>{item.role_name}</TableCell><TableCell><Box display="flex" alignItems="center" fontWeight="600">{item.average_rating}<LinearProgress variant="determinate" value={parseFloat(item.average_rating) * 10} sx={{ width: '50px', ml: 1, height: 6, borderRadius: 2 }} /></Box></TableCell><TableCell align="right">{item.total_reviews}</TableCell></TableRow>))}</TableBody></Table></TableContainer></MainCard></Grid>
-              <Grid item xs={12}><MainCard title={<Box display="flex" alignItems="center"><CalendarOutlined style={{ marginRight: 8 }} /><Typography variant="h5">Lịch Hẹn Hôm Nay</Typography></Box>}><List>{todayAppointments.map((appointment, index) => (<React.Fragment key={appointment.appointment_id}><ListItem><ListItemText primary={appointment.customer_name} secondary={`${appointment.service_name} • ${appointment.staff_name}`} /><Typography variant="body2" color="textSecondary">{formatTime(appointment.appointment_time)}</Typography><Box ml={2}>{getAppointmentStatusChip(appointment.status)}</Box></ListItem>{index < todayAppointments.length - 1 && <Divider />}</React.Fragment>))}</List></MainCard></Grid>
+            <Grid item xs={12}><MainCard title={<Box display="flex" alignItems="center"><CalendarOutlined style={{ marginRight: 8 }} /><Typography variant="h5">Lịch Hẹn Hôm Nay</Typography></Box>}><List>{todayAppointments.map((appointment, index) => (<React.Fragment key={appointment.appointment_id}><ListItem><ListItemText primary={appointment.customer_name} secondary={`${appointment.service_name} • ${appointment.staff_name}`} /><Typography variant="body2" color="textSecondary">{formatTime(appointment.appointment_time)}</Typography><Box ml={2}>{getAppointmentStatusChip(appointment.status)}</Box></ListItem>{index < todayAppointments.length - 1 && <Divider />}</React.Fragment>))}</List></MainCard></Grid>
           </Grid>
         </Grid>
       </Grid>
