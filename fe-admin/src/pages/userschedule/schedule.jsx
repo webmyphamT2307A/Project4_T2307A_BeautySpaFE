@@ -26,7 +26,8 @@ import {
   InputLabel,
   Chip,
   Avatar,
-  Grid
+  Grid,
+  CircularProgress
 } from '@mui/material';
 import MainCard from 'components/MainCard';
 import {
@@ -105,6 +106,7 @@ const UserScheduleManager = () => {
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [loading, setLoading] = useState(false);
 
   // Fallback for old format or unmatched strings
   const formatShift = (shiftType, startTime, endTime) => {
@@ -277,6 +279,7 @@ const UserScheduleManager = () => {
       url += `?${params.toString()}`;
     }
 
+    setLoading(true);
     fetch(url)
       .then(res => res.json())
       .then(response => {
@@ -289,6 +292,9 @@ const UserScheduleManager = () => {
       .catch(() => {
         setSchedules([]);
         toast.error('Error loading schedules from server.');
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
@@ -718,124 +724,132 @@ const UserScheduleManager = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredSchedules
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((schedule, index) => (
-                  <TableRow
-                    key={schedule.id}
-                    hover
-                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                  >
-                    <TableCell sx={{ pl: 3, py: 1.5 }}>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell sx={{ py: 1.5 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar
-                          src={schedule.userImageUrl}
-                          alt={schedule.userName}
-                          sx={{ width: 32, height: 32 }}
-                        >
-                          {schedule.userName?.charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight="medium">
-                            {schedule.userName}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {schedule.userEmail}
-                          </Typography>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={10} align="center" sx={{ py: 5 }}>
+                    <CircularProgress />
+                    <Typography variant="subtitle1" sx={{ mt: 1 }}>Đang tải dữ liệu lịch trình...</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : filteredSchedules.length > 0 ? (
+                filteredSchedules
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((schedule, index) => (
+                    <TableRow
+                      key={schedule.id}
+                      hover
+                      sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                    >
+                      <TableCell sx={{ pl: 3, py: 1.5 }}>{page * rowsPerPage + index + 1}</TableCell>
+                      <TableCell sx={{ py: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar
+                            src={schedule.userImageUrl}
+                            alt={schedule.userName}
+                            sx={{ width: 32, height: 32 }}
+                          >
+                            {schedule.userName?.charAt(0)}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight="medium">
+                              {schedule.userName}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {schedule.userEmail}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{ py: 1.5 }}>
-                      <Typography variant="body2" color="primary">
-                        {schedule.roleName}
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ py: 1.5 }}>
-                      <Typography variant="body2">
-                        {new Date(schedule.workDate).toLocaleDateString('vi-VN')}
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ py: 1.5 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                        <ClockCircleOutlined style={{ color: '#1976d2', fontSize: '14px', marginTop: '3px' }} />
-                        {(() => {
-                          const { shiftType, startTime, endTime } = parseShift(schedule.shift);
-                          return (
-                            <Box>
-                              <Typography variant="body2" fontWeight="medium" sx={{ lineHeight: 1.3 }}>
-                                {shiftType || 'Không xác định'}
-                              </Typography>
-                              {startTime && endTime && (
-                                <Typography variant="caption" color="text.secondary">
-                                  {`(${startTime} - ${endTime})`}
+                      </TableCell>
+                      <TableCell sx={{ py: 1.5 }}>
+                        <Typography variant="body2" color="primary">
+                          {schedule.roleName}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ py: 1.5 }}>
+                        <Typography variant="body2">
+                          {new Date(schedule.workDate).toLocaleDateString('vi-VN')}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ py: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                          <ClockCircleOutlined style={{ color: '#1976d2', fontSize: '14px', marginTop: '3px' }} />
+                          {(() => {
+                            const { shiftType, startTime, endTime } = parseShift(schedule.shift);
+                            return (
+                              <Box>
+                                <Typography variant="body2" fontWeight="medium" sx={{ lineHeight: 1.3 }}>
+                                  {shiftType || 'Không xác định'}
                                 </Typography>
-                              )}
-                            </Box>
-                          );
-                        })()}
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{ py: 1.5 }}>
-                      <Typography variant="body2" color={schedule.checkInTime ? 'success.main' : 'text.secondary'}>
-                        {formatTime(schedule.checkInTime) || '--:--'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ py: 1.5 }}>
-                      <Typography variant="body2" color={schedule.checkOutTime ? 'success.main' : 'text.secondary'}>
-                        {formatTime(schedule.checkOutTime) || '--:--'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ py: 1.5 }}>{getStatusChip(schedule.status)}</TableCell>
-                    <TableCell sx={{ py: 1.5 }}>
-                      <Chip
-                        label={schedule.isActive ? 'Hoạt Động' : 'Không Hoạt Động'}
-                        size="small"
-                        color={schedule.isActive ? 'success' : 'default'}
-                      />
-                    </TableCell>
-                    <TableCell align="center" sx={{ py: 1.5 }}>
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        <Tooltip title="Chỉnh Sửa">
-                          <IconButton size="small" color="primary" onClick={() => handleOpenDialog(schedule)}>
-                            <EditOutlined />
-                          </IconButton>
-                        </Tooltip>
-
-                        {!schedule.checkInTime && (
-                          <Tooltip title="Check In">
-                            <IconButton
-                              size="small"
-                              color="success"
-                              onClick={() => handleCheckIn(schedule.id)}
-                            >
-                              <ClockCircleOutlined />
+                                {startTime && endTime && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    {`(${startTime} - ${endTime})`}
+                                  </Typography>
+                                )}
+                              </Box>
+                            );
+                          })()}
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ py: 1.5 }}>
+                        <Typography variant="body2" color={schedule.checkInTime ? 'success.main' : 'text.secondary'}>
+                          {formatTime(schedule.checkInTime) || '--:--'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ py: 1.5 }}>
+                        <Typography variant="body2" color={schedule.checkOutTime ? 'success.main' : 'text.secondary'}>
+                          {formatTime(schedule.checkOutTime) || '--:--'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ py: 1.5 }}>{getStatusChip(schedule.status)}</TableCell>
+                      <TableCell sx={{ py: 1.5 }}>
+                        <Chip
+                          label={schedule.isActive ? 'Hoạt Động' : 'Không Hoạt Động'}
+                          size="small"
+                          color={schedule.isActive ? 'success' : 'default'}
+                        />
+                      </TableCell>
+                      <TableCell align="center" sx={{ py: 1.5 }}>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Tooltip title="Chỉnh Sửa">
+                            <IconButton size="small" color="primary" onClick={() => handleOpenDialog(schedule)}>
+                              <EditOutlined />
                             </IconButton>
                           </Tooltip>
-                        )}
 
-                        {schedule.checkInTime && !schedule.checkOutTime && (
-                          <Tooltip title="Check Out">
-                            <IconButton
-                              size="small"
-                              color="warning"
-                              onClick={() => handleCheckOut(schedule.id)}
-                            >
-                              <CheckCircleOutlined />
+                          {!schedule.checkInTime && (
+                            <Tooltip title="Check In">
+                              <IconButton
+                                size="small"
+                                color="success"
+                                onClick={() => handleCheckIn(schedule.id)}
+                              >
+                                <ClockCircleOutlined />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+
+                          {schedule.checkInTime && !schedule.checkOutTime && (
+                            <Tooltip title="Check Out">
+                              <IconButton
+                                size="small"
+                                color="warning"
+                                onClick={() => handleCheckOut(schedule.id)}
+                              >
+                                <CheckCircleOutlined />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+
+                          <Tooltip title="Xóa (Vô hiệu hóa)">
+                            <IconButton size="small" color="error" onClick={() => handleDeleteSchedule(schedule.id)}>
+                              <DeleteOutlined />
                             </IconButton>
                           </Tooltip>
-                        )}
-
-                        <Tooltip title="Xóa (Vô hiệu hóa)">
-                          <IconButton size="small" color="error" onClick={() => handleDeleteSchedule(schedule.id)}>
-                            <DeleteOutlined />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              {filteredSchedules.length === 0 && (
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : (
                 <TableRow>
                   <TableCell colSpan={10} align="center" sx={{ py: 5 }}>
                     <Typography variant="subtitle1">Không có dữ liệu lịch trình.</Typography>
