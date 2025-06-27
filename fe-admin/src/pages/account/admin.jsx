@@ -3,7 +3,7 @@ import {
   Grid, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Select, FormControl,
   InputLabel, Switch, FormControlLabel, IconButton, TablePagination, Box, InputAdornment, Chip,
-  Avatar, Typography, Divider, Tooltip
+  Avatar, Typography, Divider, Tooltip, CircularProgress
 } from '@mui/material';
 import {
   PlusOutlined,
@@ -396,7 +396,14 @@ const AdminAccount = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {currentUsers.length > 0 ? (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                        <CircularProgress />
+                        <Typography sx={{ mt: 1 }}>Đang tải dữ liệu người dùng...</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : currentUsers.length > 0 ? (
                     currentUsers.map((user, index) => (
                       <TableRow key={user.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>

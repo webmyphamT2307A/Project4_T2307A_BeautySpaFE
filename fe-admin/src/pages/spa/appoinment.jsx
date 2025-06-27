@@ -4,7 +4,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, FormControl,
   InputLabel, IconButton, TablePagination, Box, InputAdornment, Chip, MenuItem,
   Typography, Divider, Tooltip, Accordion, AccordionSummary, AccordionDetails,
-  Card, CardContent, List, ListItem, ListItemText, ListItemIcon
+  Card, CardContent, List, ListItem, ListItemText, ListItemIcon, CircularProgress
 } from '@mui/material';
 import {
   SearchOutlined,
@@ -1145,7 +1145,12 @@ const AppointmentManagement = () => {
               </TableHead>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={8} align="center">Loading...</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                      <CircularProgress />
+                      <Typography sx={{ mt: 1 }}>Đang tải dữ liệu lịch hẹn...</Typography>
+                    </TableCell>
+                  </TableRow>
                 ) : currentAppointments.length > 0 ? (
                   currentAppointments.map((appointment) => {
                     const statusProps = getStatusChipProps(appointment.status);
@@ -1220,7 +1225,7 @@ const AppointmentManagement = () => {
                     );
                   })
                 ) : (
-                  <TableRow><TableCell colSpan={8} align="center">No appointments found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} align="center">Không tìm thấy lịch hẹn nào</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
