@@ -414,7 +414,7 @@ const ServiceManagement = () => {
                       {formatCurrency(service.price)}
                     </Typography>
                   </TableCell>
-                  <TableCell>{service.duration} min</TableCell>
+                  <TableCell>{service.duration} phút</TableCell>
                   <TableCell>
                     <Chip
                       label={service.is_active ? 'Hoạt Động' : 'Không Hoạt Động'}

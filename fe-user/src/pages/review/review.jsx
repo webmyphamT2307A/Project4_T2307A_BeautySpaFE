@@ -8,7 +8,6 @@ import { DeleteOutlined, ReadFilled } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import { useAppointmentFilter } from 'contexts/AppointmentFilterContext';
 
 const API_BASE_URL = 'http://localhost:8080/api/v1';
 
@@ -38,38 +37,28 @@ const ReviewList = () => {
     const [replyContent, setReplyContent] = useState('');
     const [isSubmittingReply, setIsSubmittingReply] = useState(false);
     const navigate = useNavigate();
-    const { setFilter } = useAppointmentFilter();
 
     const handleRatingClick = (review) => {
-        console.log("Data của đánh giá vừa nhấn:", review);
-
         if (!review.relatedId || !review.type) {
             toast.info("Không thể đặt lịch từ đánh giá này (Thiếu ID hoặc Loại).");
-            console.error("Lỗi: Dữ liệu review bị thiếu 'relatedId' hoặc 'type'.", { 
-                relatedId: review.relatedId, 
-                type: review.type 
-            });
             return;
         }
 
-        const filterPayload = {};
-        let successMessage = '';
         const reviewType = review.type.toUpperCase();
+        let navigateUrl = '/spa/appointments';
+        let successMessage = '';
 
         if (reviewType === 'SERVICE') {
-            filterPayload.serviceId = review.relatedId;
+            navigateUrl += `?serviceId=${review.relatedId}`;
             successMessage = 'Đã áp dụng bộ lọc theo dịch vụ. Chuyển đến trang đặt lịch...';
         } else if (reviewType === 'USER') {
-            filterPayload.staffId = review.relatedId;
+            navigateUrl += `?staffId=${review.relatedId}`;
             successMessage = 'Đã áp dụng bộ lọc theo nhân viên. Chuyển đến trang đặt lịch...';
         }
 
-        if (Object.keys(filterPayload).length > 0) {
-            console.log("Đã tạo bộ lọc:", filterPayload);
-            setFilter(filterPayload);
+        if (navigateUrl !== '/spa/appointments') {
             toast.success(successMessage);
-            console.log("Chuẩn bị chuyển hướng đến '/spa/appointments'");
-            navigate('/spa/appointments');
+            navigate(navigateUrl);
         } else {
             console.warn("Không tạo được bộ lọc. Loại review có thể không hợp lệ:", review.type);
         }

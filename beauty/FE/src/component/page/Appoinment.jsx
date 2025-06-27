@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -80,6 +80,12 @@ const Appointment = () => {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+
+    // Review staff states
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [selectedStaffForReview, setSelectedStaffForReview] = useState(null);
+    const [reviewData, setReviewData] = useState({ rating: 0, comment: '' });
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
     // Submit appointment states
     const [isSubmittingAppointment, setIsSubmittingAppointment] = useState(false);
@@ -763,6 +769,8 @@ const Appointment = () => {
         }
     };
 
+
+
     // Step content rendering
     const renderStepContent = () => {
         switch (currentStep) {
@@ -1126,13 +1134,49 @@ const Appointment = () => {
                                             </p>
 
                                             {/* Rating */}
-                                            <div className="d-flex align-items-center justify-content-center mb-3">
+                                            <div className="d-flex align-items-center justify-content-center mb-2">
                                                 <div className="me-2">
                                                     {renderStars(staff.averageRating)}
                                                 </div>
                                                 <span className="text-white-50" style={{ fontSize: '0.65rem' }}>
                                                     ({staff.totalReviews || 0})
                                                 </span>
+                                            </div>
+
+                                            {/* Review Button */}
+                                            <div className="mb-3">
+                                                <Link
+                                                    to={`/staff-review/${staff.id}`}
+                                                    className="btn btn-sm btn-warning w-100"
+                                                    style={{ 
+                                                        fontSize: '0.75rem', 
+                                                        padding: '6px 12px',
+                                                        textDecoration: 'none',
+                                                        fontWeight: '600',
+                                                        color: '#212529',
+                                                        backgroundColor: '#ffc107',
+                                                        border: '1px solid #ffc107',
+                                                        transition: 'all 0.3s ease',
+                                                        boxShadow: '0 2px 8px rgba(255, 193, 7, 0.3)'
+                                                    }}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onMouseEnter={(e) => {
+                                                        e.target.style.backgroundColor = '#ffcd39';
+                                                        e.target.style.borderColor = '#ffcd39';
+                                                        e.target.style.transform = 'translateY(-2px)';
+                                                        e.target.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.5)';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.target.style.backgroundColor = '#ffc107';
+                                                        e.target.style.borderColor = '#ffc107';
+                                                        e.target.style.transform = 'translateY(0)';
+                                                        e.target.style.boxShadow = '0 2px 8px rgba(255, 193, 7, 0.3)';
+                                                    }}
+                                                >
+                                                    <i className="fas fa-star me-1"></i>Đánh giá
+                                                </Link>
                                             </div>
 
                                             {/* Select Button */}
@@ -1866,6 +1910,8 @@ const Appointment = () => {
                     </div>
                 </div>
             )}
+
+
 
             {/* Global CSS */}
             <style jsx global>{`
