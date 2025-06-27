@@ -1183,30 +1183,22 @@ const AppointmentManagement = () => {
                           <Tooltip title="View Details">
                             <IconButton onClick={() => handleViewOpen(appointment)} color="info" size="small"><EyeOutlined /></IconButton>
                           </Tooltip>
-                          <Tooltip title={appointment.status === 'completed' || appointment.status === 'cancelled' ? `Cannot update status` : "Update Status"}>
-                            <span>
-                              <IconButton onClick={() => handleStatusDialogOpen(appointment)} color="primary" size="small" disabled={appointment.status === 'completed' || appointment.status === 'cancelled'} >
-                                <EditOutlined />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                          <Tooltip title="Edit Details / Assign Staff">
-                            <IconButton onClick={() => handleOpenEditDetailDialog(appointment)} color="secondary" size="small">
-                              <FormOutlined />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={!appointment.customer?.email ? "No customer email available" : "Send Confirmation Email"}>
-                            <span>
-                              <IconButton
-                                onClick={() => handleOpenEmailConfirmation(appointment)}
-                                color="success"
-                                size="small"
-                                disabled={!appointment.customer?.email}
-                              >
-                                <MailOutlined />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
+                          
+                          {appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
+                            <>
+                              <Tooltip title="Update Status">
+                                <IconButton onClick={() => handleStatusDialogOpen(appointment)} color="primary" size="small">
+                                  <EditOutlined />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Edit Details / Assign Staff">
+                                <IconButton onClick={() => handleOpenEditDetailDialog(appointment)} color="secondary" size="small">
+                                  <FormOutlined />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          )}
+                          
                           <Tooltip title={
                             (appointment.status === 'completed' || appointment.status === 'cancelled')
                               ? `Không thể hủy lịch hẹn đã '${appointment.status}'`
@@ -1304,27 +1296,18 @@ const AppointmentManagement = () => {
                     <Grid item xs={12}>
                       <Divider sx={{ my: 1 }} />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
-                        <Tooltip title={currentAppointment.status === 'completed' ? `Status is 'completed'. Cannot update.` : "Update Status"}>
-                          <span>
-                            <Button variant="outlined" color="primary" onClick={() => handleStatusDialogOpen(currentAppointment)} disabled={currentAppointment.status === 'completed'}>Update Status</Button>
-                          </span>
-                        </Tooltip>
-                        <Tooltip title="Edit Details / Assign Staff">
-                          <Button variant="contained" color="secondary" onClick={() => { handleViewClose(); handleOpenEditDetailDialog(currentAppointment); }}>Edit Details</Button>
-                        </Tooltip>
-                        <Tooltip title={!currentAppointment.customer?.email ? "No customer email available" : "Send Confirmation Email"}>
-                          <span>
-                            <Button
-                              variant="contained"
-                              color="success"
-                              onClick={() => { handleViewClose(); handleOpenEmailConfirmation(currentAppointment); }}
-                              disabled={!currentAppointment.customer?.email}
-                              startIcon={<MailOutlined />}
-                            >
-                              Send Email
-                            </Button>
-                          </span>
-                        </Tooltip>
+                        
+                        {currentAppointment.status !== 'completed' && currentAppointment.status !== 'cancelled' && (
+                          <>
+                            <Tooltip title="Update Status">
+                              <Button variant="outlined" color="primary" onClick={() => handleStatusDialogOpen(currentAppointment)}>Update Status</Button>
+                            </Tooltip>
+                            <Tooltip title="Edit Details / Assign Staff">
+                              <Button variant="contained" color="secondary" onClick={() => { handleViewClose(); handleOpenEditDetailDialog(currentAppointment); }}>Edit Details</Button>
+                            </Tooltip>
+                          </>
+                        )}
+
                         <Tooltip title={
                           (currentAppointment.status === 'completed' || currentAppointment.status === 'cancelled')
                             ? `Không thể hủy lịch hẹn đã '${currentAppointment.status}'`
