@@ -1163,7 +1163,7 @@ const AppointmentManagement = () => {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>{appointment.service?.name}</Typography>
-                          <Typography variant="caption" color="primary">${appointment.price?.toFixed(2)} • {appointment.service?.duration} min</Typography>
+                          <Typography variant="caption" color="primary">{appointment.price?.toFixed(2)}đ • {appointment.service?.duration} phút</Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatDate(appointment.appointmentDate)}</Typography>
@@ -1292,8 +1292,8 @@ const AppointmentManagement = () => {
                   <Typography variant="h6" gutterBottom>Service Information</Typography>
                   <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{currentAppointment.service.name}</Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}><Typography variant="body2">Price:</Typography><Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>${currentAppointment.price?.toFixed(2)}</Typography></Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography variant="body2">Duration:</Typography><Typography variant="body2">{currentAppointment.service.duration} minutes</Typography></Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}><Typography variant="body2">Price:</Typography><Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>{currentAppointment.price?.toFixed(2)}đ</Typography></Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography variant="body2">Duration:</Typography><Typography variant="body2">{currentAppointment.service.duration} phút</Typography></Box>
                   </Paper>
                 </Box>
                 <Box>
@@ -1386,16 +1386,7 @@ const AppointmentManagement = () => {
                 <Typography variant="body2" color="textSecondary" gutterBottom>
                   Service: {appointmentToEditDetails.service?.name} on {formatDate(appointmentToEditDetails.appointmentDate)} at {formatTime(appointmentToEditDetails.appointmentDate)}
                 </Typography>
-                <Box sx={{ mt: 2, mb: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                  <Typography variant="body2" color="primary" sx={{ mb: 1 }}>
-                    <CalendarOutlined style={{ marginRight: 8 }} />
-                    Schedule Conflict Prevention: Staff members who already have appointments during this time slot will be marked as "Busy" and cannot be assigned.
-                  </Typography>
-                  <Typography variant="body2" color="secondary">
-                    <UserOutlined style={{ marginRight: 8 }} />
-                    Skill Matching: Only staff members with skills matching the service "{appointmentToEditDetails.service?.name}" are shown.
-                  </Typography>
-                </Box>
+                
               </Grid>
               <Grid item xs={12}>
                 <FormControl fullWidth margin="normal">
@@ -1473,33 +1464,13 @@ const AppointmentManagement = () => {
                       * Lọc nhân viên có kỹ năng phù hợp với "{appointmentToEditDetails.service.name}"
                     </Typography>
                     <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                      * Nhân viên "Busy" đã có lịch hẹn trong thời gian này
+                      * Nhân viên "Bận" đã có lịch hẹn trong thời gian này
                     </Typography>
-                    <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
-                      ⚠️ Nếu hiển thị nhân viên có badge "DEBUG", nghĩa là đang ở chế độ debug vì không tìm thấy kỹ năng phù hợp
-                    </Typography>
-                                      <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>
-                    🔍 Kiểm tra Browser Console (F12) để xem chi tiết quá trình matching skills
-                  </Typography>
+
                 </Box>
               )}
             </Grid>
-            <Grid item xs={12}>
-              <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
-                <Typography variant="caption" color="primary" sx={{ fontWeight: 600, display: 'block', mb: 1 }}>
-                  💡 Hướng dẫn sử dụng:
-                </Typography>
-                <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                  • <strong>Assign Staff Only:</strong> Chỉ gán/hủy gán nhân viên, không thay đổi thông tin khác
-                </Typography>
-                <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                  • <strong>Save All Changes:</strong> Lưu tất cả thay đổi bao gồm ghi chú và nhân viên
-                </Typography>
-                <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 1 }}>
-                  ⚠️ Khuyến nghị: Sử dụng "Assign Staff Only" để tránh lỗi conflict khi chỉ cần gán nhân viên
-                </Typography>
-              </Box>
-            </Grid>
+          
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -1571,7 +1542,7 @@ const AppointmentManagement = () => {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" color="textSecondary">Customer:</Typography>
+                <Typography variant="subtitle2" color="textSecondary">Khách:</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
                   {appointmentToSendEmail.customer?.name}
                 </Typography>
@@ -1590,7 +1561,7 @@ const AppointmentManagement = () => {
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle2" color="textSecondary">Price:</Typography>
                 <Typography variant="body1" color="primary" sx={{ fontWeight: 600 }}>
-                  ${appointmentToSendEmail.price?.toFixed(2)}
+                  {appointmentToSendEmail.price?.toFixed(2)}đ
                 </Typography>
               </Grid>
 

@@ -346,11 +346,11 @@ const UserAccount = () => {
                         <TableHead>
                             <TableRow>
                                 <TableCell align={'left'} width="5%">#</TableCell>
-                                <TableCell align={'left'} width="25%">Name</TableCell>
-                                <TableCell align={'left'} width="15%">Number</TableCell>
+                                <TableCell align={'left'} width="25%">Tên</TableCell>
+                                <TableCell align={'left'} width="15%">Số điện thoại</TableCell>
                                 <TableCell align={'left'} width="20%">Email</TableCell>
-                                <TableCell align={'center'} width="10%">Status</TableCell>
-                                <TableCell width="15%" align="center">Action</TableCell>
+                                <TableCell align={'center'} width="10%">Trạng thái</TableCell>
+                                <TableCell width="15%" align="center">Hành động</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
