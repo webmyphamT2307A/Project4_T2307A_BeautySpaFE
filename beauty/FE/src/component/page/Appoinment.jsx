@@ -1438,7 +1438,7 @@ const Appointment = () => {
                                         <br />
                                         <span className="d-inline-flex align-items-center">
                                             {renderStars(selectedStaff?.averageRating)}
-                                            <span className="ms-2">({selectedStaff?.totalReviews || 0} đánh giá)</span>
+                                            <span className="ms-2">({selectedStaff?.totalReviews || 0} xem đánh giá)</span>
                                         </span>
                                     </p>
                                 )}
