@@ -433,24 +433,16 @@ const AppointmentManagement = () => {
     if (!currentAppointment) return;
     setLoading(true);
 
-    const dateObj = new Date(currentAppointment.appointmentDate);
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const year = dateObj.getFullYear();
-    const formattedDate = `${day}/${month}/${year}`;
-
+    // CHỈ GỬI STATUS KHI UPDATE STATUS ĐỂ TRÁNH CONFLICT CHECK
     const updatePayload = {
+      status: newStatus,
+      // Chỉ gửi thêm các field bắt buộc tối thiểu
       fullName: currentAppointment.customer.name,
       phoneNumber: currentAppointment.customer.phone,
-      email: currentAppointment.customer.email,
-      status: newStatus,
-      slot: currentAppointment.timeSlot.slot,
-      notes: currentAppointment.notes,
-      appointmentDate: formattedDate,
-      price: currentAppointment.price,
-      userId: currentAppointment.staff.id,
-      serviceId: currentAppointment.service.id,
+      notes: currentAppointment.notes || ''
     };
+
+    console.log('🔄 Updating status only, payload:', updatePayload);
 
     fetch(`${API_URL}/update?AiD=${currentAppointment.id}`, {
       method: 'PUT',
@@ -460,7 +452,7 @@ const AppointmentManagement = () => {
       .then(res => res.json())
       .then(data => {
         if (data.status === 'SUCCESS') {
-          toast.success('Cập nhật trạng thái thành công');
+          toast.success(`Cập nhật trạng thái thành công: ${newStatus}`);
           const updatedAppointments = appointments.map(a =>
             a.id === currentAppointment.id
               ? { ...a, status: newStatus }
@@ -468,12 +460,18 @@ const AppointmentManagement = () => {
           );
           setAppointments(updatedAppointments);
           handleStatusDialogClose();
+          
+          // Refresh lại danh sách để đảm bảo đồng bộ
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         } else {
           toast.error(data.message || 'Cập nhật thất bại');
         }
         setLoading(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('❌ Status update error:', error);
         toast.error('Lỗi khi cập nhật trạng thái');
         setLoading(false);
         handleStatusDialogClose();
@@ -807,10 +805,85 @@ const AppointmentManagement = () => {
     }
   };
 
-  const handleSaveAppointmentDetails = () => {
+  // Hàm riêng để assign/unassign staff
+  const handleStaffAssignment = () => {
     if (!appointmentToEditDetails) return;
 
     // Kiểm tra xung đột lịch trước khi save
+    if (selectedStaffId && isStaffBusy(selectedStaffId, appointmentToEditDetails)) {
+      const selectedStaff = staffList.find(s => s.id === selectedStaffId);
+      const conflictingApps = appointments.filter(app =>
+        app.staff.id === selectedStaffId &&
+        app.id !== appointmentToEditDetails.id &&
+        new Date(app.appointmentDate).toDateString() === new Date(appointmentToEditDetails.appointmentDate).toDateString() &&
+        app.status !== 'cancelled'
+      ).filter(app => isTimeConflict(appointmentToEditDetails, app));
+
+      const conflictDetails = conflictingApps.map(app =>
+        `${formatTime(app.appointmentDate)}-${formatTime(app.endTime)} (${app.customer.name})`
+      ).join(', ');
+
+      toast.error(
+        `❌ CONFLICT DETECTED: ${selectedStaff?.staffName} is already busy during this time slot!\n\n` +
+        `Conflicting appointments: ${conflictDetails}\n\n` +
+        `Current appointment: ${formatTime(appointmentToEditDetails.appointmentDate)}-${formatTime(appointmentToEditDetails.endTime)}`,
+        { autoClose: 8000 }
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    // Chỉ gửi thông tin cần thiết cho việc assign staff
+    const staffAssignmentPayload = {
+      fullName: appointmentToEditDetails.customer.name,
+      phoneNumber: appointmentToEditDetails.customer.phone,
+      notes: appointmentToEditDetails.notes,
+      userId: selectedStaffId
+    };
+
+    console.log('👤 Assigning staff, payload:', staffAssignmentPayload);
+
+    fetch(`${API_URL}/update?AiD=${appointmentToEditDetails.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(staffAssignmentPayload)
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'SUCCESS') {
+          toast.success('Cập nhật nhân viên thành công!');
+          // Cập nhật lại danh sách appointments trên FE
+          const newStaffMemberInfo = staffList.find(staff => staff.id === selectedStaffId);
+
+          const updatedAppointments = appointments.map(app =>
+            app.id === appointmentToEditDetails.id
+              ? {
+                ...app,
+                staff: newStaffMemberInfo
+                  ? { id: newStaffMemberInfo.id, name: newStaffMemberInfo.fullName }
+                  : null,
+                notes: staffAssignmentPayload.notes
+              }
+              : app
+          );
+          setAppointments(updatedAppointments);
+          handleCloseEditDetailDialog();
+        } else {
+          toast.error(data.message || 'Cập nhật nhân viên thất bại');
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        toast.error('Lỗi khi cập nhật nhân viên');
+        setLoading(false);
+      });
+  };
+
+  const handleSaveAppointmentDetails = () => {
+    if (!appointmentToEditDetails) return;
+
+    // Kiểm tra xung đột lịch trước khi save (chỉ khi có thay đổi time/staff)
     if (selectedStaffId && isStaffBusy(selectedStaffId, appointmentToEditDetails)) {
       const selectedStaff = staffList.find(s => s.id === selectedStaffId);
       const conflictingApps = appointments.filter(app =>
@@ -841,8 +914,7 @@ const AppointmentManagement = () => {
     const year = dateObj.getFullYear();
     const formattedAppDate = `${day}/${month}/${year}`;
 
-    // Payload này nên bao gồm tất cả các trường mà BE AppointmentDto cho phép cập nhật
-    // hoặc yêu cầu khi gọi API update.
+    // Payload cho việc update chi tiết appointment (không phải chỉ status)
     const updatePayload = {
       fullName: appointmentToEditDetails.customer.name,
       phoneNumber: appointmentToEditDetails.customer.phone,
@@ -853,9 +925,11 @@ const AppointmentManagement = () => {
       appointmentDate: formattedAppDate,
       price: appointmentToEditDetails.price,
       serviceId: appointmentToEditDetails.service?.id,
-      
-      userId: selectedStaffId
+      userId: selectedStaffId,
+      timeSlotId: appointmentToEditDetails.timeSlot?.id
     };
+
+    console.log('🔄 Updating appointment details, payload:', updatePayload);
 
     fetch(`${API_URL}/update?AiD=${appointmentToEditDetails.id}`, {
       method: 'PUT',
@@ -1404,12 +1478,28 @@ const AppointmentManagement = () => {
                     <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
                       ⚠️ Nếu hiển thị nhân viên có badge "DEBUG", nghĩa là đang ở chế độ debug vì không tìm thấy kỹ năng phù hợp
                     </Typography>
-                    <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>
-                      🔍 Kiểm tra Browser Console (F12) để xem chi tiết quá trình matching skills
-                    </Typography>
-                  </Box>
-                )}
-              </Grid>
+                                      <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>
+                    🔍 Kiểm tra Browser Console (F12) để xem chi tiết quá trình matching skills
+                  </Typography>
+                </Box>
+              )}
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
+                <Typography variant="caption" color="primary" sx={{ fontWeight: 600, display: 'block', mb: 1 }}>
+                  💡 Hướng dẫn sử dụng:
+                </Typography>
+                <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
+                  • <strong>Assign Staff Only:</strong> Chỉ gán/hủy gán nhân viên, không thay đổi thông tin khác
+                </Typography>
+                <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
+                  • <strong>Save All Changes:</strong> Lưu tất cả thay đổi bao gồm ghi chú và nhân viên
+                </Typography>
+                <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 1 }}>
+                  ⚠️ Khuyến nghị: Sử dụng "Assign Staff Only" để tránh lỗi conflict khi chỉ cần gán nhân viên
+                </Typography>
+              </Box>
+            </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -1427,10 +1517,25 @@ const AppointmentManagement = () => {
             </Grid>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEditDetailDialog} color="inherit">Cancel</Button>
-          <Button onClick={handleSaveAppointmentDetails} variant="contained" color="primary" disabled={loading}>
-            {loading ? 'Saving...' : 'Save Changes'}
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={handleCloseEditDetailDialog} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleStaffAssignment} 
+            variant="outlined" 
+            color="secondary" 
+            disabled={loading}
+          >
+            {loading ? 'Assigning...' : 'Assign Staff Only'}
+          </Button>
+          <Button 
+            onClick={handleSaveAppointmentDetails} 
+            variant="contained" 
+            color="primary" 
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : 'Save All Changes'}
           </Button>
         </DialogActions>
       </Dialog>

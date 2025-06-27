@@ -433,7 +433,7 @@ const StaffReviewPage = () => {
                         </div>
 
                         {/* Review Form */}
-                        {/* {isAuthenticated ? (
+                        {isAuthenticated ? (
                             <div className="card mb-4">
                                 <div className="card-body">
                                     <h5 className="card-title">Đánh Giá Nhân Viên</h5>
@@ -501,7 +501,7 @@ const StaffReviewPage = () => {
                                     Vui lòng <Link to="/login" className="fw-bold">đăng nhập</Link> để đánh giá nhân viên.
                                 </p>
                             </div>
-                        )} */}
+                        )}
 
                         {/* Reviews List */}
                         <div className="card">

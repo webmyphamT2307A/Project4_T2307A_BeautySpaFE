@@ -769,95 +769,7 @@ const Appointment = () => {
         }
     };
 
-    // Review staff functions
-    const handleShowReviewModal = (staff) => {
-        setSelectedStaffForReview(staff);
-        setShowReviewModal(true);
-        setReviewData({ rating: 0, comment: '' });
-    };
 
-    const handleCloseReviewModal = () => {
-        setShowReviewModal(false);
-        setSelectedStaffForReview(null);
-        setReviewData({ rating: 0, comment: '' });
-        setIsSubmittingReview(false);
-    };
-
-    const handleSubmitReview = async () => {
-        // Check authentication
-        const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-        const userInfo = localStorage.getItem('userInfo');
-
-        if (!token || !userInfo) {
-            toast.warn('Vui lòng đăng nhập để đánh giá nhân viên!');
-            return;
-        }
-
-        // Validation
-        if (reviewData.rating === 0) {
-            toast.warn('Vui lòng chọn số sao đánh giá');
-            return;
-        }
-
-        if (!reviewData.comment.trim()) {
-            toast.warn('Vui lòng nhập nội dung đánh giá');
-            return;
-        }
-
-        if (reviewData.comment.length > 500) {
-            toast.warn('Nội dung đánh giá không được vượt quá 500 ký tự');
-            return;
-        }
-
-        setIsSubmittingReview(true);
-
-        const payload = {
-            relatedId: selectedStaffForReview.id,
-            type: 'USER', // Review nhân viên
-            rating: reviewData.rating,
-            comment: reviewData.comment,
-        };
-
-        try {
-            console.log('🚀 Submitting staff review:', payload);
-
-            const response = await axios.post('http://localhost:8080/api/v1/reviews', payload, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.data.status === 'SUCCESS') {
-                toast.success('Đánh giá nhân viên thành công! Cảm ọn bạn đã chia sẻ.');
-                handleCloseReviewModal();
-            }
-        } catch (error) {
-            console.error('Error submitting staff review:', error);
-            const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá';
-            toast.error(errorMessage);
-        } finally {
-            setIsSubmittingReview(false);
-        }
-    };
-
-    const renderReviewStars = (rating, interactive = false, onStarClick = null) => {
-        return [1, 2, 3, 4, 5].map((star) => (
-            <span
-                key={star}
-                onClick={() => interactive && onStarClick && onStarClick(star)}
-                style={{
-                    fontSize: interactive ? '2rem' : '1.2rem',
-                    cursor: interactive ? 'pointer' : 'default',
-                    color: star <= rating ? '#ffc107' : '#e4e5e9',
-                    marginRight: '2px',
-                    userSelect: 'none'
-                }}
-            >
-                ★
-            </span>
-        ));
-    };
 
     // Step content rendering
     const renderStepContent = () => {
@@ -1222,7 +1134,7 @@ const Appointment = () => {
                                             </p>
 
                                             {/* Rating */}
-                                            <div className="d-flex align-items-center justify-content-center mb-3">
+                                            <div className="d-flex align-items-center justify-content-center mb-2">
                                                 <div className="me-2">
                                                     {renderStars(staff.averageRating)}
                                                 </div>
@@ -1231,59 +1143,60 @@ const Appointment = () => {
                                                 </span>
                                             </div>
 
-                                            {/* Action Buttons */}
-                                            <div className="d-flex flex-column gap-2">
-                                                {/* Select Button */}
-                                                <button
-                                                    type="button"
-                                                    className={`btn btn-sm w-100 ${isBusy ? 'btn-outline-danger' :
-                                                        isSelected ? 'btn-primary' : 'btn-outline-light'
-                                                        }`}
-                                                    style={{ fontSize: '0.75rem', padding: '6px 12px' }}
-                                                    disabled={isBusy}
-                                                    onClick={(e) => handleStaffSelect(staff.id, e)}
-                                                >
-                                                    {isBusy ? (
-                                                        <><i className="fas fa-ban me-1"></i>Không có</>
-                                                    ) : isSelected ? (
-                                                        <><i className="fas fa-check me-1"></i>Đã chọn</>
-                                                    ) : (
-                                                        <><i className="fas fa-hand-pointer me-1"></i>Chọn</>
-                                                    )}
-                                                </button>
-
-                                                {/* Review Button */}
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-sm btn-outline-warning w-100"
+                                            {/* Review Button */}
+                                            <div className="mb-3">
+                                                <Link
+                                                    to={`/staff-review/${staff.id}`}
+                                                    className="btn btn-sm btn-warning w-100"
                                                     style={{ 
-                                                        fontSize: '0.7rem', 
-                                                        padding: '4px 8px',
-                                                        border: '1px solid rgba(255, 193, 7, 0.5)',
-                                                        color: '#ffc107',
-                                                        transition: 'all 0.3s ease'
+                                                        fontSize: '0.75rem', 
+                                                        padding: '6px 12px',
+                                                        textDecoration: 'none',
+                                                        fontWeight: '600',
+                                                        color: '#212529',
+                                                        backgroundColor: '#ffc107',
+                                                        border: '1px solid #ffc107',
+                                                        transition: 'all 0.3s ease',
+                                                        boxShadow: '0 2px 8px rgba(255, 193, 7, 0.3)'
                                                     }}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        handleShowReviewModal(staff);
-                                                    }}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
                                                     onMouseEnter={(e) => {
-                                                        e.target.style.background = 'rgba(255, 193, 7, 0.1)';
-                                                        e.target.style.borderColor = '#ffc107';
-                                                        e.target.style.color = '#fff';
-                                                        e.target.style.transform = 'translateY(-1px)';
+                                                        e.target.style.backgroundColor = '#ffcd39';
+                                                        e.target.style.borderColor = '#ffcd39';
+                                                        e.target.style.transform = 'translateY(-2px)';
+                                                        e.target.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.5)';
                                                     }}
                                                     onMouseLeave={(e) => {
-                                                        e.target.style.background = 'transparent';
-                                                        e.target.style.borderColor = 'rgba(255, 193, 7, 0.5)';
-                                                        e.target.style.color = '#ffc107';
+                                                        e.target.style.backgroundColor = '#ffc107';
+                                                        e.target.style.borderColor = '#ffc107';
                                                         e.target.style.transform = 'translateY(0)';
+                                                        e.target.style.boxShadow = '0 2px 8px rgba(255, 193, 7, 0.3)';
                                                     }}
                                                 >
                                                     <i className="fas fa-star me-1"></i>Đánh giá
-                                                </button>
+                                                </Link>
                                             </div>
+
+                                            {/* Select Button */}
+                                            <button
+                                                type="button"
+                                                className={`btn btn-sm w-100 ${isBusy ? 'btn-outline-danger' :
+                                                    isSelected ? 'btn-primary' : 'btn-outline-light'
+                                                    }`}
+                                                style={{ fontSize: '0.75rem', padding: '6px 12px' }}
+                                                disabled={isBusy}
+                                                onClick={(e) => handleStaffSelect(staff.id, e)}
+                                            >
+                                                {isBusy ? (
+                                                    <><i className="fas fa-ban me-1"></i>Không có</>
+                                                ) : isSelected ? (
+                                                    <><i className="fas fa-check me-1"></i>Đã chọn</>
+                                                ) : (
+                                                    <><i className="fas fa-hand-pointer me-1"></i>Chọn</>
+                                                )}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -1998,156 +1911,7 @@ const Appointment = () => {
                 </div>
             )}
 
-            {/* Review Staff Modal */}
-            {showReviewModal && selectedStaffForReview && (
-                <div className="modal-overlay" style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 9999
-                }}>
-                    <div className="modal-content" style={{
-                        backgroundColor: 'white',
-                        borderRadius: '15px',
-                        padding: '30px',
-                        maxWidth: '600px',
-                        width: '90%',
-                        maxHeight: '80vh',
-                        overflowY: 'auto',
-                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
-                    }}>
-                        <div className="modal-header text-center mb-4">
-                            <h4 className="text-primary mb-2">
-                                <i className="fas fa-star me-2"></i>
-                                Đánh Giá Nhân Viên
-                            </h4>
-                            <div className="d-flex align-items-center justify-content-center mb-3">
-                                <img
-                                    src={selectedStaffForReview.imageUrl || '/default-avatar.png'}
-                                    alt={selectedStaffForReview.fullName}
-                                    className="rounded-circle me-3"
-                                    style={{
-                                        width: '60px',
-                                        height: '60px',
-                                        objectFit: 'cover'
-                                    }}
-                                />
-                                <div>
-                                    <h5 className="mb-1">{selectedStaffForReview.fullName}</h5>
-                                    <p className="text-muted mb-0">{selectedStaffForReview.skillsText || 'Chuyên viên Spa'}</p>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div className="modal-body">
-                            <div className="mb-4">
-                                <label className="form-label fw-bold">Đánh giá của bạn *</label>
-                                <div className="d-flex align-items-center justify-content-center mb-3 p-3 rounded" style={{
-                                    background: 'rgba(255, 193, 7, 0.1)',
-                                    border: '1px solid rgba(255, 193, 7, 0.2)'
-                                }}>
-                                    <div className="me-3">
-                                        {renderReviewStars(reviewData.rating, true, (star) => 
-                                            setReviewData({...reviewData, rating: star})
-                                        )}
-                                    </div>
-                                    <span className={`badge px-3 py-2 rounded-pill ${
-                                        reviewData.rating === 0 ? 'bg-secondary' :
-                                        reviewData.rating <= 2 ? 'bg-danger' :
-                                        reviewData.rating === 3 ? 'bg-warning text-dark' :
-                                        'bg-success'
-                                    }`}>
-                                        {reviewData.rating === 0 ? 'Chưa chọn đánh giá' : 
-                                         ['', 'Rất tệ', 'Không hài lòng', 'Trung bình', 'Hài lòng', 'Rất hài lòng'][reviewData.rating]}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="mb-4">
-                                <label className="form-label fw-bold">
-                                    Nhận xét chi tiết * 
-                                    <small className="text-muted ms-1">(Tối đa 500 ký tự)</small>
-                                </label>
-                                <textarea
-                                    value={reviewData.comment}
-                                    onChange={(e) => setReviewData({...reviewData, comment: e.target.value})}
-                                    className="form-control"
-                                    rows="5"
-                                    maxLength="500"
-                                    placeholder="Chia sẻ trải nghiệm của bạn về nhân viên này... (VD: Nhân viên phục vụ tận tình, kỹ thuật tốt, thái độ thân thiện...)"
-                                    required
-                                    style={{
-                                        borderRadius: '10px',
-                                        resize: 'none',
-                                        fontSize: '0.95rem',
-                                        lineHeight: '1.6'
-                                    }}
-                                />
-                                <div className="d-flex justify-content-between align-items-center mt-2">
-                                    <small className="text-muted">
-                                        <i className="fas fa-info-circle me-1"></i>
-                                        Đánh giá của bạn sẽ giúp cải thiện chất lượng dịch vụ
-                                    </small>
-                                    <small className={`fw-bold ${
-                                        reviewData.comment.length >= 500 ? 'text-danger' :
-                                        reviewData.comment.length > 450 ? 'text-warning' : 
-                                        'text-muted'
-                                    }`}>
-                                        <i className="fas fa-edit me-1"></i>
-                                        {reviewData.comment.length}/500 ký tự
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="modal-footer d-flex justify-content-center gap-3">
-                            <button
-                                type="button"
-                                onClick={handleCloseReviewModal}
-                                className="btn btn-secondary"
-                                style={{
-                                    borderRadius: '20px',
-                                    padding: '10px 25px',
-                                    fontWeight: '600'
-                                }}
-                                disabled={isSubmittingReview}
-                            >
-                                <i className="fas fa-times me-2"></i>
-                                Hủy bỏ
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleSubmitReview}
-                                className="btn btn-primary"
-                                style={{
-                                    borderRadius: '20px',
-                                    padding: '10px 25px',
-                                    fontWeight: '600'
-                                }}
-                                disabled={isSubmittingReview || reviewData.rating === 0 || !reviewData.comment.trim()}
-                            >
-                                {isSubmittingReview ? (
-                                    <>
-                                        <i className="fas fa-spinner fa-spin me-2"></i>
-                                        Đang gửi...
-                                    </>
-                                ) : (
-                                    <>
-                                        <i className="fas fa-paper-plane me-2"></i>
-                                        Gửi Đánh Giá
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Global CSS */}
             <style jsx global>{`
