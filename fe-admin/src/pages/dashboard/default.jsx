@@ -3,7 +3,7 @@ import {
   Grid, Typography, Box, Avatar, Chip, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, ButtonGroup, Button,
   Divider, List, ListItem, ListItemText,
-  LinearProgress, IconButton, Dialog, DialogTitle, DialogContent, DialogActions
+  LinearProgress, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Tabs, Tab
 } from '@mui/material';
 import {
   CalendarOutlined, TeamOutlined, UserOutlined, ClockCircleOutlined,
@@ -281,7 +281,7 @@ const CustomerCalendar = ({
   );
 };
 
-const RevenueChart = ({ revenueTimeFrame, setRevenueTimeFrame, totalMonthlyRevenue, revenueGrowth, revenueLoading, revenueChartData }) => (<MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <DollarOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Doanh Thu</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={revenueTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('month')}>Theo Tháng</Button> <Button variant={revenueTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box>} > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {revenueTimeFrame === 'month' ? `Phân tích doanh thu hàng tháng năm ${new Date().getFullYear()}` : 'So sánh doanh thu trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {revenueTimeFrame === 'month' ? `$${(totalMonthlyRevenue / 1000).toFixed(1)}K` : `${revenueGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {revenueLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <ReportAreaChart timeFrame={revenueTimeFrame} chartData={revenueChartData} /> </Box> </Box> </MainCard>);
+const RevenueChart = ({ revenueTimeFrame, setRevenueTimeFrame, totalMonthlyRevenue, revenueGrowth, revenueLoading, revenueChartData }) => (<MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <DollarOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Doanh Thu</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={revenueTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('month')}>Theo Tháng</Button> <Button variant={revenueTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box>} > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {revenueTimeFrame === 'month' ? `Phân tích doanh thu hàng tháng năm ${new Date().getFullYear()}` : 'So sánh doanh thu trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {revenueTimeFrame === 'month' ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalMonthlyRevenue) : `${revenueGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {revenueLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <ReportAreaChart timeFrame={revenueTimeFrame} chartData={revenueChartData} /> </Box> </Box> </MainCard>);
 const CustomerChart = ({ customerTimeFrame, setCustomerTimeFrame, totalMonthlyCustomers, customerGrowth, customerLoading, customerChartData }) => (<MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <TeamOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Khách Hàng</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={customerTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('month')}>Theo Tháng</Button> <Button variant={customerTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box>} > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {customerTimeFrame === 'month' ? `Số lượng khách hàng hàng tháng năm ${new Date().getFullYear()}` : 'Tăng trưởng khách hàng trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {customerTimeFrame === 'month' ? `${totalMonthlyCustomers.toLocaleString()} khách hàng` : `${customerGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {customerLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <MonthlyBarChart timeFrame={customerTimeFrame} chartData={customerChartData} /> </Box> </Box> </MainCard>);
 
 // =================================================================
@@ -290,7 +290,8 @@ const CustomerChart = ({ customerTimeFrame, setCustomerTimeFrame, totalMonthlyCu
 const DashboardDefault = () => {
   // States
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [scheduleData, setScheduleData] = useState([]);
+  const [fullScheduleData, setFullScheduleData] = useState([]);
+  const [selectedShift, setSelectedShift] = useState('All');
   const [waitingCustomers, setWaitingCustomers] = useState(0);
   const [servedCustomers, setServedCustomers] = useState(0);
   const [calendarData, setCalendarData] = useState([]);
@@ -374,23 +375,25 @@ const DashboardDefault = () => {
           user_id: item.userId,
           full_name: item.userName,
           role_name: item.roleName || 'N/A',
-
           check_in_time: item.checkInTime,
-          status: item.status || 'On Time',
+          status: item.status || 'pending',
           shift: item.shift,
           image_url: item.userImageUrl
         }));
-        let dataToShow = [];
-        const shiftNameToFilter = determineShift(new Date()).split(' ')[0];
-        if (i === 0) dataToShow = mappedSchedules.filter(staff => staff.shift?.toLowerCase().includes(shiftNameToFilter.toLowerCase()));
-        if (dataToShow.length === 0) dataToShow = mappedSchedules;
-        setScheduleData(dataToShow);
+        setFullScheduleData(mappedSchedules);
+
+        const currentShiftName = determineShift(new Date()).split(' ')[0];
+        if (i === 0 && mappedSchedules.some(s => s.shift?.toLowerCase().includes(currentShiftName.toLowerCase()))) {
+          setSelectedShift(currentShiftName);
+        } else {
+          setSelectedShift('All');
+        }
         break;
       }
     }
     if (!dataFound) {
       setScheduleTitle('Staff Schedule (No recent data)');
-      setScheduleData([]);
+      setFullScheduleData([]);
     }
   };
 
@@ -499,8 +502,28 @@ const DashboardDefault = () => {
   useEffect(() => { fetchRatingData(); }, [ratingPeriod]);
 
   const getStatusChip = (status) => {
-    const config = { 'On Time': { color: 'success' }, 'Late': { color: 'warning' }, 'Working': { color: 'info' } };
-    const statusTranslations = { 'On Time': 'Đúng Giờ', 'Late': 'Trễ', 'Working': 'Đang Làm Việc', 'Unknown': 'Không Rõ' };
+    const config = {
+      'pending': { color: 'default' },
+      'confirmed': { color: 'info' },
+      'completed': { color: 'success' },
+      'cancelled': { color: 'error' },
+      'absent': { color: 'error' },
+      'On Time': { color: 'success' },
+      'Late': { color: 'warning' },
+      'Working': { color: 'info' }
+    };
+
+    const statusTranslations = {
+      'pending': 'Chờ',
+      'confirmed': 'Đã Check-in',
+      'completed': 'Hoàn Thành',
+      'cancelled': 'Đã Hủy',
+      'absent': 'Vắng Mặt',
+      'On Time': 'Đúng Giờ',
+      'Late': 'Trễ',
+      'Working': 'Đang Làm'
+    };
+
     const translatedStatus = statusTranslations[status] || status || 'Không Rõ';
     return <Chip size="small" label={translatedStatus} color={config[status]?.color || 'default'} />;
   };
@@ -542,6 +565,13 @@ const DashboardDefault = () => {
   };
 
   const handleCloseModal = () => setIsStatsModalOpen(false);
+
+  const displayedSchedules = fullScheduleData
+    .filter(staff => {
+      if (selectedShift === 'All') return true;
+      return staff.shift?.toLowerCase().includes(selectedShift.toLowerCase());
+    })
+    .slice(0, 5);
 
   // Handle click on statistic cards to navigate to appointments with filters
   const handleCardClick = (cardType) => {
@@ -597,7 +627,7 @@ const DashboardDefault = () => {
           <Box className="greeting-card">
             <Box className="greeting-content">
               <Typography variant="h3" className="greeting-title">
-                {`Xem được khoảng từ ${format(startOfMonth(selectedMonth), 'dd/MM/yyyy')} đến ${format(endOfMonth(selectedMonth), 'dd/MM/yyyy')}`}
+                {`Xem được khoảng từ${format(startOfMonth(selectedMonth), 'dd/MM/yyyy')} đến ${format(endOfMonth(selectedMonth), 'dd/MM/yyyy')}`}
               </Typography>
               <Typography variant="body1" className="greeting-subtitle">
                 Lịch đặt lịch theo tháng hiện tại
@@ -708,7 +738,53 @@ const DashboardDefault = () => {
 
         <Grid item xs={12} md={8}>
           <Grid container spacing={3}>
-            <Grid item xs={12}><MainCard title={<Box display="flex" alignItems="center"><ScheduleOutlined style={{ marginRight: 8 }} /><Typography variant="h5">{scheduleTitle}</Typography> </Box>}><TableContainer><Table size="small"><TableHead><TableRow><TableCell>Nhân Viên</TableCell><TableCell>Vai Trò</TableCell><TableCell>Giờ Vào</TableCell><TableCell>Chi Nhánh</TableCell><TableCell>Trạng Thái</TableCell></TableRow></TableHead><TableBody>{scheduleData.map((staff) => (<TableRow key={staff.user_id}><TableCell><Box display="flex" alignItems="center"><Avatar src={staff.image_url} sx={{ width: 28, height: 28, mr: 1 }} />{staff.full_name}</Box></TableCell><TableCell>{staff.role_name}</TableCell><TableCell>{staff.check_in_time}</TableCell><TableCell>{staff.branch}</TableCell><TableCell>{getStatusChip(staff.status)}</TableCell></TableRow>))}</TableBody></Table></TableContainer></MainCard></Grid>
+            <Grid item xs={12}>
+              <MainCard
+                title={<Box display="flex" alignItems="center"><ScheduleOutlined style={{ marginRight: 8 }} /><Typography variant="h5">{scheduleTitle}</Typography></Box>}
+                content={false}
+              >
+                <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
+                  <Tabs
+                    value={selectedShift}
+                    onChange={(event, newValue) => setSelectedShift(newValue)}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    aria-label="schedule shift tabs"
+                  >
+                    <Tab label="Tất Cả" value="All" />
+                    <Tab label="Ca Sáng" value="Morning" />
+                    <Tab label="Ca Chiều" value="Afternoon" />
+                  </Tabs>
+                </Box>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Nhân Viên</TableCell>
+                        <TableCell>Vai Trò</TableCell>
+                        <TableCell>Giờ Vào</TableCell>
+                        <TableCell>Trạng Thái</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {displayedSchedules.map((staff) => (
+                        <TableRow key={staff.user_id}>
+                          <TableCell>
+                            <Box display="flex" alignItems="center">
+                              <Avatar src={staff.image_url} sx={{ width: 28, height: 28, mr: 1 }} />
+                              {staff.full_name}
+                            </Box>
+                          </TableCell>
+                          <TableCell>{staff.role_name}</TableCell>
+                          <TableCell>{staff.check_in_time || 'N/A'}</TableCell>
+                          <TableCell>{getStatusChip(staff.status)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </MainCard>
+            </Grid>
             <Grid item xs={12}><RevenueChart {...{ revenueTimeFrame, setRevenueTimeFrame, totalMonthlyRevenue, revenueGrowth, revenueLoading, revenueChartData }} /></Grid>
             <Grid item xs={12}><CustomerChart {...{ customerTimeFrame, setCustomerTimeFrame, totalMonthlyCustomers, customerGrowth, customerLoading, customerChartData }} /></Grid>
           </Grid>

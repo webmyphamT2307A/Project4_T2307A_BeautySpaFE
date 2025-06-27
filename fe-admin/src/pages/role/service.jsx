@@ -18,7 +18,8 @@ import {
   InputAdornment,
   Box,
   Typography,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 import MainCard from 'components/MainCard';
 import {
@@ -35,6 +36,7 @@ const API_URL = 'http://localhost:8080/api/v1/roles';
 const RoleManager = () => {
   // States
   const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState(null);
   const [formData, setFormData] = useState({
@@ -46,6 +48,7 @@ const RoleManager = () => {
 
   // Load roles from backend
   useEffect(() => {
+    setLoading(true);
     fetch(API_URL)
       .then(res => res.json())
       .then(data => {
@@ -55,7 +58,8 @@ const RoleManager = () => {
           setRoles([]);
         }
       })
-      .catch(() => setRoles([]));
+      .catch(() => setRoles([]))
+      .finally(() => setLoading(false));
   }, []);
 
   // Handlers
@@ -223,26 +227,41 @@ const RoleManager = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredRoles
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((role, index) => (
-                <TableRow key={role.id}>
-                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                  <TableCell>{role.name}</TableCell>
-                  <TableCell align="center">
-                    <Tooltip title="Edit">
-                      <IconButton size="small" color="primary" onClick={() => handleOpen(role)}>
-                        <EditOutlined />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton size="small" color="error" onClick={() => handleDelete(role.id)}>
-                        <DeleteOutlined />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
+                  <CircularProgress />
+                  <Typography sx={{ mt: 1 }}>Đang tải dữ liệu vai trò...</Typography>
+                </TableCell>
+              </TableRow>
+            ) : filteredRoles.length > 0 ? (
+              filteredRoles
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((role, index) => (
+                  <TableRow key={role.id}>
+                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell>{role.name}</TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="Edit">
+                        <IconButton size="small" color="primary" onClick={() => handleOpen(role)}>
+                          <EditOutlined />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton size="small" color="error" onClick={() => handleDelete(role.id)}>
+                          <DeleteOutlined />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} align="center">
+                  Không tìm thấy vai trò nào.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
