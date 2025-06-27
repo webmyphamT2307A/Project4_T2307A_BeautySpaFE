@@ -10,6 +10,8 @@ import UserScheduleManager from '../pages/userschedule/schedule';
 import usePrivateRoute from './../hooks/usePrivateRoute';
 import SalaryManagement from '../pages/salary/salary';
 import ReviewList from '../pages/review/review';
+import FeedbackManager from '../pages/feedback/feedback';
+import TimeSlotManagement from '../pages/timeslot/timeslot';
 import path from 'path';
 
 // render- Dashboard
@@ -29,7 +31,8 @@ const AdminAccount = Loadable(lazy(() => import('pages/account/admin')));
 // ==============================|| MAIN ROUTING ||============================== //
 
 const ProtectedRoute = ({ element }) => {
-  usePrivateRoute(['ROLE_ADMIN']); // Chỉ cho phép ROLE_ADMIN truy cập
+  // Cho phép cả ADMIN và STAFF truy cập. Logic trong hook sẽ xử lý việc viết hoa.
+  usePrivateRoute(['ADMIN', 'STAFF']); 
   return element;
 };
 
@@ -100,9 +103,21 @@ const MainRoutes = {
         element: <ProtectedRoute element={<ReviewList />} />
       }
     ]
-
+    
   },
-  
+  {
+    path: 'feedback',
+    children: [
+      {
+        path: 'feedback',
+        element: <ProtectedRoute element={<FeedbackManager />} />
+      }
+    ]
+  },
+  {
+    path: 'timeslot',
+    element: <ProtectedRoute element={<TimeSlotManagement />} />
+  },
     {
       path: 'typography',
       element: <ProtectedRoute element={<Typography />} />
@@ -120,7 +135,7 @@ const MainRoutes = {
       element: <ProtectedRoute element={<SamplePage />} />
     },
     {
-      path: 'account',
+      path: 'admin',
       children: [
         {
           path: 'user',

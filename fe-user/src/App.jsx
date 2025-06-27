@@ -1,8 +1,8 @@
-import { RouterProvider } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 // project imports
-import router from 'routes';
+import ThemeRoutes from 'routes';
 import ThemeCustomization from 'themes';
 import ScrollTop from 'components/ScrollTop';
 import { AppointmentFilterProvider } from 'contexts/AppointmentFilterContext';
@@ -14,7 +14,7 @@ export default function App() {
     <ThemeCustomization>
       <AppointmentFilterProvider>
         <ScrollTop>
-          <RouterProvider router={router} />
+          <ThemeRoutes />
         </ScrollTop>
       </AppointmentFilterProvider>
       <ToastContainer position="top-right" autoClose={2000} />

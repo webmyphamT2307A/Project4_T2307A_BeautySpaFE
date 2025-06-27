@@ -40,6 +40,12 @@ import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:8080/api/v1/services';
 
+// Hàm tiện ích để định dạng tiền tệ
+const formatCurrency = (value) => {
+  if (!value) return '';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+};
+
 const ServiceManagement = () => {
   // States
   const [services, setServices] = useState([]);
@@ -104,7 +110,7 @@ const ServiceManagement = () => {
       setFormData({
         name: service.name,
         description: service.description,
-        price: service.price.toString(),
+        price: service.price.toString().replace(/[^0-9]/g, ''), // Chỉ giữ lại số
         duration: service.duration.toString(),
         is_active: service.is_active,
         image_url: service.image_url
@@ -183,6 +189,9 @@ const ServiceManagement = () => {
 
   // Save (edit) service
   const handleSave = () => {
+    // Loại bỏ các ký tự không phải số trước khi gửi
+    const priceAsNumber = parseFloat(formData.price.replace(/[^0-9]/g, ''));
+
     if (currentService) {
       // Edit
       fetch(`${API_URL}/${currentService.service_id}`, {
@@ -191,7 +200,7 @@ const ServiceManagement = () => {
         body: JSON.stringify({
           name: formData.name,
           description: formData.description,
-          price: parseFloat(formData.price),
+          price: priceAsNumber,
           duration: parseInt(formData.duration, 10),
           imageUrl: formData.image_url
         })
@@ -204,7 +213,7 @@ const ServiceManagement = () => {
                 ? {
                   ...service,
                   ...formData,
-                  price: parseFloat(formData.price),
+                  price: priceAsNumber,
                   duration: parseInt(formData.duration, 10),
                   image_url: formData.image_url
                 }
@@ -228,7 +237,7 @@ const ServiceManagement = () => {
         body: JSON.stringify({
           name: formData.name,
           description: formData.description,
-          price: parseFloat(formData.price),
+          price: priceAsNumber,
           duration: parseInt(formData.duration, 10),
           imageUrl: formData.image_url
         })
@@ -402,7 +411,7 @@ const ServiceManagement = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                      {service.price.toFixed(2)} VND
+                      {formatCurrency(service.price)}
                     </Typography>
                   </TableCell>
                   <TableCell>{service.duration} min</TableCell>
@@ -545,23 +554,13 @@ const ServiceManagement = () => {
               margin="dense"
               name="price"
               label="Giá (VND)"
-              type="number"
+              type="text"
               fullWidth
-              value={formData.price}
-              onChange={handleChange}
-              InputProps={{
-                endAdornment: formData.price ? (
-                  <InputAdornment position="end">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleClearField('price')}
-                    >
-                      <CloseOutlined style={{ fontSize: 16 }} />
-                    </IconButton>
-                  </InputAdornment>
-                ) : null
+              value={new Intl.NumberFormat('vi-VN').format(formData.price.replace(/[^0-9]/g, ''))}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, '');
+                setFormData({ ...formData, price: val });
               }}
-              required
             />
             <TextField
               margin="dense"
@@ -646,7 +645,7 @@ const ServiceManagement = () => {
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
                 <Box>
                   <Typography variant="overline" color="textSecondary">Giá</Typography>
-                  <Typography variant="h6" color="primary">{currentService.price.toFixed(2)}VND</Typography>
+                  <Typography variant="h6" color="primary">{formatCurrency(currentService.price)}</Typography>
                 </Box>
                 <Box>
                   <Typography variant="overline" color="textSecondary">Thời Gian</Typography>

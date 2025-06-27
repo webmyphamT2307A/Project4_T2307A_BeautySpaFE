@@ -1,134 +1,81 @@
 import { lazy } from 'react';
 
 // project imports
+import MainLayout from 'layout/Dashboard';
 import Loadable from 'components/Loadable';
-import DashboardLayout from 'layout/Dashboard';
-// import ServiceManagement from '../pages/spa/service';
-import AppointmentManagement from '../pages/spa/appoinment';
-// import ServiceHistory from '../pages/spa/service-history';
-// import RoleManger from '../pages/role/service';
-import AttendancePage from '../pages/roll_call/attendancePage';
-import AttendanceHistoryPage from '../pages/roll_call/attendanceHistoryPage';
-import WorkSchedulePage from '../pages/roll_call/workSchedulePage';
-import SalaryHistory from '../pages/salary/salary-history';
-import ReviewList from '../pages/review/review';
-import path from 'path';
+import PrivateRoute from './PrivateRoute';
 
-// render- Dashboard
+// pages
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
+const ServicePage = Loadable(lazy(() => import('pages/spa/service')));
+const AppointmentPage = Loadable(lazy(() => import('pages/spa/appoinment')));
+const ServiceHistoryPage = Loadable(lazy(() => import('pages/spa/service-history')));
+const ReviewList = Loadable(lazy(() => import('pages/review/review')));
 
-// render - color
-const Color = Loadable(lazy(() => import('pages/component-overview/color')));
-const Typography = Loadable(lazy(() => import('pages/component-overview/typography')));
-const Shadow = Loadable(lazy(() => import('pages/component-overview/shadows')));
-
-// render - sample page
-const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')));
+const WorkSchedulePage = Loadable(lazy(() => import('pages/roll_call/workSchedulePage')));
+const AttendancePage = Loadable(lazy(() => import('pages/roll_call/attendancePage')));
+const AttendanceHistoryPage = Loadable(lazy(() => import('pages/roll_call/attendanceHistoryPage')));
+const SalaryHistory = Loadable(lazy(() => import('pages/salary/salary-history')));
 
 const UserAccount = Loadable(lazy(() => import('pages/account/user')));
 const AdminAccount = Loadable(lazy(() => import('pages/account/admin')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
   path: '/',
-  element: <DashboardLayout />,
+  element: <PrivateRoute />,
   children: [
     {
       path: '/',
-      element: <DashboardDefault />
-    },
-    {
-      path: 'dashboard',
+      element: <MainLayout />,
       children: [
         {
-          path: 'default',
+          index: true,
           element: <DashboardDefault />
-        }
-      ]
-    },
-    {
-      path: 'roll_call',
-      children: [
-        {
-          path: 'workSchedulePage',
-          element: <WorkSchedulePage />
         },
         {
-          path: 'attendancePage',
-          element: <AttendancePage />
+          path: 'dashboard',
+          children: [
+            {
+              path: 'default',
+              element: <DashboardDefault />
+            }
+          ]
         },
         {
-          path: 'attendanceHistoryPage',
-          element: <AttendanceHistoryPage />
-        }
-      ]
-    },
-    {
-      path: 'spa',
-      children: [
-        // {
-        //   path: 'service',
-        //   element: <ServiceManagement />
-        // },
+          path: 'spa',
+          children: [
+            { path: 'service', element: <ServicePage /> },
+            { path: 'appointments', element: <AppointmentPage /> },
+            { path: 'service-history', element: <ServiceHistoryPage /> }
+          ]
+        },
         {
-          path: 'appointments',
-          element: <AppointmentManagement />
-        }
-        // {
-        //   path: 'service-history',
-        //   element: <ServiceHistory />
-        // }
-      ]
-    },
-    {
-      path: 'salary',
-      children: [
+          path: 'roll_call',
+          children: [
+            { path: 'workSchedulePage', element: <WorkSchedulePage /> },
+            { path: 'attendancePage', element: <AttendancePage /> },
+            { path: 'attendanceHistoryPage', element: <AttendanceHistoryPage /> }
+          ]
+        },
         {
-          path: 'history',
-          element: <SalaryHistory />
+          path: 'salary',
+          children: [{ path: 'history', element: <SalaryHistory /> }]
+        },
+        {
+          path: 'review',
+          children: [{ path: 'review', element: <ReviewList /> }]
+        },
+        {
+          path: 'account',
+          children: [
+            { path: 'user', element: <UserAccount /> },
+            { path: 'admin', element: <AdminAccount /> }
+          ]
         }
       ]
-    },
-   
-    {
-    path: 'review',
-    children:[
-      {
-        path: 'review',
-        element: <ReviewList />
-      }
-    ]
-
-  },
-    {
-      path: 'typography',
-      element: <Typography />
-    },
-    {
-      path: 'color',
-      element: <Color />
-    },
-    {
-      path: 'shadow',
-      element: <Shadow />
-    },
-    {
-      path: 'sample-page',
-      element: <SamplePage />
-    },
-    // {
-    //   path: 'account',
-    //   children: [
-    //     {
-    //       path: 'user',
-    //       element: <UserAccount />
-    //     },
-    //     {
-    //       path: 'admin',
-    //       element: <AdminAccount />
-    //     }
-    //   ]
-    // }
+    }
   ]
 };
 

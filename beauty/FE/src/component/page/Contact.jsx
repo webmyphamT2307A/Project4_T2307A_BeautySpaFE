@@ -102,12 +102,12 @@ const Contact = () => {
             default:
                 break;
         }
-        
+
         setErrors(prev => ({
             ...prev,
             [name]: error
         }));
-        
+
         return error === '';
     };
 
@@ -126,14 +126,14 @@ const Contact = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
+
         // Format phone number
         let formattedValue = value;
         if (name === 'phone') {
             // Chỉ cho phép số và một số ký tự đặc biệt
             formattedValue = value.replace(/[^0-9\s\-\+\(\)]/g, '');
         }
-        
+
         setFormData(prevData => ({
             ...prevData,
             [name]: formattedValue
@@ -152,14 +152,14 @@ const Contact = () => {
         newErrors.message = validateMessage(formData.message);
 
         setErrors(newErrors);
-        
+
         // Return true if no errors
         return Object.values(newErrors).every(error => error === '');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // Validate all fields before submit
         if (!validateAllFields()) {
             setStatusMessage('Vui lòng sửa các lỗi trong form trước khi gửi.');
@@ -203,63 +203,11 @@ const Contact = () => {
     // -----------------------------------------------------------
 
     return (
-        <div className="container-fluid py-5">
-            <div className="container py-5">
+        <div className="container-fluid py-4">
+            <div className="container py-2">
                 <div className="row g-4 align-items-center">
-                    <div className="container-fluid pb-5">
-                        <div className="container py-5">
-                            <div className="row g-4 align-items-center">
-                                <div className="col-12">
-                                    <div className="row g-4">
-                                        <div className="col-lg-4">
-                                            <div className="d-inline-flex bg-light w-100 border border-primary p-4 rounded">
-                                                <i className="fas fa-map-marker-alt fa-2x text-primary me-4" />
-                                                <div>
-                                                    <h4>Địa chỉ</h4>
-                                                    <p className="mb-0">123 North tower New York, USA</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-lg-4">
-                                            <div className="d-inline-flex bg-light w-100 border border-primary p-4 rounded">
-                                                <i className="fas fa-envelope fa-2x text-primary me-4" />
-                                                <div>
-                                                    <h4>Email của chúng tôi</h4>
-                                                    <p className="mb-0">info@example.com</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-lg-4">
-                                            <div className="d-inline-flex bg-light w-100 border border-primary p-4 rounded">
-                                                <i className="fa fa-phone-alt fa-2x text-primary me-4" />
-                                                <div>
-                                                    <h4>Điện thoại</h4>
-                                                    <p className="mb-0">(+012) 3456 7890 123</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="col-12">
-                                    <div className="rounded">
-                                        <iframe className="rounded-top w-100" style={{ height: 450, marginBottom: '-6px' }} src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.324408746655!2d106.69749831533343!3d10.78231859230824!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f38f9ed887b%3A0x14aded5703768989!2zQsOgaSBYw6AgRHXDom4gQ2jDrG0!5e0!3m2!1svi!2s!4v1645678901234!5m2!1svi!2s" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-                                    </div>
-                                    <div className=" text-center p-4 rounded-bottom bg-primary">
-                                        <h4 className="text-white fw-bold">Theo dõi chúng tôi</h4>
-                                        <div className="d-flex align-items-center justify-content-center">
-                                            <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle me-3"><i className="fab fa-facebook-f" /></a>
-                                            <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle me-3"><i className="fab fa-twitter" /></a>
-                                            <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle me-3"><i className="fab fa-instagram" /></a>
-                                            <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle"><i className="fab fa-linkedin-in" /></a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div className="col-12">
-                        <div className="bg-light rounded p-4 p-sm-5 mt-5">
+                        <div className="bg-light rounded p-4 p-sm-5">
                             <div className="text-center mx-auto" style={{ maxWidth: 500 }}>
                                 <h2 className="display-6 mb-4">Bạn có câu hỏi nào không?</h2>
                             </div>
@@ -316,7 +264,7 @@ const Contact = () => {
                                                 {errors.phone}
                                             </div>
                                         )}
-                                       
+
                                     </div>
                                     <div className="col-lg-6">
                                         <input
@@ -364,15 +312,18 @@ const Contact = () => {
                                         </div>
                                     )}
                                     <div className="col-12 text-center">
-                                        <button 
-                                            className="btn btn-primary w-100 py-3" 
-                                            type="submit" 
+                                        <button
+                                            className="btn btn-primary w-100 py-3"
+                                            type="submit"
                                             disabled={isSubmitting || Object.values(errors).some(error => error !== '')}
                                             style={{
-                                                background: 'linear-gradient(135deg, #FDB5B9, #f89ca0)',
+                                                background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%)',
                                                 border: 'none',
+                                                color: 'white',
                                                 fontWeight: '600',
-                                                transition: 'all 0.3s ease'
+                                                borderRadius: '25px',
+                                                transition: 'all 0.3s ease',
+                                                boxShadow: '0 8px 20px rgba(253, 181, 185, 0.3)'
                                             }}
                                             onMouseEnter={(e) => {
                                                 if (!e.target.disabled) {
@@ -408,6 +359,34 @@ const Contact = () => {
                                     )}
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                    <div className="col-12 py-5 mt-5">
+                        <div className="rounded shadow-lg border border-2 border-primary">
+                            <iframe
+                                className="rounded-top w-100"
+                                style={{
+                                    height: 450,
+                                    marginBottom: '-6px',
+                                    filter: 'brightness(1.1) contrast(1.1) saturate(1.2)',
+                                }}
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.324408746655!2d106.69749831533343!3d10.78231859230824!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f38f9ed887b%3A0x14aded5703768989!2zQsOgaSBYw6AgRHXDom4gQ2jDrG0!5e0!3m2!1svi!2s!4v1645678901234!5m2!1svi!2s"
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                            />
+                        </div>
+                        <div className="text-center bg-primary p-4 rounded-bottom bg-gradient" style={{
+                            boxShadow: '0 4px 15px rgba(255, 98, 132, 0.3)'
+                        }}>
+                            <h4 className="text-white fw-bold mb-3" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+                                Theo dõi chúng tôi
+                            </h4>
+                            <div className="d-flex align-items-center justify-content-center">
+                                <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-facebook-f" /></a>
+                                <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-twitter" /></a>
+                                <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-instagram" /></a>
+                                <a href="#" className="btn btn-light btn-square rounded-circle shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-linkedin-in" /></a>
+                            </div>
                         </div>
                     </div>
                 </div>

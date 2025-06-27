@@ -92,12 +92,12 @@ const StaffReviewPage = () => {
         fetchStaffReviews(currentPage - 1);
     }, [staffId, currentPage]);
 
-    // Recalculate stats when staff data changes
+    // Recalculate stats when staff data or reviews change, fixing the race condition
     useEffect(() => {
         if (staff && reviews) {
             calculateReviewStats(reviews);
         }
-    }, [staff]);
+    }, [staff, reviews]);
 
     const fetchStaffDetails = async () => {
         try {
@@ -136,15 +136,16 @@ const StaffReviewPage = () => {
             setStaffToCache(staffList);
             
             const foundStaff = staffList.find(staff => staff.id === parseInt(staffId, 10));
+
             if (foundStaff) {
-                console.log('✅ Found staff via staff list API:', foundStaff.fullName);
+                console.log('✅ Found staff via consistent API:', foundStaff.fullName);
                 setStaff(foundStaff);
             } else {
-                console.error('❌ Staff not found. Available IDs:', staffList.map(s => s.id));
+                console.error('❌ Staff not found in the list. Requested ID:', staffId);
                 toast.error(`Không tìm thấy nhân viên với ID: ${staffId}`);
             }
         } catch (error) {
-            console.error('❌ All API attempts failed:', error);
+            console.error('❌ Failed to fetch staff details:', error);
             toast.error('Không thể tải thông tin nhân viên. Vui lòng thử lại sau.');
         }
     };

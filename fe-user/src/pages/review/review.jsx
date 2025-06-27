@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     IconButton, Tooltip, CircularProgress, FormControl, InputLabel, Select, MenuItem, Box,
-    Modal, Typography, TextField, Button, Paper, TablePagination
+    Modal, Typography, TextField, Button, Paper, TablePagination, Rating
 } from '@mui/material';
 import { DeleteOutlined, ReadFilled } from '@ant-design/icons'; 
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+import { useAppointmentFilter } from 'contexts/AppointmentFilterContext';
 
 const API_BASE_URL = 'http://localhost:8080/api/v1';
 
@@ -35,7 +37,43 @@ const ReviewList = () => {
     const [selectedReview, setSelectedReview] = useState(null);
     const [replyContent, setReplyContent] = useState('');
     const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+    const navigate = useNavigate();
+    const { setFilter } = useAppointmentFilter();
 
+    const handleRatingClick = (review) => {
+        console.log("Data của đánh giá vừa nhấn:", review);
+
+        if (!review.relatedId || !review.type) {
+            toast.info("Không thể đặt lịch từ đánh giá này (Thiếu ID hoặc Loại).");
+            console.error("Lỗi: Dữ liệu review bị thiếu 'relatedId' hoặc 'type'.", { 
+                relatedId: review.relatedId, 
+                type: review.type 
+            });
+            return;
+        }
+
+        const filterPayload = {};
+        let successMessage = '';
+        const reviewType = review.type.toUpperCase();
+
+        if (reviewType === 'SERVICE') {
+            filterPayload.serviceId = review.relatedId;
+            successMessage = 'Đã áp dụng bộ lọc theo dịch vụ. Chuyển đến trang đặt lịch...';
+        } else if (reviewType === 'USER') {
+            filterPayload.staffId = review.relatedId;
+            successMessage = 'Đã áp dụng bộ lọc theo nhân viên. Chuyển đến trang đặt lịch...';
+        }
+
+        if (Object.keys(filterPayload).length > 0) {
+            console.log("Đã tạo bộ lọc:", filterPayload);
+            setFilter(filterPayload);
+            toast.success(successMessage);
+            console.log("Chuẩn bị chuyển hướng đến '/spa/appointments'");
+            navigate('/spa/appointments');
+        } else {
+            console.warn("Không tạo được bộ lọc. Loại review có thể không hợp lệ:", review.type);
+        }
+    };
 
     // Lấy tất cả review cho admin
     const fetchReviews = async () => {
@@ -190,7 +228,7 @@ const ReviewList = () => {
                             <TableCell>Loại</TableCell>
                             <TableCell>Bình luận / Phản hồi</TableCell>
                             <TableCell>Đánh giá</TableCell>
-                            <TableCell>Ngày tạo</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Ngày tạo</TableCell>
                             <TableCell>Trạng thái</TableCell>
                             <TableCell align="center">Thao tác</TableCell>
                         </TableRow>
@@ -202,7 +240,6 @@ const ReviewList = () => {
                                 <TableCell>{r.authorName || 'N/A'}</TableCell>
                                 <TableCell>{r.type}</TableCell>
                                 <TableCell sx={{ minWidth: 250 }}>
-                                    {/* // <<< THAY ĐỔI: Hiển thị comment và reply tại đây */}
                                     <Box>
                                         <Typography variant="body2">{r.comment}</Typography>
                                         {r.replies && r.replies.length > 0 && (
@@ -217,23 +254,41 @@ const ReviewList = () => {
                                         )}
                                     </Box>
                                 </TableCell>
-                                <TableCell>{r.rating}</TableCell>
-                                <TableCell>{r.createdAt?.slice(0, 10)}</TableCell>
                                 <TableCell>
+                                    <Tooltip title="Nhấn để đặt lịch với lựa chọn này">
+                                        <Typography
+                                            onClick={() => handleRatingClick(r)}
+                                            sx={{
+                                                cursor: 'pointer',
+                                                fontWeight: 'bold',
+                                                color: 'warning.main', // Màu vàng cho giống sao
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                '&:hover': {
+                                                    textDecoration: 'underline',
+                                                    opacity: 0.8
+                                                }
+                                            }}
+                                        >
+                                            {r.rating} ★
+                                        </Typography>
+                                    </Tooltip>
+                                </TableCell>
+                                <TableCell>{r.createdAt?.slice(0, 10)}</TableCell>
+                                <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                     {r.active === false || r.active === 0 ? (
                                         <span style={{ color: 'red' }}>Inactive</span>
                                     ) : (
                                         <span style={{ color: 'green' }}>Active</span>
                                     )}
                                 </TableCell>
-                                <TableCell align="center">
-                                    {/* // <<< THAY ĐỔI: Thêm nút Reply */}
+                                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                                     <Tooltip title="Reply">
-                                        <span> {/* Bọc trong span để tooltip hoạt động khi button bị disabled */}
+                                        <span>
                                             <IconButton
                                                 color="primary"
                                                 onClick={() => handleOpenReplyModal(r)}
-                                                disabled={r.replies && r.replies.length > 0} // Vô hiệu hóa nút nếu đã có reply
+                                                disabled={r.replies && r.replies.length > 0}
                                             >
                                                 <ReadFilled />
                                             </IconButton>
@@ -262,7 +317,6 @@ const ReviewList = () => {
                 onRowsPerPageChange={handleChangeRowsPerPage}
             />
 
-            {/* Modal để nhập phản hồi */}
             <Modal
                 open={replyModalOpen}
                 onClose={handleCloseReplyModal}

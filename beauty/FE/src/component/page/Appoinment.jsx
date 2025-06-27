@@ -1,19 +1,39 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { vi } from 'date-fns/locale/vi';
+import { format } from 'date-fns';
+
+registerLocale('vi', vi);
+
+const validateVietnamesePhone = (phone) => {
+    const cleanPhone = phone.replace(/[\s-().]/g, '');
+    const patterns = [
+        /^(84|0)(3[2-9]|5[689]|7[06-9]|8[1-689]|9[0-46-9])[0-9]{7}$/,
+        /^(84|0)(2[0-9])[0-9]{8}$/,
+    ];
+    if (cleanPhone.length < 10 || cleanPhone.length > 11) return 'Số điện thoại phải có 10-11 số.';
+    if (!/^\d+$/.test(cleanPhone)) return 'Số điện thoại chỉ được chứa các chữ số.';
+    if (!patterns.some(p => p.test(cleanPhone))) return 'Định dạng số điện thoại không hợp lệ (VD: 0987654321).';
+    return null;
+};
 
 const Appointment = () => {
     const navigate = useNavigate();
-    
+    const datePickerRef = useRef(null);
+
     // Step management
     const [currentStep, setCurrentStep] = useState(1);
     const totalSteps = 4;
-    
+
     const [formData, setFormData] = useState({
         fullName: '',
         phoneNumber: '',
+        email: '',
         appointmentDate: '',
         serviceId: '',
         notes: '',
@@ -28,6 +48,7 @@ const Appointment = () => {
     const [services, setServices] = useState([]);
     const [timeSlots, setTimeSlots] = useState([]);
     const [staffList, setStaffList] = useState([]);
+    const [countStaffAvaiable, setCountStaffAvaiable] = useState(0);
     const [slotInfo, setSlotInfo] = useState(null);
     // State quản lý lịch rảnh của TẤT CẢ nhân viên
     const [staffAvailabilities, setStaffAvailabilities] = useState({}); // { staffId: { isAvailable, message } }
@@ -43,14 +64,13 @@ const Appointment = () => {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
-    
+
     // Submit appointment states
     const [isSubmittingAppointment, setIsSubmittingAppointment] = useState(false);
     const [lastSubmitTime, setLastSubmitTime] = useState(0);
 
     // Validation states và patterns
     const [validationErrors, setValidationErrors] = useState({});
-    const phoneRegex = /^\d{1,10}$/; // Tối đa 10 số
 
     // Fetch services
     useEffect(() => {
@@ -61,9 +81,29 @@ const Appointment = () => {
             .catch(() => setServices([]));
     }, []);
 
+    // Fetch time slots
+    useEffect(() => {
+        axios.get('http://localhost:8080/api/v1/timeslot')
+            .then(res => {
+                const allSlots = Array.isArray(res.data) ? res.data : res.data.data || [];
+                // Lọc chỉ những time slot có isActive là 1 hoặc true
+                const activeSlots = allSlots.filter(slot => slot.isActive === 1 || slot.isActive === true);
+                setTimeSlots(activeSlots);
+            })
+            .catch(() => setTimeSlots([]));
+    }, []);
+
     // Fetch staff list based on selected service and date with schedule validation
     useEffect(() => {
         const fetchStaffList = async () => {
+            // THÊM ĐIỀU KIỆN: Chỉ fetch khi đã có đầy đủ thông tin
+            if (!formData.serviceId || !formData.appointmentDate || !formData.timeSlotId) {
+                setStaffList([]);
+                setCountStaffAvaiable(0);
+                setIsLoadingSchedules(false);
+                return;
+            }
+
             try {
                 // First, get all staff
                 let apiUrl = 'http://localhost:8080/api/v1/user/accounts/staff';
@@ -80,7 +120,7 @@ const Appointment = () => {
                 // Get selected timeslot to determine shift (moved outside try-catch)
                 const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
                 let requiredShift = null;
-                
+
                 if (selectedTimeSlot) {
                     const startHour = parseInt(selectedTimeSlot.startTime.split(':')[0]);
                     // Determine shift based on time
@@ -91,125 +131,57 @@ const Appointment = () => {
                     } else {
                         requiredShift = 'Tối';
                     }
-                    console.log(`🕐 Selected time slot: ${selectedTimeSlot.startTime}, Required shift: ${requiredShift}`);
                 }
 
                 // If date is selected, filter staff who have work schedule on that date
                 let staffWithSchedule = rawStaffList;
                 if (formData.appointmentDate && scheduleFiltering) {
-                    console.log("🔍 Checking staff schedules for date:", formData.appointmentDate);
                     setIsLoadingSchedules(true);
-                    
-                                            // Get all schedules for the selected date
-                        try {
-                            // Debug: Check date format before API call
-                            console.log("🕒 Date format check:");
-                            console.log(`   Input date: "${formData.appointmentDate}" (type: ${typeof formData.appointmentDate})`);
-                            console.log(`   Expected format: YYYY-MM-DD`);
-                            console.log(`   Date valid?: ${!isNaN(Date.parse(formData.appointmentDate))}`);
-                            
-                            const scheduleResponse = await axios.get('http://localhost:8080/api/v1/users-schedules', {
-                                params: {
-                                    startDate: formData.appointmentDate,
-                                    endDate: formData.appointmentDate
-                                    // Don't filter by status - get all schedules (pending, confirmed) but not completed
-                                }
-                            });
-                        
-                        // Check if API URL is correctly formed
-                        const apiUrl = scheduleResponse.config.url;
-                        const apiParams = scheduleResponse.config.params;
-                        console.log("🌐 Actual API URL:", apiUrl);
-                        console.log("🌐 Actual API Params:", apiParams);
-                        
-                        const schedules = Array.isArray(scheduleResponse.data?.data) 
-                            ? scheduleResponse.data.data 
-                            : (Array.isArray(scheduleResponse.data) ? scheduleResponse.data : []);
-                        
-                        console.log("📅 API Response:", scheduleResponse.data);
-                        console.log("📅 Found schedules:", schedules);
-                        console.log("🗓️ Requested date:", formData.appointmentDate);
-                        
-                        if (schedules.length === 0) {
-                            console.log("⚠️ No schedules found for date:", formData.appointmentDate);
-                        } else {
-                                                    console.log("📋 Schedule details:");
-                        schedules.forEach((schedule, index) => {
-                            console.log(`   ${index + 1}. User ${schedule.userId} (${schedule.userName || 'Unknown'}) - Work Date: ${schedule.workDate} - Shift: ${schedule.shift || 'Unknown'} - Status: ${schedule.status} - Active: ${schedule.isActive}`);
+
+                    // Get all schedules for the selected date
+                    try {
+                        // Debug: Check date format before API call
+                        const scheduleResponse = await axios.get('http://localhost:8080/api/v1/users-schedules', {
+                            params: {
+                                startDate: formData.appointmentDate,
+                                endDate: formData.appointmentDate
+                                // Don't filter by status - get all schedules (pending, confirmed) but not completed
+                            }
                         });
-                        }
-                        
+
+                        const schedules = Array.isArray(scheduleResponse.data?.data)
+                            ? scheduleResponse.data.data
+                            : (Array.isArray(scheduleResponse.data) ? scheduleResponse.data : []);
+
                         // Get list of staff IDs who have schedules on this date
                         const staffIdsWithSchedule = schedules
                             .filter(schedule => {
-                                const workDate = schedule.workDate;
-                                const requestedDate = formData.appointmentDate;
-                                const isDateMatch = workDate === requestedDate;
+                                const workDate = schedule.workDate; // Format can be "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm:ss"
+                                const requestedDate = formData.appointmentDate; // Format is "YYYY-MM-DD"
+                                // FIX: Use startsWith to handle potential time parts in the date string from backend
+                                const isDateMatch = workDate && workDate.startsWith(requestedDate);
                                 const isActive = schedule.isActive === true;
                                 const isNotCompleted = schedule.status !== 'completed';
-                                
+
                                 // Check shift compatibility (if shift info is available and shift filtering is enabled)
                                 let isShiftMatch = true;
                                 if (shiftFiltering && requiredShift && schedule.shift) {
                                     isShiftMatch = schedule.shift.toLowerCase().includes(requiredShift.toLowerCase()) ||
-                                                  requiredShift.toLowerCase().includes(schedule.shift.toLowerCase()) ||
-                                                  schedule.shift.toLowerCase() === 'full day' ||
-                                                  schedule.shift.toLowerCase() === 'cả ngày';
+                                        requiredShift.toLowerCase().includes(schedule.shift.toLowerCase()) ||
+                                        schedule.shift.toLowerCase() === 'full day' ||
+                                        schedule.shift.toLowerCase() === 'cả ngày';
                                 }
-                                
-                                console.log("🔍 Checking schedule:", {
-                                    userId: schedule.userId,
-                                    userName: schedule.userName || 'Unknown',
-                                    workDate: workDate,
-                                    requestedDate: requestedDate,
-                                    shift: schedule.shift || 'Unknown',
-                                    requiredShift: requiredShift,
-                                    isDateMatch: isDateMatch,
-                                    isActive: isActive,
-                                    status: schedule.status,
-                                    isNotCompleted: isNotCompleted,
-                                    isShiftMatch: isShiftMatch,
-                                    finalResult: isDateMatch && isActive && isNotCompleted && isShiftMatch
-                                });
-                                
                                 return isDateMatch && isActive && isNotCompleted && isShiftMatch;
                             })
-                            .map(schedule => {
-                                console.log("✅ Valid schedule for user:", schedule.userId, `(Shift: ${schedule.shift || 'Unknown'})`);
-                                return schedule.userId;
-                            });
-                        
-                        console.log("👥 Staff IDs with schedule:", staffIdsWithSchedule);
-                        console.log("👥 Total staff before filtering:", rawStaffList.length);
-                        console.log("👥 Staff IDs from API:", rawStaffList.map(s => s.id));
-                        
-                        // Check if we have schedules but none match the requested date
-                        const schedulesButWrongDate = schedules.filter(s => 
-                            s.isActive === true && 
-                            s.status !== 'completed' && 
-                            s.workDate !== formData.appointmentDate
-                        );
-                        
-                        if (schedulesButWrongDate.length > 0) {
-                            console.warn("⚠️ Found schedules but for different dates:");
-                            schedulesButWrongDate.forEach(schedule => {
-                                console.warn(`   - User ${schedule.userId} (${schedule.userName}) has schedule on ${schedule.workDate}, not ${formData.appointmentDate}`);
-                            });
-                        }
-                        
+                            .map(schedule => schedule.userId);
+
                         // Filter staff list to only include those with schedules
-                        if (staffIdsWithSchedule.length === 0) {
-                            console.log("⚠️ No staff found with schedules on this date. Showing empty list.");
-                            staffWithSchedule = []; // Show no staff if no schedules found
+                        if (staffIdsWithSchedule.length > 0) {
+                             staffWithSchedule = rawStaffList.filter(staff => staffIdsWithSchedule.includes(staff.id));
                         } else {
-                            staffWithSchedule = rawStaffList.filter(staff => {
-                                const hasSchedule = staffIdsWithSchedule.includes(staff.id);
-                                console.log(`👤 Staff ${staff.fullName} (ID: ${staff.id}): ${hasSchedule ? 'HAS' : 'NO'} schedule`);
-                                return hasSchedule;
-                            });
+                            staffWithSchedule = []; // Show no staff if no schedules found
                         }
-                        
-                        console.log(`✅ Filtered from ${rawStaffList.length} to ${staffWithSchedule.length} staff with schedules`);
+
                     } catch (scheduleError) {
                         console.error("❌ Error fetching schedules:", scheduleError);
                         // If schedule API fails, show all staff (fallback)
@@ -237,250 +209,91 @@ const Appointment = () => {
                             const selectedService = services.find(s => String(s.id) === formData.serviceId);
                             if (selectedService) {
                                 const serviceName = String(selectedService.name || '').toLowerCase();
-                                const roleName = String(staff.roleName || '').toLowerCase();
-                                const roleLevel = String(staff.roleLevel || '').toLowerCase();
                                 const skillsText = String(staff.skillsText || '').toLowerCase();
-                                const fullName = String(staff.fullName || '').toLowerCase();
-                                
-                                // Define service-skill mapping
+                                const roleName = String(staff.roleName || '').toLowerCase();
+
+                                // Basic check: if skillsText or roleName contains the service name, it's a match.
+                                if (skillsText.includes(serviceName) || roleName.includes(serviceName)) {
+                                    return true;
+                                }
+
+                                // If not direct match, check for related keywords
                                 const serviceSkillMapping = {
-                                    // Facial services
-                                    'facial': ['facial', 'skin', 'skincare', 'beauty', 'face', 'chăm sóc da', 'làm đẹp'],
-                                    'skincare': ['facial', 'skin', 'skincare', 'beauty', 'face', 'chăm sóc da'],
-                                    'chăm sóc da': ['facial', 'skin', 'skincare', 'beauty', 'face', 'chăm sóc da'],
-                                    'làm sạch da': ['facial', 'skin', 'skincare', 'beauty', 'face', 'chăm sóc da'],
-                                    
-                                    // Hair removal services - TRIỆT LÔNG
-                                    'triệt lông': ['triệt lông', 'laser', 'hair removal', 'wax', 'waxing', 'epilazione', 'depilação'],
-                                    'laser': ['triệt lông', 'laser', 'hair removal', 'ipl', 'laser hair removal'],
-                                    'wax': ['triệt lông', 'wax', 'waxing', 'hair removal', 'brazilian'],
-                                    'waxing': ['triệt lông', 'wax', 'waxing', 'hair removal'],
-                                    'hair removal': ['triệt lông', 'laser', 'hair removal', 'wax', 'waxing'],
-                                    
-                                    // Massage services
-                                    'massage': ['massage', 'therapy', 'body', 'relaxation', 'mát xa', 'trị liệu'],
-                                    'mát xa': ['massage', 'therapy', 'body', 'relaxation', 'mát xa', 'trị liệu'],
-                                    'body': ['massage', 'therapy', 'body', 'relaxation', 'mát xa', 'body care'],
-                                    'thư giãn': ['massage', 'therapy', 'relaxation', 'mát xa', 'thư giãn'],
-                                    
-                                    // Hair services  
-                                    'hair': ['hair', 'hairstyle', 'cut', 'color', 'tóc', 'cắt tóc', 'nhuộm'],
-                                    'tóc': ['hair', 'hairstyle', 'cut', 'color', 'tóc', 'cắt tóc', 'nhuộm'],
-                                    'cắt tóc': ['hair', 'hairstyle', 'cut', 'tóc', 'cắt tóc'],
-                                    'nhuộm tóc': ['hair', 'color', 'tóc', 'nhuộm', 'màu'],
-                                    
-                                    // Nail services
-                                    'nail': ['nail', 'manicure', 'pedicure', 'móng', 'nail art'],
-                                    'manicure': ['nail', 'manicure', 'móng tay', 'nail care'],
-                                    'pedicure': ['nail', 'pedicure', 'móng chân', 'foot care'],
-                                    'móng': ['nail', 'manicure', 'pedicure', 'móng', 'nail art'],
-                                    
-                                    // Spa treatment
-                                    'spa': ['spa', 'treatment', 'wellness', 'beauty', 'relaxation', 'therapy'],
-                                    'treatment': ['spa', 'treatment', 'therapy', 'healing', 'trị liệu'],
-                                    'trị liệu': ['spa', 'treatment', 'therapy', 'healing', 'trị liệu']
+                                     'facial': ['facial', 'skin', 'skincare', 'chăm sóc da'],
+                                     'triệt lông': ['triệt lông', 'laser', 'hair removal', 'waxing'],
+                                     'massage': ['massage', 'therapy', 'mát xa', 'trị liệu'],
+                                     'hair': ['hair', 'hairstyle', 'tóc', 'cắt tóc', 'nhuộm'],
+                                     'nail': ['nail', 'manicure', 'pedicure', 'móng'],
+                                     'spa': ['spa', 'treatment', 'wellness', 'beauty']
                                 };
-                                
-                                // Find matching skills for the selected service
+
                                 let requiredSkills = [];
                                 for (const [key, skills] of Object.entries(serviceSkillMapping)) {
                                     if (serviceName.includes(key)) {
-                                        requiredSkills = [...requiredSkills, ...skills];
-                                        console.log(`🎯 Service "${serviceName}" matched key "${key}" -> skills: [${skills.join(', ')}]`);
+                                        requiredSkills = skills;
+                                        break; // Found the category
                                     }
                                 }
-                                
-                                // If no specific skills found, use generic spa skills
-                                if (requiredSkills.length === 0) {
-                                    requiredSkills = ['spa', 'beauty', 'wellness', 'service', 'customer'];
-                                    console.log(`⚠️ No specific skills found for "${serviceName}", using generic: [${requiredSkills.join(', ')}]`);
-                                } else {
-                                    console.log(`✅ Final required skills for "${serviceName}": [${requiredSkills.join(', ')}]`);
-                                }
-                                
-                                // STRICT skill matching - only show staff with relevant skills
-                                const hasRequiredSkill = requiredSkills.some(skill => 
-                                    skillsText.includes(skill) || 
-                                    roleName.includes(skill) ||
-                                    fullName.includes(skill)
-                                );
-                                
-                                // For managers/seniors, still require some relevant skill match
-                                const isManagerOrSeniorWithSkill = 
-                                    (roleName.includes('manager') ||
-                                     roleName.includes('giám đốc') ||
-                                     roleName.includes('quản lý') ||
-                                     roleName.includes('senior') ||
-                                     roleName.includes('chuyên gia') ||
-                                     roleLevel.includes('expert') ||
-                                     roleLevel.includes('senior') ||
-                                     roleLevel.includes('advanced')) && hasRequiredSkill;
-                                
-                                // Enhanced skill checking for spa services
-                                const hasGeneralSpaExperience = 
-                                    skillsText.includes('spa') ||
-                                    skillsText.includes('beauty') ||
-                                    skillsText.includes('wellness') ||
-                                    skillsText.includes('treatment') ||
-                                    roleName.includes('spa') ||
-                                    roleName.includes('beauty') ||
-                                    roleName.includes('wellness');
-                                
-                                // More specific skill matching
-                                const hasSpecificServiceSkill = (() => {
-                                    // Direct service name match in skills/role
-                                    if (skillsText.includes(serviceName) || roleName.includes(serviceName)) {
-                                        return true;
-                                    }
-                                    
-                                    // Hair removal / Triệt lông specific matching
-                                    if (serviceName.includes('triệt lông') || serviceName.includes('laser') || 
-                                        serviceName.includes('hair removal') || serviceName.includes('wax')) {
-                                        return skillsText.includes('triệt lông') || 
-                                               skillsText.includes('laser') || 
-                                               skillsText.includes('hair removal') ||
-                                               skillsText.includes('wax') ||
-                                               skillsText.includes('waxing') ||
-                                               roleName.includes('triệt lông') ||
-                                               roleName.includes('laser') ||
-                                               roleName.includes('hair removal');
-                                    }
-                                    
-                                    // Specific service category matching
-                                    if (serviceName.includes('massage') || serviceName.includes('mát xa')) {
-                                        return skillsText.includes('massage') || 
-                                               skillsText.includes('mát xa') || 
-                                               skillsText.includes('therapy') ||
-                                               skillsText.includes('trị liệu') ||
-                                               roleName.includes('massage') ||
-                                               roleName.includes('therapy');
-                                    }
-                                    
-                                    if (serviceName.includes('facial') || serviceName.includes('skin') || serviceName.includes('da')) {
-                                        return skillsText.includes('facial') || 
-                                               skillsText.includes('skin') || 
-                                               skillsText.includes('skincare') ||
-                                               skillsText.includes('chăm sóc da') ||
-                                               roleName.includes('facial') ||
-                                               roleName.includes('skin');
-                                    }
-                                    
-                                    if (serviceName.includes('hair') || serviceName.includes('tóc')) {
-                                        return skillsText.includes('hair') || 
-                                               skillsText.includes('tóc') || 
-                                               skillsText.includes('hairstyle') ||
-                                               roleName.includes('hair') ||
-                                               roleName.includes('tóc');
-                                    }
-                                    
-                                    if (serviceName.includes('nail') || serviceName.includes('móng')) {
-                                        return skillsText.includes('nail') || 
-                                               skillsText.includes('móng') || 
-                                               skillsText.includes('manicure') ||
-                                               skillsText.includes('pedicure') ||
-                                               roleName.includes('nail') ||
-                                               roleName.includes('móng');
-                                    }
-                                    
-                                    return false;
-                                })();
-                                
-                                // Final qualification: More intelligent filtering 
-                                const isQualified = !strictFiltering || // If not strict, accept all
-                                                  hasRequiredSkill || 
-                                                  isManagerOrSeniorWithSkill || 
-                                                  hasSpecificServiceSkill ||
-                                                  hasGeneralSpaExperience; // Remove the "accept all" fallback
-                                
-                                if (!isQualified) {
-                                    console.log(`❌ Staff ${staff.fullName} filtered out for service: ${serviceName}`);
-                                    console.log(`   Required skills: [${requiredSkills.join(', ')}]`);
-                                    console.log(`   Staff role: "${roleName}", skills: "${skillsText}"`);
-                                    console.log(`   Checks: hasRequiredSkill=${hasRequiredSkill}, hasSpecificServiceSkill=${hasSpecificServiceSkill}, hasGeneralSpaExperience=${hasGeneralSpaExperience}`);
-                                    return false;
-                                } else {
-                                    console.log(`✅ Staff ${staff.fullName} QUALIFIED for service: ${serviceName}`);
-                                    console.log(`   Staff role: "${roleName}", skills: "${skillsText}"`);
+
+                                if (requiredSkills.length > 0) {
+                                    const hasRequiredSkill = requiredSkills.some(skill => skillsText.includes(skill) || roleName.includes(skill));
+                                    if (!hasRequiredSkill) return false;
                                 }
                             }
                         }
-
                         return true;
                     } catch (error) {
                         console.error('Error filtering staff:', error, staff);
-                        // In case of error, include the staff member (failsafe)
-                        return true;
+                        return true; // Failsafe
                     }
                 });
-
-                // Shuffle to randomize order
+                
                 const shuffledStaff = [...filteredStaff].sort(() => 0.5 - Math.random());
-                
-                // Final debug summary
-                console.log("\n🎯 FINAL STAFF LIST SUMMARY:");
-                console.log(`   📅 Selected Date: ${formData.appointmentDate}`);
-                console.log(`   🕐 Selected Time Slot: ${selectedTimeSlot ? selectedTimeSlot.startTime + '-' + selectedTimeSlot.endTime : 'None'}`);
-                console.log(`   🔄 Schedule Filtering: ${scheduleFiltering ? 'ENABLED' : 'DISABLED'}`);
-                console.log(`   ⏰ Shift Filtering: ${shiftFiltering ? 'ENABLED' : 'DISABLED'}`);
-                console.log(`   🎯 Strict Skill Filtering: ${strictFiltering ? 'ENABLED' : 'DISABLED'}`);
-                console.log(`   📊 Final Staff Count: ${shuffledStaff.length}`);
-                console.log(`   👥 Staff Names: [${shuffledStaff.map(s => s.fullName).join(', ')}]`);
-                if (formData.appointmentDate && scheduleFiltering) {
-                    console.log(`   ⚠️  NOTE: Only staff with schedules on ${formData.appointmentDate} should be shown!`);
-                    if (shiftFiltering && requiredShift) {
-                        console.log(`   ⚠️  NOTE: Only staff with ${requiredShift} shift should be shown!`);
-                    }
-                }
-                
                 setStaffList(shuffledStaff);
-
             } catch (error) {
                 console.error("Error fetching staff list:", error);
                 setStaffList([]);
+                setCountStaffAvaiable(0);
                 toast.error("Không thể tải danh sách nhân viên.");
             }
         };
 
         fetchStaffList();
-            }, [formData.serviceId, formData.appointmentDate, formData.timeSlotId, services, timeSlots, scheduleFiltering, shiftFiltering]); // Re-fetch when any relevant parameter changes
+    }, [formData.serviceId, formData.appointmentDate, formData.timeSlotId, services, timeSlots, scheduleFiltering, shiftFiltering, strictFiltering]);
 
-    // Fetch time slots
+    // Fetch available slots
     useEffect(() => {
-        axios.get('http://localhost:8080/api/v1/timeslot')
-            .then(res => setTimeSlots(Array.isArray(res.data) ? res.data : res.data.data || []))
-            .catch(() => setTimeSlots([]));
-    }, []);
-
-    // Fetch available slots with actual staff count
-    useEffect(() => {
-        if (formData.appointmentDate && formData.serviceId && formData.timeSlotId) {
-            axios.get('http://localhost:8080/api/v1/timeslot/available', {
-                params: {
-                    date: formData.appointmentDate,
-                    serviceId: formData.serviceId,
-                    timeSlotId: formData.timeSlotId
-                }
-            })
-                .then(res => {
-                    if (res.data.data && res.data.data.availableSlot !== undefined) {
-                        setSlotInfo(res.data.data);
-                    } else if (res.data.availableSlot !== undefined) {
-                        setSlotInfo(res.data);
-                    } else {
-                        setSlotInfo(null);
-                    }
-                })
-                .catch(() => setSlotInfo(null));
-        } else {
+        if (!formData.appointmentDate || !formData.serviceId || !formData.timeSlotId) {
             setSlotInfo(null);
+            return;
         }
+
+        axios.get('http://localhost:8080/api/v1/timeslot/available', {
+            params: {
+                date: formData.appointmentDate,
+                serviceId: formData.serviceId,
+                timeSlotId: formData.timeSlotId
+            }
+        })
+        .then(res => {
+            const slotData = res.data.data;
+            if (slotData && slotData.totalSlots !== undefined && slotData.bookedSlots !== undefined) {
+                const booked = Math.max(0, slotData.bookedSlots);
+                const total = Math.max(booked, slotData.totalSlots);
+                setSlotInfo({ availableSlot: booked, totalSlot: total });
+            } else {
+                setSlotInfo(null);
+            }
+        })
+        .catch(() => setSlotInfo(null));
     }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
 
-    // Kiểm tra lịch rảnh cho TẤT CẢ nhân viên khi thông tin thay đổi
+    // Check staff availability
     useEffect(() => {
         const checkAllStaffAvailability = async () => {
             if (!formData.appointmentDate || !formData.timeSlotId || !formData.serviceId || staffList.length === 0) {
                 setStaffAvailabilities({});
+                setCountStaffAvaiable(0);
                 return;
             }
 
@@ -495,31 +308,30 @@ const Appointment = () => {
 
             const [slotHours, slotMinutes] = selectedTimeSlot.startTime.split(':').map(Number);
             const [year, month, day] = formData.appointmentDate.split('-').map(Number);
-            const localDateTimeForSlot = new Date(year, month - 1, day, slotHours, slotMinutes);
-            const requestedDateTimeISO = localDateTimeForSlot.toISOString();
+            const requestedDateTimeISO = new Date(year, month - 1, day, slotHours, slotMinutes).toISOString();
 
-            const availabilityChecks = staffList.map(staff => {
-                return axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
+            const availabilityChecks = staffList.map(staff =>
+                axios.get('http://localhost:8080/api/v1/booking/staff-availability', {
                     params: {
                         userId: staff.id,
                         requestedDateTime: requestedDateTimeISO,
-                        durationMinutes: 60 // Cần thay đổi nếu dịch vụ có thời gian khác nhau
+                        durationMinutes: 60 // Assume 60 mins, adjust if needed
                     }
                 }).then(res => ({
                     staffId: staff.id,
                     isAvailable: res.data?.data?.isAvailable || false,
-                    message: res.data?.data?.availabilityMessage || 'Không xác định'
                 })).catch(() => ({
                     staffId: staff.id,
                     isAvailable: false,
-                    message: 'Lỗi kiểm tra'
-                }));
-            });
+                }))
+            );
 
             const results = await Promise.all(availabilityChecks);
+            const availableStaffCount = results.filter(r => r.isAvailable).length;
+            setCountStaffAvaiable(availableStaffCount);
 
             const newAvailabilities = results.reduce((acc, result) => {
-                acc[result.staffId] = { isAvailable: result.isAvailable, message: result.message };
+                acc[result.staffId] = { isAvailable: result.isAvailable };
                 return acc;
             }, {});
 
@@ -530,99 +342,68 @@ const Appointment = () => {
         checkAllStaffAvailability();
     }, [formData.appointmentDate, formData.timeSlotId, formData.serviceId, staffList, timeSlots]);
 
-
-    // Validation functions
     const validateField = (name, value) => {
         let error = '';
-        
         switch (name) {
             case 'fullName':
-                if (!value.trim()) {
-                    error = 'Họ tên không được để trống';
-                }
+                if (!value.trim()) error = 'Họ tên không được để trống';
+                break;
+            case 'email':
+                if (!value.trim()) error = 'Email không được để trống';
+                else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(value)) error = 'Định dạng email không hợp lệ';
                 break;
             case 'phoneNumber':
-                if (!value.trim()) {
-                    error = 'Số điện thoại không được để trống';
-                } else if (!phoneRegex.test(value)) {
-                    error = 'Số điện thoại chỉ được chứa số và tối đa 10 chữ số';
-                } else if (value.length > 10) {
-                    error = 'Số điện thoại không được quá 10 chữ số';
-                }
+                const validationMessage = validateVietnamesePhone(value);
+                if (validationMessage) error = validationMessage;
                 break;
             case 'notes':
-                if (value && value.length > 500) {
-                    error = 'Ghi chú không được vượt quá 500 ký tự';
-                } else if (value && value.length > 450) {
-                    error = 'Ghi chú sắp đạt giới hạn 500 ký tự';
-                }
+                if (value && value.length > 500) error = 'Ghi chú không được vượt quá 500 ký tự';
                 break;
             default:
                 break;
         }
-        
-        setValidationErrors(prev => ({
-            ...prev,
-            [name]: error
-        }));
-        
+        setValidationErrors(prev => ({ ...prev, [name]: error }));
         return error === '';
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        
         validateField(name, value);
-    
+        const newFormData = { ...formData, [name]: value };
         if (name === 'serviceId') {
-            // --- BẮT ĐẦU THÊM VÀO ĐÂY ---
-            console.log("1. Đã chọn Service ID:", value); 
             const selectedService = services.find(s => String(s.id) === value);
-            console.log("2. Dịch vụ tìm thấy:", selectedService); // In ra để xem có tìm thấy không
-            // --- KẾT THÚC THÊM VÀO ĐÂY ---
-            
-            setFormData(prev => ({
-                ...prev,
-                serviceId: value,
-                price: selectedService ? selectedService.price : ''
-            }));
-        } else {
-            setFormData(prev => ({
-                ...prev,
-                [name]: value
-            }));
+            newFormData.price = selectedService ? selectedService.price : '';
         }
+        setFormData(newFormData);
+    };
+
+    const handleDateChange = (date) => {
+        // Backend expects 'yyyy-MM-dd'
+        const formattedDate = date ? format(date, 'yyyy-MM-dd') : '';
+        setFormData(prev => ({ ...prev, appointmentDate: formattedDate }));
+        validateField('appointmentDate', formattedDate);
     };
 
     const handleStaffSelect = (staffId, event) => {
-        if (event) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        
+        event?.preventDefault();
         const isBusy = staffAvailabilities[staffId]?.isAvailable === false;
         if (isBusy) {
             toast.warn('Nhân viên này đang bận, vui lòng chọn nhân viên khác!');
             return;
         }
-
-        // Toggle selection
-        if (selectedStaffId === staffId) {
-            setSelectedStaffId(null);
-            setFormData((prev) => ({ ...prev, userId: '' }));
-        } else {
-            setSelectedStaffId(staffId);
-            setFormData((prev) => ({ ...prev, userId: staffId }));
-        }
+        const newStaffId = selectedStaffId === staffId ? null : staffId;
+        setSelectedStaffId(newStaffId);
+        setFormData(prev => ({ ...prev, userId: newStaffId }));
     };
 
     const handleUseAccountInfo = () => {
         const storedUserInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (storedUserInfo) {
-            setFormData((prev) => ({
+            setFormData(prev => ({
                 ...prev,
                 fullName: storedUserInfo.fullName || '',
                 phoneNumber: storedUserInfo.phone || '',
+                email: storedUserInfo.email || '',
                 customerId: storedUserInfo.id,
             }));
         } else {
@@ -657,12 +438,6 @@ const Appointment = () => {
                 return;
             }
 
-            let formattedDate = formData.appointmentDate;
-            if (formattedDate && formattedDate.includes('-')) {
-                const [year, month, day] = formattedDate.split('-');
-                formattedDate = `${day}/${month}/${year}`;
-            }
-
             let customerIdToSubmit = formData.customerId;
 
             if (!customerIdToSubmit && (formData.fullName && formData.phoneNumber)) {
@@ -670,6 +445,7 @@ const Appointment = () => {
                     const res = await axios.post('http://localhost:8080/api/v1/customers/guest-create', {
                         fullName: formData.fullName,
                         phone: formData.phoneNumber,
+                        email: formData.email,
                     });
                     customerIdToSubmit = res.data.id;
                 } catch (err) {
@@ -682,7 +458,6 @@ const Appointment = () => {
                 ...formData,
                 customerId: customerIdToSubmit,
                 status: formData.status || 'pending',
-                appointmentDate: formattedDate,
                 branchId: formData.branchId || 1,
                 timeSlotId: formData.timeSlotId,
                 price: formData.price,
@@ -693,14 +468,35 @@ const Appointment = () => {
                 delete submitData.userId;
             }
 
-            if (!submitData.fullName || !submitData.phoneNumber || !submitData.appointmentDate || !submitData.serviceId || !submitData.timeSlotId) {
-                toast.error('Vui lòng điền đầy đủ các trường bắt buộc: Họ tên, SĐT, Dịch vụ, Ngày hẹn, Khung giờ.');
+            if (!submitData.fullName || !submitData.phoneNumber || !submitData.email || !submitData.appointmentDate || !submitData.serviceId || !submitData.timeSlotId) {
+                toast.error('Vui lòng điền đầy đủ các trường bắt buộc: Họ tên, SĐT, Email, Dịch vụ, Ngày hẹn, Khung giờ.');
                 return;
             }
 
             await axios.post('http://localhost:8080/api/v1/admin/appointment/create', submitData);
-            toast.success('Đặt lịch thành công!');
-            
+
+            // Hiển thị thông báo thành công với thời gian chờ
+            toast.success('Đặt lịch thành công! Đang chuyển hướng...', {
+                position: "top-right",
+                autoClose: 2000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
+
+            // Lưu thông tin để tự động tra cứu ở trang service-history
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            const bookingInfo = {
+                phoneNumber: formData.phoneNumber,
+                fullName: formData.fullName,
+                isLoggedIn: !!userInfo.id,
+                timestamp: Date.now()
+            };
+
+            // Lưu thông tin đặt lịch vào sessionStorage (chỉ tồn tại trong phiên làm việc hiện tại)
+            sessionStorage.setItem('recentBooking', JSON.stringify(bookingInfo));
+
             // Reset form after successful submission
             setFormData(prev => ({
                 ...prev,
@@ -714,6 +510,11 @@ const Appointment = () => {
             setSelectedStaffId(null);
             setStaffAvailabilities({});
             setCurrentStep(1); // Reset về step đầu tiên
+
+            // Chuyển hướng sau 0.5 giây để người dùng có thể thấy thông báo thành công
+            setTimeout(() => {
+                navigate('/service-history');
+            }, 500);
 
         } catch (error) {
             if (error.response) {
@@ -750,13 +551,13 @@ const Appointment = () => {
                     return bIsAvailable - aIsAvailable; // true (1) - false (0) -> b lên trước a
                 });
             }
-            
+
             return filtered;
         } catch (error) {
             console.error('Error in filteredStaffList:', error);
             return [];
         }
-    }, [staffList, staffSearchTerm, staffAvailabilities]); // Thêm staffAvailabilities vào dependencies
+    }, [staffList, staffSearchTerm, staffAvailabilities]);
 
     const renderStars = (rating) => {
         const totalStars = 5;
@@ -768,17 +569,20 @@ const Appointment = () => {
         ));
     };
 
+
+
     // Step validation
     const canProceedToStep = (step) => {
+        console.log("step: ", step);
         switch (step) {
             case 2:
-                return formData.serviceId !== '' && formData.appointmentDate !== '' && formData.timeSlotId !== '';
+                return formData.serviceId !== '' && formData.appointmentDate !== '' && formData.timeSlotId !== '' && (countStaffAvaiable > 0) && (slotInfo.availableSlot < slotInfo.totalSlot);
             case 3:
                 // Must have staff selected and staff must be available
-                const selectedStaffAvailable = formData.userId !== '' && 
+                const selectedStaffAvailable = formData.userId !== '' &&
                     staffAvailabilities[formData.userId]?.isAvailable === true;
-                return formData.serviceId !== '' && formData.appointmentDate !== '' && 
-                       formData.timeSlotId !== '' && selectedStaffAvailable;
+                return formData.serviceId !== '' && formData.appointmentDate !== '' &&
+                    formData.timeSlotId !== '' && selectedStaffAvailable;
             case 4:
                 // Check each field individually with detailed logging
                 const hasServiceId = formData.serviceId !== '';
@@ -787,13 +591,15 @@ const Appointment = () => {
                 const hasUserId = formData.userId !== '' && formData.userId != null && formData.userId !== undefined;
                 const hasFullName = formData.fullName !== '' && formData.fullName?.trim() !== '';
                 const hasPhoneNumber = formData.phoneNumber !== '' && formData.phoneNumber?.trim() !== '';
+                const hasEmail = formData.email !== '' && formData.email?.trim() !== '';
                 const noNameError = !validationErrors.fullName || validationErrors.fullName === '';
                 const noPhoneError = !validationErrors.phoneNumber || validationErrors.phoneNumber === '';
-                
-                const step4Valid = hasServiceId && hasAppointmentDate && hasTimeSlotId && 
-                                 hasUserId && hasFullName && hasPhoneNumber && 
-                                 noNameError && noPhoneError;
-                
+                const noEmailError = !validationErrors.email || validationErrors.email === '';
+
+                const step4Valid = hasServiceId && hasAppointmentDate && hasTimeSlotId &&
+                    hasUserId && hasFullName && hasPhoneNumber && hasEmail &&
+                    noNameError && noPhoneError && noEmailError;
+
                 console.log("🔍 Step 4 Validation DETAILED:", {
                     serviceId: `"${formData.serviceId}" -> ${hasServiceId}`,
                     appointmentDate: `"${formData.appointmentDate}" -> ${hasAppointmentDate}`,
@@ -801,12 +607,14 @@ const Appointment = () => {
                     userId: `${formData.userId} (type: ${typeof formData.userId}) -> ${hasUserId}`,
                     fullName: `"${formData.fullName}" -> ${hasFullName}`,
                     phoneNumber: `"${formData.phoneNumber}" -> ${hasPhoneNumber}`,
+                    email: `"${formData.email}" -> ${hasEmail}`,
                     validationErrors: validationErrors,
                     noNameError: noNameError,
                     noPhoneError: noPhoneError,
+                    noEmailError: noEmailError,
                     FINAL_RESULT: step4Valid
                 });
-                
+
                 // Show which field is failing
                 if (!step4Valid) {
                     const failedFields = [];
@@ -816,12 +624,14 @@ const Appointment = () => {
                     if (!hasUserId) failedFields.push('userId');
                     if (!hasFullName) failedFields.push('fullName');
                     if (!hasPhoneNumber) failedFields.push('phoneNumber');
+                    if (!hasEmail) failedFields.push('email');
                     if (!noNameError) failedFields.push('fullName validation error');
                     if (!noPhoneError) failedFields.push('phoneNumber validation error');
-                    
+                    if (!noEmailError) failedFields.push('email validation error');
+
                     console.error("❌ Step 4 FAILED - Missing fields:", failedFields);
                 }
-                
+
                 return step4Valid;
             default:
                 return true;
@@ -842,7 +652,7 @@ const Appointment = () => {
                 phoneNumber: formData.phoneNumber
             }
         });
-        
+
         if (canProceedToStep(currentStep + 1)) {
             console.log("✅ Proceeding to next step");
             setCurrentStep(prev => Math.min(prev + 1, totalSteps));
@@ -863,9 +673,9 @@ const Appointment = () => {
                     }
                     break;
                 case 3:
-                    if (!formData.fullName || !formData.phoneNumber) {
-                        toast.error('Vui lòng điền đầy đủ họ tên và số điện thoại!');
-                    } else if (validationErrors.fullName || validationErrors.phoneNumber) {
+                    if (!formData.fullName || !formData.phoneNumber || !formData.email) {
+                        toast.error('Vui lòng điền đầy đủ họ tên, số điện thoại và email!');
+                    } else if (validationErrors.fullName || validationErrors.phoneNumber || validationErrors.email) {
                         toast.error('Vui lòng sửa lỗi trong thông tin cá nhân!');
                     }
                     break;
@@ -907,13 +717,14 @@ const Appointment = () => {
         try {
             // Here you can send the cancel reason to backend if needed
             // await axios.post('http://localhost:8080/api/v1/appointment/cancel', { reason: cancelReason });
-            
+
             toast.success(`Đã hủy đặt lịch thành công. Lý do: ${cancelReason}`);
-            
+
             // Reset form
             setFormData({
                 fullName: '',
                 phoneNumber: '',
+                email: '',
                 appointmentDate: '',
                 serviceId: '',
                 notes: '',
@@ -929,7 +740,7 @@ const Appointment = () => {
             setStaffAvailabilities({});
             setCurrentStep(1);
             handleCloseCancelModal();
-            
+
         } catch (error) {
             toast.error('Có lỗi xảy ra khi hủy đặt lịch. Vui lòng thử lại.');
         } finally {
@@ -962,7 +773,7 @@ const Appointment = () => {
                 </h4>
                 <p className="text-white-50">Lựa chọn dịch vụ và thời gian phù hợp với bạn</p>
             </div>
-            
+
             <div className="row g-3">
                 <div className="col-12 col-lg-6">
                     <label className="form-label text-white fw-bold">
@@ -988,15 +799,26 @@ const Appointment = () => {
                     <label className="form-label text-white fw-bold">
                         <i className="fas fa-calendar me-2"></i>Chọn Ngày *
                     </label>
-                    <input
-                        type="date"
-                        name="appointmentDate"
-                        value={formData.appointmentDate}
-                        onChange={handleInputChange}
-                        className="form-control py-2 border-white bg-transparent text-white custom-date-picker"
-                        min={new Date().toISOString().split("T")[0]}
-                        style={{ height: '45px' }}
-                    />
+                    <div className="position-relative">
+                        <DatePicker
+                            ref={datePickerRef}
+                            locale="vi"
+                            dateFormat="dd/MM/yyyy"
+                            selected={formData.appointmentDate ? new Date(formData.appointmentDate.replace(/-/g, "/")) : null}
+                            onChange={handleDateChange}
+                            minDate={new Date()}
+                            className="form-control py-2 border-white bg-transparent text-white"
+                            placeholderText="dd/MM/yyyy"
+                            wrapperClassName="w-100"
+                            calendarClassName="custom-calendar" // for custom styling
+                            popperPlacement="bottom-end"
+                        />
+                        <i
+                            className="fas fa-calendar-alt text-white-50 position-absolute top-50 end-0 translate-middle-y me-3"
+                            style={{ cursor: 'pointer', zIndex: 3 }}
+                            onClick={() => datePickerRef.current && datePickerRef.current.setOpen(true)}
+                        ></i>
+                    </div>
                 </div>
 
                 <div className="col-12">
@@ -1013,10 +835,15 @@ const Appointment = () => {
                     >
                         <option value="" style={{ color: 'black' }}>Chọn khung giờ</option>
                         {timeSlots.map(slot => {
-                            const slotDateTimeStr = `${formData.appointmentDate}T${slot.endTime}:00`;
-                            const slotEnd = new Date(slotDateTimeStr);
                             const now = new Date();
-                            const isPast = formData.appointmentDate && slot.endTime ? slotEnd < now : false;
+                            const todayStr = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+                            const isToday = formData.appointmentDate === todayStr;
+
+                            let isPast = false;
+                            if (isToday && slot.startTime) {
+                                const slotStartDateTime = new Date(`${formData.appointmentDate}T${slot.startTime}`);
+                                isPast = slotStartDateTime < now;
+                            }
 
                             return (
                                 <option
@@ -1032,40 +859,83 @@ const Appointment = () => {
                     </select>
                 </div>
 
-                                {formData.appointmentDate && formData.timeSlotId && formData.serviceId && (
+                {formData.appointmentDate && formData.timeSlotId && formData.serviceId && (
                     <div className="col-12">
-                        <div className="alert alert-info bg-transparent border-info text-white">
+                        <div className="alert alert-info bg-transparent border-white text-white rounded-3 shadow-sm">
                             <div className="d-flex align-items-center justify-content-between flex-wrap">
-                                <span>
-                                    <i className="fas fa-users me-2"></i>
-                                    <strong>Nhân viên có lịch làm việc:</strong>
-                                    <span className={`badge ms-2 ${staffList.length > 2 ? 'bg-success' : staffList.length > 0 ? 'bg-warning text-dark' : 'bg-danger'}`}>
-                                        {staffList.length} nhân viên
-                                    </span>
-                                    {slotInfo && (
-                                        <span className={`badge ms-2 ${slotInfo.availableSlot > 2 ? 'bg-success' : slotInfo.availableSlot > 0 ? 'bg-primary' : 'bg-danger'}`}>
-                                            {slotInfo.availableSlot}/{slotInfo.totalSlot} slot trống
+                                <div className="d-flex flex-column gap-2">
+                                    <div className="d-flex align-items-center">
+                                        <i className="fas fa-user-friends me-2"></i>
+                                        <strong>Nhân viên:</strong>
+                                        <span className={`badge ms-2 px-2 py-1 rounded-pill ${countStaffAvaiable > 2 ? 'bg-success' :
+                                            countStaffAvaiable > 0 ? 'bg-warning text-dark' :
+                                                'bg-danger'
+                                            }`} style={{ fontSize: '0.8rem' }}>
+                                            <i className="fas fa-users me-1"></i>
+                                            {countStaffAvaiable} người
                                         </span>
+                                    </div>
+
+                                    {slotInfo && (
+                                        <div className="d-flex align-items-center">
+                                            <i className="fas fa-bookmark me-2"></i>
+                                            <span className="me-2">Đã đặt:</span>
+                                            <span className={`badge px-2 py-1 rounded-pill ${slotInfo.availableSlot === slotInfo.totalSlot ? 'bg-danger' :
+                                                slotInfo.availableSlot > slotInfo.totalSlot / 2 ? 'bg-warning text-dark' :
+                                                    'bg-success'
+                                                }`} style={{ fontSize: '0.8rem' }}>
+                                                <i className="fas fa-calendar-check me-1"></i>
+                                                {slotInfo.availableSlot} / {slotInfo.totalSlot} chỗ
+                                            </span>
+                                        </div>
                                     )}
-                                </span>
-                                {staffList.length > 0 && (
-                                <div className="progress" style={{ width: '200px', height: '8px' }}>
-                                    <div
-                                            className={`progress-bar ${staffList.length === 0 ? 'bg-danger' : staffList.length <= 2 ? 'bg-warning' : 'bg-success'}`}
-                                            style={{ width: `${Math.min((staffList.length / 5) * 100, 100)}%` }}
-                                    />
                                 </div>
+
+                                {countStaffAvaiable > 0 && (
+                                    <div className="d-flex flex-column align-items-end gap-1">
+                                        <small className="text-white-50 mb-1">Tình trạng sẵn sàng</small>
+                                        <div className="progress rounded-pill" style={{ width: '180px', height: '10px' }}>
+                                            <div
+                                                className={`progress-bar progress-bar-striped progress-bar-animated ${countStaffAvaiable === 0 ? 'bg-danger' :
+                                                    countStaffAvaiable <= 2 ? 'bg-warning' :
+                                                        'bg-success'
+                                                    }`}
+                                                style={{
+                                                    width: `${Math.min((countStaffAvaiable / 5) * 100, 100)}%`,
+                                                    borderRadius: '10px'
+                                                }}
+                                                role="progressbar"
+                                                aria-valuenow={countStaffAvaiable}
+                                                aria-valuemin="0"
+                                                aria-valuemax="5"
+                                            />
+                                        </div>
+                                        <small className="text-white-50" style={{ fontSize: '0.7rem' }}>
+                                            {countStaffAvaiable === 0 ? 'Chưa có nhân viên' :
+                                                countStaffAvaiable <= 2 ? 'Ít nhân viên' :
+                                                    'Đủ nhân viên'}
+                                        </small>
+                                    </div>
                                 )}
                             </div>
-                            <div className="mt-2">
-                                <small className="text-white-50">
-                                    <i className="fas fa-calendar-check me-1"></i>
-                                    {slotInfo ? slotInfo.message : 
-                                     (staffList.length > 0 
-                                        ? `${staffList.length} nhân viên có ca làm việc trong khung giờ này`
-                                        : 'Không có nhân viên nào có ca làm việc trong khung giờ này')
-                                    }
-                                </small>
+
+                            {/* Thêm thông báo rõ ràng thân thiện với người dùng */}
+                            <div className="mt-3 pt-2 border-top border-white" style={{ borderOpacity: '0.3' }}>
+                                <div className="d-flex align-items-center text-white-50">
+                                    <i className="fas fa-info-circle me-2"></i>
+                                    <small>
+                                        {staffList.length === 0 ?
+                                            'Hiện tại chưa có nhân viên nào có lịch làm việc vào thời gian này. Vui lòng chọn thời gian khác.' :
+                                            slotInfo?.availableSlot === slotInfo?.totalSlot ?
+                                                'Thời gian này đã kín lịch. Vui lòng chọn khung giờ khác.' :
+                                                slotInfo?.availableSlot === slotInfo?.totalSlot - 1 ?
+                                                    'Chỉ còn 1 chỗ trống cuối cùng! Hãy nhanh tay đặt lịch.' :
+                                                    slotInfo?.availableSlot < slotInfo?.totalSlot ?
+                                                        `Còn ${slotInfo.totalSlot - slotInfo.availableSlot} chỗ trống. Bạn có thể đặt lịch ngay!` :
+                                                        'Nhân viên đã sẵn sàng phục vụ bạn!'
+                                        }
+                                    </small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1107,7 +977,7 @@ const Appointment = () => {
                     </div>
                 </div>
                 <div className="col-12 col-md-6">
-                    <div className="d-flex flex-column align-items-md-end">                   
+                    <div className="d-flex flex-column align-items-md-end">
                         {(isCheckingAvailabilities || isLoadingSchedules) && (
                             <div className="text-info">
                                 <i className="fas fa-spinner fa-spin me-2"></i>
@@ -1169,7 +1039,7 @@ const Appointment = () => {
                                                     <li>Nhân viên có thể phục vụ dịch vụ được chọn</li>
                                                 </ul>
                                             </div>
-                                            <strong>Gợi ý:</strong> 
+                                            <strong>Gợi ý:</strong>
                                             <span> Thử chọn thời gian khác hoặc ngày khác để xem thêm nhân viên phù hợp.</span>
                                         </div>
                                         <small className="text-warning">
@@ -1190,14 +1060,13 @@ const Appointment = () => {
                             return (
                                 <div key={staff.id} className="col-12 col-sm-6 col-md-4 col-lg-3">
                                     <div
-                                        className={`employee-card h-100 p-3 border rounded-3 position-relative ${
-                                            isSelected ? 'border-primary selected-card' : 
+                                        className={`employee-card h-100 p-3 border rounded-3 position-relative ${isSelected ? 'border-primary selected-card' :
                                             isBusy ? 'border-danger busy-card' : 'border-light'
-                                        }`}
+                                            }`}
                                         style={{
-                                            backgroundColor: isBusy ? 'rgba(220, 53, 69, 0.1)' : 
-                                                           isSelected ? 'rgba(13, 110, 253, 0.1)' : 
-                                                           'rgba(255,255,255,0.05)',
+                                            backgroundColor: isBusy ? 'rgba(220, 53, 69, 0.1)' :
+                                                isSelected ? 'rgba(13, 110, 253, 0.1)' :
+                                                    'rgba(255,255,255,0.05)',
                                             cursor: isBusy ? 'not-allowed' : 'pointer',
                                             transition: 'all 0.3s ease-in-out',
                                             opacity: isBusy ? 0.6 : 1,
@@ -1235,16 +1104,16 @@ const Appointment = () => {
                                                     borderWidth: '2px !important'
                                                 }}
                                             />
-                                            
-                                            <h6 className="text-white mb-1" style={{ 
-                                                fontSize: '0.95rem', 
+
+                                            <h6 className="text-white mb-1" style={{
+                                                fontSize: '0.95rem',
                                                 fontWeight: '600',
                                                 minHeight: '22px'
                                             }}>
                                                 {staff.fullName}
                                             </h6>
-                                            
-                                            <p className="text-white-50 mb-1" style={{ 
+
+                                            <p className="text-white-50 mb-1" style={{
                                                 fontSize: '0.75rem',
                                                 minHeight: '18px'
                                             }}>
@@ -1260,30 +1129,13 @@ const Appointment = () => {
                                                     ({staff.totalReviews || 0})
                                                 </span>
                                             </div>
-                                            
-                                            {/* Review Link */}
-                                            <div className="text-center mb-3">
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-link p-0 text-decoration-none"
-                                                    style={{ fontSize: '0.7rem', color: '#ffc107', border: 'none', background: 'none' }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/staff-review/${staff.id}`);
-                                                    }}
-                                                >
-                                                    <i className="fas fa-star me-1"></i>
-                                                    Xem đánh giá
-                                                </button>
-                                            </div>
 
                                             {/* Select Button */}
                                             <button
                                                 type="button"
-                                                className={`btn btn-sm w-100 ${
-                                                    isBusy ? 'btn-outline-danger' : 
+                                                className={`btn btn-sm w-100 ${isBusy ? 'btn-outline-danger' :
                                                     isSelected ? 'btn-primary' : 'btn-outline-light'
-                                                }`}
+                                                    }`}
                                                 style={{ fontSize: '0.75rem', padding: '6px 12px' }}
                                                 disabled={isBusy}
                                                 onClick={(e) => handleStaffSelect(staff.id, e)}
@@ -1307,112 +1159,155 @@ const Appointment = () => {
         </div>
     );
 
-    const renderCustomerInfo = () => (
-        <div className="step-content">
-            <div className="text-center mb-4">
-                <h4 className="text-white mb-2">
-                    <i className="fas fa-user me-2 text-primary"></i>
-                    Thông Tin Khách Hàng
-                </h4>
-                <p className="text-white-50">Vui lòng điền thông tin liên hệ của bạn</p>
-            </div>
+    const renderCustomerInfo = () => {
+        // Kiểm tra trạng thái đăng nhập
+        const isLoggedIn = localStorage.getItem('userInfo') !== null;
 
-            <div className="row g-3">
-                <div className="col-12">
-                                            <button
-                            type="button"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleUseAccountInfo();
-                            }}
-                            className="btn btn-outline-light w-100 mb-3"
-                            style={{ height: '45px' }}
-                        >
-                        <i className="fas fa-user-circle me-2"></i>
-                        Sử dụng thông tin tài khoản
-                    </button>
+        return (
+            <div className="step-content">
+                <div className="text-center mb-4">
+                    <h4 className="text-white mb-2">
+                        <i className="fas fa-user me-2 text-primary"></i>
+                        Thông Tin Khách Hàng
+                    </h4>
+                    <p className="text-white-50">Vui lòng điền thông tin liên hệ của bạn</p>
                 </div>
 
-                <div className="col-12 col-lg-6">
-                    <label className="form-label text-white fw-bold">
-                        <i className="fas fa-user me-2"></i>Họ và Tên *
-                    </label>
-                    <input
-                        type="text"
-                        name="fullName"
-                        value={formData.fullName}
-                        onChange={handleInputChange}
-                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.fullName ? 'border-danger' : ''}`}
-                        placeholder="Nhập họ và tên của bạn"
-                        style={{ color: 'white', height: '45px' }}
-                    />
-                    {validationErrors.fullName && (
-                        <small className="text-danger mt-1 d-block">{validationErrors.fullName}</small>
+                <div className="row g-3">
+                    {/* Chỉ hiện nút khi đã đăng nhập */}
+                    {isLoggedIn && (
+                        <div className="col-12">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleUseAccountInfo();
+                                }}
+                                className="btn btn-outline-light w-100 mb-3"
+                                style={{ height: '45px' }}
+                            >
+                                <i className="fas fa-user-circle me-2"></i>
+                                Sử dụng thông tin tài khoản
+                            </button>
+                        </div>
                     )}
-                </div>
 
-                <div className="col-12 col-lg-6">
-                    <label className="form-label text-white fw-bold">
-                        <i className="fas fa-phone me-2"></i>Số Điện Thoại *
-                    </label>
-                    <input
-                        type="text"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={handleInputChange}
-                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
-                        placeholder="Nhập số điện thoại (tối đa 10 số)"
-                        maxLength="10"
-                        style={{ color: 'white', height: '45px' }}
-                    />
-                    {validationErrors.phoneNumber && (
-                        <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
+                    {/* Hiển thị thông báo khuyến khích đăng nhập nếu chưa đăng nhập */}
+                    {!isLoggedIn && (
+                        <div className="col-12">
+                            <div className="alert alert-info bg-transparent border-white text-white mb-3">
+                                <div className="d-flex align-items-center">
+                                    <i className="fas fa-info-circle me-2"></i>
+                                    <div>
+                                        <strong>Gợi ý:</strong> Đăng nhập để tự động điền thông tin và theo dõi lịch hẹn của bạn
+                                        {/* <a href="/login" className="btn btn-sm btn-outline-light ms-2">
+                                            <i className="fas fa-sign-in-alt me-1"></i>
+                                            Đăng nhập
+                                        </a> */}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     )}
-                </div>
 
-                <div className="col-12">
-                    <label className="form-label text-white fw-bold">
-                        <i className="fas fa-comment me-2"></i>Ghi Chú
-                    </label>
-                    <div className="position-relative">
-                        <textarea
-                            name="notes"
-                            value={formData.notes}
+                    <div className="col-12 col-lg-6">
+                        <label className="form-label text-white fw-bold">
+                            <i className="fas fa-user me-2"></i>Họ và Tên *
+                        </label>
+                        <input
+                            type="text"
+                            name="fullName"
+                            value={formData.fullName}
                             onChange={handleInputChange}
-                            className={`form-control border-white bg-transparent text-white custom-placeholder ${validationErrors.notes ? 'border-danger' : ''}`}
-                            rows="4"
-                            placeholder="Ghi chú thêm về yêu cầu của bạn (không bắt buộc)"
-                            maxLength="500"
-                            style={{
-                                color: 'white',
-                                resize: 'none',
-                                fontSize: '0.9rem'
-                            }}
+                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.fullName ? 'border-danger' : ''}`}
+                            placeholder="Nhập họ và tên của bạn"
+                            style={{ color: 'white', height: '45px' }}
                         />
-                        <div className="d-flex justify-content-between align-items-center mt-1">
-                            {validationErrors.notes && (
-                                <small className={`${formData.notes?.length > 500 ? 'text-danger' : formData.notes?.length > 450 ? 'text-warning' : 'text-info'}`}>
-                                    <i className="fas fa-exclamation-circle me-1"></i>
-                                    {validationErrors.notes}
+                        {validationErrors.fullName && (
+                            <small className="text-danger mt-1 d-block">{validationErrors.fullName}</small>
+                        )}
+                    </div>
+
+                    <div className="col-12 col-lg-6">
+                        <label className="form-label text-white fw-bold">
+                            <i className="fas fa-phone me-2"></i>Số Điện Thoại *
+                        </label>
+                        <input
+                            type="tel"
+                            name="phoneNumber"
+                            value={formData.phoneNumber}
+                            onChange={handleInputChange}
+                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
+                            placeholder="Nhập số điện thoại hợp lệ"
+                            maxLength="15"
+                            style={{ color: 'white', height: '45px' }}
+                        />
+                        {validationErrors.phoneNumber && (
+                            <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
+                        )}
+                    </div>
+
+                    <div className="col-12">
+                        <label className="form-label text-white fw-bold">
+                            <i className="fas fa-envelope me-2"></i>Email *
+                        </label>
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.email ? 'border-danger' : ''}`}
+                            placeholder="Nhập email của bạn"
+                            style={{ color: 'white', height: '45px' }}
+                        />
+                        {validationErrors.email && (
+                            <small className="text-danger mt-1 d-block">{validationErrors.email}</small>
+                        )}
+                    </div>
+
+                    <div className="col-12">
+                        <label className="form-label text-white fw-bold">
+                            <i className="fas fa-comment me-2"></i>Ghi Chú
+                        </label>
+                        <div className="position-relative">
+                            <textarea
+                                name="notes"
+                                value={formData.notes}
+                                onChange={handleInputChange}
+                                className={`form-control border-white bg-transparent text-white custom-placeholder ${validationErrors.notes ? 'border-danger' : ''}`}
+                                rows="4"
+                                placeholder="Ghi chú thêm về yêu cầu của bạn (không bắt buộc)"
+                                maxLength="500"
+                                style={{
+                                    color: 'white',
+                                    resize: 'none',
+                                    fontSize: '0.9rem'
+                                }}
+                            />
+                            <div className="d-flex justify-content-between align-items-center mt-1">
+                                {validationErrors.notes && (
+                                    <small className={`${formData.notes?.length > 500 ? 'text-danger' : formData.notes?.length > 450 ? 'text-warning' : 'text-info'}`}>
+                                        <i className="fas fa-exclamation-circle me-1"></i>
+                                        {validationErrors.notes}
+                                    </small>
+                                )}
+                                <small className={`ms-auto ${formData.notes?.length >= 500 ? 'text-danger fw-bold' :
+                                    formData.notes?.length > 450 ? 'text-warning fw-bold' :
+                                        formData.notes?.length > 400 ? 'text-info' : 'text-white-50'
+                                    }`} style={{ fontSize: '0.75rem' }}>
+                                    <i className="fas fa-edit me-1"></i>
+                                    {formData.notes?.length || 0}/500 ký tự
+                                    {formData.notes?.length >= 500 && <span className="ms-1">⚠️ Đã đạt giới hạn!</span>}
+                                    {formData.notes?.length > 450 && formData.notes?.length < 500 && <span className="ms-1">⚠️ Gần hết!</span>}
                                 </small>
-                            )}
-                            <small className={`ms-auto ${
-                                formData.notes?.length >= 500 ? 'text-danger fw-bold' : 
-                                formData.notes?.length > 450 ? 'text-warning fw-bold' : 
-                                formData.notes?.length > 400 ? 'text-info' : 'text-white-50'
-                            }`} style={{ fontSize: '0.75rem' }}>
-                                <i className="fas fa-edit me-1"></i>
-                                {formData.notes?.length || 0}/500 ký tự
-                                {formData.notes?.length >= 500 && <span className="ms-1">⚠️ Đã đạt giới hạn!</span>}
-                                {formData.notes?.length > 450 && formData.notes?.length < 500 && <span className="ms-1">⚠️ Gần hết!</span>}
-                            </small>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderConfirmation = () => {
         const selectedService = services.find(s => String(s.id) === formData.serviceId);
@@ -1423,168 +1318,241 @@ const Appointment = () => {
             <div className="step-content">
                 <div className="text-center mb-4">
                     <h4 className="text-white mb-2" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
-                        <i className="fas fa-check-circle me-2 text-success"></i>
-                        Xác Nhận Đặt Lịch
+                        <i className="fas fa-check-double me-2 text-success"></i>
+                        Xác Nhận Thông Tin Đặt Lịch
                     </h4>
-                    <p style={{ 
-                        color: '#f8f9fa', 
+                    <p style={{
+                        color: '#f8f9fa',
                         textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
                         fontSize: '1rem'
-                    }}>Vui lòng kiểm tra lại thông tin trước khi xác nhận</p>
+                    }}>Vui lòng kiểm tra kỹ thông tin trước khi xác nhận</p>
                 </div>
 
-                <div className="confirmation-card p-4 rounded-3" style={{ 
-                    backgroundColor: 'rgba(255,255,255,0.15)', 
-                    backdropFilter: 'blur(15px)',
-                    border: '1px solid rgba(255,255,255,0.2)'
+                {/* Summary Card */}
+                <div className="confirmation-summary mb-4 p-4 rounded-3" style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
+                    backdropFilter: 'blur(20px)',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
                 }}>
                     <div className="row g-4">
-                        {/* Dịch Vụ - moved to left side */}
-                        <div className="col-12 col-md-6">
-                            <div className="border-start border-success border-3 ps-3">
-                                <h6 className="text-success mb-1" style={{ 
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    <i className="fas fa-spa me-2"></i>Dịch Vụ
-                                </h6>
-                                <p className="mb-1 fw-bold" style={{ 
-                                    color: '#ffffff',
-                                    fontSize: '1.1rem',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                                }}>{selectedService?.name}</p>
-                                <p className="mb-0" style={{ 
-                                    color: '#28a745',
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>{selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'} VNĐ - {selectedService?.duration || '60'} phút</p>
+                        {/* Service Info */}
+                        <div className="col-12 col-lg-6">
+                            <div className="info-block h-100">
+                                <div className="d-flex align-items-center mb-3">
+                                    <div className="icon-circle me-3" style={{
+                                        width: '50px',
+                                        height: '50px',
+                                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '2px solid #28a745'
+                                    }}>
+                                        <i className="fas fa-spa text-success" style={{ fontSize: '1.2rem' }}></i>
+                                    </div>
+                                    <div>
+                                        <h6 className="text-success mb-1 fw-bold">DỊCH VỤ</h6>
+                                        <h5 className="text-white mb-0 fw-bold">{selectedService?.name}</h5>
+                                    </div>
+                                </div>
+                                <div className="service-details">
+                                    <div className="d-flex justify-content-start align-items-center mb-2">
+                                        <span className="text-white-50">
+                                            <i className="fas fa-clock me-2"></i>Thời gian:	&nbsp;
+                                        </span>
+                                        <span className="text-white fw-bold">{selectedService?.duration || '60'} phút</span>
+                                    </div>
+                                    <div className="d-flex justify-content-start align-items-center">
+                                        <span className="text-white-50">
+                                            <i className="fas fa-money-bill me-2"></i>Giá:	&nbsp;
+                                        </span>
+                                        <span className="text-success fw-bold fs-5">
+                                            {selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'} VNĐ
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Nhân Viên - moved to right side */}
-                        <div className="col-12 col-md-6">
-                            <div className="border-start border-3 ps-3" style={{ borderColor: '#FDB5B9 !important' }}>
-                                <h6 className="mb-1" style={{ 
-                                    color: '#FDB5B9',
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    <i className="fas fa-user-tie me-2"></i>Nhân Viên
-                                </h6>
-                                <p className="mb-1 fw-bold" style={{ 
-                                    color: '#ffffff',
-                                    fontSize: '1.1rem',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                                }}>{selectedStaff?.fullName || 'Chưa chọn'}</p>
-                                <div className="d-flex align-items-center">
-                                    {selectedStaff && renderStars(selectedStaff?.averageRating)}
-                                    <span className="ms-2" style={{ 
-                                        color: '#e9ecef',
-                                        fontSize: '0.9rem',
-                                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                        {/* Staff Info */}
+                        <div className="col-12 col-lg-6">
+                            <div className="info-block h-100">
+                                <div className="d-flex align-items-center mb-3">
+                                    <div className="icon-circle me-3" style={{
+                                        width: '50px',
+                                        height: '50px',
+                                        backgroundColor: 'rgba(253, 181, 185, 0.2)',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '2px solid #FDB5B9'
                                     }}>
-                                        ({selectedStaff?.totalReviews || 0} đánh giá)
-                                    </span>
+                                        <i className="fas fa-user-tie" style={{ fontSize: '1.2rem', color: '#FDB5B9' }}></i>
+                                    </div>
+                                    <div>
+                                        <h6 className="mb-1 fw-bold" style={{ color: '#FDB5B9' }}>NHÂN VIÊN</h6>
+                                        <h5 className="text-white mb-0 fw-bold">{selectedStaff?.fullName || 'Sẽ được phân công'}</h5>
+                                    </div>
                                 </div>
+                                {selectedStaff && (
+                                    <div className="staff-rating d-flex align-items-center">
+                                        <div className="me-2">
+                                            {renderStars(selectedStaff?.averageRating)}
+                                        </div>
+                                        <span className="text-white-50" style={{ fontSize: '0.9rem' }}>
+                                            ({selectedStaff?.totalReviews || 0} đánh giá)
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         {/* Khách Hàng - moved to left side */}
                         <div className="col-12 col-md-6">
                             <div className="border-start border-warning border-3 ps-3">
-                                <h6 className="text-warning mb-1" style={{ 
+                                <h6 className="text-warning mb-1" style={{
                                     fontSize: '1rem',
                                     fontWeight: '600',
                                     textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
                                 }}>
                                     <i className="fas fa-user me-2"></i>Khách Hàng
                                 </h6>
-                                <p className="mb-1 fw-bold" style={{ 
+                                <p className="mb-1 fw-bold" style={{
                                     color: '#ffffff',
                                     fontSize: '1.1rem',
                                     textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
                                 }}>{formData.fullName}</p>
-                                <p className="mb-0" style={{ 
+                                <p className="mb-0" style={{
                                     color: '#e9ecef',
                                     fontSize: '1rem',
                                     textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>{formData.phoneNumber}</p>
+                                }}>{formData.phoneNumber}
+                                    <br />
+                                    {formData.email}
+                                </p>
                             </div>
                         </div>
 
                         {/* Thời Gian - moved to right side with Vietnamese format */}
+                    </div>
+                </div>
+
+                {/* Appointment Details */}
+                <div className="appointment-details mb-4 p-4 rounded-3" style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
+                    backdropFilter: 'blur(15px)',
+                    border: '1px solid rgba(255,255,255,0.2)'
+                }}>
+                    <h5 className="text-primary mb-3 fw-bold">
+                        <i className="fas fa-info-circle me-2 text-primary"></i>
+                        Chi Tiết Cuộc Hẹn
+                    </h5>
+
+                    <div className="row g-3">
+                        {/* Date & Time */}
                         <div className="col-12 col-md-6">
-                            <div className="border-start border-info border-3 ps-3">
-                                <h6 className="text-info mb-1" style={{ 
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    <i className="fas fa-calendar-alt me-2"></i>Thời Gian
-                                </h6>
-                                <p className="mb-1 fw-bold" style={{ 
-                                    color: '#ffffff',
-                                    fontSize: '1.1rem',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                                }}>
-                                    {(() => {
-                                        if (formData.appointmentDate) {
-                                            const [year, month, day] = formData.appointmentDate.split('-');
-                                            return `${day}/${month}/${year}`;
-                                        }
-                                        return formData.appointmentDate;
-                                    })()}
-                                </p>
-                                <p className="mb-0" style={{ 
-                                    color: '#ffc107',
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    {selectedTimeSlot?.startTime} - {selectedTimeSlot?.endTime}
-                                </p>
+                            <div className="detail-item p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                                <div className="d-flex align-items-center">
+                                    <i className="fas fa-calendar-alt text-info me-3" style={{ fontSize: '1.5rem' }}></i>
+                                    <div>
+                                        <small className="text-info fw-bold d-block">NGÀY & GIỜ</small>
+                                        <div className="text-white fw-normal">
+                                            {(() => {
+                                                if (formData.appointmentDate) {
+                                                    const [year, month, day] = formData.appointmentDate.split('-');
+                                                    const date = new Date(year, month - 1, day);
+                                                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                                                    return date.toLocaleDateString('vi-VN', options);
+                                                }
+                                                return formData.appointmentDate;
+                                            })()}
+                                        </div>
+                                        <div className="text-white fw-bold">
+                                            {selectedTimeSlot?.startTime} - {selectedTimeSlot?.endTime}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        {formData.notes && (
-                            <div className="col-12">
-                                <div className="border-start border-secondary border-3 ps-3">
-                                    <h6 className="text-secondary mb-1" style={{ 
-                                        fontSize: '1rem',
-                                        fontWeight: '600',
-                                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                    }}>
-                                        <i className="fas fa-comment me-2"></i>Ghi Chú
-                                    </h6>
-                                    <p className="mb-0" style={{ 
-                                        color: '#e9ecef',
-                                        fontSize: '0.95rem',
-                                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                    }}>{formData.notes}</p>
+                        {/* Customer Info */}
+                        <div className="col-12 col-md-6">
+                            <div className="detail-item p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                                <div className="d-flex align-items-center">
+                                    <i className="fas fa-user text-warning me-3" style={{ fontSize: '1.5rem' }}></i>
+                                    <div>
+                                        <small className="text-warning fw-bold d-block">THÔNG TIN KHÁCH HÀNG</small>
+                                        <div className="text-white-50 fw-bold">{formData.fullName}</div>
+                                        <div className="text-white-50">
+                                            <i className="fas fa-phone me-1"></i>
+                                            {formData.phoneNumber}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </div>
 
-                    <hr className="my-4" style={{ borderColor: 'rgba(255,255,255,0.4)' }} />
-                    
+                    {/* Notes */}
+                    {formData.notes && (
+                        <div className="mt-3">
+                            <div className="detail-item p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                                <div className="d-flex">
+                                    <i className="fas fa-sticky-note text-warning me-3 mt-1" style={{ fontSize: '1.2rem' }}></i>
+                                    <div>
+                                        <small className="text-warning fw-bold d-block mb-1">GHI CHÚ</small>
+                                        <div className="text-white fst-italic" style={{ fontSize: '0.95rem', lineHeight: '1.5' }}>
+                                            {formData.notes}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Total Cost */}
+                <div className="total-cost p-4 rounded-3 text-center" style={{
+                    background: 'linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(40, 167, 69, 0.1) 100%)',
+                    border: '2px solid rgba(40, 167, 69, 0.5)',
+                    backdropFilter: 'blur(15px)'
+                }}>
                     <div className="d-flex justify-content-between align-items-center">
-                        <h5 className="mb-0" style={{ 
-                            color: '#ffffff',
-                            fontSize: '1.3rem',
-                            fontWeight: '600',
-                            textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                        }}>
-                            <i className="fas fa-money-bill-wave me-2"></i>Tổng Chi Phí:
-                        </h5>
-                        <h3 className="mb-0 fw-bold" style={{ 
-                            color: '#FDB5B9',
-                            fontSize: '2rem',
-                            textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                        }}>{selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'} VNĐ</h3>
+                        <div>
+                            <h5 className="text-white mb-1 fw-bold">
+                                <i className="fas fa-receipt me-2"></i>
+                                Tổng Chi Phí
+                            </h5>
+                            <small className="text-white-50">Đã bao gồm tất cả phí dịch vụ</small>
+                        </div>
+                        <div className="text-end">
+                            <h2 className="mb-0 fw-bold" style={{
+                                color: '#28a745',
+                                fontSize: '2.5rem',
+                                textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                            }}>
+                                {selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'}
+                                <span style={{ fontSize: '1.5rem' }}> VNĐ</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Warning Notice */}
+                <div className="alert alert-warning bg-transparent border-warning text-warning mt-4">
+                    <div className="d-flex align-items-start">
+                        <i className="fas fa-exclamation-triangle me-2 mt-1"></i>
+                        <div>
+                            <strong>Lưu ý quan trọng:</strong>
+                            <ul className="mb-0 mt-2" style={{ fontSize: '0.9rem' }}>
+                                <li>Vui lòng có mặt đúng giờ để đảm bảo chất lượng dịch vụ tốt nhất</li>
+                                <li>Nếu cần thay đổi lịch hẹn, vui lòng liên hệ trước ít nhất 2 tiếng</li>
+                                <li>Thanh toán có thể thực hiện bằng tiền mặt hoặc chuyển khoản tại spa</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1598,19 +1566,19 @@ const Appointment = () => {
             <div className="container py-5">
                 {/* Header */}
                 <div className="text-center mb-5">
-                    <p className="fs-4 text-uppercase" style={{ 
-                        color: '#ffffff', 
+                    <p className="fs-4 text-uppercase" style={{
+                        color: '#ffffff',
                         fontWeight: '600',
                         textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                         letterSpacing: '1px'
                     }}>Liên Hệ Với Chúng Tôi</p>
-                    <h1 className="display-5 display-lg-4 mb-3" style={{ 
+                    <h1 className="display-5 display-lg-4 mb-3" style={{
                         color: '#ffffff',
                         fontWeight: '700',
                         textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
                     }}>Đặt Lịch Hẹn</h1>
-                    <p style={{ 
-                        color: '#f8f9fa', 
+                    <p style={{
+                        color: '#f8f9fa',
                         fontSize: '1.1rem',
                         textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
                         fontWeight: '500'
@@ -1624,7 +1592,7 @@ const Appointment = () => {
                             <div className="d-flex justify-content-between align-items-center step-progress-wrapper">
                                 {[1, 2, 3, 4].map(step => (
                                     <div key={step} className="d-flex flex-column align-items-center step-item">
-                                        <div 
+                                        <div
                                             className={`step-circle ${currentStep >= step ? 'active' : ''} ${currentStep > step ? 'completed' : ''}`}
                                         >
                                             {currentStep > step ? (
@@ -1661,7 +1629,7 @@ const Appointment = () => {
                                 zIndex: 5
                             }}
                         >
-                            <form 
+                            <form
                                 onSubmit={handleSubmit}
                                 onKeyDown={(e) => {
                                     // Ngăn form auto-submit khi nhấn Enter
@@ -1681,7 +1649,7 @@ const Appointment = () => {
                                 <div className="row mt-4">
                                     <div className="col-12">
                                         <div className="d-flex justify-content-between navigation-buttons-wrapper">
-                                            <button 
+                                            <button
                                                 type="button"
                                                 className="btn custom-btn prev-btn"
                                                 onClick={(e) => {
@@ -1695,9 +1663,9 @@ const Appointment = () => {
                                                 <i className="fas fa-chevron-left me-2"></i>
                                                 Quay Lại
                                             </button>
-                                            
+
                                             {currentStep < totalSteps ? (
-                                                <button 
+                                                <button
                                                     type="button"
                                                     className="btn custom-btn next-btn"
                                                     onClick={(e) => {
@@ -1712,24 +1680,24 @@ const Appointment = () => {
                                                     <i className="fas fa-chevron-right ms-2"></i>
                                                 </button>
                                             ) : (
-                                                                                <button 
-                                    type="submit"
-                                    className="btn custom-btn submit-btn"
-                                    style={{ minWidth: '180px' }}
-                                    disabled={isSubmittingAppointment}
-                                >
-                                    {isSubmittingAppointment ? (
-                                        <>
-                                            <i className="fas fa-spinner fa-spin me-2"></i>
-                                            Đang Xử Lý...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="fas fa-check me-2"></i>
-                                            Xác Nhận Đặt Lịch
-                                        </>
-                                    )}
-                                </button>
+                                                <button
+                                                    type="submit"
+                                                    className="btn custom-btn submit-btn"
+                                                    style={{ minWidth: '180px' }}
+                                                    disabled={isSubmittingAppointment || !canProceedToStep(4)}
+                                                >
+                                                    {isSubmittingAppointment ? (
+                                                        <>
+                                                            <i className="fas fa-spinner fa-spin me-2"></i>
+                                                            Đang Xử Lý...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <i className="fas fa-check me-2"></i>
+                                                            Xác Nhận Đặt Lịch
+                                                        </>
+                                                    )}
+                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -2269,6 +2237,81 @@ const Appointment = () => {
                 border-color: #6c757d;
                 color: white;
               }
+
+              /* Custom DatePicker Styles */
+                .react-datepicker-wrapper {
+                width: 100%;
+                }
+                .react-datepicker-wrapper .react-datepicker__input-container input {
+                height: 45px;
+                color: white !important; /* Ensure text is white */
+                background-color: transparent !important;
+                }
+                .react-datepicker-wrapper .react-datepicker__input-container input::placeholder {
+                color: #ccc;
+                opacity: 1;
+                }
+
+                .react-datepicker-popper {
+                z-index: 10 !important; /* Ensure calendar appears on top */
+                }
+
+                .custom-calendar {
+                font-family: 'Arial', sans-serif;
+                border-radius: 10px;
+                box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+                border: 1px solid rgba(255,255,255,0.2);
+                background-color: #333;
+                }
+
+                .custom-calendar .react-datepicker__header {
+                background-color: #444;
+                border-bottom: 1px solid #555;
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+                padding: 15px;
+                }
+
+                .custom-calendar .react-datepicker__current-month,
+                .custom-calendar .react-datepicker-time__header,
+                .custom-calendar .react-datepicker__day-name {
+                color: #fff;
+                font-weight: bold;
+                }
+
+                .custom-calendar .react-datepicker__day {
+                color: #ddd;
+                transition: all 0.2s ease;
+                }
+
+                .custom-calendar .react-datepicker__day:hover {
+                background-color: #555;
+                border-radius: 50%;
+                color: #fff;
+                }
+
+                .custom-calendar .react-datepicker__day--selected,
+                .custom-calendar .react-datepicker__day--in-selecting-range,
+                .custom-calendar .react-datepicker__day--in-range {
+                background-color: #FDB5B9;
+                color: #333;
+                border-radius: 50%;
+                font-weight: bold;
+                }
+
+                .custom-calendar .react-datepicker__day--keyboard-selected {
+                background-color: #f89ca0;
+                color: #fff;
+                }
+
+                .custom-calendar .react-datepicker__day--disabled {
+                color: #777;
+                cursor: not-allowed;
+                }
+
+                .custom-calendar .react-datepicker__navigation-icon::before {
+                border-color: #fff;
+                }
 
               /* Mobile responsiveness for cancel modal */
               @media (max-width: 767.98px) {

@@ -208,15 +208,15 @@ const ContactPage = () => {
             </div>
 
             <div className="container-fluid contact py-5" style={{ 
-                background: 'linear-gradient(135deg, #fef7f7 0%, #fee2e2 25%, #fecaca 60%, #fdb5b9 100%)',
-                position: 'relative'
+                background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #fdb5b9 100%)',
+                position: 'relative',
             }}>
                 <div className="container pt-5">
                     <div className="row g-4 align-items-center">
                         <div className="col-lg-6">
                             <div className="text-center">
-                                <h1 className="display-3 text-white mb-4">Liên Hệ Với Chúng Tôi</h1>
-                                <p className="text-white fs-4">
+                                <h1 className="display-3 text-dark mb-4">Liên Hệ Với Chúng Tôi</h1>
+                                <p className="text-dark fs-4">
                                     Chúng tôi luôn sẵn sàng lắng nghe ý kiến từ bạn. 
                                     Hãy để lại tin nhắn và chúng tôi sẽ phản hồi trong thời gian sớm nhất.
                                     {userInfo && (
@@ -232,7 +232,7 @@ const ContactPage = () => {
                             <div className="contact-form rounded p-5" style={{
                                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
                                 backdropFilter: 'blur(10px)',
-                                boxShadow: '0 15px 35px rgba(253, 181, 185, 0.2), 0 5px 15px rgba(253, 181, 185, 0.1)',
+                                boxShadow: '0 15px 35px rgba(255, 45, 55, 0.2), 0 5px 15px rgba(255, 25, 36, 0.1)',
                                 border: '1px solid rgba(253, 181, 185, 0.3)'
                             }}>
                                 <form onSubmit={handleSubmit}>
@@ -253,7 +253,7 @@ const ContactPage = () => {
                                                 name="firstName"
                                                 value={formData.firstName}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control bg-white py-3 px-4 border rounded" 
                                                 placeholder="Họ và tên của bạn" 
                                                 required
                                             />
@@ -264,7 +264,7 @@ const ContactPage = () => {
                                                 name="email"
                                                 value={formData.email}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control bg-white py-3 px-4 border rounded" 
                                                 placeholder="Email của bạn" 
                                                 required
                                             />
@@ -275,7 +275,7 @@ const ContactPage = () => {
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control bg-white py-3 px-4 border rounded" 
                                                 placeholder="Số điện thoại (tùy chọn)"
                                             />
                                         </div>
@@ -285,7 +285,7 @@ const ContactPage = () => {
                                                 name="subject"
                                                 value={formData.subject}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control bg-white py-3 px-4 border rounded" 
                                                 placeholder="Chủ đề" 
                                                 required
                                             />
@@ -295,7 +295,7 @@ const ContactPage = () => {
                                                 name="message"
                                                 value={formData.message}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control py-3 px-4 border rounded" 
                                                 rows={4} 
                                                 cols={10} 
                                                 placeholder="Nội dung tin nhắn của bạn" 
@@ -304,11 +304,11 @@ const ContactPage = () => {
                                         </div>
                                         <div className="col-12">
                                             <button 
-                                                className="btn w-100 py-3 px-5" 
+                                                className="btn w-100 py-3 px-5 " 
                                                 type="submit"
                                                 disabled={loading}
                                                 style={{ 
-                                                    background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%, #fee2e2 100%)',
+                                                    background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%)',
                                                     border: 'none',
                                                     color: 'white',
                                                     fontWeight: '600',
@@ -378,28 +378,40 @@ const ContactPage = () => {
                                         <i className="fa fa-phone-alt fa-2x me-4" style={{ color: '#fdb5b9' }} />
                                         <div>
                                             <h4>Điện Thoại</h4>
-                                            <p className="mb-0">(028) 1234 5678</p>
+                                            <p className="mb-0">(+84) 0123456789</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div className="col-12">
-                            <div className="rounded">
-                                <iframe className="rounded-top w-100" style={{ height: 450, marginBottom: '-6px' }} src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.324408746655!2d106.69749831533343!3d10.78231859230824!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f38f9ed887b%3A0x14aded5703768989!2zQsOgaSBYw6AgRHXDom4gQ2jDrG0!5e0!3m2!1svi!2s!4v1645678901234!5m2!1svi!2s" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-                            </div>
-                            <div className=" text-center p-4 rounded-bottom" style={{
-                                background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%, #fee2e2 100%)'
-                            }}>
-                                <h4 className="text-white fw-bold">Theo Dõi Chúng Tôi</h4>
-                                <div className="d-flex align-items-center justify-content-center">
-                                    <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle me-3"><i className="fab fa-facebook-f" /></a>
-                                    <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle me-3"><i className="fab fa-twitter" /></a>
-                                    <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle me-3"><i className="fab fa-instagram" /></a>
-                                    <a href="#" className="btn btn-light btn-light-outline-0 btn-square rounded-circle"><i className="fab fa-linkedin-in" /></a>
-                                </div>
+                        <div className="rounded shadow-lg border border-2 border-primary">
+                            <iframe
+                                className="rounded-top w-100"
+                                style={{
+                                    height: 450,
+                                    marginBottom: '-6px',
+                                    filter: 'brightness(1.1) contrast(1.1) saturate(1.2)',
+                                }}
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.324408746655!2d106.69749831533343!3d10.78231859230824!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f38f9ed887b%3A0x14aded5703768989!2zQsOgaSBYw6AgRHXDom4gQ2jDrG0!5e0!3m2!1svi!2s!4v1645678901234!5m2!1svi!2s"
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                            />
+                        </div>
+                        <div className="text-center bg-primary p-4 rounded-bottom bg-gradient" style={{
+                            boxShadow: '0 4px 15px rgba(255, 98, 132, 0.3)'
+                        }}>
+                            <h4 className="text-white fw-bold mb-3" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+                                Theo dõi chúng tôi
+                            </h4>
+                            <div className="d-flex align-items-center justify-content-center">
+                                <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-facebook-f" /></a>
+                                <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-twitter" /></a>
+                                <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-instagram" /></a>
+                                <a href="#" className="btn btn-light btn-square rounded-circle shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-linkedin-in" /></a>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>
