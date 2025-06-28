@@ -281,7 +281,7 @@ const CustomerCalendar = ({
   );
 };
 
-const RevenueChart = ({ revenueTimeFrame, setRevenueTimeFrame, totalMonthlyRevenue, revenueGrowth, revenueLoading, revenueChartData }) => (<MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <DollarOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Doanh Thu</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={revenueTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('month')}>Theo Tháng</Button> <Button variant={revenueTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box>} > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {revenueTimeFrame === 'month' ? `Phân tích doanh thu hàng tháng năm ${new Date().getFullYear()}` : 'So sánh doanh thu trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {revenueTimeFrame === 'month' ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalMonthlyRevenue) : `${revenueGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {revenueLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <ReportAreaChart timeFrame={revenueTimeFrame} chartData={revenueChartData} /> </Box> </Box> </MainCard>);
+const RevenueChart = ({ revenueTimeFrame, setRevenueTimeFrame, totalMonthlyRevenue, revenueGrowth, revenueLoading, revenueChartData }) => (<MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <DollarOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Doanh Thu</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={revenueTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('month')}>Theo Tháng</Button> <Button variant={revenueTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setRevenueTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box>} > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {revenueTimeFrame === 'month' ? `Phân tích doanh thu hàng tháng năm ${new Date().getFullYear()}` : 'So sánh doanh thu trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {revenueTimeFrame === 'month' ? `${new Intl.NumberFormat('vi-VN').format(totalMonthlyRevenue)} VND` : `${revenueGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {revenueLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <ReportAreaChart timeFrame={revenueTimeFrame} chartData={revenueChartData} /> </Box> </Box> </MainCard>);
 const CustomerChart = ({ customerTimeFrame, setCustomerTimeFrame, totalMonthlyCustomers, customerGrowth, customerLoading, customerChartData }) => (<MainCard title={<Box display="flex" justifyContent="space-between" alignItems="center" width="100%"> <Box display="flex" alignItems="center"> <TeamOutlined style={{ marginRight: 8 }} /> <Typography variant="h5">Xu Hướng Khách Hàng</Typography> </Box> <ButtonGroup variant="outlined" size="small"> <Button variant={customerTimeFrame === 'month' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('month')}>Theo Tháng</Button> <Button variant={customerTimeFrame === 'year' ? 'contained' : 'outlined'} onClick={() => setCustomerTimeFrame('year')}>Theo Năm</Button> </ButtonGroup> </Box>} > <Box p={2}> <Typography variant="subtitle1" mb={1} color="textSecondary"> {customerTimeFrame === 'month' ? `Số lượng khách hàng hàng tháng năm ${new Date().getFullYear()}` : 'Tăng trưởng khách hàng trong 5 năm qua'} </Typography> <Typography variant="h4" mb={2}> {customerTimeFrame === 'month' ? `${totalMonthlyCustomers.toLocaleString()} khách hàng` : `${customerGrowth} tăng trưởng hàng năm`} </Typography> <Box className="chart-container" sx={{ position: 'relative' }}> {customerLoading && <LinearProgress sx={{ position: 'absolute', width: '100%', top: '50%' }} />} <MonthlyBarChart timeFrame={customerTimeFrame} chartData={customerChartData} /> </Box> </Box> </MainCard>);
 
 // =================================================================
@@ -353,7 +353,7 @@ const DashboardDefault = () => {
       setServedCustomers(summary.servedCustomersToday || 0);
       setTotalServices(summary.servicesPerformedThisMonth || 0);
       setOverallAverageRating(summary.overallAverageRating?.toFixed(1) || 'N/A');
-      setTodayRevenue(`${summary.todayRevenue?.toLocaleString('en-US') || 0}VND`);
+      setTodayRevenue(`${new Intl.NumberFormat('vi-VN').format(summary.todayRevenue || 0)} VND`);
     }
   };
   const handleNavigateToAppointments = () => {
@@ -372,6 +372,7 @@ const DashboardDefault = () => {
         dataFound = true;
         setScheduleTitle(`Lịch Trình Nhân Viên (${i === 0 ? 'Hôm Nay' : format(dateToFetch, 'MMM d')})`);
         const mappedSchedules = schedules.map(item => ({
+          schedule_id: item.id,
           user_id: item.userId,
           full_name: item.userName,
           role_name: item.roleName || 'N/A',
@@ -569,7 +570,19 @@ const DashboardDefault = () => {
   const displayedSchedules = fullScheduleData
     .filter(staff => {
       if (selectedShift === 'All') return true;
-      return staff.shift?.toLowerCase().includes(selectedShift.toLowerCase());
+
+      const shiftName = (staff.shift || '').toLowerCase();
+      const selected = selectedShift.toLowerCase();
+
+      if (selected === 'morning') {
+        return shiftName.includes('sáng') || shiftName.includes('morning');
+      }
+      if (selected === 'afternoon') {
+        return shiftName.includes('chiều') || shiftName.includes('afternoon');
+      }
+
+      // Fallback for any other shifts that might be added later
+      return shiftName.includes(selected);
     })
     .slice(0, 5);
 
@@ -660,7 +673,7 @@ const DashboardDefault = () => {
             <AnalyticEcommerce
               title="Khách Chờ"
               count={waitingCustomers}
-              extra={`${servedCustomers} khách `}
+              extra={`${servedCustomers} đã phục vụ hôm nay`}
               color="warning"
               icon={<UserOutlined />}
             />
@@ -684,7 +697,7 @@ const DashboardDefault = () => {
             <AnalyticEcommerce
               title="Dịch Vụ Tháng Này"
               count={totalServices}
-              extra="dịch vụ vào"
+              extra="Đã hoàn thành"
               icon={<ShopOutlined />}
             />
           </Box>
@@ -764,13 +777,14 @@ const DashboardDefault = () => {
                       <TableRow>
                         <TableCell>Nhân Viên</TableCell>
                         <TableCell>Vai Trò</TableCell>
-                        <TableCell>Giờ Vào</TableCell>
+                        <TableCell>Ca Làm Việc</TableCell>
+                        <TableCell>Giờ Check-in</TableCell>
                         <TableCell>Trạng Thái</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {displayedSchedules.map((staff) => (
-                        <TableRow key={staff.user_id}>
+                        <TableRow key={staff.schedule_id}>
                           <TableCell>
                             <Box display="flex" alignItems="center">
                               <Avatar src={staff.image_url} sx={{ width: 28, height: 28, mr: 1 }} />
@@ -778,6 +792,7 @@ const DashboardDefault = () => {
                             </Box>
                           </TableCell>
                           <TableCell>{staff.role_name}</TableCell>
+                          <TableCell>{staff.shift || 'N/A'}</TableCell>
                           <TableCell>{staff.check_in_time || 'N/A'}</TableCell>
                           <TableCell>{getStatusChip(staff.status)}</TableCell>
                         </TableRow>

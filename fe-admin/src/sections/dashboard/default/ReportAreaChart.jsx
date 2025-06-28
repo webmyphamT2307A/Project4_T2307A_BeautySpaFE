@@ -44,13 +44,13 @@ const ReportAreaChart = ({ timeFrame, chartData }) => {
     yaxis: {
       tickAmount: 5,
       labels: {
-        formatter: (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
+        formatter: (value) => `${new Intl.NumberFormat('vi-VN').format(value)} VND`
       }
     },
     tooltip: {
       theme: 'light',
       y: {
-        formatter: (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
+        formatter: (value) => `${new Intl.NumberFormat('vi-VN').format(value)} VND`
       }
     }
   });
