@@ -67,13 +67,13 @@ export default function Login() {
           Cookies.set('admin_token', token, { path: '/admin', sameSite: 'Strict', expires: 7 });
           Cookies.set('admin_role', roleName, { path: '/admin', sameSite: 'Strict', expires: 7 });
           console.log('Admin cookie set:', Cookies.get('admin_token'), Cookies.get('admin_role'));
-          window.location.href = 'http://localhost:3003/admin';
+          window.location.href = 'http://localhost:3003';
         } else if (roleName === 'ROLE_STAFF') {
           Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 }); 
           console.log('Staff cookie set:', Cookies.get('staff_token'), Cookies.get('staff_role'), Cookies.get('staff_userId'));
-          window.location.href = 'http://localhost:3002/staff';
+          window.location.href = 'http://localhost:3002';
         } else {
           console.log('Invalid role, clearing cookies...');
           Cookies.remove('admin_token', { path: '/admin' });
