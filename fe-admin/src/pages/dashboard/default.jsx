@@ -353,7 +353,7 @@ const DashboardDefault = () => {
       setServedCustomers(summary.servedCustomersToday || 0);
       setTotalServices(summary.servicesPerformedThisMonth || 0);
       setOverallAverageRating(summary.overallAverageRating?.toFixed(1) || 'N/A');
-      setTodayRevenue(`${summary.todayRevenue?.toLocaleString('en-US') || 0}₫`);
+      setTodayRevenue(`${summary.todayRevenue?.toLocaleString('en-US') || 0}VND`);
     }
   };
   const handleNavigateToAppointments = () => {
