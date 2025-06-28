@@ -102,12 +102,7 @@ export default function Register() {
                 onChange={e => setAddress(e.target.value)}
                 required
               />
-              <TextField
-                label="Mã chi nhánh"
-                value={branchId}
-                onChange={e => setBranchId(e.target.value)}
-                required
-              />
+          
               <Button type="submit" variant="contained" color="primary">
                 Đăng ký
               </Button>
