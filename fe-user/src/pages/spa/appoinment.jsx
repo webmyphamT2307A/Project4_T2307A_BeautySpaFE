@@ -24,6 +24,7 @@ import MainCard from 'components/MainCard';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Cookies from 'js-cookie';
+import { useAppointmentFilter } from '../../contexts/AppointmentFilterContext';
 
 const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
 const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
@@ -31,6 +32,7 @@ const API_SERVICE_URL = 'http://localhost:8080/api/v1/services/findAll';
 const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confirmation';
 
 const AppointmentManagement = () => {
+  const { filter, setFilter } = useAppointmentFilter();
   // States
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
@@ -54,6 +56,20 @@ const AppointmentManagement = () => {
   useEffect(() => {
     // This effect can be used for future URL param handling
   }, []); // Chỉ chạy một lần khi component mount
+
+  // Apply filter from context passed from dashboard
+  useEffect(() => {
+    if (filter) {
+      if (filter.status) {
+        setStatusFilter(filter.status);
+      }
+      if (filter.dateFilter) {
+        setDateFilter(filter.dateFilter);
+      }
+      // Reset the filter in context after applying it
+      setFilter(null);
+    }
+  }, [filter, setFilter]);
 
   const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
   const [appointmentToEditDetails, setAppointmentToEditDetails] = useState(null);
