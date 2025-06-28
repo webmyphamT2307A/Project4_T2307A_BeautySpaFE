@@ -363,7 +363,7 @@ const SkillManagement = () => {
         <Box sx={{ pt: 2 }}>
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <FormControl sx={{ minWidth: 200 }} size="small">
+        <FormControl sx={{ width: 200 }} size="small">
           <InputLabel id="filter-employee-label">Lọc theo Nhân Viên</InputLabel>
           <Select
             labelId="filter-employee-label"
@@ -381,7 +381,7 @@ const SkillManagement = () => {
           </Select>
         </FormControl>
 
-        <FormControl sx={{ minWidth: 200 }} size="small">
+        <FormControl sx={{ width: 200 }} size="small">
           <InputLabel id="filter-skill-label">Lọc theo Kỹ Năng</InputLabel>
           <Select
             labelId="filter-skill-label"
@@ -426,7 +426,7 @@ const SkillManagement = () => {
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{employee.fullName}</TableCell>
                         <TableCell>{employeeSkills.map((skill, idx) => (<Chip key={idx} label={skill} sx={{ mr: 1, mb: 1 }} />))}</TableCell>
-                  <TableCell>
+                  <TableCell width={150}>
                             <IconButton color="primary" onClick={() => handleOpenAssignDialog('edit', employee)} disabled={saving || isDeleting}><EditOutlined /></IconButton>
                             <IconButton color="error" onClick={() => handleDeleteAssignment(employee.id)} disabled={saving || isDeleting}>
                                 {isDeleting ? <CircularProgress size={24} color="error" /> : <DeleteOutlined />}
