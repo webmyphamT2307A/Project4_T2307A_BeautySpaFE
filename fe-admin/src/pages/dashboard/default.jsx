@@ -684,7 +684,7 @@ const DashboardDefault = () => {
             <AnalyticEcommerce
               title="Dịch Vụ Tháng Này"
               count={totalServices}
-              extra="Đã hoàn thành"
+              extra="dịch vụ vào"
               icon={<ShopOutlined />}
             />
           </Box>
