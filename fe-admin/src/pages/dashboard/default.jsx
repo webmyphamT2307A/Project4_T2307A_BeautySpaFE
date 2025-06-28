@@ -581,17 +581,16 @@ const DashboardDefault = () => {
 
     switch (cardType) {
       case 'waiting':
-        // Navigate to appointments page with pending status filter
+        // Chuyển đến trang lịch hẹn, lọc theo trạng thái "pending" không giới hạn ngày
         navigate('/spa/appointments', {
           state: {
             filterStatus: 'pending',
-            filterDate: today,
             title: 'Khách Hàng Đang Chờ'
           }
         });
         break;
       case 'services':
-        // Navigate to appointments page with completed status and current month filter
+        // Chuyển đến trang lịch hẹn, lọc theo trạng thái "completed" trong tháng này
         navigate('/spa/appointments', {
           state: {
             filterStatus: 'completed',
@@ -602,20 +601,23 @@ const DashboardDefault = () => {
         });
         break;
       case 'rating':
-        // Navigate to reviews page
+        // << ĐÚNG LOGIC: Phải chuyển đến trang ĐÁNH GIÁ >>
         navigate('/review/review');
         break;
       case 'revenue':
-        // Navigate to appointments page with completed status for today
+        // Chuyển đến trang lịch hẹn, lọc theo trạng thái "completed" của ngày hôm nay
         navigate('/spa/appointments', {
           state: {
             filterStatus: 'completed',
-            filterDate: today,
+            startDate: today,
+            endDate: today,
             title: 'Doanh Thu Hôm Nay'
           }
         });
         break;
       default:
+        // Trường hợp không xác định, không làm gì cả
+        console.warn(`handleCardClick called with unknown cardType: ${cardType}`);
         break;
     }
   };
