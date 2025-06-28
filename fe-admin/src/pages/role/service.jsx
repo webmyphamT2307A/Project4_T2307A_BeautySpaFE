@@ -172,20 +172,20 @@ const RoleManager = () => {
   );
 
   return (
-    <MainCard title="Role Management" secondary={
+    <MainCard title="Quản Lý Vai Trò" secondary={
       <Button
         variant="contained"
         startIcon={<PlusOutlined />}
         onClick={() => handleOpen()}
       >
-        Add Role
+        Thêm Vai Trò
       </Button>
     }>
       <Box sx={{ mb: 3 }}>
         <TextField
           fullWidth
           size="small"
-          placeholder="Search roles by name..."
+          placeholder="Tìm kiếm vai trò theo tên..."
           value={searchQuery}
           onChange={handleSearchChange}
           InputProps={{
@@ -222,8 +222,8 @@ const RoleManager = () => {
           <TableHead>
             <TableRow>
               <TableCell>#</TableCell>
-              <TableCell>Role Name</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell>Tên Vai Trò</TableCell>
+              <TableCell align="center">Thao Tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -279,13 +279,13 @@ const RoleManager = () => {
       {/* Add/Edit Role Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {currentRole ? 'Edit Role' : 'Add Role'}
+          {currentRole ? 'Chỉnh Sửa Vai Trò' : 'Thêm Vai Trò'}
         </DialogTitle>
         <DialogContent>
           <TextField
             margin="dense"
             name="name"
-            label="Role Name"
+            label="Tên Vai Trò"
             type="text"
             fullWidth
             value={formData.name}
@@ -294,8 +294,8 @@ const RoleManager = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} variant="outlined" color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" color="primary">Save</Button>
+          <Button onClick={handleClose} variant="outlined" color="inherit">Hủy</Button>
+          <Button onClick={handleSave} variant="contained" color="primary">Lưu</Button>
         </DialogActions>
       </Dialog>
     </MainCard>

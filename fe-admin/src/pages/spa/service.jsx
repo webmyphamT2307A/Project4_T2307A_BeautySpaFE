@@ -43,8 +43,8 @@ const API_URL = 'http://localhost:8080/api/v1/services';
 
 // Hàm tiện ích để định dạng tiền tệ
 const formatCurrency = (value) => {
-  if (!value) return '';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  if (value == null) return '';
+  return `${new Intl.NumberFormat('vi-VN').format(value)} VND`;
 };
 
 const ServiceManagement = () => {
