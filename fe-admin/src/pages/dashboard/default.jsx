@@ -758,7 +758,7 @@ const DashboardDefault = () => {
                     <Tab label="Ca Chiều" value="Afternoon" />
                   </Tabs>
                 </Box>
-                <TableContainer>
+                <TableContainer sx={{ maxHeight: 800 }}>
                   <Table size="small">
                     <TableHead>
                       <TableRow>

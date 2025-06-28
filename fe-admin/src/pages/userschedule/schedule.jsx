@@ -703,7 +703,7 @@ const UserScheduleManager = () => {
       </Box>
 
       <Paper sx={{ mt: 3, borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-        <TableContainer>
+        <TableContainer sx={{ maxHeight: 800 }}>
           <Table sx={{ minWidth: 650 }}>
             <TableHead sx={{ bgcolor: 'grey.50' }}>
               <TableRow>

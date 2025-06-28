@@ -16,7 +16,7 @@ const ContactPage = () => {
     // UI state
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
-    const [messageType, setMessageType] = useState(''); 
+    const [messageType, setMessageType] = useState('');
     const [userInfo, setUserInfo] = useState(null);
 
     // Check if user is logged in
@@ -126,19 +126,19 @@ const ContactPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage('');
-        
+
         if (!validateForm()) {
             return;
         }
 
         setLoading(true);
-        
+
         try {
             const token = localStorage.getItem('token');
             const headers = {
                 'Content-Type': 'application/json'
             };
-            
+
             // Add authorization header if user is logged in
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
@@ -159,7 +159,7 @@ const ContactPage = () => {
             if (response.data.status === 'SUCCESS') {
                 setMessage('Tin nhắn của bạn đã được gửi thành công! Chúng tôi sẽ liên hệ lại trong thời gian sớm nhất.');
                 setMessageType('success');
-                
+
                 // Reset form if user is not logged in
                 if (!userInfo) {
                     setFormData({
@@ -207,7 +207,7 @@ const ContactPage = () => {
                 </div>
             </div>
 
-            <div className="container-fluid contact py-5" style={{ 
+            <div className="container-fluid contact py-5" style={{
                 background: 'linear-gradient(135deg, #fef7f7 0%, #fee2e2 25%, #fecaca 60%, #fdb5b9 100%)',
                 position: 'relative'
             }}>
@@ -217,7 +217,7 @@ const ContactPage = () => {
                             <div className="text-center">
                                 <h1 className="display-3 text-white mb-4">Liên Hệ Với Chúng Tôi</h1>
                                 <p className="text-white fs-4">
-                                    Chúng tôi luôn sẵn sàng lắng nghe ý kiến từ bạn. 
+                                    Chúng tôi luôn sẵn sàng lắng nghe ý kiến từ bạn.
                                     Hãy để lại tin nhắn và chúng tôi sẽ phản hồi trong thời gian sớm nhất.
                                     {userInfo && (
                                         <span className="d-block mt-3 fs-5">
@@ -237,7 +237,7 @@ const ContactPage = () => {
                             }}>
                                 <form onSubmit={handleSubmit}>
                                     <h1 className="display-6 mb-4">Bạn Có Câu Hỏi Nào Không?</h1>
-                                    
+
                                     {/* Success/Error Message */}
                                     {message && (
                                         <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mb-4`}>
@@ -245,78 +245,88 @@ const ContactPage = () => {
                                             {message}
                                         </div>
                                     )}
-                                    
+
                                     <div className="row gx-4 gy-3">
                                         <div className="col-xl-6">
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 name="firstName"
                                                 value={formData.firstName}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
-                                                placeholder="Họ và tên của bạn" 
+                                                className="form-control bg-white border-0 py-3 px-4"
+                                                placeholder="Họ và tên của bạn"
                                                 required
                                             />
                                         </div>
                                         <div className="col-xl-6">
-                                            <input 
-                                                type="email" 
+                                            <input
+                                                type="email"
                                                 name="email"
                                                 value={formData.email}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
-                                                placeholder="Email của bạn" 
+                                                className="form-control bg-white border-0 py-3 px-4"
+                                                placeholder="Email của bạn"
                                                 required
                                             />
                                         </div>
                                         <div className="col-xl-6">
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
+                                                className="form-control bg-white border-0 py-3 px-4"
                                                 placeholder="Số điện thoại (tùy chọn)"
                                             />
                                         </div>
                                         <div className="col-xl-6">
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 name="subject"
                                                 value={formData.subject}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
-                                                placeholder="Chủ đề" 
+                                                className="form-control bg-white border-0 py-3 px-4"
+                                                placeholder="Chủ đề"
                                                 required
                                             />
                                         </div>
                                         <div className="col-12">
-                                            <textarea 
+                                            <textarea
                                                 name="message"
                                                 value={formData.message}
                                                 onChange={handleInputChange}
-                                                className="form-control bg-white border-0 py-3 px-4" 
-                                                rows={4} 
-                                                cols={10} 
-                                                placeholder="Nội dung tin nhắn của bạn" 
+                                                className="form-control bg-white border-0 py-3 px-4"
+                                                rows={4}
+                                                cols={10}
+                                                placeholder="Nội dung tin nhắn của bạn"
                                                 required
                                             />
                                         </div>
                                         <div className="col-12">
-                                            <button 
-                                                className="btn w-100 py-3 px-5" 
+                                            <button
+                                                className="btn w-100 py-3 px-5"
                                                 type="submit"
                                                 disabled={loading}
-                                                style={{ 
+                                                style={{
                                                     background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%, #fee2e2 100%)',
                                                     border: 'none',
-                                                    color: 'white',
+                                                    color: 'black',
                                                     fontWeight: '600',
                                                     borderRadius: '25px',
                                                     transition: 'all 0.3s ease',
                                                     opacity: loading ? 0.7 : 1,
                                                     cursor: loading ? 'not-allowed' : 'pointer',
                                                     boxShadow: '0 8px 20px rgba(253, 181, 185, 0.3)'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    if (!e.target.disabled) {
+                                                        e.target.style.background = 'linear-gradient(135deg,rgb(255, 172, 176),rgb(250, 144, 149))';
+                                                        e.target.style.transform = 'translateY(-2px)';
+                                                    }
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.target.style.background = 'linear-gradient(135deg, #FDB5B9, #f89ca0)';
+                                                    e.target.style.transform = 'translateY(0)';
                                                 }}
                                             >
                                                 {loading ? (
@@ -339,7 +349,7 @@ const ContactPage = () => {
                     </div>
                 </div>
             </div>
-            
+
             {/* Contact Info Section */}
             <div className="container-fluid pb-5">
                 <div className="container py-5">

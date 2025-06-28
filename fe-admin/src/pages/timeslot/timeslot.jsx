@@ -223,7 +223,7 @@ const TimeSlotManagement = () => {
       ) : error ? (
         <Alert severity="error">{error}</Alert>
       ) : (
-        <TableContainer component={Paper}>
+        <TableContainer sx={{ maxHeight: 800 }} component={Paper}>
           <Table>
             <TableHead>
               <TableRow>

@@ -338,7 +338,7 @@ const UserAccount = () => {
         
         {/* Table */}
         <Grid item xs={12}>
-            <TableContainer component={Paper} sx={{ maxHeight: 600 }}>
+            <TableContainer component={Paper} sx={{ maxHeight: 800 }}>
               {loading && <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}><CircularProgress /></Box>}
               {!loading && (
                 <>

@@ -1010,7 +1010,7 @@ const AppointmentManagement = () => {
       <Grid container spacing={3}>
         {/* Search and Filter Controls */}
         <Grid item xs={12}>
-          <Card sx={{ p: 2, mb: 2 }}>
+          <Card sx={{ p: 0, mb: 0 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <FilterOutlined />
@@ -1123,7 +1123,7 @@ const AppointmentManagement = () => {
 
         {/* Appointments Table */}
         <Grid item xs={12}>
-          <TableContainer component={Paper} sx={{ maxHeight: 440, '& .MuiTableHead-root': { position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f8f8f8' } }}>
+          <TableContainer component={Paper} sx={{ maxHeight: 725, '& .MuiTableHead-root': { position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f8f8f8' } }}>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>

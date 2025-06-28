@@ -22,7 +22,7 @@ import {
   InputLabel,
   TextField,
   Tabs,
-  Tab,
+  Tab, TablePagination
 } from '@mui/material';
 import { AddOutlined, EditOutlined, DeleteOutlined, CloseOutlined } from '@mui/icons-material';
 import MainCard from 'components/MainCard';
@@ -30,6 +30,7 @@ import axios from 'axios';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Swal from 'sweetalert2';
 
 const SkillManagement = () => {
   const [employees, setEmployees] = useState([]);
@@ -37,6 +38,11 @@ const SkillManagement = () => {
   const [userSkills, setUserSkills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState('1');
+  const [employeePage, setEmployeePage] = useState(0);
+  const [employeeRowsPerPage, setEmployeeRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [skillPage, setSkillPage] = useState(0);
+  const [skillRowsPerPage, setSkillRowsPerPage] = useState(10);
 
   // Bộ lọc
   const [filterEmployees, setFilterEmployees] = useState([]); // mảng id nhân viên được chọn lọc
@@ -83,6 +89,24 @@ const SkillManagement = () => {
       });
   }, []);
 
+  function loadData() {
+    Promise.all([
+      axios.get('http://localhost:8080/api/v1/user/accounts/staff'),
+      axios.get('http://localhost:8080/api/v1/skills'),
+      axios.get('http://localhost:8080/api/v1/user-skills'),
+    ])
+      .then(([employeeRes, skillRes, userSkillRes]) => {
+        setEmployees(employeeRes.data);
+        setSkills(skillRes.data);
+        setUserSkills(userSkillRes.data);
+      })
+      .catch((error) => {
+        console.error('Error fetching data:', error);
+        toast.error('Lỗi tải dữ liệu');
+      })
+      .finally(() => {
+      });
+  }
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -132,9 +156,11 @@ const SkillManagement = () => {
     const requests = userIds.map((id) => {
       const payload = { userId: id, skillIds: selectedSkills };
       if (dialogType === 'add') {
-        return axios.post('http://localhost:8080/api/v1/user-skills/insert', payload);
+        axios.post('http://localhost:8080/api/v1/user-skills/insert', payload);
+        loadData();
       } else {
-        return axios.put(`http://localhost:8080/api/v1/user-skills/edit`, payload);
+        axios.put(`http://localhost:8080/api/v1/user-skills/edit`, payload);
+        loadData();
       }
     });
 
@@ -151,27 +177,41 @@ const SkillManagement = () => {
       })
       .finally(() => {
         setSaving(false);
+        loadData();
       });
   };
 
   const handleDeleteAssignment = (employeeId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ kỹ năng của nhân viên này?')) return;
-    setDeletingIds((prev) => [...prev, employeeId]);
+    Swal.fire({
+      title: 'Bạn có chắc chắn?',
+      text: 'Toàn bộ kỹ năng của nhân viên này sẽ bị xóa!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
 
-    axios
-      .delete(`http://localhost:8080/api/v1/user-skills/delete/${employeeId}`)
-      .then(() => axios.get('http://localhost:8080/api/v1/user-skills'))
-      .then((res) => {
-        setUserSkills(res.data);
-        toast.success('Xóa kỹ năng của nhân viên thành công');
-      })
-      .catch((error) => {
-        console.error('Error deleting skills:', error);
-        toast.error('Xóa kỹ năng thất bại');
-      })
-      .finally(() => {
-        setDeletingIds((prev) => prev.filter((id) => id !== employeeId));
-      });
+      setDeletingIds((prev) => [...prev, employeeId]);
+
+      axios
+        .delete(`http://localhost:8080/api/v1/user-skills/delete/${employeeId}`)
+        .then(() => axios.get('http://localhost:8080/api/v1/user-skills'))
+        .then((res) => {
+          setUserSkills(res.data);
+          toast.success('Xóa kỹ năng của nhân viên thành công');
+        })
+        .catch((error) => {
+          console.error('Error deleting skills:', error);
+          toast.error('Xóa kỹ năng thất bại');
+        })
+        .finally(() => {
+          setDeletingIds((prev) => prev.filter((id) => id !== employeeId));
+          loadData();
+        });
+    });
   };
 
   // --- Handlers for Skill CRUD ---
@@ -201,7 +241,9 @@ const SkillManagement = () => {
         console.error('Lỗi khi tạo kỹ năng mới:', error);
         toast.error(error.response?.data?.message || 'Thêm kỹ năng mới thất bại');
       })
-      .finally(() => setIsCreatingSkill(false));
+      .finally(() => {
+        setIsCreatingSkill(false)
+      });
   };
 
   const handleOpenEditSkillDialog = (skill) => {
@@ -224,41 +266,57 @@ const SkillManagement = () => {
     setIsUpdatingSkill(true);
     axios.put(`http://localhost:8080/api/v1/skills/${editingSkill.id}`, { skillName: editingSkill.skillName })
         .then(() => {
-            toast.success('Cập nhật kỹ năng thành công!');
-            handleCloseEditSkillDialog();
-            return axios.get('http://localhost:8080/api/v1/skills');
+          handleCloseEditSkillDialog();
+          toast.success('Cập nhật kỹ năng thành công!');
+          return axios.get('http://localhost:8080/api/v1/skills');
         })
         .then(res => setSkills(res.data))
         .catch(error => {
             console.error('Lỗi khi cập nhật kỹ năng:', error);
             toast.error(error.response?.data?.message || 'Cập nhật kỹ năng thất bại');
         })
-        .finally(() => setIsUpdatingSkill(false));
+        .finally(() => {
+          setIsUpdatingSkill(false)
+        });
   };
 
   const handleDeleteSkill = (skillId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa kỹ năng này không? Kỹ năng đã gán cho nhân viên cũng sẽ bị ảnh hưởng.')) {
-        return;
-    }
-    setDeletingSkillId(skillId);
-    axios.delete(`http://localhost:8080/api/v1/skills/${skillId}`)
+    Swal.fire({
+      title: 'Bạn có chắc chắn?',
+      text: 'Kỹ năng này sẽ bị xóa. Kỹ năng đã gán cho nhân viên cũng sẽ bị ảnh hưởng!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+      reverseButtons: true
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      setDeletingSkillId(skillId);
+      axios.delete(`http://localhost:8080/api/v1/skills/${skillId}`)
         .then(() => {
-            toast.success('Xóa kỹ năng thành công!');
-            return Promise.all([
-              axios.get('http://localhost:8080/api/v1/skills'),
-              axios.get('http://localhost:8080/api/v1/user-skills'),
-            ]);
+          toast.success('Xóa kỹ năng thành công!');
+          return Promise.all([
+            axios.get('http://localhost:8080/api/v1/skills'),
+            axios.get('http://localhost:8080/api/v1/user-skills'),
+          ]);
         })
         .then(([skillRes, userSkillRes]) => {
-            setSkills(skillRes.data);
-            setUserSkills(userSkillRes.data);
+          setSkills(skillRes.data);
+          setUserSkills(userSkillRes.data);
         })
         .catch(error => {
-            console.error('Lỗi khi xóa kỹ năng:', error);
-            toast.error(error.response?.data?.message || 'Xóa kỹ năng thất bại.');
+          console.error('Lỗi khi xóa kỹ năng:', error);
+          toast.error(error.response?.data?.message || 'Xóa kỹ năng thất bại.');
         })
-        .finally(() => setDeletingSkillId(null));
+        .finally(() => {
+          setDeletingSkillId(null)
+        });
+    });
   };
+
 
 
   // Lọc employees hiển thị theo bộ lọc nhân viên + kỹ năng
@@ -281,6 +339,15 @@ const SkillManagement = () => {
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
+  const paginatedEmployees = filteredEmployees.slice(
+    employeePage * employeeRowsPerPage,
+    employeePage * employeeRowsPerPage + employeeRowsPerPage
+  );
+
+  const paginatedSkills = skills.slice(
+    skillPage * skillRowsPerPage,
+    skillPage * skillRowsPerPage + skillRowsPerPage
+  );
 
   return (
     <MainCard title="Quản Lý Kỹ Năng">
@@ -338,7 +405,7 @@ const SkillManagement = () => {
                     </Button>
                 </Box>
             </div>
-            <TableContainer>
+            <TableContainer sx={{ maxHeight: 800 }}>
                 <Table>
                 <TableHead>
                     <TableRow>
@@ -349,7 +416,7 @@ const SkillManagement = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {filteredEmployees.map((employee, index) => {
+                    {paginatedEmployees.map((employee, index) => {
                     const employeeSkills = userSkills
                         .filter((us) => us.id.userId === employee.id)
                         .map((us) => us.skill.skillName);
@@ -371,18 +438,38 @@ const SkillManagement = () => {
                 </TableBody>
                 </Table>
             </TableContainer>
+            <TablePagination
+              component="div"
+              count={filteredEmployees.length}
+              page={employeePage}
+              onPageChange={(e, newPage) => setEmployeePage(newPage)}
+              rowsPerPage={employeeRowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setEmployeeRowsPerPage(parseInt(e.target.value, 10));
+                setEmployeePage(0);
+              }}
+              rowsPerPageOptions={[5, 10, 20]}
+            />
+
         </Box>
       )}
 
       {/* Tab 2: Quản lý danh sách kỹ năng */}
       {tabValue === '2' && (
         <Box sx={{ pt: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button variant="contained" startIcon={<AddOutlined />} onClick={handleOpenNewSkillDialog} disabled={isCreatingSkill}>
-                    Tạo Kỹ Năng Mới
-                </Button>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+              <TextField
+                variant="outlined"
+                size="small"
+                placeholder="Tìm kiếm kỹ năng"
+                onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
+                sx={{ width: '300px' }}
+              />
+              <Button variant="contained" startIcon={<AddOutlined />} onClick={handleOpenNewSkillDialog} disabled={isCreatingSkill}>
+                Tạo Kỹ Năng Mới
+              </Button>
             </Box>
-            <TableContainer>
+            <TableContainer sx={{ maxHeight: 700 }}>
                 <Table>
                     <TableHead>
                         <TableRow>
@@ -392,7 +479,9 @@ const SkillManagement = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {skills.map((skill, index) => {
+                        {skills
+                          .filter((skill) => skill.skillName.toLowerCase().includes(searchTerm))
+                          .map((skill, index) => {
                             const isDeleting = deletingSkillId === skill.id;
                             return (
                                 <TableRow key={skill.id}>

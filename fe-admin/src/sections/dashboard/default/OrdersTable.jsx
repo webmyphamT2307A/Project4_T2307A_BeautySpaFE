@@ -156,6 +156,7 @@ export default function OrderTable() {
       <TableContainer
         sx={{
           width: '100%',
+          maxHeight: '800px',
           overflowX: 'auto',
           position: 'relative',
           display: 'block',

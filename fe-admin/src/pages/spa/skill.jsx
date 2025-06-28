@@ -268,7 +268,7 @@ const SkillManagement = () => {
                     <Button variant="contained" startIcon={<AddOutlined />} onClick={() => handleOpenAssignDialog('add')}>Gán Kỹ Năng</Button>
                 </Box>
             </div>
-            <TableContainer>
+            <TableContainer sx={{ maxHeight: 800 }}>
                 <Table>
                 <TableHead><TableRow><TableCell>STT</TableCell><TableCell>Tên Nhân Viên</TableCell><TableCell>Kỹ Năng</TableCell><TableCell>Hành Động</TableCell></TableRow></TableHead>
                 <TableBody>
@@ -299,7 +299,7 @@ const SkillManagement = () => {
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                 <Button variant="contained" startIcon={<AddOutlined />} onClick={() => handleOpenSkillDialog('add')}>Tạo Kỹ Năng Mới</Button>
             </Box>
-            <TableContainer>
+            <TableContainer sx={{ maxHeight: 800 }}>
                 <Table>
                     <TableHead><TableRow><TableCell>STT</TableCell><TableCell>Tên Kỹ Năng</TableCell><TableCell>Mô tả</TableCell><TableCell align="right">Hành Động</TableCell></TableRow></TableHead>
                     <TableBody>

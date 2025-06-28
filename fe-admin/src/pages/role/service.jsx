@@ -214,7 +214,7 @@ const RoleManager = () => {
         sx={{
           boxShadow: 'none',
           borderRadius: '10px',
-          height: '400px',
+          maxHeight: '800px',
           overflow: 'auto'
         }}
       >
