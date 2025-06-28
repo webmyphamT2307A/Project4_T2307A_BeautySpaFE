@@ -6,48 +6,13 @@ import 'react-toastify/dist/ReactToastify.css';
 import Header from '../../shared/header';
 import Footer from '../../shared/footer';
 
-// 🔧 Utility functions for staff cache management
-const STAFF_CACHE_KEY = 'staffList';
-const STAFF_CACHE_EXPIRY_KEY = 'staffListExpiry';
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
-
-const getStaffFromCache = () => {
-    try {
-        const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
-        const expiry = localStorage.getItem(STAFF_CACHE_EXPIRY_KEY);
-
-        if (cachedData && expiry) {
-            const now = Date.now();
-            if (now < parseInt(expiry, 10)) {
-                return JSON.parse(cachedData);
-            } else {
-                // Cache expired, remove it
-                localStorage.removeItem(STAFF_CACHE_KEY);
-                localStorage.removeItem(STAFF_CACHE_EXPIRY_KEY);
-            }
-        }
-    } catch (error) {
-        console.warn('⚠️ Error reading staff cache:', error);
-    }
-    return null;
-};
-
-const setStaffToCache = (staffList) => {
-    try {
-        const expiry = Date.now() + CACHE_DURATION;
-        localStorage.setItem(STAFF_CACHE_KEY, JSON.stringify(staffList));
-        localStorage.setItem(STAFF_CACHE_EXPIRY_KEY, expiry.toString());
-        console.log('💾 Staff list cached for 30 minutes');
-    } catch (error) {
-        console.warn('⚠️ Error setting staff cache:', error);
-    }
-};
 
 const StaffReviewPage = () => {
     const { staffId } = useParams();
     const navigate = useNavigate();
     const [staff, setStaff] = useState(null);
     const [reviews, setReviews] = useState([]);
+    const [allReviews, setAllReviews] = useState([]);
     const [reviewStats, setReviewStats] = useState({
         averageRating: 0,
         totalReviews: 0,
@@ -89,7 +54,7 @@ const StaffReviewPage = () => {
 
         // Fetch staff details and reviews
         fetchStaffDetails();
-        fetchStaffReviews(currentPage - 1);
+        fetchStaffReviews();
     }, [staffId, currentPage]);
 
     // Recalculate stats when staff data changes
@@ -99,81 +64,61 @@ const StaffReviewPage = () => {
         }
     }, [staff]);
 
+    // Lấy thông tin staff
     const fetchStaffDetails = async () => {
         try {
-            // 🔍 First: Try to get staff from cache (with expiry check)
-            const cachedStaffList = getStaffFromCache();
-            if (cachedStaffList) {
-                const foundStaff = cachedStaffList.find(staff => staff.id === parseInt(staffId, 10));
-                if (foundStaff) {
-                    console.log('✅ Found staff in cache:', foundStaff.fullName);
-                    setStaff(foundStaff);
-                    return; // Exit early if found in cache
-                }
-            }
-
-            // 🌐 Second: Try the admin API endpoint
-            console.log('🔍 Staff not found in cache, trying admin API...');
             try {
                 const response = await axios.get(`http://localhost:8080/api/v1/admin/accounts/find-by-id/${staffId}`);
                 if (response.data && response.data.status === 'SUCCESS') {
-                    console.log('✅ Found staff via admin API:', response.data.data.fullName);
-                    setStaff(response.data.data); // ⚠️ Admin API wraps data in ResponseObject
-                    return;
+                    setStaff(response.data.data);
                 }
             } catch (adminError) {
                 console.warn('⚠️ Admin API not accessible:', adminError.response?.status);
-            }
-
-            // 🔄 Third: Fallback to staff list API
-            console.log('🔄 Trying staff list API...');
-            const fallbackResponse = await axios.get('http://localhost:8080/api/v1/user/accounts/staff');
-            const staffList = Array.isArray(fallbackResponse.data)
-                ? fallbackResponse.data
-                : (fallbackResponse.data.data || []);
-
-            // 💾 Cache the staff list for future use
-            setStaffToCache(staffList);
-
-            const foundStaff = staffList.find(staff => staff.id === parseInt(staffId, 10));
-            if (foundStaff) {
-                console.log('✅ Found staff via staff list API:', foundStaff.fullName);
-                setStaff(foundStaff);
-            } else {
-                // console.error('❌ Staff not found. Available IDs:', staffList.map(s => s.id));
-                toast.error(`Không tìm thấy nhân viên với ID: ${staffId}`);
             }
         } catch (error) {
             // console.error('❌ All API attempts failed:', error);
             toast.error('Không thể tải thông tin nhân viên. Vui lòng thử lại sau.');
         }
     };
+    useEffect(() => {
+        if (allReviews.length > 0) {
+            const start = (currentPage - 1) * reviewsPerPage;
+            const end = start + reviewsPerPage;
+            const currentReviews = allReviews.slice(start, end);
+            setReviews(currentReviews);
+        }
+    }, [currentPage, allReviews]);
 
-    const fetchStaffReviews = async (page = 0) => {
+    //lấy thông tin đánh giá staff
+    const fetchStaffReviews = async () => {
         try {
-            const response = await axios.get(`http://localhost:8080/api/v1/reviews/item/${staffId}`, {
-                params: {
-                    page: page,
-                    size: reviewsPerPage,
-                    sort: 'createdAt,desc'
-                }
-            });
+            const response = await axios.get(`http://localhost:8080/api/v1/reviews/item/staff/${staffId}`);
 
-            if (response.data.status === 'SUCCESS') {
-                const pageData = response.data.data;
-                setReviews(pageData.content || []);
-                setTotalPages(pageData.totalPages || 1);
+            console.log('📊 Fetched staff reviews:', response.data);
+            if (response.data.data && response.data.status === 'SUCCESS') {
+                setAllReviews(response.data.data);
 
-                // Calculate review statistics after both staff and reviews are loaded
-                if (staff || pageData.content) {
-                    calculateReviewStats(pageData.content || []);
-                }
+                const total = response.data.data.length;
+                console.log("📈 Total reviews fetched:", total);
+                console.log("totalPages:", Math.ceil(total / reviewsPerPage));
+                setTotalPages(Math.ceil(total / reviewsPerPage));
+
+                // Gán cho reviews hiện tại theo trang
+                const start = (currentPage - 1) * reviewsPerPage;
+                const end = start + reviewsPerPage;
+                const currentReviews = response.data.data.slice(start, end);
+                setReviews(currentReviews);
+                console.log(`📄 Displaying reviews for page ${currentPage}:`, currentReviews);
+
+                calculateReviewStats(response.data.data); // dùng toàn bộ review để thống kê
             }
         } catch (error) {
-            // console.error('Error fetching staff reviews:', error);
+            setAllReviews([]);
             setReviews([]);
+            setTotalPages(1);
         }
     };
+
 
     const calculateReviewStats = (reviewList) => {
         // 🎯 Use database rating if available, otherwise calculate from reviews
@@ -182,7 +127,6 @@ const StaffReviewPage = () => {
 
         if (dbRating && dbTotalReviews) {
             // ✅ Use database values (more accurate)
-            console.log(`📊 Using database rating: ${dbRating} (${dbTotalReviews} reviews)`);
 
             // Count ratings from current reviews for chart
             const ratingCounts = [5, 4, 3, 2, 1].map(star =>
@@ -440,16 +384,16 @@ const StaffReviewPage = () => {
                                     <div className="alert alert-info">
                                         <strong>Đánh giá với tư cách:</strong> {user?.fullName}
                                     </div>
-                                    
+
                                     <form onSubmit={handleReviewSubmit}>
                                         <div className="mb-3">
                                             <label className="form-label fw-bold">Đánh giá của bạn *</label>
                                             <div className="d-flex align-items-center mb-2">
-                                                {renderStars(newReview.rating, true, (star) => 
+                                                {renderStars(newReview.rating, true, (star) =>
                                                     setNewReview({...newReview, rating: star})
                                                 )}
                                                 <span className="ms-3 text-muted">
-                                                    {newReview.rating === 0 ? 'Chưa chọn đánh giá' : 
+                                                    {newReview.rating === 0 ? 'Chưa chọn đánh giá' :
                                                      ['', 'Rất tệ', 'Không hài lòng', 'Trung bình', 'Hài lòng', 'Rất hài lòng'][newReview.rating]}
                                                 </span>
                                             </div>
@@ -475,8 +419,8 @@ const StaffReviewPage = () => {
                                             </div>
                                         </div>
 
-                                        <button 
-                                            type="submit" 
+                                        <button
+                                            type="submit"
                                             className="btn btn-primary"
                                             disabled={isSubmitting}
                                         >
@@ -562,10 +506,11 @@ const StaffReviewPage = () => {
                                         ))}
 
                                         {/* Pagination */}
-                                        {totalPages > 1 && (
+                                        {totalPages > 0 && (
                                             <div className="d-flex justify-content-center mt-4">
                                                 <nav>
                                                     <ul className="pagination">
+                                                        {/* Nút "Trước" */}
                                                         <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
                                                             <button
                                                                 className="page-link"
@@ -575,8 +520,13 @@ const StaffReviewPage = () => {
                                                                 Trước
                                                             </button>
                                                         </li>
+
+                                                        {/* Danh sách số trang */}
                                                         {[...Array(totalPages)].map((_, index) => (
-                                                            <li key={index + 1} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                                                            <li
+                                                                key={index + 1}
+                                                                className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}
+                                                            >
                                                                 <button
                                                                     className="page-link"
                                                                     onClick={() => setCurrentPage(index + 1)}
@@ -585,6 +535,8 @@ const StaffReviewPage = () => {
                                                                 </button>
                                                             </li>
                                                         ))}
+
+                                                        {/* Nút "Sau" */}
                                                         <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
                                                             <button
                                                                 className="page-link"
@@ -598,6 +550,7 @@ const StaffReviewPage = () => {
                                                 </nav>
                                             </div>
                                         )}
+
                                     </>
                                 ) : (
                                     <div className="text-center py-4">
@@ -676,4 +629,4 @@ const StaffReviewPage = () => {
     );
 };
 
-export default StaffReviewPage; 
+export default StaffReviewPage;
