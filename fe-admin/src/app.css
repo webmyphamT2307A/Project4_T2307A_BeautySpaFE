@@ -1,3 +1,6 @@
 .css-1aoqknv-MuiFormLabel-root-MuiInputLabel-root{
     top:0!important;
 }
+.swal2-container.swal2-center.swal2-backdrop-show{
+    z-index: 10000;
+}

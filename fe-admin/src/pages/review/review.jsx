@@ -260,7 +260,7 @@ const ReviewList = () => {
                 </FormControl>
             </Box>
             {loading && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
-            <TableContainer>
+            <TableContainer sx={{ maxHeight: 800 }}>
                 <Table>
                     <TableHead>
                         <TableRow>

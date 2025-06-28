@@ -1037,7 +1037,7 @@ const ServiceHistoryPage = () => {
                                 ? 'Đây là danh sách lịch hẹn và dịch vụ của bạn tại spa của chúng tôi.'
                                 : 'Tra cứu lịch hẹn bằng số điện thoại (dành cho khách chưa đăng nhập).'}
                         </p>
-                        {userInfo && (
+                        {/* {userInfo && (
                             <div className="alert alert-info" role="alert">
                                 <i className="fas fa-info-circle me-2"></i>
                                 <strong>Lưu ý:</strong> Bạn có thể hủy các lịch hẹn sắp tới bằng cách nhấn nút "Hủy Lịch" trong bảng bên dưới.
@@ -1048,7 +1048,7 @@ const ServiceHistoryPage = () => {
                                     Chỉ hiển thị lịch hẹn hợp lệ (có giá tiền lớn hơn 0, tên dịch vụ và nhân viên không phải N/A).
                                 </small>
                             </div>
-                        )}
+                        )} */}
 
 
                         {/* Thông báo tự động tra cứu */}
@@ -1220,7 +1220,7 @@ const ServiceHistoryPage = () => {
                                                 <small style={{ color: '#6c757d' }}>
                                                     Cần hỗ trợ? Gọi hotline:
                                                     <a href="tel:1900xxxx" className="text-decoration-none ms-1" style={{ color: '#FDB5B9', fontWeight: '600' }}>
-                                                        1900-xxxx
+                                                        0366888894
                                                     </a>
                                                 </small>
                                             </div>
@@ -1298,7 +1298,7 @@ const ServiceHistoryPage = () => {
                                             Thử lại
                                         </button>
                                         <small className="text-muted">
-                                            Hoặc liên hệ <strong>hotline: 1900-xxxx</strong> để hỗ trợ
+                                            Hoặc liên hệ <strong>hotline: 0366888894</strong> để hỗ trợ
                                         </small>
                                     </div>
                                 </div>

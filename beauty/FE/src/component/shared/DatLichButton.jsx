@@ -5,15 +5,15 @@ const DatLichButton = ({ onClick }) => {
 
   const baseStyle = {
     background: isHovered
-        ? '#fff'
-        : 'linear-gradient(135deg, #FDB5B9, #f89ca0)',
+        ? 'linear-gradient(135deg,rgb(254, 171, 175),rgb(255, 150, 156))'
+        : 'linear-gradient(135deg,rgb(254, 171, 175),rgb(255, 150, 156))',
     border: isHovered
-        ? '2px solid #FAD0C4'
-        : '2px solid #f89ca0',
+        ? '2px solid #F9A0A4'
+        : '2px solid #F9A0A4',
     boxShadow: isHovered
-        ? '0 0 20px rgba(255, 120, 150, 0.55), 0 10px 24px rgba(255, 165, 140, 0.35)'
+        ? '0 0 20px rgba(255, 163, 183, 0.55), 0 10px 24px rgba(253, 192, 175, 0.35)'
         : '0 6px 16px rgba(255, 150, 160, 0.25)',
-    color: isHovered ? "#FDB5B9" : 'white',
+    color: isHovered ? "white" : 'white',
     borderRadius: '50px',
     padding: '12px 28px',
     fontSize: '1.05rem',

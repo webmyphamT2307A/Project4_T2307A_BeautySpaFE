@@ -319,7 +319,7 @@ const Contact = () => {
                                             style={{
                                                 background: 'linear-gradient(135deg, #fdb5b9 0%, #fecaca 50%)',
                                                 border: 'none',
-                                                color: 'white',
+                                                color: 'black',
                                                 fontWeight: '600',
                                                 borderRadius: '25px',
                                                 transition: 'all 0.3s ease',
@@ -327,7 +327,7 @@ const Contact = () => {
                                             }}
                                             onMouseEnter={(e) => {
                                                 if (!e.target.disabled) {
-                                                    e.target.style.background = 'linear-gradient(135deg, #F7A8B8, #E589A3)';
+                                                    e.target.style.background = 'linear-gradient(135deg,rgb(255, 172, 176),rgb(250, 144, 149))';
                                                     e.target.style.transform = 'translateY(-2px)';
                                                 }
                                             }}
