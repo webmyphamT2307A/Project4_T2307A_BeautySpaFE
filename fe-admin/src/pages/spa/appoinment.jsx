@@ -34,6 +34,11 @@ const API_URL = 'http://localhost:8080/api/v1/admin/appointment';
 const API_STAFF_URL = 'http://localhost:8080/api/v1/admin/accounts/find-all';
 const EMAIL_API_URL = 'http://localhost:8080/api/v1/email/send-appointment-confirmation';
 
+const formatCurrency = (value) => {
+  if (value == null || isNaN(value)) return 'N/A';
+  return `${new Intl.NumberFormat('vi-VN').format(value)} VND`;
+};
+
 const AppointmentManagement = () => {
   // States
   const [searchParams] = useSearchParams();
@@ -1128,13 +1133,13 @@ const AppointmentManagement = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Customer</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Service</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Date & Time</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Staff</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Khách Hàng</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Dịch Vụ</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Thời Gian</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Nhân Viên</TableCell>
                   
-                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Trạng Thái</TableCell>
+                  <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Thao Tác</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1162,7 +1167,7 @@ const AppointmentManagement = () => {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>{appointment.service?.name}</Typography>
-                          <Typography variant="caption" color="primary">{appointment.price?.toFixed(2)}đ • {appointment.service?.duration} phút</Typography>
+                          <Typography variant="caption" color="primary">{formatCurrency(appointment.price)} • {appointment.service?.duration} phút</Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatDate(appointment.appointmentDate)}</Typography>
@@ -1283,7 +1288,7 @@ const AppointmentManagement = () => {
                   <Typography variant="h6" gutterBottom>Service Information</Typography>
                   <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{currentAppointment.service.name}</Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}><Typography variant="body2">Price:</Typography><Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>{currentAppointment.price?.toFixed(2)}đ</Typography></Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}><Typography variant="body2">Price:</Typography><Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>{formatCurrency(currentAppointment.price)}</Typography></Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography variant="body2">Duration:</Typography><Typography variant="body2">{currentAppointment.service.duration} phút</Typography></Box>
                   </Paper>
                 </Box>
@@ -1542,7 +1547,7 @@ const AppointmentManagement = () => {
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle2" color="textSecondary">Price:</Typography>
                 <Typography variant="body1" color="primary" sx={{ fontWeight: 600 }}>
-                  {appointmentToSendEmail.price?.toFixed(2)}đ
+                  {formatCurrency(appointmentToSendEmail.price)}
                 </Typography>
               </Grid>
 
