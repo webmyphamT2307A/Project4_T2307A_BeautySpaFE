@@ -19,6 +19,15 @@ const ContactPage = () => {
     const [messageType, setMessageType] = useState('');
     const [userInfo, setUserInfo] = useState(null);
 
+    // Field validation state
+    const [validFields, setValidFields] = useState({
+        firstName: false,
+        email: false,
+        phone: false,
+        subject: false,
+        message: false
+    });
+
     // Check if user is logged in
     useEffect(() => {
         const storedUser = localStorage.getItem('userInfo');
@@ -38,9 +47,43 @@ const ContactPage = () => {
     // Handle form input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        
+        // Format phone number for Vietnamese format
+        let formattedValue = value;
+        if (name === 'phone') {
+            formattedValue = value.replace(/[^0-9\s+()-]/g, '');
+        }
+        
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: formattedValue
+        }));
+
+        // Validate field
+        let isValid = false;
+        switch (name) {
+            case 'firstName':
+                isValid = value.trim().length >= 2;
+                break;
+            case 'email':
+                isValid = isValidEmail(value);
+                break;
+            case 'phone':
+                isValid = !value.trim() || isValidPhone(value);
+                break;
+            case 'subject':
+                isValid = value.trim().length >= 5 && value.trim().length <= 500;
+                break;
+            case 'message':
+                isValid = value.trim().length >= 10 && value.trim().length <= 1000;
+                break;
+            default:
+                break;
+        }
+
+        setValidFields(prev => ({
+            ...prev,
+            [name]: isValid
         }));
     };
 
@@ -52,9 +95,12 @@ const ContactPage = () => {
 
     // Phone validation (Vietnamese phone format)
     const isValidPhone = (phone) => {
-        // Vietnamese phone: 0xxxxxxxxx (10-11 digits) or +84xxxxxxxxx
-        const phoneRegex = /^(\+84|0)[3-9]\d{8,9}$/;
-        return phoneRegex.test(phone.replace(/\s+/g, ''));
+        if (!phone.trim()) return true; // Phone is optional
+        const phoneRegex = /^[0-9\s+()-]+$/;
+        if (!phoneRegex.test(phone.trim())) return false;
+        // Loại bỏ các ký tự không phải số để kiểm tra độ dài
+        const digitsOnly = phone.replace(/\D/g, '');
+        return digitsOnly.length >= 9 && digitsOnly.length <= 15;
     };
 
     // Form validation
@@ -85,7 +131,7 @@ const ContactPage = () => {
 
         // Phone (optional but validate if provided)
         if (formData.phone.trim() && !isValidPhone(formData.phone)) {
-            setMessage('Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam hợp lệ');
+            setMessage('Số điện thoại không hợp lệ. Vui lòng chỉ nhập số và các ký tự +, -, (, )');
             setMessageType('error');
             return false;
         }
@@ -147,6 +193,7 @@ const ContactPage = () => {
             const response = await axios.post(
                 'http://localhost:8080/api/v1/feedbacks/created',
                 {
+                    guestName: formData.firstName, // Đồng bộ với Contact.jsx
                     firstName: formData.firstName,
                     email: formData.email,
                     phone: formData.phone,
@@ -180,13 +227,8 @@ const ContactPage = () => {
             }
         } catch (error) {
             console.error('Error sending feedback:', error);
-            if (error.response?.status === 400) {
-                setMessage('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin');
-            } else if (error.response?.status === 500) {
-                setMessage('Lỗi hệ thống. Vui lòng thử lại sau');
-            } else {
-                setMessage('Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau');
-            }
+            const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
+            setMessage(errorMessage);
             setMessageType('error');
         } finally {
             setLoading(false);
@@ -201,7 +243,7 @@ const ContactPage = () => {
                     <h3 className="text-white display-3 mb-4">Liên Hệ</h3>
                     <ol className="breadcrumb justify-content-center mb-0">
                         <li className="breadcrumb-item"><a href="/">Trang Chủ</a></li>
-                        <li className="breadcrumb-item"><a href="#">Trang</a></li>
+                        <li className="breadcrumb-item"><button className="btn p-0 text-decoration-none">Trang</button></li>
                         <li className="breadcrumb-item active text-white">Liên Hệ</li>
                     </ol>
                 </div>
@@ -216,13 +258,16 @@ const ContactPage = () => {
                         <div className="col-lg-6">
                             <div className="text-center">
                                 <h1 className="display-3 text-dark mb-4">Liên Hệ Với Chúng Tôi</h1>
-                                <p className="text-dark fs-4">
+                                <p className="text-dark fs-4 bg-transparent">
                                     Chúng tôi luôn sẵn sàng lắng nghe ý kiến từ bạn.
                                     Hãy để lại tin nhắn và chúng tôi sẽ phản hồi trong thời gian sớm nhất.
                                     {userInfo && (
-                                        <span className="d-block mt-3 fs-5">
-                                            <i className="fas fa-user-check me-2"></i>
+                                        <span className="d-block mt-3 fs-5 bg-light p-3 rounded" style={{ border: '1px solid rgba(253, 181, 185, 0.3)' }}>
+                                            <i className="fas fa-user-check me-2 text-success"></i>
                                             Xin chào, {userInfo.fullName}!
+                                            <small className="d-block mt-1 text-muted">
+                                                Thông tin cá nhân đã được điền tự động từ tài khoản của bạn
+                                            </small>
                                         </span>
                                     )}
                                 </p>
@@ -248,59 +293,100 @@ const ContactPage = () => {
 
                                     <div className="row gx-4 gy-3">
                                         <div className="col-xl-6">
-                                            <input
-                                                type="text"
-                                                name="firstName"
-                                                value={formData.firstName}
-                                                onChange={handleInputChange}
-                                                className="form-control bg-white py-3 px-4 border rounded"
-                                                placeholder="Họ và tên của bạn"
-                                                required
-                                            />
+                                            <div className="position-relative">
+                                                <input
+                                                    type="text"
+                                                    name="firstName"
+                                                    value={formData.firstName}
+                                                    onChange={handleInputChange}
+                                                    className={`form-control bg-white py-3 px-4 border rounded ${validFields.firstName ? 'is-valid' : ''}`}
+                                                    placeholder="Họ và tên của bạn"
+                                                    required
+                                                    readOnly={userInfo !== null}
+                                                />
+                                                {validFields.firstName && (
+                                                    <div className="valid-feedback d-block position-absolute" style={{ right: '10px', top: '50%', transform: 'translateY(-50%)' }}>
+                                                        <i className="fas fa-check text-success"></i>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="col-xl-6">
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleInputChange}
-                                                className="form-control bg-white py-3 px-4 border rounded"
-                                                placeholder="Email của bạn"
-                                                required
-                                            />
+                                            <div className="position-relative">
+                                                <input
+                                                    type="email"
+                                                    name="email"
+                                                    value={formData.email}
+                                                    onChange={handleInputChange}
+                                                    className={`form-control bg-white py-3 px-4 border rounded ${validFields.email ? 'is-valid' : ''}`}
+                                                    placeholder="Email của bạn"
+                                                    required
+                                                    readOnly={userInfo !== null}
+                                                />
+                                                {validFields.email && (
+                                                    <div className="valid-feedback d-block position-absolute" style={{ right: '10px', top: '50%', transform: 'translateY(-50%)' }}>
+                                                        <i className="fas fa-check text-success"></i>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="col-xl-6">
-                                            <input
-                                                type="text"
-                                                name="phone"
-                                                value={formData.phone}
-                                                onChange={handleInputChange}
-                                                className="form-control bg-white py-3 px-4 border rounded"
-                                                placeholder="Số điện thoại (tùy chọn)"
-                                            />
+                                            <div className="position-relative">
+                                                <input
+                                                    type="text"
+                                                    name="phone"
+                                                    value={formData.phone}
+                                                    onChange={handleInputChange}
+                                                    className={`form-control bg-white py-3 px-4 border rounded ${validFields.phone ? 'is-valid' : ''}`}
+                                                    placeholder="Số điện thoại (tùy chọn)"
+                                                    // readOnly={userInfo !== null}
+                                                />
+                                                {validFields.phone && formData.phone.trim() && (
+                                                    <div className="valid-feedback d-block position-absolute" style={{ right: '10px', top: '50%', transform: 'translateY(-50%)' }}>
+                                                        <i className="fas fa-check text-success"></i>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="col-xl-6">
-                                            <input
-                                                type="text"
-                                                name="subject"
-                                                value={formData.subject}
-                                                onChange={handleInputChange}
-                                                className="form-control bg-white py-3 px-4 border rounded"
-                                                placeholder="Chủ đề"
-                                                required
-                                            />
+                                            <div className="position-relative">
+                                                <input
+                                                    type="text"
+                                                    name="subject"
+                                                    value={formData.subject}
+                                                    onChange={handleInputChange}
+                                                    className={`form-control bg-white py-3 px-4 border rounded ${validFields.subject ? 'is-valid' : ''}`}
+                                                    placeholder="Chủ đề"
+                                                    required
+                                                />
+                                                {validFields.subject && (
+                                                    <div className="valid-feedback d-block position-absolute" style={{ right: '10px', top: '50%', transform: 'translateY(-50%)' }}>
+                                                        <i className="fas fa-check text-success"></i>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="col-12">
-                                            <textarea
-                                                name="message"
-                                                value={formData.message}
-                                                onChange={handleInputChange}
-                                                className="form-control py-3 px-4 border rounded"
-                                                rows={4}
-                                                cols={10}
-                                                placeholder="Nội dung tin nhắn của bạn"
-                                                required
-                                            />
+                                            <div className="position-relative">
+                                                <textarea
+                                                    name="message"
+                                                    value={formData.message}
+                                                    onChange={handleInputChange}
+                                                    className={`form-control py-3 px-4 border rounded ${validFields.message ? 'is-valid' : ''}`}
+                                                    rows={4}
+                                                    cols={10}
+                                                    placeholder="Nội dung tin nhắn của bạn"
+                                                    required
+                                                />
+                                                <small className="text-muted d-block mt-1">
+                                                    {formData.message.length}/1000 ký tự
+                                                </small>
+                                                {validFields.message && (
+                                                    <div className="valid-feedback d-block position-absolute" style={{ right: '10px', top: '20px' }}>
+                                                        <i className="fas fa-check text-success"></i>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="col-12">
                                             <button
@@ -403,6 +489,7 @@ const ContactPage = () => {
                                         marginBottom: '-6px',
                                         filter: 'brightness(1.1) contrast(1.1) saturate(1.2)',
                                     }}
+                                    title="Bản đồ địa chỉ Beauty Spa"
                                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.6703376889236!2d105.83851277531139!3d21.00584778063775!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ac778d04e3e1%3A0xd211a8690f6ae0d1!2zMjIgxJAuIEdp4bqjaSBQaMOzbmcsIFBoxrDGoW5nIE1haSwgxJDhu5FuZyDEkGEsIEjDoCBO4buZaSwgVmlldG5hbQ!5e0!3m2!1sen!2s!4v1751101490103!5m2!1sen!2s"
                                     loading="lazy"
                                     referrerPolicy="no-referrer-when-downgrade"
@@ -415,10 +502,10 @@ const ContactPage = () => {
                                     Theo dõi chúng tôi
                                 </h4>
                                 <div className="d-flex align-items-center justify-content-center">
-                                    <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-facebook-f" /></a>
-                                    <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-twitter" /></a>
-                                    <a href="#" className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-instagram" /></a>
-                                    <a href="#" className="btn btn-light btn-square rounded-circle shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-linkedin-in" /></a>
+                                    <button className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-facebook-f" aria-label="Facebook" /></button>
+                                    <button className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-twitter" aria-label="Twitter" /></button>
+                                    <button className="btn btn-light btn-square rounded-circle me-3 shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-instagram" aria-label="Instagram" /></button>
+                                    <button className="btn btn-light btn-square rounded-circle shadow-sm" style={{ transform: 'scale(1)', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}><i className="fab fa-linkedin-in" aria-label="LinkedIn" /></button>
                                 </div>
                             </div>
                         </div>

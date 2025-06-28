@@ -517,8 +517,8 @@ const Header = () => {
             {/* Search functionality */}
             {showSearch && (
                 <div ref={searchRef} className="search-bar-wrapper position-absolute w-100 d-flex justify-content-center" style={{ top: "170px", zIndex: 1050 }}>
-                    <div className="position-relative" style={{ maxWidth: "600px", width: "100%" }}>
-                        <div className="input-group shadow">
+                    <div className="position-relative " style={{ maxWidth: "600px", width: "100%" }}>
+                        <div className="input-group shadow rounded-pill">
                             <input
                                 type="search"
                                 className="form-control p-3"

@@ -288,17 +288,17 @@ const Appointment = () => {
                 timeSlotId: formData.timeSlotId
             }
         })
-        .then(res => {
-            const slotData = res.data.data;
-            if (slotData && slotData.totalSlots !== undefined && slotData.bookedSlots !== undefined) {
-                const booked = Math.max(0, slotData.bookedSlots);
-                const total = Math.max(booked, slotData.totalSlots);
-                setSlotInfo({ availableSlot: booked, totalSlot: total });
-            } else {
-                setSlotInfo(null);
-            }
-        })
-        .catch(() => setSlotInfo(null));
+            .then(res => {
+                const slotData = res.data.data;
+                if (slotData && slotData.totalSlots !== undefined && slotData.bookedSlots !== undefined) {
+                    const booked = Math.max(0, slotData.bookedSlots);
+                    const total = Math.max(booked, slotData.totalSlots);
+                    setSlotInfo({ availableSlot: booked, totalSlot: total });
+                } else {
+                    setSlotInfo(null);
+                }
+            })
+            .catch(() => setSlotInfo(null));
     }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
 
     // Check staff availability
@@ -466,7 +466,7 @@ const Appointment = () => {
                     return;
                 }
             }
-            
+
             // Re-format date to dd/MM/yyyy for backend submission
             let formattedDate = formData.appointmentDate;
             if (formattedDate && formattedDate.includes('-')) {
@@ -874,81 +874,81 @@ const Appointment = () => {
                         <div className=" alert alert-info bg-transparent border-white text-white rounded-3 shadow-sm">
                             <div className={`${loading ? 'background-blur' : ''}`}>
                                 <div className="d-flex align-items-center justify-content-between flex-wrap">
-                                <div className="d-flex flex-column gap-2">
-                                    <div className="d-flex align-items-center">
-                                        <i className="fas fa-user-friends me-2"></i>
-                                        <strong>Nhân viên sẵn sàng phục vụ:</strong>
-                                        <span className={`badge ms-2 px-2 py-1 rounded-pill ${countStaffAvaiable > 2 ? 'bg-success' :
-                                            countStaffAvaiable > 0 ? 'bg-warning text-dark' :
-                                                'bg-danger'
-                                            }`} style={{ fontSize: '0.8rem' }}>
-                                            <i className="fas fa-users me-1"></i>
-                                            {countStaffAvaiable} người
-                                        </span>
+                                    <div className="d-flex flex-column gap-2">
+                                        <div className="d-flex align-items-center">
+                                            <i className="fas fa-user-friends me-2"></i>
+                                            <strong>Nhân viên sẵn sàng phục vụ:</strong>
+                                            <span className={`badge ms-2 px-2 py-1 rounded-pill ${countStaffAvaiable > 2 ? 'bg-success' :
+                                                countStaffAvaiable > 0 ? 'bg-warning text-dark' :
+                                                    'bg-danger'
+                                                }`} style={{ fontSize: '0.8rem' }}>
+                                                <i className="fas fa-users me-1"></i>
+                                                {countStaffAvaiable} người
+                                            </span>
+                                        </div>
+
+                                        {slotInfo && (
+                                            <div className="d-flex align-items-center">
+                                                <i className="fas fa-bookmark me-2"></i>
+                                                <span className="me-2">Đã đặt:</span>
+                                                <span
+                                                    className={`badge px-2 py-1 rounded-pill ${slotInfo.availableSlot === slotInfo.totalSlot ? 'bg-danger' :
+                                                        slotInfo.availableSlot > slotInfo.totalSlot / 2 ? 'bg-warning text-dark' :
+                                                            'bg-success'
+                                                        }`} style={{ fontSize: '0.8rem' }}>
+                                                    <i className="fas fa-calendar-check me-1"></i>
+                                                    {slotInfo.availableSlot} / {slotInfo.totalSlot} chỗ
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {slotInfo && (
-                                        <div className="d-flex align-items-center">
-                                            <i className="fas fa-bookmark me-2"></i>
-                                            <span className="me-2">Đã đặt:</span>
-                                            <span
-                                                className={`badge px-2 py-1 rounded-pill ${slotInfo.availableSlot === slotInfo.totalSlot ? 'bg-danger' :
-                                                    slotInfo.availableSlot > slotInfo.totalSlot / 2 ? 'bg-warning text-dark' :
-                                                        'bg-success'
-                                                }`} style={{fontSize: '0.8rem'}}>
-                                                <i className="fas fa-calendar-check me-1"></i>
-                                                {slotInfo.availableSlot} / {slotInfo.totalSlot} chỗ
-                                            </span>
+                                    {countStaffAvaiable > 0 && (
+                                        <div className="d-flex flex-column align-items-end gap-1">
+                                            <small className="text-white-50 mb-1">Tình trạng sẵn sàng</small>
+                                            <div className="progress rounded-pill" style={{ width: '180px', height: '10px' }}>
+                                                <div
+                                                    className={`progress-bar progress-bar-striped progress-bar-animated ${countStaffAvaiable === 0 ? 'bg-danger' :
+                                                        countStaffAvaiable <= 2 ? 'bg-warning' :
+                                                            'bg-success'
+                                                        }`}
+                                                    style={{
+                                                        width: `${Math.min((countStaffAvaiable / 5) * 100, 100)}%`,
+                                                        borderRadius: '10px'
+                                                    }}
+                                                    role="progressbar"
+                                                    aria-valuenow={countStaffAvaiable}
+                                                    aria-valuemin="0"
+                                                    aria-valuemax="5"
+                                                />
+                                            </div>
+                                            <small className="text-white-50" style={{ fontSize: '0.7rem' }}>
+                                                {countStaffAvaiable === 0 ? 'Chưa có nhân viên' :
+                                                    countStaffAvaiable <= 2 ? 'Ít nhân viên' :
+                                                        'Đủ nhân viên'}
+                                            </small>
                                         </div>
                                     )}
                                 </div>
 
-                                {countStaffAvaiable > 0 && (
-                                    <div className="d-flex flex-column align-items-end gap-1">
-                                        <small className="text-white-50 mb-1">Tình trạng sẵn sàng</small>
-                                        <div className="progress rounded-pill" style={{width: '180px', height: '10px'}}>
-                                            <div
-                                                className={`progress-bar progress-bar-striped progress-bar-animated ${countStaffAvaiable === 0 ? 'bg-danger' :
-                                                    countStaffAvaiable <= 2 ? 'bg-warning' :
-                                                        'bg-success'
-                                                }`}
-                                                style={{
-                                                    width: `${Math.min((countStaffAvaiable / 5) * 100, 100)}%`,
-                                                    borderRadius: '10px'
-                                                }}
-                                                role="progressbar"
-                                                aria-valuenow={countStaffAvaiable}
-                                                aria-valuemin="0"
-                                                aria-valuemax="5"
-                                            />
-                                        </div>
-                                        <small className="text-white-50" style={{fontSize: '0.7rem'}}>
-                                            {countStaffAvaiable === 0 ? 'Chưa có nhân viên' :
-                                                countStaffAvaiable <= 2 ? 'Ít nhân viên' :
-                                                    'Đủ nhân viên'}
+                                {/* Thêm thông báo rõ ràng thân thiện với người dùng */}
+                                <div className="mt-3 pt-2 border-top border-white" style={{ borderOpacity: '0.3' }}>
+                                    <div className="d-flex align-items-center text-white-50">
+                                        <i className="fas fa-info-circle me-2"></i>
+                                        <small>
+                                            {staffList.length === 0 ?
+                                                'Hiện tại chưa có nhân viên nào có lịch làm việc vào thời gian này. Vui lòng chọn thời gian khác.' :
+                                                slotInfo?.availableSlot === slotInfo?.totalSlot ?
+                                                    'Thời gian này đã kín lịch. Vui lòng chọn khung giờ khác.' :
+                                                    slotInfo?.availableSlot === slotInfo?.totalSlot - 1 ?
+                                                        'Chỉ còn 1 chỗ trống cuối cùng! Hãy nhanh tay đặt lịch.' :
+                                                        slotInfo?.availableSlot < slotInfo?.totalSlot ?
+                                                            `Còn ${slotInfo.totalSlot - slotInfo.availableSlot} chỗ trống. Bạn có thể đặt lịch ngay!` :
+                                                            'Nhân viên đã sẵn sàng phục vụ bạn!'
+                                            }
                                         </small>
                                     </div>
-                                )}
-                            </div>
-
-                                {/* Thêm thông báo rõ ràng thân thiện với người dùng */}
-                                <div className="mt-3 pt-2 border-top border-white" style={{borderOpacity: '0.3'}}>
-                                <div className="d-flex align-items-center text-white-50">
-                                    <i className="fas fa-info-circle me-2"></i>
-                                    <small>
-                                        {staffList.length === 0 ?
-                                            'Hiện tại chưa có nhân viên nào có lịch làm việc vào thời gian này. Vui lòng chọn thời gian khác.' :
-                                            slotInfo?.availableSlot === slotInfo?.totalSlot ?
-                                                'Thời gian này đã kín lịch. Vui lòng chọn khung giờ khác.' :
-                                                slotInfo?.availableSlot === slotInfo?.totalSlot - 1 ?
-                                                    'Chỉ còn 1 chỗ trống cuối cùng! Hãy nhanh tay đặt lịch.' :
-                                                    slotInfo?.availableSlot < slotInfo?.totalSlot ?
-                                                        `Còn ${slotInfo.totalSlot - slotInfo.availableSlot} chỗ trống. Bạn có thể đặt lịch ngay!` :
-                                                        'Nhân viên đã sẵn sàng phục vụ bạn!'
-                                        }
-                                    </small>
                                 </div>
-                            </div>
                             </div>
                         </div>
                     </div>
@@ -1128,428 +1128,432 @@ const Appointment = () => {
 
                                             <p className="text-white-50 mb-1" style={{
                                                 fontSize: '0.75rem',
-                                                minHeight: '18px'
+                                                minHeight: '18px',
+                                                maxHeight: '38px',                             
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
                                             }}>
-                                                {staff.skillsText || 'Chuyên viên Spa'}
-                                            </p>
+                                            {staff.skillsText || 'Chuyên viên Spa'}
+                                        </p>
 
-                                            {/* Rating */}
-                                            <div className="d-flex align-items-center justify-content-center mb-2">
-                                                <div className="me-2">
-                                                    {renderStars(staff.averageRating)}
-                                                </div>
-                                                <span className="text-white-50" style={{ fontSize: '0.65rem' }}>
-                                                    ({staff.totalReviews || 0})
-                                                </span>
+                                        {/* Rating */}
+                                        <div className="d-flex align-items-center justify-content-center mb-2">
+                                            <div className="me-2">
+                                                {renderStars(staff.averageRating)}
                                             </div>
-
-                                            {/* Review Button */}
-                                            <div className="mb-3">
-                                                <Link
-                                                    to={`/staff-review/${staff.id}`}
-                                                    className="btn btn-sm btn-warning w-100"
-                                                    style={{ 
-                                                        fontSize: '0.75rem', 
-                                                        padding: '6px 12px',
-                                                        textDecoration: 'none',
-                                                        fontWeight: '600',
-                                                        color: '#212529',
-                                                        backgroundColor: '#ffc107',
-                                                        border: '1px solid #ffc107',
-                                                        transition: 'all 0.3s ease',
-                                                        boxShadow: '0 2px 8px rgba(255, 193, 7, 0.3)'
-                                                    }}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    onMouseEnter={(e) => {
-                                                        e.target.style.backgroundColor = '#ffcd39';
-                                                        e.target.style.borderColor = '#ffcd39';
-                                                        e.target.style.transform = 'translateY(-2px)';
-                                                        e.target.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.5)';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.target.style.backgroundColor = '#ffc107';
-                                                        e.target.style.borderColor = '#ffc107';
-                                                        e.target.style.transform = 'translateY(0)';
-                                                        e.target.style.boxShadow = '0 2px 8px rgba(255, 193, 7, 0.3)';
-                                                    }}
-                                                >
-                                                    <i className="fas fa-star me-1"></i>Đánh giá
-                                                </Link>
-                                            </div>
-
-                                            {/* Select Button */}
-                                            <button
-                                                type="button"
-                                                className={`btn btn-sm w-100 ${isBusy ? 'btn-outline-danger' :
-                                                    isSelected ? 'btn-primary' : 'btn-outline-light'
-                                                    }`}
-                                                style={{ fontSize: '0.75rem', padding: '6px 12px' }}
-                                                disabled={isBusy}
-                                                onClick={(e) => handleStaffSelect(staff.id, e)}
-                                            >
-                                                {isBusy ? (
-                                                    <><i className="fas fa-ban me-1"></i>Không có</>
-                                                ) : isSelected ? (
-                                                    <><i className="fas fa-check me-1"></i>Đã chọn</>
-                                                ) : (
-                                                    <><i className="fas fa-hand-pointer me-1"></i>Chọn</>
-                                                )}
-                                            </button>
+                                            <span className="text-white-50" style={{ fontSize: '0.65rem' }}>
+                                                ({staff.totalReviews || 0})
+                                            </span>
                                         </div>
+
+                                        {/* Review Button */}
+                                        <div className="mb-3">
+                                            <Link
+                                                to={`/staff-review/${staff.id}`}
+                                                className="btn btn-sm btn-warning w-100"
+                                                style={{
+                                                    fontSize: '0.75rem',
+                                                    padding: '6px 12px',
+                                                    textDecoration: 'none',
+                                                    fontWeight: '600',
+                                                    color: '#212529',
+                                                    backgroundColor: '#ffc107',
+                                                    border: '1px solid #ffc107',
+                                                    transition: 'all 0.3s ease',
+                                                    boxShadow: '0 2px 8px rgba(255, 193, 7, 0.3)'
+                                                }}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                onMouseEnter={(e) => {
+                                                    e.target.style.backgroundColor = '#ffcd39';
+                                                    e.target.style.borderColor = '#ffcd39';
+                                                    e.target.style.transform = 'translateY(-2px)';
+                                                    e.target.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.5)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.target.style.backgroundColor = '#ffc107';
+                                                    e.target.style.borderColor = '#ffc107';
+                                                    e.target.style.transform = 'translateY(0)';
+                                                    e.target.style.boxShadow = '0 2px 8px rgba(255, 193, 7, 0.3)';
+                                                }}
+                                            >
+                                                <i className="fas fa-star me-1"></i>Đánh giá
+                                            </Link>
+                                        </div>
+
+                                        {/* Select Button */}
+                                        <button
+                                            type="button"
+                                            className={`btn btn-sm w-100 ${isBusy ? 'btn-outline-danger' :
+                                                isSelected ? 'btn-primary' : 'btn-outline-light'
+                                                }`}
+                                            style={{ fontSize: '0.75rem', padding: '6px 12px' }}
+                                            disabled={isBusy}
+                                            onClick={(e) => handleStaffSelect(staff.id, e)}
+                                        >
+                                            {isBusy ? (
+                                                <><i className="fas fa-ban me-1"></i>Không có</>
+                                            ) : isSelected ? (
+                                                <><i className="fas fa-check me-1"></i>Đã chọn</>
+                                            ) : (
+                                                <><i className="fas fa-hand-pointer me-1"></i>Chọn</>
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
-                            );
+                                </div>
+                );
                         })}
-                    </div>
-                )}
             </div>
+                )}
         </div>
+        </div >
     );
 
-    const renderCustomerInfo = () => {
-        // Kiểm tra trạng thái đăng nhập
-        const isLoggedIn = localStorage.getItem('userInfo') !== null;
+const renderCustomerInfo = () => {
+    // Kiểm tra trạng thái đăng nhập
+    const isLoggedIn = localStorage.getItem('userInfo') !== null;
 
-        return (
-            <div className="step-content">
-                <div className="text-center mb-4">
-                    <h4 className="text-white mb-2">
-                        <i className="fas fa-user me-2 text-primary"></i>
-                        Thông Tin Khách Hàng
-                    </h4>
-                    <p className="text-white-50">Vui lòng điền thông tin liên hệ của bạn</p>
-                </div>
+    return (
+        <div className="step-content">
+            <div className="text-center mb-4">
+                <h4 className="text-white mb-2">
+                    <i className="fas fa-user me-2 text-primary"></i>
+                    Thông Tin Khách Hàng
+                </h4>
+                <p className="text-white-50">Vui lòng điền thông tin liên hệ của bạn</p>
+            </div>
 
-                <div className="row g-3">
-                    {/* Chỉ hiện nút khi đã đăng nhập */}
-                    {isLoggedIn && (
-                        <div className="col-12">
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleUseAccountInfo();
-                                }}
-                                className="btn btn-outline-light w-100 mb-3"
-                                style={{ height: '45px' }}
-                            >
-                                <i className="fas fa-user-circle me-2"></i>
-                                Sử dụng thông tin tài khoản
-                            </button>
-                        </div>
-                    )}
+            <div className="row g-3">
+                {/* Chỉ hiện nút khi đã đăng nhập */}
+                {isLoggedIn && (
+                    <div className="col-12">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleUseAccountInfo();
+                            }}
+                            className="btn btn-outline-light w-100 mb-3"
+                            style={{ height: '45px' }}
+                        >
+                            <i className="fas fa-user-circle me-2"></i>
+                            Sử dụng thông tin tài khoản
+                        </button>
+                    </div>
+                )}
 
-                    {/* Hiển thị thông báo khuyến khích đăng nhập nếu chưa đăng nhập */}
-                    {!isLoggedIn && (
-                        <div className="col-12">
-                            <div className="alert alert-info bg-transparent border-white text-white mb-3">
-                                <div className="d-flex align-items-center">
-                                    <i className="fas fa-info-circle me-2"></i>
-                                    <div>
-                                        <strong>Gợi ý:</strong> Đăng nhập để tự động điền thông tin và theo dõi lịch hẹn của bạn
-                                        {/* <a href="/login" className="btn btn-sm btn-outline-light ms-2">
+                {/* Hiển thị thông báo khuyến khích đăng nhập nếu chưa đăng nhập */}
+                {!isLoggedIn && (
+                    <div className="col-12">
+                        <div className="alert alert-info bg-transparent border-white text-white mb-3">
+                            <div className="d-flex align-items-center">
+                                <i className="fas fa-info-circle me-2"></i>
+                                <div>
+                                    <strong>Gợi ý:</strong> Đăng nhập để tự động điền thông tin và theo dõi lịch hẹn của bạn
+                                    {/* <a href="/login" className="btn btn-sm btn-outline-light ms-2">
                                             <i className="fas fa-sign-in-alt me-1"></i>
                                             Đăng nhập
                                         </a> */}
-                                    </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                <div className="col-12 col-lg-6">
+                    <label className="form-label text-white fw-bold">
+                        <i className="fas fa-user me-2"></i>Họ và Tên *
+                    </label>
+                    <input
+                        type="text"
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.fullName ? 'border-danger' : ''}`}
+                        placeholder="Nhập họ và tên của bạn"
+                        style={{ color: 'white', height: '45px' }}
+                    />
+                    {validationErrors.fullName && (
+                        <small className="text-danger mt-1 d-block">{validationErrors.fullName}</small>
                     )}
+                </div>
 
-                    <div className="col-12 col-lg-6">
-                        <label className="form-label text-white fw-bold">
-                            <i className="fas fa-user me-2"></i>Họ và Tên *
-                        </label>
-                        <input
-                            type="text"
-                            name="fullName"
-                            value={formData.fullName}
+                <div className="col-12 col-lg-6">
+                    <label className="form-label text-white fw-bold">
+                        <i className="fas fa-phone me-2"></i>Số Điện Thoại *
+                    </label>
+                    <input
+                        type="tel"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
+                        placeholder="Nhập số điện thoại hợp lệ"
+                        maxLength="15"
+                        style={{ color: 'white', height: '45px' }}
+                    />
+                    {validationErrors.phoneNumber && (
+                        <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
+                    )}
+                </div>
+
+                <div className="col-12">
+                    <label className="form-label text-white fw-bold">
+                        <i className="fas fa-envelope me-2"></i>Email *
+                    </label>
+                    <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.email ? 'border-danger' : ''}`}
+                        placeholder="Nhập email của bạn"
+                        style={{ color: 'white', height: '45px' }}
+                    />
+                    {validationErrors.email && (
+                        <small className="text-danger mt-1 d-block">{validationErrors.email}</small>
+                    )}
+                </div>
+
+                <div className="col-12">
+                    <label className="form-label text-white fw-bold">
+                        <i className="fas fa-comment me-2"></i>Ghi Chú
+                    </label>
+                    <div className="position-relative">
+                        <textarea
+                            name="notes"
+                            value={formData.notes}
                             onChange={handleInputChange}
-                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.fullName ? 'border-danger' : ''}`}
-                            placeholder="Nhập họ và tên của bạn"
-                            style={{ color: 'white', height: '45px' }}
+                            className={`form-control border-white bg-transparent text-white custom-placeholder ${validationErrors.notes ? 'border-danger' : ''}`}
+                            rows="4"
+                            placeholder="Ghi chú thêm về yêu cầu của bạn (không bắt buộc)"
+                            maxLength="500"
+                            style={{
+                                color: 'white',
+                                resize: 'none',
+                                fontSize: '0.9rem'
+                            }}
                         />
-                        {validationErrors.fullName && (
-                            <small className="text-danger mt-1 d-block">{validationErrors.fullName}</small>
-                        )}
-                    </div>
-
-                    <div className="col-12 col-lg-6">
-                        <label className="form-label text-white fw-bold">
-                            <i className="fas fa-phone me-2"></i>Số Điện Thoại *
-                        </label>
-                        <input
-                            type="tel"
-                            name="phoneNumber"
-                            value={formData.phoneNumber}
-                            onChange={handleInputChange}
-                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.phoneNumber ? 'border-danger' : ''}`}
-                            placeholder="Nhập số điện thoại hợp lệ"
-                            maxLength="15"
-                            style={{ color: 'white', height: '45px' }}
-                        />
-                        {validationErrors.phoneNumber && (
-                            <small className="text-danger mt-1 d-block">{validationErrors.phoneNumber}</small>
-                        )}
-                    </div>
-
-                    <div className="col-12">
-                        <label className="form-label text-white fw-bold">
-                            <i className="fas fa-envelope me-2"></i>Email *
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            className={`form-control py-2 border-white bg-transparent text-white custom-placeholder ${validationErrors.email ? 'border-danger' : ''}`}
-                            placeholder="Nhập email của bạn"
-                            style={{ color: 'white', height: '45px' }}
-                        />
-                        {validationErrors.email && (
-                            <small className="text-danger mt-1 d-block">{validationErrors.email}</small>
-                        )}
-                    </div>
-
-                    <div className="col-12">
-                        <label className="form-label text-white fw-bold">
-                            <i className="fas fa-comment me-2"></i>Ghi Chú
-                        </label>
-                        <div className="position-relative">
-                            <textarea
-                                name="notes"
-                                value={formData.notes}
-                                onChange={handleInputChange}
-                                className={`form-control border-white bg-transparent text-white custom-placeholder ${validationErrors.notes ? 'border-danger' : ''}`}
-                                rows="4"
-                                placeholder="Ghi chú thêm về yêu cầu của bạn (không bắt buộc)"
-                                maxLength="500"
-                                style={{
-                                    color: 'white',
-                                    resize: 'none',
-                                    fontSize: '0.9rem'
-                                }}
-                            />
-                            <div className="d-flex justify-content-between align-items-center mt-1">
-                                {/* {validationErrors.notes && (
+                        <div className="d-flex justify-content-between align-items-center mt-1">
+                            {/* {validationErrors.notes && (
                                     <small className={`${formData.notes?.length > 500 ? 'text-danger' : formData.notes?.length > 450 ? 'text-warning' : 'text-info'}`}>
                                         <i className="fas fa-exclamation-circle me-1"></i>
                                         {validationErrors.notes}
                                     </small>
                                 )} */}
-                                <small className={`ms-auto ${formData.notes?.length >= 500 ? 'text-danger fw-bold' :
-                                    formData.notes?.length > 450 ? 'text-warning fw-bold' :
-                                        formData.notes?.length > 400 ? 'text-info' : 'text-white-50'
-                                    }`} style={{ fontSize: '0.75rem' }}>
-                                    <i className="fas fa-edit me-1"></i>
-                                    {formData.notes?.length || 0}/500 ký tự
-                                    {formData.notes?.length >= 500 && <span className="ms-1">⚠️ Đã đạt giới hạn!</span>}
-                                    {formData.notes?.length > 450 && formData.notes?.length < 500 && <span className="ms-1">⚠️ Gần hết!</span>}
-                                </small>
-                            </div>
+                            <small className={`ms-auto ${formData.notes?.length >= 500 ? 'text-danger fw-bold' :
+                                formData.notes?.length > 450 ? 'text-warning fw-bold' :
+                                    formData.notes?.length > 400 ? 'text-info' : 'text-white-50'
+                                }`} style={{ fontSize: '0.75rem' }}>
+                                <i className="fas fa-edit me-1"></i>
+                                {formData.notes?.length || 0}/500 ký tự
+                                {formData.notes?.length >= 500 && <span className="ms-1">⚠️ Đã đạt giới hạn!</span>}
+                                {formData.notes?.length > 450 && formData.notes?.length < 500 && <span className="ms-1">⚠️ Gần hết!</span>}
+                            </small>
                         </div>
                     </div>
                 </div>
             </div>
-        );
-    };
+        </div>
+    );
+};
 
-    const renderConfirmation = () => {
-        const selectedService = services.find(s => String(s.id) === formData.serviceId);
-        const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
-        const selectedStaff = staffList.find(s => s.id === selectedStaffId);
-    
-        return (
-            <div className="step-content">
-                <div className="text-center mb-4">
-                    <h4 className="text-white mb-2" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
-                        <i className="fas fa-check-double me-2 text-success"></i>
-                        Xác Nhận Thông Tin Đặt Lịch
-                    </h4>
-                    <p style={{
-                        color: '#f8f9fa',
-                        textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
-                        fontSize: '1rem'
-                    }}>Vui lòng kiểm tra kỹ thông tin trước khi xác nhận</p>
-                </div>
-  
-                {/* Summary Card */}
-                <div className="confirmation-summary mb-4 p-4 rounded-3" style={{
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
-                    backdropFilter: 'blur(20px)',
-                    border: '2px solid rgba(255,255,255,0.3)',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
-                }}>
-                    <div className="row g-4">
-                        {/* Dịch Vụ */}
-                        <div className="col-12 col-md-6">
-                            <div className="border-start border-success border-3 ps-3">
-                                <h6 className="text-success mb-1" style={{
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    <i className="fas fa-spa me-2"></i>Dịch Vụ
-                                </h6>
-                                <p className="mb-1 fw-bold" style={{
-                                    color: '#ffffff',
-                                    fontSize: '1.1rem',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                                }}>{selectedService?.name}</p>
+const renderConfirmation = () => {
+    const selectedService = services.find(s => String(s.id) === formData.serviceId);
+    const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
+    const selectedStaff = staffList.find(s => s.id === selectedStaffId);
+
+    return (
+        <div className="step-content">
+            <div className="text-center mb-4">
+                <h4 className="text-white mb-2" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                    <i className="fas fa-check-double me-2 text-success"></i>
+                    Xác Nhận Thông Tin Đặt Lịch
+                </h4>
+                <p style={{
+                    color: '#f8f9fa',
+                    textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
+                    fontSize: '1rem'
+                }}>Vui lòng kiểm tra kỹ thông tin trước khi xác nhận</p>
+            </div>
+
+            {/* Summary Card */}
+            <div className="confirmation-summary mb-4 p-4 rounded-3" style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '2px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+            }}>
+                <div className="row g-4">
+                    {/* Dịch Vụ */}
+                    <div className="col-12 col-md-6">
+                        <div className="border-start border-success border-3 ps-3">
+                            <h6 className="text-success mb-1" style={{
+                                fontSize: '1rem',
+                                fontWeight: '600',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                            }}>
+                                <i className="fas fa-spa me-2"></i>Dịch Vụ
+                            </h6>
+                            <p className="mb-1 fw-bold" style={{
+                                color: '#ffffff',
+                                fontSize: '1.1rem',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                            }}>{selectedService?.name}</p>
+                            <p className="mb-0" style={{
+                                color: '#e9ecef',
+                                fontSize: '1rem',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                            }}>
+                                Thời gian: {selectedService?.duration || '60'} phút
+                                <br />
+                                Giá: {selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'} VNĐ
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Nhân Viên */}
+                    <div className="col-12 col-md-6">
+                        <div className="border-start border-3 ps-3" style={{ borderColor: '#FDB5B9' }}>
+                            <h6 className="mb-1" style={{
+                                fontSize: '1rem',
+                                fontWeight: '600',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
+                                color: '#FDB5B9'
+                            }}>
+                                <i className="fas fa-user-tie me-2"></i>Nhân Viên
+                            </h6>
+                            <p className="mb-1 fw-bold" style={{
+                                color: '#ffffff',
+                                fontSize: '1.1rem',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                            }}>{selectedStaff?.fullName || 'Sẽ được phân công'}</p>
+                            {selectedStaff && (
                                 <p className="mb-0" style={{
                                     color: '#e9ecef',
                                     fontSize: '1rem',
                                     textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
                                 }}>
-                                    Thời gian: {selectedService?.duration || '60'} phút
+                                    {selectedStaff?.skillsText || 'Chuyên viên Spa'}
                                     <br />
-                                    Giá: {selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'} VNĐ
+                                    <span className="d-inline-flex align-items-center">
+                                        {renderStars(selectedStaff?.averageRating)}
+                                        <span className="ms-2">({selectedStaff?.totalReviews || 0} xem đánh giá)</span>
+                                    </span>
                                 </p>
-                            </div>
-                        </div>
-    
-                        {/* Nhân Viên */}
-                        <div className="col-12 col-md-6">
-                            <div className="border-start border-3 ps-3" style={{ borderColor: '#FDB5B9' }}>
-                                <h6 className="mb-1" style={{
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
-                                    color: '#FDB5B9'
-                                }}>
-                                    <i className="fas fa-user-tie me-2"></i>Nhân Viên
-                                </h6>
-                                <p className="mb-1 fw-bold" style={{
-                                    color: '#ffffff',
-                                    fontSize: '1.1rem',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                                }}>{selectedStaff?.fullName || 'Sẽ được phân công'}</p>
-                                {selectedStaff && (
-                                    <p className="mb-0" style={{
-                                        color: '#e9ecef',
-                                        fontSize: '1rem',
-                                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                    }}>
-                                        {selectedStaff?.skillsText || 'Chuyên viên Spa'}
-                                        <br />
-                                        <span className="d-inline-flex align-items-center">
-                                            {renderStars(selectedStaff?.averageRating)}
-                                            <span className="ms-2">({selectedStaff?.totalReviews || 0} xem đánh giá)</span>
-                                        </span>
-                                    </p>
-                                )}
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
-    
-                {/* Appointment Details */}
-                <div className="appointment-details mb-4 p-4 rounded-3" style={{
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
-                    backdropFilter: 'blur(15px)',
-                    border: '1px solid rgba(255,255,255,0.2)'
-                }}>
-                    <h5 className="text-primary mb-3 fw-bold">
-                        <i className="fas fa-info-circle me-2 text-primary"></i>
-                        Chi Tiết Cuộc Hẹn
-                    </h5>
-    
-                    <div className="row g-3">
-                        {/* Ngày & Giờ */}
-                        <div className="col-12 col-md-6">
-                            <div className="border-start border-info border-3 ps-3">
-                                <h6 className="text-info mb-1" style={{
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    <i className="fas fa-calendar-alt me-2"></i>Ngày & Giờ
-                                </h6>
-                                <p className="mb-1 fw-bold" style={{
-                                    color: '#ffffff',
-                                    fontSize: '1.1rem',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                                }}>
-                                    {(() => {
-                                        if (formData.appointmentDate) {
-                                            const [year, month, day] = formData.appointmentDate.split('-');
-                                            const date = new Date(year, month - 1, day);
-                                            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                                            return date.toLocaleDateString('vi-VN', options);
-                                        }
-                                        return formData.appointmentDate;
-                                    })()}
-                                </p>
-                                <p className="mb-0" style={{
-                                    color: '#e9ecef',
-                                    fontSize: '1rem',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    Khung giờ: {selectedTimeSlot?.startTime} - {selectedTimeSlot?.endTime}
-                                </p>
-                            </div>
-                        </div>
-    
-                        {/* Khách Hàng */}
-                        <div className="col-12 col-md-6">
-                            <div className="border-start border-warning border-3 ps-3">
-                                <h6 className="text-warning mb-1" style={{
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    <i className="fas fa-user me-2"></i>Khách Hàng
-                                </h6>
-                                <p className="mb-1 fw-bold" style={{
-                                    color: '#ffffff',
-                                    fontSize: '1.1rem',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                                }}>{formData.fullName}</p>
-                                <p className="mb-0" style={{
-                                    color: '#e9ecef',
-                                    fontSize: '1rem',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    {formData.phoneNumber}
-                                    <br />
-                                    {formData.email}
-                                </p>
-                            </div>
+            </div>
+
+            {/* Appointment Details */}
+            <div className="appointment-details mb-4 p-4 rounded-3" style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
+                backdropFilter: 'blur(15px)',
+                border: '1px solid rgba(255,255,255,0.2)'
+            }}>
+                <h5 className="text-primary mb-3 fw-bold">
+                    <i className="fas fa-info-circle me-2 text-primary"></i>
+                    Chi Tiết Cuộc Hẹn
+                </h5>
+
+                <div className="row g-3">
+                    {/* Ngày & Giờ */}
+                    <div className="col-12 col-md-6">
+                        <div className="border-start border-info border-3 ps-3">
+                            <h6 className="text-info mb-1" style={{
+                                fontSize: '1rem',
+                                fontWeight: '600',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                            }}>
+                                <i className="fas fa-calendar-alt me-2"></i>Ngày & Giờ
+                            </h6>
+                            <p className="mb-1 fw-bold" style={{
+                                color: '#ffffff',
+                                fontSize: '1.1rem',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                            }}>
+                                {(() => {
+                                    if (formData.appointmentDate) {
+                                        const [year, month, day] = formData.appointmentDate.split('-');
+                                        const date = new Date(year, month - 1, day);
+                                        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                                        return date.toLocaleDateString('vi-VN', options);
+                                    }
+                                    return formData.appointmentDate;
+                                })()}
+                            </p>
+                            <p className="mb-0" style={{
+                                color: '#e9ecef',
+                                fontSize: '1rem',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                            }}>
+                                Khung giờ: {selectedTimeSlot?.startTime} - {selectedTimeSlot?.endTime}
+                            </p>
                         </div>
                     </div>
-    
-                    {/* Notes */}
-                    {formData.notes && (
-                        <div className="mt-3">
-                            <div className="border-start border-warning border-3 ps-3">
-                                <h6 className="text-warning mb-1" style={{
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    <i className="fas fa-sticky-note me-2"></i>Ghi Chú
-                                </h6>
-                                <div className="text-white fst-italic" style={{
-                                    fontSize: '0.95rem',
-                                    lineHeight: '1.5',
-                                    wordWrap: 'break-word',
-                                    wordBreak: 'break-word',
-                                    overflowWrap: 'break-word',
-                                    hyphens: 'auto',
-                                    maxHeight: '120px',
-                                    overflowY: 'auto',
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                                }}>
-                                    {formData.notes}
-                                </div>
+
+                    {/* Khách Hàng */}
+                    <div className="col-12 col-md-6">
+                        <div className="border-start border-warning border-3 ps-3">
+                            <h6 className="text-warning mb-1" style={{
+                                fontSize: '1rem',
+                                fontWeight: '600',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                            }}>
+                                <i className="fas fa-user me-2"></i>Khách Hàng
+                            </h6>
+                            <p className="mb-1 fw-bold" style={{
+                                color: '#ffffff',
+                                fontSize: '1.1rem',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                            }}>{formData.fullName}</p>
+                            <p className="mb-0" style={{
+                                color: '#e9ecef',
+                                fontSize: '1rem',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                            }}>
+                                {formData.phoneNumber}
+                                <br />
+                                {formData.email}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Notes */}
+                {formData.notes && (
+                    <div className="mt-3">
+                        <div className="border-start border-warning border-3 ps-3">
+                            <h6 className="text-warning mb-1" style={{
+                                fontSize: '1rem',
+                                fontWeight: '600',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                            }}>
+                                <i className="fas fa-sticky-note me-2"></i>Ghi Chú
+                            </h6>
+                            <div className="text-white fst-italic" style={{
+                                fontSize: '0.95rem',
+                                lineHeight: '1.5',
+                                wordWrap: 'break-word',
+                                wordBreak: 'break-word',
+                                overflowWrap: 'break-word',
+                                hyphens: 'auto',
+                                maxHeight: '120px',
+                                overflowY: 'auto',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                            }}>
+                                {formData.notes}
                             </div>
-    
-                            {/* Custom scrollbar styling */}
-                            <style jsx>{`
+                        </div>
+
+                        {/* Custom scrollbar styling */}
+                        <style jsx>{`
                                 .mt-3 div:last-child::-webkit-scrollbar {
                                     width: 4px;
                                 }
@@ -1568,353 +1572,353 @@ const Appointment = () => {
                                     background: rgba(255,193,7,0.7);
                                 }
                             `}</style>
-                        </div>
-                    )}
-                </div>
-    
-                {/* Total Cost */}
-                <div className="total-cost p-4 rounded-3" style={{
-                    background: 'linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(40, 167, 69, 0.1) 100%)',
-                    border: '2px solid rgba(40, 167, 69, 0.5)',
-                    backdropFilter: 'blur(15px)'
-                }}>
-                    <div className="border-start border-success border-3 ps-3">
-                        <h6 className="text-success mb-1" style={{
+                    </div>
+                )}
+            </div>
+
+            {/* Total Cost */}
+            <div className="total-cost p-4 rounded-3" style={{
+                background: 'linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(40, 167, 69, 0.1) 100%)',
+                border: '2px solid rgba(40, 167, 69, 0.5)',
+                backdropFilter: 'blur(15px)'
+            }}>
+                <div className="border-start border-success border-3 ps-3">
+                    <h6 className="text-success mb-1" style={{
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+                    }}>
+                        <i className="fas fa-receipt me-2"></i>Tổng Chi Phí
+                    </h6>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <p className="mb-0" style={{
+                            color: '#e9ecef',
                             fontSize: '1rem',
-                            fontWeight: '600',
                             textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
                         }}>
-                            <i className="fas fa-receipt me-2"></i>Tổng Chi Phí
-                        </h6>
-                        <div className="d-flex justify-content-between align-items-center">
-                            <p className="mb-0" style={{
-                                color: '#e9ecef',
-                                fontSize: '1rem',
-                                textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                            }}>
-                                Đã bao gồm tất cả phí dịch vụ
-                            </p>
-                            <h2 className="mb-0 fw-bold text-end" style={{
-                                color: '#28a745',
-                                fontSize: '2.5rem',
-                                textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                            }}>
-                                {selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'}
-                                <span style={{ fontSize: '1.5rem' }}> VNĐ</span>
-                            </h2>
-                        </div>
+                            Đã bao gồm tất cả phí dịch vụ
+                        </p>
+                        <h2 className="mb-0 fw-bold text-end" style={{
+                            color: '#28a745',
+                            fontSize: '2.5rem',
+                            textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                        }}>
+                            {selectedService?.price ? selectedService.price.toLocaleString('vi-VN') : '0'}
+                            <span style={{ fontSize: '1.5rem' }}> VNĐ</span>
+                        </h2>
                     </div>
                 </div>
-    
-                {/* Warning Notice */}
-                <div className="alert alert-warning bg-transparent border-warning text-warning mt-4">
-                    <div className="d-flex align-items-start">
-                        <i className="fas fa-exclamation-triangle me-2 mt-1"></i>
-                        <div>
-                            <strong>Lưu ý quan trọng:</strong>
-                            <ul className="mb-0 mt-2" style={{ fontSize: '0.9rem' }}>
-                                <li>Vui lòng có mặt đúng giờ để đảm bảo chất lượng dịch vụ tốt nhất</li>
-                                <li>Nếu cần thay đổi lịch hẹn, vui lòng liên hệ trước ít nhất 2 tiếng</li>
-                                <li>Thanh toán có thể thực hiện bằng tiền mặt hoặc chuyển khoản tại spa</li>
-                            </ul>
+            </div>
+
+            {/* Warning Notice */}
+            <div className="alert alert-warning bg-transparent border-warning text-warning mt-4">
+                <div className="d-flex align-items-start">
+                    <i className="fas fa-exclamation-triangle me-2 mt-1"></i>
+                    <div>
+                        <strong>Lưu ý quan trọng:</strong>
+                        <ul className="mb-0 mt-2" style={{ fontSize: '0.9rem' }}>
+                            <li>Vui lòng có mặt đúng giờ để đảm bảo chất lượng dịch vụ tốt nhất</li>
+                            <li>Nếu cần thay đổi lịch hẹn, vui lòng liên hệ trước ít nhất 2 tiếng</li>
+                            <li>Thanh toán có thể thực hiện bằng tiền mặt hoặc chuyển khoản tại spa</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- BẮT ĐẦU PHẦN GIAO DIỆN (JSX) ---
+return (
+    <div className="container-fluid appointment py-5">
+        <ToastContainer />
+        <div className="container py-5">
+            {/* Header */}
+            <div className="text-center mb-5">
+                <p className="fs-4 text-uppercase" style={{
+                    color: '#ffffff',
+                    fontWeight: '600',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                    letterSpacing: '1px'
+                }}>Liên Hệ Với Chúng Tôi</p>
+                <h1 className="display-5 display-lg-4 mb-3" style={{
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
+                }}>Đặt Lịch Hẹn</h1>
+                <p style={{
+                    color: '#f8f9fa',
+                    fontSize: '1.1rem',
+                    textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
+                    fontWeight: '500'
+                }}>Đặt lịch hẹn spa chỉ với 4 bước đơn giản</p>
+            </div>
+
+            {/* Progress Steps */}
+            <div className="row justify-content-center mb-4">
+                <div className="col-lg-10 col-12">
+                    <div className="step-progress-container">
+                        <div className="d-flex justify-content-between align-items-center step-progress-wrapper">
+                            {[1, 2, 3, 4].map(step => (
+                                <div key={step} className="d-flex flex-column align-items-center step-item">
+                                    <div
+                                        className={`step-circle ${currentStep >= step ? 'active' : ''} ${currentStep > step ? 'completed' : ''}`}
+                                    >
+                                        {currentStep > step ? (
+                                            <i className="fas fa-check"></i>
+                                        ) : (
+                                            step
+                                        )}
+                                    </div>
+                                    <small className="mt-2 text-center step-label">
+                                        {step === 1 && 'Dịch Vụ & Thời Gian'}
+                                        {step === 2 && 'Chọn Nhân Viên'}
+                                        {step === 3 && 'Thông Tin Cá Nhân'}
+                                        {step === 4 && 'Xác Nhận'}
+                                    </small>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
             </div>
-        );
-    };
 
-    // --- BẮT ĐẦU PHẦN GIAO DIỆN (JSX) ---
-    return (
-        <div className="container-fluid appointment py-5">
-            <ToastContainer />
-            <div className="container py-5">
-                {/* Header */}
-                <div className="text-center mb-5">
-                    <p className="fs-4 text-uppercase" style={{
-                        color: '#ffffff',
-                        fontWeight: '600',
-                        textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                        letterSpacing: '1px'
-                    }}>Liên Hệ Với Chúng Tôi</p>
-                    <h1 className="display-5 display-lg-4 mb-3" style={{
-                        color: '#ffffff',
-                        fontWeight: '700',
-                        textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
-                    }}>Đặt Lịch Hẹn</h1>
-                    <p style={{
-                        color: '#f8f9fa',
-                        fontSize: '1.1rem',
-                        textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
-                        fontWeight: '500'
-                    }}>Đặt lịch hẹn spa chỉ với 4 bước đơn giản</p>
-                </div>
+            <div className="row g-5 justify-content-center">
+                <div className="col-lg-10 col-12">
+                    <div
+                        className="appointment-form p-3 p-lg-4 position-relative overflow-hidden"
+                        style={{
+                            height: 'auto',
+                            minHeight: '600px',
+                            maxWidth: '100%',
+                            background: 'rgba(0, 0, 0, 0.3)',
+                            backdropFilter: 'blur(15px)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                            zIndex: 5
+                        }}
+                    >
+                        <form
+                            onSubmit={handleSubmit}
+                            onKeyDown={(e) => {
+                                // Ngăn form auto-submit khi nhấn Enter
+                                if (e.key === 'Enter' && e.target.type !== 'submit') {
+                                    e.preventDefault();
+                                    // Nếu đang ở step cuối và nhấn Enter, mới cho submit
+                                    if (currentStep === totalSteps && e.target.type === 'submit') {
+                                        handleSubmit(e);
+                                    }
+                                }
+                            }}
+                        >
+                            {/* Step Content */}
+                            {renderStepContent()}
 
-                {/* Progress Steps */}
-                <div className="row justify-content-center mb-4">
-                    <div className="col-lg-10 col-12">
-                        <div className="step-progress-container">
-                            <div className="d-flex justify-content-between align-items-center step-progress-wrapper">
-                                {[1, 2, 3, 4].map(step => (
-                                    <div key={step} className="d-flex flex-column align-items-center step-item">
-                                        <div
-                                            className={`step-circle ${currentStep >= step ? 'active' : ''} ${currentStep > step ? 'completed' : ''}`}
+                            {/* Navigation Buttons */}
+                            <div className="row mt-4">
+                                <div className="col-12">
+                                    <div className="d-flex justify-content-between navigation-buttons-wrapper">
+                                        <button
+                                            type="button"
+                                            className="btn custom-btn prev-btn"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handlePrevStep();
+                                            }}
+                                            disabled={currentStep === 1}
+                                            style={{ minWidth: '120px' }}
                                         >
-                                            {currentStep > step ? (
-                                                <i className="fas fa-check"></i>
-                                            ) : (
-                                                step
-                                            )}
-                                        </div>
-                                        <small className="mt-2 text-center step-label">
-                                            {step === 1 && 'Dịch Vụ & Thời Gian'}
-                                            {step === 2 && 'Chọn Nhân Viên'}
-                                            {step === 3 && 'Thông Tin Cá Nhân'}
-                                            {step === 4 && 'Xác Nhận'}
-                                        </small>
+                                            <i className="fas fa-chevron-left me-2"></i>
+                                            Quay Lại
+                                        </button>
+
+                                        {currentStep < totalSteps ? (
+                                            <button
+                                                type="button"
+                                                className="btn custom-btn next-btn"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    handleNextStep();
+                                                }}
+                                                disabled={!canProceedToStep(currentStep + 1)}
+                                                style={{ minWidth: '120px' }}
+                                            >
+                                                Tiếp Theo
+                                                <i className="fas fa-chevron-right ms-2"></i>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="submit"
+                                                className="btn custom-btn submit-btn"
+                                                style={{ minWidth: '180px' }}
+                                                disabled={isSubmittingAppointment || !canProceedToStep(4)}
+                                            >
+                                                {isSubmittingAppointment ? (
+                                                    <>
+                                                        <i className="fas fa-spinner fa-spin me-2"></i>
+                                                        Đang Xử Lý...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <i className="fas fa-check me-2"></i>
+                                                        Xác Nhận Đặt Lịch
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
                                     </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Cancel Appointment Modal */}
+        {showCancelModal && (
+            <div className="modal-overlay" style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9999
+            }}>
+                <div className="modal-content" style={{
+                    backgroundColor: 'white',
+                    borderRadius: '15px',
+                    padding: '30px',
+                    maxWidth: '500px',
+                    width: '90%',
+                    maxHeight: '80vh',
+                    overflowY: 'auto',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
+                }}>
+                    <div className="modal-header text-center mb-4">
+                        <h4 className="text-danger mb-2">
+                            <i className="fas fa-exclamation-triangle me-2"></i>
+                            Hủy đặt lịch
+                        </h4>
+                        <p className="text-muted mb-0">Vui lòng cho chúng tôi biết lý do hủy đặt lịch</p>
+                    </div>
+
+                    <div className="modal-body">
+                        <div className="mb-3">
+                            <label className="form-label fw-bold">Lý do hủy đặt lịch *</label>
+                            <textarea
+                                value={cancelReason}
+                                onChange={(e) => setCancelReason(e.target.value)}
+                                className="form-control"
+                                rows={4}
+                                placeholder="Vui lòng nhập lý do hủy đặt lịch (tối đa 500 ký tự)..."
+                                maxLength={500}
+                                style={{
+                                    resize: 'vertical',
+                                    fontSize: '0.95rem'
+                                }}
+                            />
+                            <div className="d-flex justify-content-between mt-1">
+                                <small className="text-muted">* Bắt buộc</small>
+                                <small className={`${cancelReason.length > 450 ? 'text-warning' : 'text-muted'}`}>
+                                    {cancelReason.length}/500 ký tự
+                                </small>
+                            </div>
+                        </div>
+
+                        {/* Quick reason buttons */}
+                        <div className="mb-3">
+                            <label className="form-label fw-bold">Lý do thường gặp:</label>
+                            <div className="d-flex flex-wrap gap-2">
+                                {[
+                                    'Thay đổi lịch trình',
+                                    'Vấn đề sức khỏe',
+                                    'Có việc đột xuất',
+                                    'Thay đổi ý định',
+                                    'Không phù hợp thời gian'
+                                ].map((reason, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setCancelReason(reason);
+                                        }}
+                                        style={{
+                                            borderRadius: '15px',
+                                            fontSize: '0.8rem'
+                                        }}
+                                    >
+                                        {reason}
+                                    </button>
                                 ))}
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="row g-5 justify-content-center">
-                    <div className="col-lg-10 col-12">
-                        <div
-                            className="appointment-form p-3 p-lg-4 position-relative overflow-hidden"
-                            style={{
-                                height: 'auto',
-                                minHeight: '600px',
-                                maxWidth: '100%',
-                                background: 'rgba(0, 0, 0, 0.3)',
-                                backdropFilter: 'blur(15px)',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-                                zIndex: 5
+                    <div className="modal-footer d-flex justify-content-center gap-3">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleCloseCancelModal();
                             }}
+                            className="btn btn-secondary"
+                            style={{
+                                borderRadius: '20px',
+                                padding: '10px 25px',
+                                fontWeight: '600'
+                            }}
+                            disabled={isSubmittingCancel}
                         >
-                            <form
-                                onSubmit={handleSubmit}
-                                onKeyDown={(e) => {
-                                    // Ngăn form auto-submit khi nhấn Enter
-                                    if (e.key === 'Enter' && e.target.type !== 'submit') {
-                                        e.preventDefault();
-                                        // Nếu đang ở step cuối và nhấn Enter, mới cho submit
-                                        if (currentStep === totalSteps && e.target.type === 'submit') {
-                                            handleSubmit(e);
-                                        }
-                                    }
-                                }}
-                            >
-                                {/* Step Content */}
-                                {renderStepContent()}
-
-                                {/* Navigation Buttons */}
-                                <div className="row mt-4">
-                                    <div className="col-12">
-                                        <div className="d-flex justify-content-between navigation-buttons-wrapper">
-                                            <button
-                                                type="button"
-                                                className="btn custom-btn prev-btn"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    handlePrevStep();
-                                                }}
-                                                disabled={currentStep === 1}
-                                                style={{ minWidth: '120px' }}
-                                            >
-                                                <i className="fas fa-chevron-left me-2"></i>
-                                                Quay Lại
-                                            </button>
-
-                                            {currentStep < totalSteps ? (
-                                                <button
-                                                    type="button"
-                                                    className="btn custom-btn next-btn"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        handleNextStep();
-                                                    }}
-                                                    disabled={!canProceedToStep(currentStep + 1)}
-                                                    style={{ minWidth: '120px' }}
-                                                >
-                                                    Tiếp Theo
-                                                    <i className="fas fa-chevron-right ms-2"></i>
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    type="submit"
-                                                    className="btn custom-btn submit-btn"
-                                                    style={{ minWidth: '180px' }}
-                                                    disabled={isSubmittingAppointment || !canProceedToStep(4)}
-                                                >
-                                                    {isSubmittingAppointment ? (
-                                                        <>
-                                                            <i className="fas fa-spinner fa-spin me-2"></i>
-                                                            Đang Xử Lý...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <i className="fas fa-check me-2"></i>
-                                                            Xác Nhận Đặt Lịch
-                                                        </>
-                                                    )}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
+                            <i className="fas fa-arrow-left me-2"></i>
+                            Quay lại
+                        </button>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleCancelAppointment();
+                            }}
+                            className="btn btn-danger"
+                            style={{
+                                borderRadius: '20px',
+                                padding: '10px 25px',
+                                fontWeight: '600'
+                            }}
+                            disabled={isSubmittingCancel || !cancelReason.trim()}
+                        >
+                            {isSubmittingCancel ? (
+                                <>
+                                    <i className="fas fa-spinner fa-spin me-2"></i>
+                                    Đang hủy...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="fas fa-check me-2"></i>
+                                    Xác nhận hủy
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
             </div>
-
-            {/* Cancel Appointment Modal */}
-            {showCancelModal && (
-                <div className="modal-overlay" style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 9999
-                }}>
-                    <div className="modal-content" style={{
-                        backgroundColor: 'white',
-                        borderRadius: '15px',
-                        padding: '30px',
-                        maxWidth: '500px',
-                        width: '90%',
-                        maxHeight: '80vh',
-                        overflowY: 'auto',
-                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
-                    }}>
-                        <div className="modal-header text-center mb-4">
-                            <h4 className="text-danger mb-2">
-                                <i className="fas fa-exclamation-triangle me-2"></i>
-                                Hủy đặt lịch
-                            </h4>
-                            <p className="text-muted mb-0">Vui lòng cho chúng tôi biết lý do hủy đặt lịch</p>
-                        </div>
-
-                        <div className="modal-body">
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Lý do hủy đặt lịch *</label>
-                                <textarea
-                                    value={cancelReason}
-                                    onChange={(e) => setCancelReason(e.target.value)}
-                                    className="form-control"
-                                    rows={4}
-                                    placeholder="Vui lòng nhập lý do hủy đặt lịch (tối đa 500 ký tự)..."
-                                    maxLength={500}
-                                    style={{
-                                        resize: 'vertical',
-                                        fontSize: '0.95rem'
-                                    }}
-                                />
-                                <div className="d-flex justify-content-between mt-1">
-                                    <small className="text-muted">* Bắt buộc</small>
-                                    <small className={`${cancelReason.length > 450 ? 'text-warning' : 'text-muted'}`}>
-                                        {cancelReason.length}/500 ký tự
-                                    </small>
-                                </div>
-                            </div>
-
-                            {/* Quick reason buttons */}
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Lý do thường gặp:</label>
-                                <div className="d-flex flex-wrap gap-2">
-                                    {[
-                                        'Thay đổi lịch trình',
-                                        'Vấn đề sức khỏe',
-                                        'Có việc đột xuất',
-                                        'Thay đổi ý định',
-                                        'Không phù hợp thời gian'
-                                    ].map((reason, index) => (
-                                        <button
-                                            key={index}
-                                            type="button"
-                                            className="btn btn-sm btn-outline-secondary"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                setCancelReason(reason);
-                                            }}
-                                            style={{
-                                                borderRadius: '15px',
-                                                fontSize: '0.8rem'
-                                            }}
-                                        >
-                                            {reason}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="modal-footer d-flex justify-content-center gap-3">
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleCloseCancelModal();
-                                }}
-                                className="btn btn-secondary"
-                                style={{
-                                    borderRadius: '20px',
-                                    padding: '10px 25px',
-                                    fontWeight: '600'
-                                }}
-                                disabled={isSubmittingCancel}
-                            >
-                                <i className="fas fa-arrow-left me-2"></i>
-                                Quay lại
-                            </button>
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleCancelAppointment();
-                                }}
-                                className="btn btn-danger"
-                                style={{
-                                    borderRadius: '20px',
-                                    padding: '10px 25px',
-                                    fontWeight: '600'
-                                }}
-                                disabled={isSubmittingCancel || !cancelReason.trim()}
-                            >
-                                {isSubmittingCancel ? (
-                                    <>
-                                        <i className="fas fa-spinner fa-spin me-2"></i>
-                                        Đang hủy...
-                                    </>
-                                ) : (
-                                    <>
-                                        <i className="fas fa-check me-2"></i>
-                                        Xác nhận hủy
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+        )}
 
 
 
-            {/* Global CSS */}
-            <style jsx global>{`
+        {/* Global CSS */}
+        <style jsx global>{`
                 /* Step Progress Styles */
                 .step-progress-container {
                     background: rgba(0, 0, 0, 0.6);
@@ -2357,8 +2361,8 @@ const Appointment = () => {
                     }
                 }
             `}</style>
-        </div>
-    );
+    </div>
+);
 };
 
 export default Appointment;

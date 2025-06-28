@@ -45,14 +45,14 @@ const CustomerDetail = () => {
         } else {
             window.location.href = '/';
         }
-        
+
         // Cleanup function to revoke preview URLs
         return () => {
             if (userInfo.imagePreview) {
                 URL.revokeObjectURL(userInfo.imagePreview);
             }
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchUserDetails = async (userId, token) => {
@@ -121,12 +121,12 @@ const CustomerDetail = () => {
             if (response.data && response.data.status === 'SUCCESS') {
                 const updatedUserInfo = { ...user, ...userInfo, imageUrl: response.data.data.imageUrl || userInfo.imageUrl };
                 localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
-                
+
                 // Dispatch custom event to notify Header component
                 window.dispatchEvent(new CustomEvent('userInfoUpdated'));
-                
+
                 setMessage({ type: 'success', content: 'Cập nhật thông tin thành công!' });
-                
+
                 // Update local state to show new image immediately
                 setUserInfo(prev => ({ ...prev, imageUrl: response.data.data.imageUrl || prev.imageUrl }));
             } else {
@@ -165,24 +165,24 @@ const CustomerDetail = () => {
 
     const handleLogout = () => {
         if (isLoggingOut) return; // Prevent multiple clicks
-        
+
         setIsLoggingOut(true);
-        
+
         // IMMEDIATE logout - no waiting, no async
         // Clear all user data instantly
         localStorage.removeItem('userInfo');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        
+
         // Redirect immediately
         window.location.href = '/';
-        
+
         // Call logout API in background after redirect (fire and forget)
         setTimeout(() => {
             if (user.token) {
                 fetch('http://localhost:8080/api/v1/customer/logout', {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Authorization': `Bearer ${user.token}`,
                         'Content-Type': 'application/json'
                     },
@@ -218,6 +218,7 @@ const CustomerDetail = () => {
                 }
                 
                 .profile-card {
+                    padding: 2.7rem 1rem !important;
                     background: white;
                     border-radius: 20px;
                     box-shadow: 0 10px 30px rgba(253, 181, 185, 0.3);
@@ -235,7 +236,7 @@ const CustomerDetail = () => {
                     background: white;
                     border-radius: 20px;
                     box-shadow: 0 10px 30px rgba(253, 181, 185, 0.2);
-                    padding: 2rem;
+                    padding: 2.27rem;
                     border: none;
                 }
                 
@@ -289,13 +290,13 @@ const CustomerDetail = () => {
                 }
                 
                 .navs-link:hover {
-                    background: linear-gradient(135deg, #FDB5B9, #FFE4E6);
+                    background: linear-gradient(135deg,rgb(255, 152, 157),rgb(251, 150, 155));
                     color: white;
                     transform: translateX(5px);
                 }
                 
                 .navs-link.active {
-                    background: linear-gradient(135deg, #FDB5B9, #FF9CA3);
+                    background: linear-gradient(135deg,rgb(250, 162, 166),rgb(254, 168, 173));
                     color: white;
                     box-shadow: 0 5px 15px rgba(253, 181, 185, 0.4);
                 }
@@ -312,7 +313,7 @@ const CustomerDetail = () => {
                 }
                 
                 .form-floating {
-                    margin-bottom: 1.5rem;
+                    margin-bottom: 2.7rem;
                 }
                 
                 .form-floating .form-control {
@@ -333,17 +334,19 @@ const CustomerDetail = () => {
                     font-weight: 500;
                 }
                 
-                .btn-primary {
-                    background: linear-gradient(135deg, #FDB5B9, #FF9CA3);
+                .btn-primarys {
+                    background: linear-gradient(135deg,rgb(250, 162, 166),rgb(254, 168, 173));
                     border: none;
+                    color: black;
                     border-radius: 12px;
                     padding: 0.75rem 2rem;
                     font-weight: 600;
                     transition: all 0.3s ease;
                 }
                 
-                .btn-primary:hover {
-                    background: linear-gradient(135deg, #FF9CA3, #FDB5B9);
+                .btn-primarys:hover {
+                    background: linear-gradient(135deg,rgb(255, 152, 157),rgb(251, 150, 155));              
+                    color: black;
                     transform: translateY(-2px);
                     box-shadow: 0 8px 25px rgba(253, 181, 185, 0.4);
                 }
@@ -380,7 +383,7 @@ const CustomerDetail = () => {
                     left: 0;
                     width: 50px;
                     height: 3px;
-                    background: linear-gradient(135deg, #FDB5B9, #FF9CA3);
+                    background: linear-gradient(135deg, #FDB5B9,rgb(254, 176, 181));
                     border-radius: 2px;
                 }
                 
@@ -421,11 +424,11 @@ const CustomerDetail = () => {
                 }
                 
                 .breadcrumb-text {
-                    color: white;
+                    color: black;
                     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 }
             `}</style>
-            
+
             <div className="profile-container">
                 <div className="container">
                     <div className="profile-breadcrumb text-center">
@@ -436,7 +439,7 @@ const CustomerDetail = () => {
                         <nav>
                             <ol className="breadcrumb justify-content-center mb-0">
                                 <li className="breadcrumb-item">
-                                    <a href="/" className="text-white">
+                                    <a href="/" className="text-">
                                         <i className="fas fa-home me-1"></i>Trang chủ
                                     </a>
                                 </li>
@@ -470,7 +473,7 @@ const CustomerDetail = () => {
                                         {userInfo.email}
                                     </p>
                                 </div>
-                                
+
                                 <nav className="navs flex-column">
                                     <div className="navs-item">
                                         <button
@@ -498,7 +501,7 @@ const CustomerDetail = () => {
                                             className={`navs-link logout-link ${isLoggingOut ? 'disabled' : ''}`}
                                             onClick={handleLogout}
                                             disabled={isLoggingOut}
-                                            style={{ 
+                                            style={{
                                                 opacity: isLoggingOut ? 0.6 : 1,
                                                 cursor: isLoggingOut ? 'not-allowed' : 'pointer'
                                             }}
@@ -519,7 +522,7 @@ const CustomerDetail = () => {
                                 </nav>
                             </div>
                         </div>
-                        
+
                         <div className="col-lg-8 col-md-12">
                             <div className="profile-card p-4">
                                 {message.content && (
@@ -623,14 +626,14 @@ const CustomerDetail = () => {
                                                     </label>
                                                 </div>
                                                 <div className="d-grid">
-                                                    <button type="submit" className="btn btn-primary">
+                                                    <button type="submit" className="btn btn-primarys">
                                                         <i className="fas fa-save me-2"></i>
                                                         Cập nhật thông tin
                                                     </button>
                                                 </div>
                                             </form>
                                         </Tab.Pane>
-                                        
+
                                         <Tab.Pane eventKey="password">
                                             <h3 className="content-header">
                                                 <i className="fas fa-key me-2"></i>
@@ -683,7 +686,7 @@ const CustomerDetail = () => {
                                                     </label>
                                                 </div>
                                                 <div className="d-grid">
-                                                    <button type="submit" className="btn btn-primary">
+                                                    <button type="submit" className="btn btn-primarys">
                                                         <i className="fas fa-shield-alt me-2"></i>
                                                         Đổi mật khẩu
                                                     </button>
@@ -698,7 +701,7 @@ const CustomerDetail = () => {
                 </div>
             </div>
 
-            
+
             <Footer />
         </>
     );
