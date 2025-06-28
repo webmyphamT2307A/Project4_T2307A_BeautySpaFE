@@ -225,8 +225,25 @@ const Header = () => {
                 // Kích hoạt session manager khi đăng nhập thành công
                 sessionManager.onUserLogin();
 
-                // Dùng window.location.href để tải lại toàn bộ trang, cập nhật trạng thái login
-                window.location.href = "/CustomerDetail";
+                // Cập nhật state userInfo ngay lập tức
+                setUserInfo({
+                    ...customerData,
+                    token: token
+                });
+
+                // Clear form
+                setEmail('');
+                setPassword('');
+
+                // Đóng modal
+                const modalElement = document.getElementById('loginModal');
+                const modal = window.bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+
+                // Trigger sự kiện để các component khác cập nhật
+                window.dispatchEvent(new CustomEvent('userInfoUpdated'));
 
             }
         } catch (error) {
@@ -298,7 +315,7 @@ const Header = () => {
                             <div className="col-lg-8">
                                 <div className="d-flex flex-wrap">
                                     <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Tìm Địa Điểm</a>
-                                    <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+01234567890</a>
+                                    <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+3668888940</a>
                                     <a href="#"><i className="fas fa-envelope me-2" />info@sparlex.com</a>
                                 </div>
                             </div>

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const DatLichButton = ({ onClick, isHovered }) => {
+const DatLichButton = ({ onClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   const baseStyle = {
     background: isHovered
         ? '#fff'
@@ -17,15 +19,24 @@ const DatLichButton = ({ onClick, isHovered }) => {
     fontSize: '1.05rem',
     fontWeight: 700,
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
     outline: 'none',
     textDecoration: 'none',
     display: 'inline-block',
     position: 'relative',
     zIndex: 2,
     letterSpacing: '0.4px',
-    transform: isHovered ? 'translateY(-3px) scale(1.01)' : 'translateY(0) scale(1)',
-    backdropFilter: isHovered ? 'blur(1px)' : 'none',
+    transform: isHovered ? 'translateY(-3px) scale(1.02)' : 'translateY(0) scale(1)',
+    backdropFilter: isHovered ? 'blur(2px)' : 'none',
+    textShadow: isHovered ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
   };
 
   return (
@@ -33,8 +44,16 @@ const DatLichButton = ({ onClick, isHovered }) => {
           style={baseStyle}
           onClick={onClick}
           type="button"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
       >
-        Đặt Lịch Ngay
+        <span style={{ 
+          position: 'relative',
+          zIndex: 1,
+          transition: 'all 0.3s ease'
+        }}>
+          Đặt Lịch Ngay
+        </span>
       </button>
   );
 };
