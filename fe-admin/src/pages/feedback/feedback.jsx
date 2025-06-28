@@ -173,9 +173,6 @@ const FeedbackManager = () => {
                       <Typography variant="body2" fontWeight="bold">
                         {fb.customerName || 'Khách vãng lai'}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        ID: {fb.customerId || 'N/A'}
-                      </Typography>
                     </TableCell>
                     <TableCell>{fb.subject || 'Không có chủ đề'}</TableCell>
                     <TableCell>

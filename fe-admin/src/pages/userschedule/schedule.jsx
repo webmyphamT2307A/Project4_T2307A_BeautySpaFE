@@ -313,15 +313,29 @@ const UserScheduleManager = () => {
         break;
       case 'month':
         setFilterMonth(value);
+        setStartDate('');
+        setEndDate('');
         break;
       case 'year':
         setFilterYear(value);
+        setStartDate('');
+        setEndDate('');
         break;
       case 'startDate':
+        if (endDate && value > endDate) {
+          setEndDate('');
+        }
         setStartDate(value);
+        setFilterMonth('');
+        setFilterYear('');
         break;
       case 'endDate':
+        if (startDate && value < startDate) {
+          setStartDate('');
+        }
         setEndDate(value);
+        setFilterMonth('');
+        setFilterYear('');
         break;
       default:
         break;
@@ -570,10 +584,10 @@ const UserScheduleManager = () => {
     (schedule.roleName && schedule.roleName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Generate year options (current year ± 2)
+  // Generate year options (from 2 years ago to current year)
   const currentYear = new Date().getFullYear();
   const yearOptions = [];
-  for (let i = currentYear - 2; i <= currentYear + 2; i++) {
+  for (let i = currentYear - 2; i <= currentYear; i++) {
     yearOptions.push(i);
   }
 
@@ -694,6 +708,7 @@ const UserScheduleManager = () => {
               value={startDate}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
               InputLabelProps={{ shrink: true }}
+              inputProps={{ max: endDate || undefined }}
               fullWidth
             />
           </Grid>
@@ -706,6 +721,7 @@ const UserScheduleManager = () => {
               value={endDate}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
               InputLabelProps={{ shrink: true }}
+              inputProps={{ min: startDate || undefined }}
               fullWidth
             />
           </Grid>

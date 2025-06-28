@@ -92,12 +92,12 @@ const SalaryManager = () => {
           setUsers(staffUsers);
         } else {
           setUsers([]);
-          toast.error(response.message || "Failed to load staff list.");
+          toast.error(response.message || "Tải danh sách nhân viên thất bại.");
         }
       })
       .catch(() => {
         setUsers([]);
-        toast.error("Error loading staff list.");
+        toast.error("Lỗi khi tải danh sách nhân viên.");
       });
   }, []);
 
@@ -123,13 +123,13 @@ const SalaryManager = () => {
         } else {
           setSalaries([]);
           if(filterControls.userId || filterControls.month || filterControls.year) {
-            toast.info(response.message || 'No salary records found for the current filter.');
+            toast.info(response.message || 'Không tìm thấy bản ghi lương nào cho bộ lọc hiện tại.');
           }
         }
       })
       .catch(() => {
         setSalaries([]);
-        toast.error('Error loading salary records.');
+        toast.error('Lỗi khi tải bản ghi lương.');
       })
       .finally(() => setLoading(false));
   };
@@ -187,7 +187,7 @@ const SalaryManager = () => {
 
   const handleCalculateSalary = () => {
     if (!calculateFormData.userId || !calculateFormData.month || !calculateFormData.year) {
-      toast.error("Please select Employee, Month, and Year.");
+      toast.error("Vui lòng chọn Nhân viên, Tháng và Năm.");
       return;
     }
     const payload = {
@@ -208,14 +208,14 @@ const SalaryManager = () => {
     .then(res => res.json())
     .then(response => {
       if (response.status === 'SUCCESS') {
-        toast.success(response.message || "Salary calculated and saved successfully!");
+        toast.success(response.message || "Đã tính và lưu lương thành công!");
         fetchSalaries();
         handleCloseCalculateDialog();
       } else {
-        toast.error(response.message || "Failed to calculate salary.");
+        toast.error(response.message || "Tính lương thất bại.");
       }
     })
-    .catch(() => toast.error("Error calculating salary."))
+    .catch(() => toast.error("Lỗi khi tính lương."))
     .finally(() => setLoading(false));
   };
 
@@ -244,14 +244,14 @@ const SalaryManager = () => {
     .then(res => res.json())
     .then(response => {
       if (response.status === 'SUCCESS') {
-        toast.success(response.message || "Salary record updated successfully!");
+        toast.success(response.message || "Cập nhật bản ghi lương thành công!");
         fetchSalaries();
         handleCloseEditDialog();
       } else {
-        toast.error(response.message || "Failed to update salary record.");
+        toast.error(response.message || "Cập nhật bản ghi lương thất bại.");
       }
     })
-    .catch(() => toast.error("Error updating salary record."))
+    .catch(() => toast.error("Lỗi khi cập nhật bản ghi lương."))
     .finally(() => setLoading(false));
   };
 
@@ -262,13 +262,13 @@ const SalaryManager = () => {
         .then(res => res.json())
         .then(response => {
           if (response.status === 'SUCCESS') {
-            toast.success(response.message || "Salary record deactivated successfully.");
+            toast.success(response.message || "Vô hiệu hóa bản ghi lương thành công.");
             fetchSalaries();
           } else {
-            toast.error(response.message || "Failed to deactivate salary record.");
+            toast.error(response.message || "Vô hiệu hóa bản ghi lương thất bại.");
           }
         })
-        .catch(() => toast.error("Error deactivating salary record."))
+        .catch(() => toast.error("Lỗi khi vô hiệu hóa bản ghi lương."))
         .finally(() => setLoading(false));
     }
   };
@@ -403,25 +403,25 @@ const SalaryManager = () => {
       />
 
       <Dialog open={openCalculateDialog} onClose={handleCloseCalculateDialog} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '10px' } }}>
-        <DialogTitle sx={{ borderBottom: '1px solid rgba(224, 224, 224, 1)'}}>Calculate New Salary</DialogTitle>
+        <DialogTitle sx={{ borderBottom: '1px solid rgba(224, 224, 224, 1)'}}>Tính Lương Mới</DialogTitle>
         <DialogContent sx={{ pt: '20px !important' }}>
           <FormControl fullWidth margin="dense" required>
-            <InputLabel id="calc-userId-label">Employee (STAFF)</InputLabel>
-            <Select labelId="calc-userId-label" name="userId" value={calculateFormData.userId} label="Employee (STAFF)" onChange={handleCalculateFormChange}>
-              <MenuItem value=""><em>Select Employee</em></MenuItem>
+            <InputLabel id="calc-userId-label">Nhân viên (STAFF)</InputLabel>
+            <Select labelId="calc-userId-label" name="userId" value={calculateFormData.userId} label="Nhân viên (STAFF)" onChange={handleCalculateFormChange}>
+              <MenuItem value=""><em>Chọn Nhân Viên</em></MenuItem>
               {users.map(user => <MenuItem key={user.id} value={user.id}>{user.fullName || user.username}</MenuItem>)}
             </Select>
           </FormControl>
-          <TextField margin="dense" name="month" label="Month (1-12)" type="number" fullWidth value={calculateFormData.month} onChange={handleCalculateFormChange} required />
-          <TextField margin="dense" name="year" label="Year (YYYY)" type="number" fullWidth value={calculateFormData.year} onChange={handleCalculateFormChange} required />
-          <TextField margin="dense" name="manualBonus" label="Manual Bonus/Commission" type="number" fullWidth value={calculateFormData.manualBonus} onChange={handleCalculateFormChange} helperText="Additional bonus or commission amount." />
-          <TextField margin="dense" name="manualDeductions" label="Other Manual Deductions" type="number" fullWidth value={calculateFormData.manualDeductions} onChange={handleCalculateFormChange} helperText="Deductions not automatically calculated (e.g., advances)." />
-          <TextField margin="dense" name="notesForCalculation" label="Calculation Notes" type="text" fullWidth multiline rows={2} value={calculateFormData.notesForCalculation} onChange={handleCalculateFormChange} />
+          <TextField margin="dense" name="month" label="Tháng (1-12)" type="number" fullWidth value={calculateFormData.month} onChange={handleCalculateFormChange} required />
+          <TextField margin="dense" name="year" label="Năm (YYYY)" type="number" fullWidth value={calculateFormData.year} onChange={handleCalculateFormChange} required />
+          <TextField margin="dense" name="manualBonus" label="Thưởng / Hoa hồng thủ công" type="number" fullWidth value={calculateFormData.manualBonus} onChange={handleCalculateFormChange} helperText="Khoản thưởng hoặc hoa hồng bổ sung." />
+          <TextField margin="dense" name="manualDeductions" label="Các khoản khấu trừ thủ công khác" type="number" fullWidth value={calculateFormData.manualDeductions} onChange={handleCalculateFormChange} helperText="Các khoản khấu trừ không được tính tự động (ví dụ: tạm ứng)." />
+          <TextField margin="dense" name="notesForCalculation" label="Ghi chú tính lương" type="text" fullWidth multiline rows={2} value={calculateFormData.notesForCalculation} onChange={handleCalculateFormChange} />
         </DialogContent>
         <DialogActions sx={{ p: '16px 24px', borderTop: '1px solid rgba(224, 224, 224, 1)'}}>
-          <Button onClick={handleCloseCalculateDialog} variant="outlined" color="secondary" sx={{ borderRadius: '8px' }}>Cancel</Button>
+          <Button onClick={handleCloseCalculateDialog} variant="outlined" color="secondary" sx={{ borderRadius: '8px' }}>Hủy</Button>
           <Button onClick={handleCalculateSalary} variant="contained" color="primary" sx={{ borderRadius: '8px' }} disabled={loading}>
-            {loading ? <CircularProgress size={24} /> : "Calculate & Save"}
+            {loading ? <CircularProgress size={24} /> : "Tính & Lưu"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -429,26 +429,26 @@ const SalaryManager = () => {
       {currentSalaryRecord && (
         <Dialog open={openEditDialog} onClose={handleCloseEditDialog} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '10px' } }}>
           <DialogTitle sx={{ borderBottom: '1px solid rgba(224, 224, 224, 1)'}}>
-            Edit Salary Record for {currentSalaryRecord.userName} ({currentSalaryRecord.month}/{currentSalaryRecord.year})
+            Chỉnh Sửa Bản Ghi Lương cho {currentSalaryRecord.userName} ({currentSalaryRecord.month}/{currentSalaryRecord.year})
           </DialogTitle>
           <DialogContent sx={{ pt: '20px !important' }}>
-            <Typography variant="subtitle2" gutterBottom>Note: Employee, Month, and Year cannot be changed. For corrections, core salary components should ideally be recalculated.</Typography>
-            <TextField margin="dense" name="baseSalary" label="Base Salary (Actual)" type="number" fullWidth value={editFormData.baseSalary} onChange={handleEditFormChange} />
-            <TextField margin="dense" name="bonus" label="Bonus/Commission" type="number" fullWidth value={editFormData.bonus} onChange={handleEditFormChange} />
-            <TextField margin="dense" name="deductions" label="Total Deductions" type="number" fullWidth value={editFormData.deductions} onChange={handleEditFormChange} />
-            <TextField margin="dense" name="totalSalary" label="Net Salary" type="number" fullWidth value={editFormData.totalSalary} onChange={handleEditFormChange} InputProps={{ readOnly: true }} helperText="Usually recalculated by the system." />
-            <TextField margin="dense" name="paymentDate" label="Payment Date" type="date" fullWidth value={editFormData.paymentDate} onChange={handleEditFormChange} InputLabelProps={{ shrink: true }}/>
-            <TextField margin="dense" name="notes" label="Notes" type="text" fullWidth multiline rows={2} value={editFormData.notes} onChange={handleEditFormChange} />
+            <Typography variant="subtitle2" gutterBottom>Lưu ý: Không thể thay đổi Nhân viên, Tháng và Năm. Để sửa đổi, các thành phần lương cốt lõi nên được tính toán lại.</Typography>
+            <TextField margin="dense" name="baseSalary" label="Lương Cơ Bản (Thực tế)" type="number" fullWidth value={editFormData.baseSalary} onChange={handleEditFormChange} />
+            <TextField margin="dense" name="bonus" label="Thưởng / Hoa hồng" type="number" fullWidth value={editFormData.bonus} onChange={handleEditFormChange} />
+            <TextField margin="dense" name="deductions" label="Tổng khấu trừ" type="number" fullWidth value={editFormData.deductions} onChange={handleEditFormChange} />
+            <TextField margin="dense" name="totalSalary" label="Lương thực nhận" type="number" fullWidth value={editFormData.totalSalary} onChange={handleEditFormChange} InputProps={{ readOnly: true }} helperText="Thường được hệ thống tính toán lại." />
+            <TextField margin="dense" name="paymentDate" label="Ngày thanh toán" type="date" fullWidth value={editFormData.paymentDate} onChange={handleEditFormChange} InputLabelProps={{ shrink: true }}/>
+            <TextField margin="dense" name="notes" label="Ghi chú" type="text" fullWidth multiline rows={2} value={editFormData.notes} onChange={handleEditFormChange} />
             <FormControlLabel
                 control={<Checkbox checked={editFormData.isActive} onChange={handleEditFormChange} name="isActive" />}
-                label="Is Active"
+                label="Kích hoạt"
                 sx={{mt: 1}}
             />
           </DialogContent>
           <DialogActions sx={{ p: '16px 24px', borderTop: '1px solid rgba(224, 224, 224, 1)'}}>
-            <Button onClick={handleCloseEditDialog} variant="outlined" color="secondary" sx={{ borderRadius: '8px' }}>Cancel</Button>
+            <Button onClick={handleCloseEditDialog} variant="outlined" color="secondary" sx={{ borderRadius: '8px' }}>Hủy</Button>
             <Button onClick={handleUpdateSalary} variant="contained" color="primary" sx={{ borderRadius: '8px' }} disabled={loading}>
-             {loading ? <CircularProgress size={24} /> : "Update Record"}
+             {loading ? <CircularProgress size={24} /> : "Cập nhật bản ghi"}
             </Button>
           </DialogActions>
         </Dialog>
