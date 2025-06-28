@@ -239,7 +239,7 @@
 }
 
 .services .services-item:hover {
-    background: var(--bs-primary) !important;
+    background: #ffccce !important;
     border-color: #a63f52 !important;
 }
 
