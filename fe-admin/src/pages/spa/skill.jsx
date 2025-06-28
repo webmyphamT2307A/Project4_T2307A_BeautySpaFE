@@ -20,6 +20,7 @@ import {
   Select,
   FormControl,
   InputLabel,
+  TextField,
 } from '@mui/material';
 import { AddOutlined, EditOutlined, DeleteOutlined, CloseOutlined } from '@mui/icons-material';
 import MainCard from 'components/MainCard';
@@ -46,6 +47,11 @@ const SkillManagement = () => {
 
   const [saving, setSaving] = useState(false);
   const [deletingIds, setDeletingIds] = useState([]);
+
+  // State cho dialog tạo kỹ năng mới
+  const [openNewSkillDialog, setOpenNewSkillDialog] = useState(false);
+  const [newSkillName, setNewSkillName] = useState('');
+  const [isCreatingSkill, setIsCreatingSkill] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -122,7 +128,7 @@ const SkillManagement = () => {
       .then(() => axios.get('http://localhost:8080/api/v1/user-skills'))
       .then((res) => {
         setUserSkills(res.data);
-        toast.success(dialogType === 'add' ? 'Thêm kỹ năng thành công' : 'Cập nhật kỹ năng thành công');
+        toast.success(dialogType === 'add' ? 'Gán kỹ năng thành công' : 'Cập nhật kỹ năng thành công');
         handleCloseDialog();
       })
       .catch((error) => {
@@ -150,6 +156,44 @@ const SkillManagement = () => {
       })
       .finally(() => {
         setDeletingIds((prev) => prev.filter((id) => id !== employeeId));
+      });
+  };
+
+  // Handlers cho việc tạo kỹ năng mới
+  const handleOpenNewSkillDialog = () => {
+    setNewSkillName('');
+    setOpenNewSkillDialog(true);
+  };
+
+  const handleCloseNewSkillDialog = () => {
+    if (!isCreatingSkill) {
+      setOpenNewSkillDialog(false);
+    }
+  };
+
+  const handleSaveNewSkill = () => {
+    if (!newSkillName.trim()) {
+      toast.warn('Vui lòng nhập tên kỹ năng');
+      return;
+    }
+    setIsCreatingSkill(true);
+    // Giả sử API endpoint để tạo skill là POST /api/v1/skills
+    axios.post('http://localhost:8080/api/v1/skills', { skillName: newSkillName })
+      .then(() => {
+        toast.success('Thêm kỹ năng mới thành công!');
+        handleCloseNewSkillDialog();
+        // Tải lại danh sách kỹ năng
+        return axios.get('http://localhost:8080/api/v1/skills');
+      })
+      .then(res => {
+        setSkills(res.data);
+      })
+      .catch(error => {
+        console.error('Lỗi khi tạo kỹ năng mới:', error);
+        toast.error(error.response?.data?.message || 'Thêm kỹ năng mới thất bại');
+      })
+      .finally(() => {
+        setIsCreatingSkill(false);
       });
   };
 
@@ -185,7 +229,7 @@ const SkillManagement = () => {
   }
 
   return (
-    <MainCard title="Quản Lý Kỹ Năng">
+    <MainCard title="Quản Lý Kỹ Năng Nhân Viên">
       {/* Filter Box */}
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
       <Box sx={{ display: 'flex', gap: 2, mb: 0 }}>
@@ -238,7 +282,16 @@ const SkillManagement = () => {
         </FormControl>
       </Box>
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, gap: 1 }}>
+        <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<AddOutlined />}
+            onClick={handleOpenNewSkillDialog}
+            disabled={saving || isCreatingSkill}
+        >
+          Tạo Kỹ Năng Mới
+        </Button>
         <Button
           variant="contained"
           startIcon={<AddOutlined />}
@@ -248,7 +301,7 @@ const SkillManagement = () => {
           {saving && dialogType === 'add' ? (
             <CircularProgress size={20} color="inherit" />
           ) : (
-            'Thêm Kỹ Năng'
+            'Gán Kỹ Năng'
           )}
         </Button>
       </Box>
@@ -310,7 +363,7 @@ const SkillManagement = () => {
       {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {dialogType === 'add' ? 'Thêm Kỹ Năng' : 'Chỉnh Sửa Kỹ Năng'}
+          {dialogType === 'add' ? 'Gán Kỹ Năng cho Nhân Viên' : 'Chỉnh Sửa Kỹ Năng'}
           <IconButton
             aria-label="close"
             onClick={handleCloseDialog}
@@ -400,6 +453,43 @@ const SkillManagement = () => {
           </Button>
           <Button onClick={handleSave} variant="contained" disabled={saving}>
             {saving ? <CircularProgress size={24} color="inherit" /> : 'Lưu'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog tạo kỹ năng mới */}
+      <Dialog open={openNewSkillDialog} onClose={handleCloseNewSkillDialog} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          Tạo Kỹ Năng Mới
+          <IconButton
+              aria-label="close"
+              onClick={handleCloseNewSkillDialog}
+              disabled={isCreatingSkill}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseOutlined />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+              autoFocus
+              margin="dense"
+              id="skillName"
+              label="Tên Kỹ Năng"
+              type="text"
+              fullWidth
+              variant="outlined"
+              value={newSkillName}
+              onChange={(e) => setNewSkillName(e.target.value)}
+              disabled={isCreatingSkill}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseNewSkillDialog} variant="outlined" disabled={isCreatingSkill}>
+            Hủy
+          </Button>
+          <Button onClick={handleSaveNewSkill} variant="contained" disabled={isCreatingSkill}>
+            {isCreatingSkill ? <CircularProgress size={24} color="inherit" /> : 'Lưu'}
           </Button>
         </DialogActions>
       </Dialog>
