@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // dùng điều hướng
 import Header from '../../shared/header';
 import Footer from '../../shared/footer';
+import DatLichButton from '../../shared/DatLichButton';
 
 const itemsPerPage = 8;
 
@@ -305,7 +306,7 @@ const ServicePage = () => {
                                 }}>
                                   {service.description}
                                 </p>
-                                <button 
+                                <DatLichButton 
                                   onClick={() => {
                                     navigate('/', { replace: true });
                                     setTimeout(() => {
@@ -315,10 +316,7 @@ const ServicePage = () => {
                                       }
                                     }, 100);
                                   }}
-                                  className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
-                                >
-                                  Đặt Lịch
-                                </button>
+                                />
                               </div>
                             </div>
                             <div className="col-4 d-flex align-items-center justify-content-center">
@@ -367,7 +365,7 @@ const ServicePage = () => {
                                 }}>
                                   {service.description}
                                 </p>
-                                <button 
+                                <DatLichButton 
                                   onClick={() => {
                                     navigate('/', { replace: true });
                                     setTimeout(() => {
@@ -377,10 +375,7 @@ const ServicePage = () => {
                                       }
                                     }, 100);
                                   }}
-                                  className="btn btn-primary btn-primary-outline-0 rounded-pill py-2 px-4 mt-2"
-                                >
-                                  Đặt Lịch
-                                </button>
+                                />
                               </div>
                             </div>
                           </>
