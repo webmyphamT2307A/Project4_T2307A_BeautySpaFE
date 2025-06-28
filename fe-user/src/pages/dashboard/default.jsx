@@ -301,7 +301,8 @@ export default function DashboardDefault() {
       color: '#2962ff', 
       bg: '#e3f2fd',
       onClick: () => {
-        setFilter({ status: 'pending' });
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        setFilter({ status: 'pending', dateFilter: { startDate: todayStr, endDate: todayStr } });
         navigate('/spa/appointments');
       }
     },
@@ -313,7 +314,8 @@ export default function DashboardDefault() {
       color: '#2e7d32', 
       bg: '#e8f5e9',
       onClick: () => {
-        setFilter({ status: 'completed' });
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        setFilter({ status: 'completed', dateFilter: { startDate: todayStr, endDate: todayStr } });
         navigate('/spa/appointments');
       }
     },
@@ -326,9 +328,9 @@ export default function DashboardDefault() {
       bg: '#fff3e0',
       onClick: () => {
         const today = new Date();
-        const startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-        const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
-        setFilter({ dateFilter: { startDate, endDate } });
+        const startOfMonthStr = format(new Date(today.getFullYear(), today.getMonth(), 1), 'yyyy-MM-dd');
+        const endOfMonthStr = format(new Date(today.getFullYear(), today.getMonth() + 1, 0), 'yyyy-MM-dd');
+        setFilter({ dateFilter: { startDate: startOfMonthStr, endDate: endOfMonthStr }, status: 'completed' });
         navigate('/spa/appointments');
       }
     },

@@ -194,24 +194,24 @@ const SkillManagement = () => {
     }).then((result) => {
       if (!result.isConfirmed) return;
 
-      setDeletingIds((prev) => [...prev, employeeId]);
+    setDeletingIds((prev) => [...prev, employeeId]);
 
-      axios
-        .delete(`http://localhost:8080/api/v1/user-skills/delete/${employeeId}`)
-        .then(() => axios.get('http://localhost:8080/api/v1/user-skills'))
-        .then((res) => {
-          setUserSkills(res.data);
+    axios
+      .delete(`http://localhost:8080/api/v1/user-skills/delete/${employeeId}`)
+      .then(() => axios.get('http://localhost:8080/api/v1/user-skills'))
+      .then((res) => {
+        setUserSkills(res.data);
           toast.success('Xóa kỹ năng của nhân viên thành công');
-        })
-        .catch((error) => {
-          console.error('Error deleting skills:', error);
-          toast.error('Xóa kỹ năng thất bại');
-        })
-        .finally(() => {
-          setDeletingIds((prev) => prev.filter((id) => id !== employeeId));
+      })
+      .catch((error) => {
+        console.error('Error deleting skills:', error);
+        toast.error('Xóa kỹ năng thất bại');
+      })
+      .finally(() => {
+        setDeletingIds((prev) => prev.filter((id) => id !== employeeId));
           loadData();
         });
-    });
+      });
   };
 
   // --- Handlers for Skill CRUD ---
@@ -361,77 +361,77 @@ const SkillManagement = () => {
       {/* Tab 1: Gán kỹ năng cho nhân viên */}
       {tabValue === '1' && (
         <Box sx={{ pt: 2 }}>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <FormControl sx={{ minWidth: 200 }} size="small">
-                    <InputLabel id="filter-employee-label">Lọc theo Nhân Viên</InputLabel>
-                    <Select
-                        labelId="filter-employee-label"
-                        multiple
-                        value={filterEmployees}
-                        onChange={(e) => setFilterEmployees(e.target.value)}
+        <FormControl sx={{ minWidth: 200 }} size="small">
+          <InputLabel id="filter-employee-label">Lọc theo Nhân Viên</InputLabel>
+          <Select
+            labelId="filter-employee-label"
+            multiple
+            value={filterEmployees}
+            onChange={(e) => setFilterEmployees(e.target.value)}
                         renderValue={(selected) => selected.map((id) => employees.find((emp) => emp.id === id)?.fullName).join(', ')}
-                    >
-                        {employees.map((emp) => (
-                        <MenuItem key={emp.id} value={emp.id}>
-                            {emp.fullName}
+          >
+            {employees.map((emp) => (
+              <MenuItem key={emp.id} value={emp.id}>
+                {emp.fullName}
                             {filterEmployees.includes(emp.id) && (<Chip label="✓" color="success" size="small" sx={{ ml: 1 }} />)}
-                        </MenuItem>
-                        ))}
-                    </Select>
-                    </FormControl>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-                    <FormControl sx={{ minWidth: 200 }} size="small">
-                    <InputLabel id="filter-skill-label">Lọc theo Kỹ Năng</InputLabel>
-                    <Select
-                        labelId="filter-skill-label"
-                        multiple
-                        value={filterSkills}
-                        onChange={(e) => setFilterSkills(e.target.value)}
+        <FormControl sx={{ minWidth: 200 }} size="small">
+          <InputLabel id="filter-skill-label">Lọc theo Kỹ Năng</InputLabel>
+          <Select
+            labelId="filter-skill-label"
+            multiple
+            value={filterSkills}
+            onChange={(e) => setFilterSkills(e.target.value)}
                         renderValue={(selected) => selected.map((id) => skills.find((skill) => skill.id === id)?.skillName).join(', ')}
-                    >
-                        {skills.map((skill) => (
-                        <MenuItem key={skill.id} value={skill.id}>
-                            {skill.skillName}
+          >
+            {skills.map((skill) => (
+              <MenuItem key={skill.id} value={skill.id}>
+                {skill.skillName}
                             {filterSkills.includes(skill.id) && (<Chip label="✓" color="success" size="small" sx={{ ml: 1 }} />)}
-                        </MenuItem>
-                        ))}
-                    </Select>
-                    </FormControl>
-                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                     <Button variant="contained" startIcon={<AddOutlined />} onClick={() => handleOpenAssignDialog('add')} disabled={saving}>
                         Gán Kỹ Năng
-                    </Button>
-                </Box>
-            </div>
+        </Button>
+      </Box>
+      </div>
             <TableContainer sx={{ maxHeight: 800 }}>
-                <Table>
-                <TableHead>
-                    <TableRow>
-                    <TableCell>STT</TableCell>
-                    <TableCell>Tên Nhân Viên</TableCell>
-                    <TableCell>Kỹ Năng</TableCell>
-                    <TableCell>Hành Động</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>STT</TableCell>
+              <TableCell>Tên Nhân Viên</TableCell>
+              <TableCell>Kỹ Năng</TableCell>
+              <TableCell>Hành Động</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
                     {paginatedEmployees.map((employee, index) => {
-                    const employeeSkills = userSkills
-                        .filter((us) => us.id.userId === employee.id)
-                        .map((us) => us.skill.skillName);
-                    const isDeleting = deletingIds.includes(employee.id);
-                    return (
-                        <TableRow key={employee.id}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>{employee.fullName}</TableCell>
+              const employeeSkills = userSkills
+                .filter((us) => us.id.userId === employee.id)
+                .map((us) => us.skill.skillName);
+              const isDeleting = deletingIds.includes(employee.id);
+              return (
+                <TableRow key={employee.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{employee.fullName}</TableCell>
                         <TableCell>{employeeSkills.map((skill, idx) => (<Chip key={idx} label={skill} sx={{ mr: 1, mb: 1 }} />))}</TableCell>
-                        <TableCell>
+                  <TableCell>
                             <IconButton color="primary" onClick={() => handleOpenAssignDialog('edit', employee)} disabled={saving || isDeleting}><EditOutlined /></IconButton>
                             <IconButton color="error" onClick={() => handleDeleteAssignment(employee.id)} disabled={saving || isDeleting}>
                                 {isDeleting ? <CircularProgress size={24} color="error" /> : <DeleteOutlined />}
                             </IconButton>
-                        </TableCell>
+                  </TableCell>
                         </TableRow>
                     );
                     })}
@@ -491,14 +491,14 @@ const SkillManagement = () => {
                                         <IconButton color="primary" onClick={() => handleOpenEditSkillDialog(skill)} disabled={isDeleting}><EditOutlined/></IconButton>
                                         <IconButton color="error" onClick={() => handleDeleteSkill(skill.id)} disabled={isDeleting}>
                                             {isDeleting ? <CircularProgress size={24} color="error" /> : <DeleteOutlined/>}
-                                        </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
         </Box>
       )}
 
