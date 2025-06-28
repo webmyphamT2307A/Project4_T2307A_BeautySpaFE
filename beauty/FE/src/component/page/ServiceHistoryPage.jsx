@@ -867,6 +867,7 @@ const ServiceHistoryPage = () => {
                                         </div>
                                         <div>
                                             <div className="fw-bold text-primary">{item.serviceName}</div>
+                                            <small className="text-muted">Mã dịch vụ: #{item.serviceId}</small>
                                         </div>
                                     </div>
                                 </td>
