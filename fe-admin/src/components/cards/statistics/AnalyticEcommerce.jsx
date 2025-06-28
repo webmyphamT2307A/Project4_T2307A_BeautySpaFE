@@ -48,7 +48,7 @@ export default function AnalyticEcommerce({ color = 'primary', title, count, per
           <Typography variant="caption" sx={{ color: `${color || 'primary'}.main` }}>
             {extra}
           </Typography>{' '}
-          vào năm nay
+          vào hôm nay
         </Typography>
       </Box>
     </MainCard>
