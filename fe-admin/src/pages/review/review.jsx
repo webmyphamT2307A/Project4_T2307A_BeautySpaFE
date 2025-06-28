@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     IconButton, Tooltip, CircularProgress, FormControl, InputLabel, Select, MenuItem, Box,
-    Modal, Typography, TextField, Button, Paper, TablePagination
+    Modal, Typography, TextField, Button, Paper, TablePagination, Grid, Chip
 } from '@mui/material';
 import { DeleteOutlined, ReadFilled } from '@ant-design/icons'; // <<< THAY ĐỔI: Dùng ReadFilled cho trực quan
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +29,10 @@ const ReviewList = () => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState('all');
+    const [ratingFilter, setRatingFilter] = useState('all');
+    const [typeFilter, setTypeFilter] = useState('all');
+    const [staffFilter, setStaffFilter] = useState('all');
+    const [staffList, setStaffList] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -43,7 +47,7 @@ const ReviewList = () => {
         console.log('🔍 Review clicked:', review);
         
         // Kiểm tra xem review có thông tin service không
-        if (review.type === 'SERVICE' && review.relatedId) {
+        if (review.type === 'service' && review.relatedId) {
             // Chuyển đến trang appointment với filter theo service
             navigate('/spa/appointments', {
                 state: {
@@ -56,7 +60,7 @@ const ReviewList = () => {
                 }
             });
             toast.info(`Chuyển đến trang đặt lịch cho dịch vụ: ${review.serviceName || `#${review.relatedId}`}`);
-        } else if (review.type === 'USER' && review.relatedId) {
+        } else if (review.type === 'staff' && review.relatedId) {
             // Nếu là review cho nhân viên, chuyển đến trang appointment với filter theo staff
             navigate('/spa/appointments', {
                 state: {
@@ -153,6 +157,29 @@ const ReviewList = () => {
 
     useEffect(() => { fetchReviews(); }, []);
 
+    // Lấy danh sách nhân viên để lọc
+    useEffect(() => {
+        const fetchStaff = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                // API này đã được sử dụng ở các trang khác để lấy nhân viên
+                const res = await fetch(`${API_BASE_URL}/admin/accounts/find-all`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const response = await res.json();
+                if (response.status === 'SUCCESS' && Array.isArray(response.data)) {
+                    const staffUsers = response.data.filter(user => user.role?.name?.toUpperCase() === 'STAFF');
+                    setStaffList(staffUsers);
+                } else {
+                    console.error("Không thể tải danh sách nhân viên:", response.message);
+                }
+            } catch (error) {
+                console.error("Lỗi kết nối khi tải danh sách nhân viên:", error);
+            }
+        };
+        fetchStaff();
+    }, []);
+
     // Các hàm xử lý modal
     const handleOpenReplyModal = (review) => {
         setSelectedReview(review);
@@ -226,10 +253,18 @@ const ReviewList = () => {
     };
 
     const filteredReviews = reviews.filter(r => {
-        if (statusFilter === 'all') return true;
-        if (statusFilter === 'active') return r.active === true || r.active === 1;
-        if (statusFilter === 'inactive') return r.active === false || r.active === 0;
-        return true;
+        const statusMatch = statusFilter === 'all' ||
+            (statusFilter === 'active' && (r.active === true || r.active === 1)) ||
+            (statusFilter === 'inactive' && (r.active === false || r.active === 0));
+
+        const ratingMatch = ratingFilter === 'all' || r.rating === ratingFilter;
+
+        const typeMatch = typeFilter === 'all' || r.type === typeFilter;
+
+        // Lọc theo nhân viên chỉ áp dụng khi loại là 'staff'
+        const staffMatch = typeFilter !== 'staff' || staffFilter === 'all' || String(r.relatedId) === String(staffFilter);
+
+        return statusMatch && ratingMatch && typeMatch && staffMatch;
     });
 
     const handleChangePage = (event, newPage) => {
@@ -245,19 +280,81 @@ const ReviewList = () => {
 
     return (
         <MainCard title="Tất Cả Đánh Giá">
-            <Box mb={2} display="flex" justifyContent="flex-end">
-                <FormControl size="small" sx={{ minWidth: 160 }}>
-                    <InputLabel>Trạng Thái</InputLabel>
-                    <Select
-                        value={statusFilter}
-                        label="Trạng Thái"
-                        onChange={e => setStatusFilter(e.target.value)}
-                    >
-                        <MenuItem value="all">Tất Cả</MenuItem>
-                        <MenuItem value="active">Hoạt Động</MenuItem>
-                        <MenuItem value="inactive">Không Hoạt Động</MenuItem>
-                    </Select>
-                </FormControl>
+            <Box mb={2}>
+                <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={3}>
+                        <FormControl size="small" fullWidth>
+                            <InputLabel>Trạng Thái</InputLabel>
+                            <Select
+                                value={statusFilter}
+                                label="Trạng Thái"
+                                onChange={e => setStatusFilter(e.target.value)}
+                            >
+                                <MenuItem value="all">Tất Cả Trạng Thái</MenuItem>
+                                <MenuItem value="active">Hoạt Động</MenuItem>
+                                <MenuItem value="inactive">Không Hoạt Động</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={3}>
+                        <FormControl size="small" fullWidth>
+                            <InputLabel>Đánh Giá</InputLabel>
+                            <Select
+                                value={ratingFilter}
+                                label="Đánh Giá"
+                                onChange={e => setRatingFilter(e.target.value)}
+                            >
+                                <MenuItem value="all">Tất Cả Sao</MenuItem>
+                                <MenuItem value={5}>5 Sao</MenuItem>
+                                <MenuItem value={4}>4 Sao</MenuItem>
+                                <MenuItem value={3}>3 Sao</MenuItem>
+                                <MenuItem value={2}>2 Sao</MenuItem>
+                                <MenuItem value={1}>1 Sao</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={3}>
+                        <FormControl size="small" fullWidth>
+                            <InputLabel>Loại Đánh Giá</InputLabel>
+                            <Select
+                                value={typeFilter}
+                                label="Loại Đánh Giá"
+                                onChange={e => {
+                                    setTypeFilter(e.target.value);
+                                    if (e.target.value !== 'staff') {
+                                        setStaffFilter('all'); // Reset bộ lọc nhân viên nếu không phải loại staff
+                                    }
+                                }}
+                            >
+                                <MenuItem value="all">Tất Cả Loại</MenuItem>
+                                <MenuItem value="service">Dịch Vụ</MenuItem>
+                                <MenuItem value="staff">Nhân Viên</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
+
+                    {typeFilter === 'staff' && (
+                        <Grid item xs={12} sm={3}>
+                            <FormControl size="small" fullWidth>
+                                <InputLabel>Lọc Theo Nhân Viên</InputLabel>
+                                <Select
+                                    value={staffFilter}
+                                    label="Lọc Theo Nhân Viên"
+                                    onChange={e => setStaffFilter(e.target.value)}
+                                >
+                                    <MenuItem value="all">Tất Cả Nhân Viên</MenuItem>
+                                    {staffList.map(staff => (
+                                        <MenuItem key={staff.id} value={staff.id}>
+                                            {staff.fullName || `Nhân viên #${staff.id}`}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                    )}
+                </Grid>
             </Box>
             {loading && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
             <TableContainer sx={{ maxHeight: 800 }}>
@@ -279,7 +376,14 @@ const ReviewList = () => {
                             <TableRow key={r.id}>
                                 <TableCell>{r.id}</TableCell>
                                 <TableCell>{r.authorName || 'N/A'}</TableCell>
-                                <TableCell>{r.type}</TableCell>
+                                <TableCell>
+                                    <Chip
+                                        label={r.type === 'service' ? 'Dịch Vụ' : 'Nhân Viên'}
+                                        color={r.type === 'service' ? 'primary' : 'secondary'}
+                                        size="small"
+                                        variant="outlined"
+                                    />
+                                </TableCell>
                                 <TableCell sx={{ minWidth: 250 }}>
                                     {/* // <<< THAY ĐỔI: Hiển thị comment và reply tại đây */}
                                     <Box>
@@ -314,7 +418,7 @@ const ReviewList = () => {
                                         padding: '8px'
                                     }}
                                     onClick={() => handleRatingClick(r)}
-                                    title={`Click để đặt lịch ${r.type === 'SERVICE' ? 'dịch vụ' : 'nhân viên'} này`}
+                                    title={`Click để đặt lịch ${r.type === 'service' ? 'dịch vụ' : 'nhân viên'} này`}
                                 >
                                     <Box sx={{ 
                                         display: 'flex', 
@@ -330,12 +434,12 @@ const ReviewList = () => {
                                         <span style={{ fontSize: '16px' }}>{r.rating}</span>
                                         <span style={{ color: '#FFD700', marginLeft: '4px' }}>⭐</span>
                                     </Box>
-                                    {r.type === 'SERVICE' && (
+                                    {r.type === 'service' && (
                                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                                             {r.serviceName || `Dịch vụ #${r.relatedId}`}
                                         </Typography>
                                     )}
-                                    {r.type === 'USER' && (
+                                    {r.type === 'staff' && (
                                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                                             {r.userName || `Nhân viên #${r.relatedId}`}
                                         </Typography>
