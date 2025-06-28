@@ -24,11 +24,12 @@ const role = {
       url: '/role/service',
       icon: icons.UserOutlined
     },
+    
     {
       id: 'skill-service',
-      title: 'Quản Lý Kỹ Năng',
+      title: 'Quản Lý  Kỹ Năng ',
       type: 'item',
-      url: '/role/skill',
+      url: '/role/skillManagement',
       icon: icons.UserOutlined
     }
   ]
