@@ -67,7 +67,7 @@ export default function Login() {
         if (roleName === 'ROLE_ADMIN') {
           Cookies.set('admin_token', token, { path: '/admin', sameSite: 'Strict', expires: 7 });
           Cookies.set('admin_role', roleName, { path: '/admin', sameSite: 'Strict', expires: 7 });
-          window.location.href = 'http://localhost:3003/admin';
+          window.location.href = 'http://localhost:3003';
         } else if (
           roleName === 'ROLE_STAFF' ||
           roleName === 'ROLE_MANAGER' ||
@@ -76,7 +76,7 @@ export default function Login() {
           Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 });
-          window.location.href = 'http://localhost:3002/staff';
+          window.location.href = 'http://localhost:3002';
         } else {
           Cookies.remove('admin_token', { path: '/admin' });
           Cookies.remove('admin_role', { path: '/admin' });
