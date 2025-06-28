@@ -27,7 +27,8 @@ import {
   Chip,
   Avatar,
   Grid,
-  CircularProgress
+  CircularProgress,
+  Autocomplete
 } from '@mui/material';
 import MainCard from 'components/MainCard';
 import {
@@ -907,28 +908,24 @@ const UserScheduleManager = () => {
           {currentSchedule ? 'Chỉnh Sửa Lịch Trình' : 'Thêm Lịch Trình Mới'}
         </DialogTitle>
         <DialogContent>
-          <FormControl fullWidth margin="dense" required>
-            <InputLabel id="user-select-label">Nhân Viên</InputLabel>
-            <Select
-              labelId="user-select-label"
-              name="userId"
-              value={formData.userId}
-              onChange={handleFormChange}
-              label="Nhân Viên"
-            >
-              <MenuItem value="">
-                <em>Chọn nhân viên</em>
-              </MenuItem>
-              {users.map((user) => (
-                <MenuItem key={user.id} value={user.id}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Avatar src={user.imageUrl} sx={{ width: 24, height: 24 }} />
-                    <Typography variant="body2">{user.fullName}</Typography>
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Autocomplete
+            id="user-autocomplete"
+            options={users}
+            getOptionLabel={(option) => option.fullName || ''}
+            value={users.find((user) => user.id === formData.userId) || null}
+            onChange={(event, newValue) => {
+              setFormData(prev => ({ ...prev, userId: newValue ? newValue.id : '' }));
+            }}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            renderInput={(params) => <TextField {...params} label="Nhân Viên" margin="dense" required />}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} key={option.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Avatar src={option.imageUrl} sx={{ width: 24, height: 24 }} />
+                <Typography variant="body2">{option.fullName}</Typography>
+              </Box>
+            )}
+            fullWidth
+          />
 
           <TextField
             margin="dense"

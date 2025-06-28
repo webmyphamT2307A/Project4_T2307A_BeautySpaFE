@@ -239,7 +239,7 @@ const SkillManagement = () => {
   }
 
   return (
-    <MainCard title="Quản Lý Kỹ Năng">
+    <MainCard >
       <Box sx={{ width: '100%', borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="skill management tabs">
           <Tab label="Kỹ Năng Nhân Viên" value="1" />

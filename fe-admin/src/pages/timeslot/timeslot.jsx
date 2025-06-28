@@ -192,7 +192,7 @@ const TimeSlotManagement = () => {
   };
 
   return (
-    <MainCard title="Quản Lý Khung Giờ">
+    <MainCard >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Button variant="contained" startIcon={<PlusOutlined />} onClick={handleOpenCreateDialog}>
           Tạo Khung Giờ Mới
