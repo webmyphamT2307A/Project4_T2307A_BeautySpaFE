@@ -1167,11 +1167,15 @@ const AppointmentManagement = () => {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>{appointment.service?.name}</Typography>
-                          <Typography variant="caption" color="primary">{formatCurrency(appointment.price)} • {appointment.service?.duration} phút</Typography>
+                          <Typography variant="subtitle2" color="primary" sx={{ cursor: 'pointer' }}>
+                            {formatCurrency(appointment.service.price)} • {appointment.service.duration} phút
+                          </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatDate(appointment.appointmentDate)}</Typography>
-                          <Typography variant="caption" color="textSecondary">{formatTime(appointment.appointmentDate)} - {formatTime(appointment.endTime)}</Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            {formatTime(appointment.appointmentDate)} - {formatTime(appointment.endTime)}
+                          </Typography>
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

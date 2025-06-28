@@ -631,7 +631,7 @@ const AppointmentManagement = () => {
                             {appointment.service?.name}
                           </Typography>
                           <Typography variant="caption" color="primary">
-                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appointment.price * 10000)} • {appointment.service?.duration} phút
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appointment.price)} • {appointment.service?.duration} phút
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -846,7 +846,7 @@ const AppointmentManagement = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                       <Typography variant="body2">Price:</Typography>
                       <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                        ${currentAppointment.price.toFixed(2)}
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentAppointment.price)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1018,7 +1018,7 @@ const AppointmentManagement = () => {
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle2" color="textSecondary">Price:</Typography>
                 <Typography variant="body1" color="primary" sx={{ fontWeight: 600 }}>
-                  ${appointmentToSendEmail.price?.toFixed(2)}
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appointmentToSendEmail.price || 0)}
                 </Typography>
               </Grid>
 

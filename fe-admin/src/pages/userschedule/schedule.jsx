@@ -419,6 +419,21 @@ const UserScheduleManager = () => {
       return;
     }
 
+    // For new schedules, prevent setting schedule for a past date.
+    // For existing schedules, prevent moving them to a past date (but allow saving changes on the same past date).
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const parts = formData.workDate.split('-').map(Number);
+    const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
+    const isEditing = !!currentSchedule;
+    const originalDateStr = isEditing ? new Date(currentSchedule.workDate).toISOString().split('T')[0] : null;
+
+    if (selectedDate <= today && formData.workDate !== originalDateStr) {
+      toast.error("Không thể tạo hoặc dời lịch trình vào hôm nay hoặc một ngày trong quá khứ.");
+      return;
+    }
+
     // Kiểm tra có shift custom
     if (!shiftForm.shiftType || !shiftForm.startTime || !shiftForm.endTime) {
       toast.error('Vui lòng chọn ca làm việc và thời gian.');
@@ -561,6 +576,10 @@ const UserScheduleManager = () => {
   for (let i = currentYear - 2; i <= currentYear + 2; i++) {
     yearOptions.push(i);
   }
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDateForNew = tomorrow.toISOString().split('T')[0];
 
   return (
     <MainCard title="Quản Lý Lịch Trình Nhân Viên" secondary={
@@ -904,6 +923,7 @@ const UserScheduleManager = () => {
             value={formData.workDate}
             onChange={handleFormChange}
             InputLabelProps={{ shrink: true }}
+            inputProps={{ min: currentSchedule ? undefined : minDateForNew }}
             required
           />
 
