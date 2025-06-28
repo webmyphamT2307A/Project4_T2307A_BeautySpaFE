@@ -353,7 +353,7 @@ const DashboardDefault = () => {
       setServedCustomers(summary.servedCustomersToday || 0);
       setTotalServices(summary.servicesPerformedThisMonth || 0);
       setOverallAverageRating(summary.overallAverageRating?.toFixed(1) || 'N/A');
-      setTodayRevenue(`${summary.todayRevenue?.toLocaleString('en-US') || 0}VND`);
+      setTodayRevenue(`${summary.todayRevenue?.toLocaleString('en-US') || 0}₫`);
     }
   };
   const handleNavigateToAppointments = () => {
@@ -660,7 +660,7 @@ const DashboardDefault = () => {
             <AnalyticEcommerce
               title="Khách Chờ"
               count={waitingCustomers}
-              extra={`${servedCustomers} khách hàng`}
+              extra={`${servedCustomers} đã phục vụ hôm nay`}
               color="warning"
               icon={<UserOutlined />}
             />

@@ -249,43 +249,43 @@ const SkillManagement = () => {
       
       {/* Tab 1: Gán kỹ năng cho nhân viên */}
       <Box sx={{ pt: 2, display: tabValue === '1' ? 'block' : 'none' }}>
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <FormControl sx={{ minWidth: 200 }} size="small">
+                    <FormControl sx={{ minWidth: 200 }} size="small">
                     <InputLabel>Lọc theo Nhân Viên</InputLabel>
                     <Select multiple value={filterEmployees} onChange={(e) => setFilterEmployees(e.target.value)} renderValue={(selected) => selected.map((id) => employees.find((emp) => emp.id === id)?.fullName).join(', ')}>
                         {employees.map((emp) => (<MenuItem key={emp.id} value={emp.id}>{emp.fullName}</MenuItem>))}
-          </Select>
-        </FormControl>
-        <FormControl sx={{ minWidth: 200 }} size="small">
+                    </Select>
+                    </FormControl>
+                    <FormControl sx={{ minWidth: 200 }} size="small">
                     <InputLabel>Lọc theo Kỹ Năng</InputLabel>
                     <Select multiple value={filterSkills} onChange={(e) => setFilterSkills(e.target.value)} renderValue={(selected) => selected.map((id) => skills.find((skill) => skill.id === id)?.skillName).join(', ')}>
                         {skills.map((skill) => (<MenuItem key={skill.id} value={skill.id}>{skill.skillName}</MenuItem>))}
-          </Select>
-        </FormControl>
-      </Box>
+                    </Select>
+                    </FormControl>
+                </Box>
                 <Box sx={{ mb: 2 }}>
                     <Button variant="contained" startIcon={<AddOutlined />} onClick={() => handleOpenAssignDialog('add')}>Gán Kỹ Năng</Button>
-      </Box>
-      </div>
+                </Box>
+            </div>
             <TableContainer sx={{ maxHeight: 800 }}>
-        <Table>
+                <Table>
                 <TableHead><TableRow><TableCell>STT</TableCell><TableCell>Tên Nhân Viên</TableCell><TableCell>Kỹ Năng</TableCell><TableCell>Hành Động</TableCell></TableRow></TableHead>
-          <TableBody>
-            {filteredEmployees.map((employee, index) => {
+                <TableBody>
+                    {filteredEmployees.map((employee, index) => {
                     const employeeSkills = userSkills.filter((us) => us.id.userId === employee.id).map((us) => us.skill.skillName);
-              const isDeleting = deletingIds.includes(employee.id);
-              return (
-                <TableRow key={employee.id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{employee.fullName}</TableCell>
+                    const isDeleting = deletingIds.includes(employee.id);
+                    return (
+                        <TableRow key={employee.id}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{employee.fullName}</TableCell>
                         <TableCell>{employeeSkills.map((skill, idx) => (<Chip key={idx} label={skill} sx={{ mr: 1, mb: 1 }} />))}</TableCell>
-                  <TableCell>
+                        <TableCell>
                             <IconButton color="primary" onClick={() => handleOpenAssignDialog('edit', employee)} disabled={isDeleting}><EditOutlined /></IconButton>
                             <IconButton color="error" onClick={() => handleDeleteAssignment(employee.id)} disabled={isDeleting}>
                                 {isDeleting ? <CircularProgress size={24} color="error" /> : <DeleteOutlined />}
                             </IconButton>
-                  </TableCell>
+                        </TableCell>
                         </TableRow>
                     );
                     })}
@@ -314,14 +314,14 @@ const SkillManagement = () => {
                                         <IconButton color="primary" onClick={() => handleOpenSkillDialog('edit', skill)} disabled={isDeleting}><EditOutlined/></IconButton>
                                         <IconButton color="error" onClick={() => handleDeleteSkill(skill.id)} disabled={isDeleting}>
                                             {isDeleting ? <CircularProgress size={24} color="error" /> : <DeleteOutlined/>}
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            </TableContainer>
       </Box>
 
       {/* Dialog gán kỹ năng cho nhân viên */}
