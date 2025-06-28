@@ -57,6 +57,7 @@ const AppointmentManagement = () => {
   const [pageTitle, setPageTitle] = useState('Quản Lý Lịch Hẹn');
 
   const [staffList, setStaffList] = useState([]);
+  const [serviceList, setServiceList] = useState([]);
   const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
   const [appointmentToEditDetails, setAppointmentToEditDetails] = useState(null);
   const [selectedStaffId, setSelectedStaffId] = useState(null);
@@ -65,9 +66,9 @@ const AppointmentManagement = () => {
   const [appointmentToSendEmail, setAppointmentToSendEmail] = useState(null);
   const [emailSending, setEmailSending] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [appointmentToCancel, setAppointmentToCancel] = useState(null)
-  const [staffFilter, setStaffFilter] = useState('');
-  const [serviceFilter, setServiceFilter] = useState('');
+  const [appointmentToCancel, setAppointmentToCancel] = useState(null);
+  // const [staffFilter, setStaffFilter] = useState('');
+  // const [serviceFilter, setServiceFilter] = useState('');
 
   useEffect(() => {
     const dateFromUrl = searchParams.get('date');
@@ -317,7 +318,19 @@ const AppointmentManagement = () => {
       });
   }, []);
 
-
+  // Fetch danh sách dịch vụ
+  useEffect(() => {
+    fetch('http://localhost:8080/api/v1/services')
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
+          setServiceList(data.data);
+        } else {
+          toast.error('Không thể tải danh sách dịch vụ.');
+        }
+      })
+      .catch(() => toast.error('Lỗi kết nối khi tải danh sách dịch vụ.'));
+  }, []);
 
   // Filter appointments
   useEffect(() => {
@@ -334,12 +347,12 @@ const AppointmentManagement = () => {
         return appointmentDate >= start && appointmentDate <= end;
       });
     }
-    if (staffFilter) {
-      results = results.filter(appointment => String(appointment.staff?.id) === String(staffFilter));
-    }
-    if (serviceFilter) {
-      results = results.filter(appointment => String(appointment.service?.id) === String(serviceFilter));
-    }
+    // if (staffFilter) {
+    //   results = results.filter(appointment => appointment.staff?.name === staffFilter);
+    // }
+    // if (serviceFilter) {
+    //   results = results.filter(appointment => appointment.service?.name === serviceFilter);
+    // }
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       results = results.filter(
@@ -351,7 +364,7 @@ const AppointmentManagement = () => {
     }
     setFilteredAppointments(results);
     setPage(0);
-  }, [searchQuery, statusFilter, dateFilter, staffFilter, serviceFilter, appointments]);
+  }, [searchQuery, statusFilter, dateFilter, appointments]);
 
   // Handlers
   const handleChangePage = (event, newPage) => setPage(newPage);
@@ -1042,26 +1055,7 @@ const AppointmentManagement = () => {
                     <MenuItem value="cancelled">Đã hủy</MenuItem>
                   </Select>
                 </FormControl>
-                <FormControl size="small" sx={{ minWidth: 150 }}>
-                  <InputLabel>Nhân viên</InputLabel>
-                  <Select value={staffFilter} label="Nhân viên" onChange={e => setStaffFilter(e.target.value)}>
-                    <MenuItem value="">Tất cả</MenuItem>
-                    {staffList.map(staff => (
-                      <MenuItem key={staff.id} value={staff.id}>{staff.fullName}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl size="small" sx={{ minWidth: 150 }}>
-                  <InputLabel>Dịch vụ</InputLabel>
-                  <Select value={serviceFilter} label="Dịch vụ" onChange={e => setServiceFilter(e.target.value)}>
-                    <MenuItem value="">Tất cả</MenuItem>
-                    {[...new Set(appointments.map(app => app.service?.id && app.service))]
-                      .filter(Boolean)
-                      .map(service => (
-                        <MenuItem key={service.id} value={service.id}>{service.name}</MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
+                
                 <TextField
                   size="small"
                   label="Từ ngày"
@@ -1086,8 +1080,8 @@ const AppointmentManagement = () => {
                   setStatusFilter('all');
                   setDateFilter({ startDate: '', endDate: '' });
                   setSearchQuery('');
-                  setStaffFilter('');
-                  setServiceFilter('');
+                  // setStaffFilter('');
+                  // setServiceFilter('');
                   setPageTitle('Quản Lý Lịch Hẹn');
                 }}>Xóa bộ lọc</Button>
                 {location.state && location.state.fromReview && (
@@ -1105,15 +1099,15 @@ const AppointmentManagement = () => {
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">
                   Hiển thị {filteredAppointments.length} / {appointments.length} lịch hẹn
-                  {(statusFilter !== 'all' || dateFilter.startDate || dateFilter.endDate || searchQuery || staffFilter || serviceFilter) && (
+                  {(statusFilter !== 'all' || dateFilter.startDate || dateFilter.endDate || searchQuery) && (
                     <Button 
                       size="small" 
                       onClick={() => {
                         setStatusFilter('all');
                         setDateFilter({ startDate: '', endDate: '' });
                         setSearchQuery('');
-                        setStaffFilter('');
-                        setServiceFilter('');
+                        // setStaffFilter('');
+                        // setServiceFilter('');
                         setPageTitle('Quản Lý Lịch Hẹn');
                       }}
                       sx={{ ml: 2 }}
@@ -1454,10 +1448,9 @@ const AppointmentManagement = () => {
                     <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
                       * Nhân viên "Bận" đã có lịch hẹn trong thời gian này
                     </Typography>
-
-                </Box>
-              )}
-            </Grid>
+                  </Box>
+                )}
+              </Grid>
           
               <Grid item xs={12}>
                 <TextField

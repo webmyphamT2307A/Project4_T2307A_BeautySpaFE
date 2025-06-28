@@ -44,8 +44,6 @@ const AppointmentManagement = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [serviceFilter, setServiceFilter] = useState('all');
-  const [staffFilter, setStaffFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState({
     startDate: '',
     endDate: ''
@@ -54,25 +52,9 @@ const AppointmentManagement = () => {
 
   // Đọc filter từ URL params khi component được tải
   useEffect(() => {
-    const serviceId = searchParams.get('serviceId');
-    const staffId = searchParams.get('staffId');
-
-    if (serviceId) {
-      setServiceFilter(serviceId);
-      // Xóa param khỏi URL để không bị lọc lại ở lần sau
-      searchParams.delete('serviceId');
-      setSearchParams(searchParams, { replace: true });
-    }
-
-    if (staffId) {
-      setStaffFilter(staffId);
-      searchParams.delete('staffId');
-      setSearchParams(searchParams, { replace: true });
-    }
+    // This effect can be used for future URL param handling
   }, []); // Chỉ chạy một lần khi component mount
 
-  const [staffList, setStaffList] = useState([]);
-  const [serviceList, setServiceList] = useState([]);
   const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
   const [appointmentToEditDetails, setAppointmentToEditDetails] = useState(null);
   const [selectedStaffId, setSelectedStaffId] = useState(null);
@@ -136,27 +118,6 @@ const AppointmentManagement = () => {
       setEmailSending(false);
     }
   };
-
-  const fetchFilterData = async () => {
-    const token = Cookies.get('staff_token');
-    try {
-      // Fetch staff
-      const staffRes = await fetch(API_STAFF_URL, { headers: { Authorization: `Bearer ${token}` } });
-      const staffData = await staffRes.json();
-      if (staffData.status === 'SUCCESS') setStaffList(staffData.data);
-
-      // Fetch services
-      const serviceRes = await fetch(API_SERVICE_URL, { headers: { Authorization: `Bearer ${token}` } });
-      const serviceData = await serviceRes.json();
-      if (serviceData.status === 'SUCCESS') setServiceList(serviceData.data);
-    } catch (error) {
-      toast.error("Lỗi khi tải dữ liệu cho bộ lọc.");
-    }
-  };
-
-  useEffect(() => {
-    fetchFilterData();
-  }, []);
 
   const fetchAppointments = async (silent = false) => {
     const token = Cookies.get('staff_token');
@@ -231,14 +192,22 @@ const AppointmentManagement = () => {
             appointment_date: item.appointmentDate,
             end_time: item.endTime,
             price: item.price,
-            service: { name: item.serviceName },
-            branch: { name: item.branchName },
+            service: { 
+              id: item.serviceId, 
+              name: item.serviceName,
+              duration: item.serviceDuration || 60,
+            },
+            branch: { 
+              id: item.branchId,
+              name: item.branchName 
+            },
             customer: {
               name: item.customerName,
               image: item.customerImageUrl,
               email: item.customerEmail || item.email || item.userEmail || ''
             },
             user: {
+              id: item.userId,
               name: item.userName,
               image: item.userImageUrl,
             },
@@ -279,14 +248,6 @@ const AppointmentManagement = () => {
       results = results.filter(appointment => appointment.status === statusFilter);
     }
 
-    if (serviceFilter !== 'all') {
-        results = results.filter(appointment => appointment.service?.id == serviceFilter);
-    }
-
-    if (staffFilter !== 'all') {
-        results = results.filter(appointment => appointment.user?.id == staffFilter);
-    }
-
     // Apply date range filter
     if (dateFilter.startDate && dateFilter.endDate) {
       const start = new Date(dateFilter.startDate);
@@ -317,7 +278,7 @@ const AppointmentManagement = () => {
 
     setFilteredAppointments(results);
     setPage(0);
-  }, [searchQuery, statusFilter, dateFilter, appointments, serviceFilter, staffFilter]);
+  }, [searchQuery, statusFilter, dateFilter, appointments]);
 
   // Handlers
   const handleChangePage = (event, newPage) => {
@@ -426,8 +387,6 @@ const AppointmentManagement = () => {
 
   const handleClearFilters = () => {
     setStatusFilter('all');
-    setServiceFilter('all');
-    setStaffFilter('all');
     setDateFilter({ startDate: '', endDate: '' });
     setSearchQuery('');
     toast.info("Đã xóa tất cả bộ lọc.");
@@ -562,26 +521,6 @@ const AppointmentManagement = () => {
               <MenuItem value="confirmed">Đã xác nhận</MenuItem>
               <MenuItem value="completed">Hoàn thành</MenuItem>
               <MenuItem value="cancelled">Đã hủy</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Dịch vụ</InputLabel>
-            <Select value={serviceFilter} label="Dịch vụ" onChange={(e) => setServiceFilter(e.target.value)}>
-              <MenuItem value="all">Tất cả dịch vụ</MenuItem>
-              {serviceList.map(service => (
-                <MenuItem key={service.id} value={service.id}>{service.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Nhân viên</InputLabel>
-            <Select value={staffFilter} label="Nhân viên" onChange={(e) => setStaffFilter(e.target.value)}>
-              <MenuItem value="all">Tất cả nhân viên</MenuItem>
-              {staffList.map(staff => (
-                <MenuItem key={staff.id} value={staff.id}>{staff.fullName}</MenuItem>
-              ))}
             </Select>
           </FormControl>
 
