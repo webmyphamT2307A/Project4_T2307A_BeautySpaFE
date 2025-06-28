@@ -116,7 +116,7 @@ const FeedbackManager = () => {
   );
 
   return (
-    <MainCard title="Quản Lý Phản Hồi Khách Hàng">
+    <MainCard >
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <TextField
           size="small"

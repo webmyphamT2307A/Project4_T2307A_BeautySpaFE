@@ -41,7 +41,7 @@ export default function HeaderContent() {
 
      
 
-      <Notification />
+      {/* <Notification /> */}
       {!downLG && <Profile />}
       {downLG && <MobileSection />}
     </>

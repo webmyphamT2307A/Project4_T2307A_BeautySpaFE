@@ -286,7 +286,7 @@ const SalaryManager = () => {
   );
 
   return (
-    <MainCard title="Quản Lý Tiền Lương" secondary={
+    <MainCard  secondary={
       <Button
         variant="contained"
         color="primary"

@@ -279,7 +279,7 @@ const ReviewList = () => {
     const paginatedReviews = filteredReviews.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     return (
-        <MainCard title="Tất Cả Đánh Giá">
+        <MainCard >
             <Box mb={2}>
                 <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3}>
