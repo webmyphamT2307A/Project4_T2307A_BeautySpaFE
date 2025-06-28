@@ -372,6 +372,7 @@ const DashboardDefault = () => {
         dataFound = true;
         setScheduleTitle(`Lịch Trình Nhân Viên (${i === 0 ? 'Hôm Nay' : format(dateToFetch, 'MMM d')})`);
         const mappedSchedules = schedules.map(item => ({
+          schedule_id: item.id,
           user_id: item.userId,
           full_name: item.userName,
           role_name: item.roleName || 'N/A',
@@ -569,7 +570,19 @@ const DashboardDefault = () => {
   const displayedSchedules = fullScheduleData
     .filter(staff => {
       if (selectedShift === 'All') return true;
-      return staff.shift?.toLowerCase().includes(selectedShift.toLowerCase());
+
+      const shiftName = (staff.shift || '').toLowerCase();
+      const selected = selectedShift.toLowerCase();
+
+      if (selected === 'morning') {
+        return shiftName.includes('sáng') || shiftName.includes('morning');
+      }
+      if (selected === 'afternoon') {
+        return shiftName.includes('chiều') || shiftName.includes('afternoon');
+      }
+
+      // Fallback for any other shifts that might be added later
+      return shiftName.includes(selected);
     })
     .slice(0, 5);
 
@@ -660,7 +673,7 @@ const DashboardDefault = () => {
             <AnalyticEcommerce
               title="Khách Chờ"
               count={waitingCustomers}
-              extra={`${servedCustomers} khách `}
+              extra={`${servedCustomers} đã phục vụ hôm nay`}
               color="warning"
               icon={<UserOutlined />}
             />
@@ -684,7 +697,7 @@ const DashboardDefault = () => {
             <AnalyticEcommerce
               title="Dịch Vụ Tháng Này"
               count={totalServices}
-              extra="dịch vụ vào"
+              extra="Đã hoàn thành"
               icon={<ShopOutlined />}
             />
           </Box>
@@ -764,13 +777,14 @@ const DashboardDefault = () => {
                       <TableRow>
                         <TableCell>Nhân Viên</TableCell>
                         <TableCell>Vai Trò</TableCell>
-                        <TableCell>Giờ Vào</TableCell>
+                        <TableCell>Ca Làm Việc</TableCell>
+                        <TableCell>Giờ Check-in</TableCell>
                         <TableCell>Trạng Thái</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {displayedSchedules.map((staff) => (
-                        <TableRow key={staff.user_id}>
+                        <TableRow key={staff.schedule_id}>
                           <TableCell>
                             <Box display="flex" alignItems="center">
                               <Avatar src={staff.image_url} sx={{ width: 28, height: 28, mr: 1 }} />
@@ -778,6 +792,7 @@ const DashboardDefault = () => {
                             </Box>
                           </TableCell>
                           <TableCell>{staff.role_name}</TableCell>
+                          <TableCell>{staff.shift || 'N/A'}</TableCell>
                           <TableCell>{staff.check_in_time || 'N/A'}</TableCell>
                           <TableCell>{getStatusChip(staff.status)}</TableCell>
                         </TableRow>
