@@ -161,7 +161,7 @@ const UserScheduleManager = () => {
       const slotId = slot.slotId || slot.slot_id || slot.id;
 
       return {
-        value: slotName,
+        value: slotId, // Use unique ID for value
         label: slotName,
         defaultStart: startTime ? startTime.substring(0, 5) : '',
         defaultEnd: endTime ? endTime.substring(0, 5) : '',
@@ -188,31 +188,18 @@ const UserScheduleManager = () => {
 
     let newShiftForm = { ...shiftForm, [field]: safeValue };
 
-    // Auto-fill start and end time when shift type is selected
-    if (field === 'shiftType' && safeValue) {
-      const shiftOptions = getShiftOptions();
-      console.log('Available shift options:', shiftOptions); // Debug log
-
-      const selectedShift = shiftOptions.find(option => option.value === safeValue);
-      console.log('Selected shift:', selectedShift); // Debug log
-
-      if (selectedShift) {
-        newShiftForm = {
-          ...newShiftForm,
-          startTime: selectedShift.defaultStart || '',
-          endTime: selectedShift.defaultEnd || ''
-        };
-      }
-    }
-
-    console.log('New shift form:', newShiftForm); // Debug log
     setShiftForm(newShiftForm);
 
     // Update the main formData.shift field with formatted string
     const formattedShift = formatShift(newShiftForm.shiftType, newShiftForm.startTime, newShiftForm.endTime);
     console.log('Formatted shift:', formattedShift); // Debug log
 
-    setFormData(prev => ({ ...prev, shift: formattedShift }));
+    // If start/end time is changed manually, it's a custom shift. Deselect the timeslot.
+    if (field === 'startTime' || field === 'endTime') {
+       setFormData(prev => ({ ...prev, shift: formattedShift, timeSlotId: '' }));
+    } else {
+       setFormData(prev => ({ ...prev, shift: formattedShift }));
+    }
   };
 
   // Handle time form changes for check-in/check-out
@@ -366,11 +353,20 @@ const UserScheduleManager = () => {
         checkOutTime: schedule.checkOutTime ? formatTime(schedule.checkOutTime) : ''
       });
 
+      // Find the matching timeslot to pre-select it in dropdown
+      const matchingTimeslot = timeslots.find(slot => {
+        const slotName = slot.shift || slot.slotName || slot.name;
+        const startTime = (slot.startTime || slot.start_time || '').substring(0, 5);
+        const endTime = (slot.endTime || slot.end_time || '').substring(0, 5);
+        return slotName === parsedShift.shiftType && startTime === parsedShift.startTime && endTime === parsedShift.endTime;
+      });
+      const initialTimeSlotId = matchingTimeslot ? (matchingTimeslot.slotId || matchingTimeslot.slot_id || matchingTimeslot.id) : '';
+
       setFormData({
         userId: schedule.userId || '',
         shift: schedule.shift || '',
         workDate: schedule.workDate || '',
-        timeSlotId: '', // Không sử dụng timeslot
+        timeSlotId: initialTimeSlotId, // Use the found ID
         status: schedule.status || 'pending',
         isLastTask: schedule.isLastTask || false,
         isActive: schedule.isActive === undefined ? true : schedule.isActive,
@@ -383,7 +379,7 @@ const UserScheduleManager = () => {
         userId: '',
         shift: '',
         workDate: '',
-        timeSlotId: '', // Không sử dụng timeslot
+        timeSlotId: '', // Correctly empty for new schedule
         status: 'pending',
         isLastTask: false,
         isActive: true
@@ -877,54 +873,25 @@ const UserScheduleManager = () => {
         </DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="dense" required>
-            <InputLabel id="shiftType-label">Loại Ca</InputLabel>
+            <InputLabel id="user-select-label">Nhân Viên</InputLabel>
             <Select
-              labelId="shiftType-label"
-              value={shiftForm.shiftType || ''} // Ensure never undefined
-              label="Loại Ca"
-              onChange={(e) => {
-                console.log('Select onChange triggered with value:', e.target.value);
-                console.log('Event target:', e.target);
-                handleShiftFormChange('shiftType', e.target.value);
-              }}
-              MenuProps={{
-                PaperProps: {
-                  style: {
-                    maxHeight: 224,
-                    width: 250,
-                  },
-                },
-              }}
+              labelId="user-select-label"
+              name="userId"
+              value={formData.userId}
+              onChange={handleFormChange}
+              label="Nhân Viên"
             >
               <MenuItem value="">
-                <em>Chọn Ca</em>
+                <em>Chọn nhân viên</em>
               </MenuItem>
-              {getShiftOptions().map((option, index) => {
-                console.log(`Rendering option ${index}:`, option); // Debug log
-
-                // Skip options with invalid data
-                if (!option.value || !option.label) {
-                  console.warn('Skipping invalid option:', option);
-                  return null;
-                }
-
-                return (
-                  <MenuItem
-                    key={`shift-${option.id || index}-${option.value}`}
-                    value={option.value}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <ClockCircleOutlined style={{ color: '#1976d2' }} />
-                      <Box>
-                        <Typography>{option.label}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {option.defaultStart} - {option.defaultEnd}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </MenuItem>
-                );
-              })}
+              {users.map((user) => (
+                <MenuItem key={user.id} value={user.id}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Avatar src={user.imageUrl} sx={{ width: 24, height: 24 }} />
+                    <Typography variant="body2">{user.fullName}</Typography>
+                  </Box>
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
@@ -951,12 +918,29 @@ const UserScheduleManager = () => {
                 <InputLabel id="shiftType-label">Loại Ca</InputLabel>
                 <Select
                   labelId="shiftType-label"
-                  value={shiftForm.shiftType}
+                  value={formData.timeSlotId || ''}
                   label="Loại Ca"
                   onChange={(e) => {
-                    console.log('Select onChange triggered with value:', e.target.value);
-                    console.log('Event target:', e.target);
-                    handleShiftFormChange('shiftType', e.target.value);
+                    const selectedSlotId = e.target.value;
+                    const selectedTimeslot = timeslots.find(slot => (slot.slotId || slot.slot_id || slot.id) === selectedSlotId);
+
+                    if (selectedTimeslot) {
+                        const slotName = selectedTimeslot.shift || selectedTimeslot.slotName || selectedTimeslot.name;
+                        const startTime = (selectedTimeslot.startTime || selectedTimeslot.start_time || '').substring(0, 5);
+                        const endTime = (selectedTimeslot.endTime || selectedTimeslot.end_time || '').substring(0, 5);
+
+                        // Update all relevant state
+                        setFormData(prev => ({ ...prev, timeSlotId: selectedSlotId, shift: formatShift(slotName, startTime, endTime) }));
+                        setShiftForm({
+                            shiftType: slotName,
+                            startTime: startTime,
+                            endTime: endTime
+                        });
+                    } else {
+                        // Reset if "Chọn Ca" is selected
+                        setFormData(prev => ({ ...prev, timeSlotId: '', shift: '' }));
+                        setShiftForm({ shiftType: '', startTime: '', endTime: '' });
+                    }
                   }}
                   MenuProps={{
                     PaperProps: {
