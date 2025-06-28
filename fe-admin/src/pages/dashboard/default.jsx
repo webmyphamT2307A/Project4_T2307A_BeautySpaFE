@@ -660,7 +660,7 @@ const DashboardDefault = () => {
             <AnalyticEcommerce
               title="Khách Chờ"
               count={waitingCustomers}
-              extra={`${servedCustomers} đã phục vụ hôm nay`}
+              extra={`${servedCustomers} khách `}
               color="warning"
               icon={<UserOutlined />}
             />
@@ -684,7 +684,7 @@ const DashboardDefault = () => {
             <AnalyticEcommerce
               title="Dịch Vụ Tháng Này"
               count={totalServices}
-              extra="Đã hoàn thành"
+              extra="dịch vụ vào"
               icon={<ShopOutlined />}
             />
           </Box>
