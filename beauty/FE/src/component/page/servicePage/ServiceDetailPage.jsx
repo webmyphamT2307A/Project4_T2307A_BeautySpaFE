@@ -105,10 +105,10 @@ const ServiceDetailPage = () => {
     // Hàm fetch danh sách review
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/v1/reviews/item/${id}?sort=createdAt,desc`);
+        const response = await fetch(`http://localhost:8080/api/v1/reviews/item/service/${id}?sort=createdAt,desc`);
         const result = await response.json();
-        if (result.status === 'SUCCESS' && result.data.content) {
-          setReviews(result.data.content);
+        if (result.status === 'SUCCESS' && result.data) {
+          setReviews(result.data);
         } else {
           console.error("Failed to fetch reviews:", result.message);
         }

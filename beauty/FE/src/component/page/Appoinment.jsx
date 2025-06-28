@@ -123,11 +123,11 @@ const Appointment = () => {
                 setStaffList([]);
                 setCountStaffAvaiable(0);
                 setIsLoadingSchedules(false);
-                setLoading(false); // ✅ Thêm ở đây
+                setLoading(false);
                 return;
             }
 
-            setLoading(true); // ✅ Đặt ở đây trước tất cả logic chính
+            setLoading(true);
 
             try {
                 // First, get all staff
