@@ -49,10 +49,10 @@ const Footer = () => {
                     <div className="col-md-6 col-lg-6 col-xl-3">
                         <div className="footer-item d-flex flex-column">
                             <h4 className="mb-4 text-white">Lịch làm việc</h4>
-                            <p className="text-muted mb-0">Buổi sáng: <span className="text-white"> 09:00 sáng – 11:00 sáng</span></p>
-                            <p className="text-muted mb-0">Buổi chiều: <span className="text-white"> 13:00 chiều  – 17:00 sáng</span></p>
+                            <p className="text-muted mb-0">Buổi sáng: <span className="text-white"> 08:00 sáng – 12:00 sáng</span></p>
+                            <p className="text-muted mb-0">Buổi chiều: <span className="text-white"> 13:00 chiều  – 17:00 chiều</span></p>
                             <h4 className="my-4 text-white">Địa chỉ</h4>
-                            <p className="mb-0"><i className="fas fa-map-marker-alt  me-2" /> 123 Đường ABC, Quận 1, TP.HCM</p>
+                            <p className="mb-0"><i className="fas fa-map-marker-alt  me-2" /> 22 Đ. Giải Phóng, Phương Mai, Đống Đa, Hà Nội</p>
                         </div>
                     </div>
                     <div className="col-md-6 col-lg-6 col-xl-3">
@@ -63,7 +63,8 @@ const Footer = () => {
                             <a href="#" className="text-white mb-2 text-decoration-none"><i className="fab fa-twitter me-2" /> Twitter</a>
                             <h4 className="my-4 text-white">Liên hệ với chúng tôi</h4>
                             <p className="mb-0"><i className="fas fa-envelope  me-2" /> info@beautyspa.vn</p>
-                            <p className="mb-0"><i className="fas fa-phone  me-2" /> (+84) 0123456789</p>
+                            <p className="mb-0"><i className="fas fa-envelope  me-2" /> info@sparlex.com</p>
+                            <p className="mb-0"><i className="fas fa-phone  me-2" /> (+84) 366888894</p>
                         </div>
                     </div>
                 </div>
@@ -98,7 +99,7 @@ const Footer = () => {
                                         e.target.style.color = '#f8f9fa';
                                     }}
                                 >
-                                    Sparlex
+                                    Sparlex 2025
                                 </a>
                                 , Bảo lưu mọi quyền.
                             </span>
