@@ -382,7 +382,7 @@ const AdminAccount = () => {
         </Grid>
         <Grid item xs={12}>
           <Box sx={{ width: '100%', overflow: 'hidden' }}>
-            <TableContainer component={Paper} sx={{ maxHeight: 440, '& .MuiTableHead-root': { position: 'sticky', top: 0, zIndex: 10 } }}>
+            <TableContainer component={Paper} sx={{ maxHeight: 800, '& .MuiTableHead-root': { position: 'sticky', top: 0, zIndex: 10 } }}>
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
@@ -756,7 +756,7 @@ const AdminAccount = () => {
                   Kỹ Năng
                 </Typography>
                 {currentUser.skills && currentUser.skills.length > 0 ? (
-                  <TableContainer component={Paper}>
+                  <TableContainer sx={{ maxHeight: 800 }} component={Paper}>
                     <Table>
                       <TableHead>
                         <TableRow>

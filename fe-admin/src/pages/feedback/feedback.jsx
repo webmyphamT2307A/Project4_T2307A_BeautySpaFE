@@ -143,7 +143,7 @@ const FeedbackManager = () => {
 
       <Paper sx={{ borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
         <TableContainer>
-          <Table sx={{ minWidth: 650 }}>
+          <Table sx={{ minWidth: 650, maxHeight: 800 }}>
             <TableHead sx={{ bgcolor: 'grey.50' }}>
               <TableRow>
                 <TableCell sx={{ pl: 3 }}>#</TableCell>
