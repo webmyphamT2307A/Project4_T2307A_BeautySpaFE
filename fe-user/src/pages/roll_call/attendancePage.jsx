@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, Box, Button, Alert, CircularProgress } from '@mui/material';
+import Cookies from 'js-cookie';
 
 const AttendancePage = () => {
   const [statusMessage, setStatusMessage] = useState('');
@@ -29,8 +30,11 @@ const AttendancePage = () => {
         }
 
         const schedules = await response.json();
-        const today = new Date().toISOString().split('T')[0];
-        const scheduleForToday = schedules.find((s) => s.date === today);
+        const today = new Date().toLocaleDateString('en-CA', {
+          timeZone: 'Asia/Ho_Chi_Minh'
+        });
+        console.log("today:", today);
+        const scheduleForToday = schedules.find((s) => s.date === today && s.status !== 'completed');
 
         if (scheduleForToday) {
           setTodaysSchedule(scheduleForToday);
