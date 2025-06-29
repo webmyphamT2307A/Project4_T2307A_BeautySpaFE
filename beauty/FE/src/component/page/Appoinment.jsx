@@ -452,6 +452,19 @@ const Appointment = () => {
             }
 
             let customerIdToSubmit = formData.customerId;
+            const parseTime = (timeStr) => {
+                const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            };
+
+            const slot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
+            let durationMinutes = 60; // mặc định
+
+            if (slot && slot.startTime && slot.endTime) {
+                const start = parseTime(slot.startTime);
+                const end = parseTime(slot.endTime);
+                durationMinutes = end - start;
+            }
 
             if (!customerIdToSubmit && (formData.fullName && formData.phoneNumber)) {
                 try {
@@ -479,6 +492,7 @@ const Appointment = () => {
                 customerId: customerIdToSubmit,
                 status: formData.status || 'pending',
                 appointmentDate: formattedDate, // Use the correctly formatted date
+                durationMinutes: durationMinutes,
                 branchId: formData.branchId || 1,
                 timeSlotId: formData.timeSlotId,
                 price: formData.price,

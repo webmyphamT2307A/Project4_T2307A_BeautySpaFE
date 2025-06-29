@@ -370,20 +370,11 @@ const ReviewList = () => {
                                         cursor: 'pointer', 
                                         color: 'primary.main',
                                         fontWeight: 'bold',
-                                        '&:hover': {
-                                            backgroundColor: 'primary.light',
-                                            color: 'white',
-                                            borderRadius: '4px',
-                                            transform: 'scale(1.05)',
-                                            transition: 'all 0.2s'
-                                        },
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: 1,
                                         padding: '8px'
                                     }}
-                                    onClick={() => handleRatingClick(r)}
-                                    title={`Click để đặt lịch ${r.type === 'service' ? 'dịch vụ' : 'nhân viên'} này`}
                                 >
                                     <Box sx={{ 
                                         display: 'flex', 
@@ -391,10 +382,6 @@ const ReviewList = () => {
                                         backgroundColor: 'primary.lighter',
                                         padding: '4px 8px',
                                         borderRadius: '12px',
-                                        '&:hover': {
-                                            backgroundColor: 'primary.light',
-                                            color: 'white'
-                                        }
                                     }}>
                                         <span style={{ fontSize: '16px' }}>{r.rating}</span>
                                         <span style={{ color: '#FFD700', marginLeft: '4px' }}>⭐</span>

@@ -76,14 +76,15 @@ const FeedbackManager = () => {
 
   const handleDelete = (feedbackId) => {
     Swal.fire({
-      title: 'Bạn có chắc chắn?',
+      title: 'Bạn có chắc chắn ẩn feedback này?',
       text: 'Bạn sẽ không thể hoàn tác hành động này!',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
-      confirmButtonText: 'Vâng, xóa nó!',
-      cancelButtonText: 'Hủy'
+      confirmButtonText: 'Vâng!',
+      cancelButtonText: 'Hủy',
+      reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
         // Giả sử API để xóa (soft-delete) có dạng: PUT /api/v1/feedbacks/delete/{id}
@@ -151,7 +152,6 @@ const FeedbackManager = () => {
                 <TableCell>Chủ Đề</TableCell>
                 <TableCell>Nội Dung</TableCell>
                 <TableCell>Ngày Gửi</TableCell>
-                <TableCell>Trạng Thái</TableCell>
                 <TableCell align="center" sx={{ pr: 3 }}>
                   Thao Tác
                 </TableCell>
@@ -191,17 +191,14 @@ const FeedbackManager = () => {
                       </Tooltip>
                     </TableCell>
                     <TableCell>{new Date(fb.createdAt).toLocaleDateString('vi-VN')}</TableCell>
-                    <TableCell>
-                      <Chip label={fb.isActive ? 'Hoạt Động' : 'Đã Ẩn'} color={fb.isActive ? 'success' : 'default'} size="small" />
-                    </TableCell>
                     <TableCell align="center" sx={{ pr: 3 }}>
-                      <Tooltip title="Xóa (Ẩn) Feedback">
+                      <Tooltip title="Ẩn Feedback">
                         <span>
                           <IconButton
                             size="small"
                             color="error"
                             onClick={() => handleDelete(fb.id)}
-                            disabled={!fb.isActive} // Vô hiệu hóa nút nếu đã ẩn
+                            disabled={!fb.active} // Vô hiệu hóa nút nếu đã ẩn
                           >
                             <DeleteOutlined />
                           </IconButton>

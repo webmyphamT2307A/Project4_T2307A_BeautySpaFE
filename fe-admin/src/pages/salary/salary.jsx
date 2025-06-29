@@ -146,13 +146,49 @@ const SalaryManager = () => {
 
   const handleCalculateFormChange = (event) => {
     const { name, value } = event.target;
-    setCalculateFormData(prev => ({ ...prev, [name]: value }));
+    const rawValue = unformatCurrency(value);
+    if (!/^\d*$/.test(rawValue)) return; // chỉ cho nhập số
+
+    setCalculateFormData(prev => ({
+      ...prev,
+      [name]: rawValue
+    }));
+  };
+
+  const formatCurrency = (value) => {
+    if (!value) return '';
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+
+// formatCurrencyIntl(100000000000000) => "100.000.000.000.000"
+
+  const unformatCurrency = (value) => {
+    return value.replace(/\./g, '');
   };
 
   const handleEditFormChange = (event) => {
     const { name, value, type, checked } = event.target;
-    setEditFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+
+    if (type === 'checkbox') {
+      setEditFormData(prev => ({ ...prev, [name]: checked }));
+      return;
+    }
+
+    // Áp dụng cho các trường tiền
+    const moneyFields = ['baseSalary', 'bonus', 'deductions', 'totalSalary'];
+    if (moneyFields.includes(name)) {
+      const rawValue = unformatCurrency(value);
+      if (!/^\d*$/.test(rawValue)) return;
+
+      setEditFormData(prev => ({ ...prev, [name]: rawValue }));
+      return;
+    }
+
+    // Trường khác (vd: notes, paymentDate...)
+    setEditFormData(prev => ({ ...prev, [name]: value }));
   };
+
 
   const handleOpenCalculateDialog = () => {
     const currentMonth = new Date().getMonth() + 1;
@@ -194,6 +230,7 @@ const SalaryManager = () => {
       notes: salaryRecord.notes || '',
       isActive: salaryRecord.isActive === undefined ? true : salaryRecord.isActive,
     });
+    console.log("editformdata", editFormData);
     setOpenEditDialog(true);
   };
   const handleCloseEditDialog = () => setOpenEditDialog(false);
@@ -312,9 +349,15 @@ const SalaryManager = () => {
     (salary.month && String(salary.month).includes(searchQuery)) ||
     (salary.year && String(salary.year).includes(searchQuery))
   );
+  const formatDate = (isoDateStr) => {
+    if (!isoDateStr) return '';
+    const [year, month, day] = isoDateStr.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
 
   return (
-    <MainCard  secondary={
+    <MainCard title="Quản Lý Tiền Lương"  secondary={
       <Button
         variant="contained"
         color="primary"
@@ -377,7 +420,13 @@ const SalaryManager = () => {
               <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Lương Thực Nhận</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Ngày Thanh Toán</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Trạng Thái</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Thao Tác</TableCell>
+              <TableCell sx={{
+                fontWeight: 'bold',
+                position: 'sticky',
+                right: 0,
+                backgroundColor: '#fff',
+                zIndex: 3
+              }} align="center" >Thao Tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -392,13 +441,19 @@ const SalaryManager = () => {
                   <TableCell sx={{ textAlign: 'right' }}>{salary.bonus?.toLocaleString()}</TableCell>
                   <TableCell sx={{ textAlign: 'right' }}>{salary.deductions?.toLocaleString()}</TableCell>
                   <TableCell sx={{ textAlign: 'right', fontWeight: 'bold' }}>{salary.totalSalary?.toLocaleString()}</TableCell>
-                  <TableCell>{salary.paymentDate}</TableCell>
+                  <TableCell>{formatDate(salary.paymentDate)}</TableCell>
                   <TableCell>
                     <Typography sx={{ color: salary.isActive ? 'success.main' : 'error.main', fontWeight: 'medium' }}>
                       {salary.isActive ? 'Hoạt Động' : 'Không Hoạt Động'}
                     </Typography>
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center"
+                             sx={{
+                               position: 'sticky',
+                               right: 0,
+                               backgroundColor: '#fff',
+                               zIndex: 1
+                             }}>
                     <Tooltip title="Chỉnh Sửa">
                       <IconButton size="small" color="primary" onClick={() => handleOpenEditDialog(salary)}>
                         <EditOutlined />
@@ -488,8 +543,8 @@ const SalaryManager = () => {
               ))}
             </Select>
           </FormControl>
-          <TextField margin="dense" name="manualBonus" label="Thưởng / Hoa hồng thủ công" type="number" fullWidth value={calculateFormData.manualBonus} onChange={handleCalculateFormChange} helperText="Khoản thưởng hoặc hoa hồng bổ sung." />
-          <TextField margin="dense" name="manualDeductions" label="Các khoản khấu trừ thủ công khác" type="number" fullWidth value={calculateFormData.manualDeductions} onChange={handleCalculateFormChange} helperText="Các khoản khấu trừ không được tính tự động (ví dụ: tạm ứng)." />
+          <TextField margin="dense" name="manualBonus" label="Thưởng / Hoa hồng thủ công" type="text" fullWidth value={formatCurrency(calculateFormData.manualBonus)} onChange={handleCalculateFormChange} helperText="Khoản thưởng hoặc hoa hồng bổ sung." />
+          <TextField margin="dense" name="manualDeductions" label="Các khoản khấu trừ thủ công khác" type="text" fullWidth value={formatCurrency(calculateFormData.manualDeductions)} onChange={handleCalculateFormChange} helperText="Các khoản khấu trừ không được tính tự động (ví dụ: tạm ứng)." />
           <TextField margin="dense" name="notesForCalculation" label="Ghi chú tính lương" type="text" fullWidth multiline rows={2} value={calculateFormData.notesForCalculation} onChange={handleCalculateFormChange} />
         </DialogContent>
         <DialogActions sx={{ p: '16px 24px', borderTop: '1px solid rgba(224, 224, 224, 1)'}}>
@@ -507,9 +562,9 @@ const SalaryManager = () => {
           </DialogTitle>
           <DialogContent sx={{ pt: '20px !important' }}>
             <Typography variant="subtitle2" gutterBottom>Lưu ý: Không thể thay đổi Nhân viên, Tháng và Năm. Để sửa đổi, các thành phần lương cốt lõi nên được tính toán lại.</Typography>
-            <TextField margin="dense" name="baseSalary" label="Lương Cơ Bản (Thực tế)" type="number" fullWidth value={editFormData.baseSalary} onChange={handleEditFormChange} />
-            <TextField margin="dense" name="bonus" label="Thưởng / Hoa hồng" type="number" fullWidth value={editFormData.bonus} onChange={handleEditFormChange} />
-            <TextField margin="dense" name="deductions" label="Tổng khấu trừ" type="number" fullWidth value={editFormData.deductions} onChange={handleEditFormChange} />
+            <TextField margin="dense" name="baseSalary" label="Lương Cơ Bản (Thực tế)" type="text" fullWidth value={formatCurrency(editFormData.baseSalary)} onChange={handleEditFormChange} />
+            <TextField margin="dense" name="bonus" label="Thưởng / Hoa hồng" type="text" fullWidth value={formatCurrency(editFormData.bonus)} onChange={handleEditFormChange} />
+            <TextField margin="dense" name="deductions" label="Tổng khấu trừ" type="text" fullWidth value={formatCurrency(editFormData.deductions)} onChange={handleEditFormChange} />
             <TextField margin="dense" name="paymentDate" label="Ngày thanh toán" type="date" fullWidth value={editFormData.paymentDate} onChange={handleEditFormChange} InputLabelProps={{ shrink: true }}/>
             <TextField margin="dense" name="notes" label="Ghi chú" type="text" fullWidth multiline rows={2} value={editFormData.notes} onChange={handleEditFormChange} />
             <FormControlLabel
