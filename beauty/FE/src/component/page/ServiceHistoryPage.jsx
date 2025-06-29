@@ -867,6 +867,7 @@ const ServiceHistoryPage = () => {
                                         </div>
                                         <div>
                                             <div className="fw-bold text-primary">{item.serviceName}</div>
+                                            <small className="text-muted">Mã lịch hẹn: #{item.appointmentId}</small>
                                             {/* <small className="text-muted">Mã dịch vụ: #{item.serviceId}</small> */}
                                         </div>
                                     </div>
@@ -896,8 +897,7 @@ const ServiceHistoryPage = () => {
                                 </td>
                                 <td className="py-3 align-middle">
                                     <div>
-                                        <div className="fw-bold text-info">{item.userName}</div>
-                                        <small className="text-muted">Mã lịch hẹn: #{item.appointmentId}</small>
+                                        <div className="fw-bold text-info">{item.userName}</div>                                      
                                     </div>
                                 </td>
                                 <td className="py-3 align-middle">

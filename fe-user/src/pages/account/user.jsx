@@ -78,9 +78,9 @@ const UserAccount = () => {
   useEffect(() => {
     setLoading(true);
     fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
-        const usersData = (data.data || []).map(u => ({
+      .then((res) => res.json())
+      .then((data) => {
+        const usersData = (data.data || []).map((u) => ({
           ...u,
           customer_id: u.customer_id || u.id, // fallback if BE returns id
           full_name: u.full_name || u.fullName || '',
@@ -103,9 +103,7 @@ const UserAccount = () => {
         }));
 
         // Sort by newest first
-        const sortedUsers = usersData.sort((a, b) =>
-          new Date(b.created_at) - new Date(a.created_at)
-        );
+        const sortedUsers = usersData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
         setUsers(sortedUsers);
         setFilteredUsers(sortedUsers);
@@ -122,14 +120,14 @@ const UserAccount = () => {
       // Apply status filter
       if (statusFilter !== 'all') {
         const isActive = statusFilter === 'active';
-        results = results.filter(user => user.is_active === isActive);
+        results = results.filter((user) => user.is_active === isActive);
       }
 
       // Apply search query
       if (searchQuery) {
         const lowercasedQuery = searchQuery.toLowerCase();
         results = results.filter(
-          user =>
+          (user) =>
             (user.full_name && user.full_name.toLowerCase().includes(lowercasedQuery)) ||
             (user.phone && user.phone.toLowerCase().includes(lowercasedQuery)) ||
             (user.email && user.email.toLowerCase().includes(lowercasedQuery))
@@ -269,9 +267,9 @@ const UserAccount = () => {
       // Reload users
       setLoading(true);
       fetch(API_URL)
-        .then(res => res.json())
-        .then(data => {
-          const usersData = (data.data || []).map(u => ({
+        .then((res) => res.json())
+        .then((data) => {
+          const usersData = (data.data || []).map((u) => ({
             ...u,
             customer_id: u.customer_id || u.id,
             full_name: u.full_name || u.fullName || '',
@@ -294,9 +292,7 @@ const UserAccount = () => {
           }));
 
           // Sort by newest first
-          const sortedUsers = usersData.sort((a, b) =>
-            new Date(b.created_at) - new Date(a.created_at)
-          );
+          const sortedUsers = usersData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
           setUsers(sortedUsers);
           setFilteredUsers(sortedUsers);
@@ -305,7 +301,7 @@ const UserAccount = () => {
         .catch(() => setLoading(false));
       setOpen(false);
     } catch (error) {
-      console.error("Error saving user:", error);
+      console.error('Error saving user:', error);
     }
   };
 
@@ -315,9 +311,9 @@ const UserAccount = () => {
       // Reload users
       setLoading(true);
       fetch(API_URL)
-        .then(res => res.json())
-        .then(data => {
-          const usersData = (data.data || []).map(u => ({
+        .then((res) => res.json())
+        .then((data) => {
+          const usersData = (data.data || []).map((u) => ({
             ...u,
             customer_id: u.customer_id || u.id,
             full_name: u.full_name || u.fullName || '',
@@ -340,9 +336,7 @@ const UserAccount = () => {
           }));
 
           // Sort by newest first
-          const sortedUsers = usersData.sort((a, b) =>
-            new Date(b.created_at) - new Date(a.created_at)
-          );
+          const sortedUsers = usersData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
           setUsers(sortedUsers);
           setFilteredUsers(sortedUsers);
@@ -350,7 +344,7 @@ const UserAccount = () => {
         })
         .catch(() => setLoading(false));
     } catch (error) {
-      console.error("Error deleting user:", error);
+      console.error('Error deleting user:', error);
     }
   };
 
@@ -422,12 +416,7 @@ const UserAccount = () => {
               </Select>
             </FormControl>
           </Box>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<PlusOutlined />}
-            onClick={() => handleOpen()}
-          >
+          <Button variant="contained" color="primary" startIcon={<PlusOutlined />} onClick={() => handleOpen()}>
             Add Customer
           </Button>
         </Grid>
@@ -447,13 +436,27 @@ const UserAccount = () => {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell align={'left'} width="5%" sx={{ backgroundColor: '#f8f8f8' }}>STT</TableCell>
-                    <TableCell align={'left'} width="15%" sx={{ backgroundColor: '#f8f8f8' }}>Full Name</TableCell>
-                    <TableCell align={'left'} width="12%" sx={{ backgroundColor: '#f8f8f8' }}>Phone</TableCell>
-                    <TableCell align={'left'} width="15%" sx={{ backgroundColor: '#f8f8f8' }}>Email</TableCell>
-                    <TableCell align={'left'} width="18%" sx={{ backgroundColor: '#f8f8f8' }}>Address</TableCell>
-                    <TableCell align={'left'} width="10%" sx={{ backgroundColor: '#f8f8f8' }}>Status</TableCell>
-                    <TableCell width="15%" align="left" sx={{ backgroundColor: '#f8f8f8' }}>Actions</TableCell>
+                    <TableCell align={'left'} width="5%" sx={{ backgroundColor: '#f8f8f8' }}>
+                      STT
+                    </TableCell>
+                    <TableCell align={'left'} width="15%" sx={{ backgroundColor: '#f8f8f8' }}>
+                      Full Name
+                    </TableCell>
+                    <TableCell align={'left'} width="12%" sx={{ backgroundColor: '#f8f8f8' }}>
+                      Phone
+                    </TableCell>
+                    <TableCell align={'left'} width="15%" sx={{ backgroundColor: '#f8f8f8' }}>
+                      Email
+                    </TableCell>
+                    <TableCell align={'left'} width="18%" sx={{ backgroundColor: '#f8f8f8' }}>
+                      Address
+                    </TableCell>
+                    <TableCell align={'left'} width="10%" sx={{ backgroundColor: '#f8f8f8' }}>
+                      Status
+                    </TableCell>
+                    <TableCell width="15%" align="left" sx={{ backgroundColor: '#f8f8f8' }}>
+                      Actions
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -463,11 +466,7 @@ const UserAccount = () => {
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar
-                              src={user.image_url}
-                              alt={user.full_name}
-                              sx={{ width: 32, height: 32 }}
-                            >
+                            <Avatar src={user.image_url} alt={user.full_name} sx={{ width: 32, height: 32 }}>
                               {!user.image_url && <UserOutlined />}
                             </Avatar>
                             {user.full_name}
@@ -478,18 +477,18 @@ const UserAccount = () => {
                         <TableCell>{user.address}</TableCell>
                         <TableCell>
                           <Chip
-                            label={user.is_active ? "Active" : "Inactive"}
+                            label={user.is_active ? 'Active' : 'Inactive'}
                             size="small"
-                            color={user.is_active ? "success" : "default"}
+                            color={user.is_active ? 'success' : 'default'}
                             sx={{
                               borderRadius: '16px',
                               fontWeight: 500,
                               fontSize: '0.75rem',
-                              color: user.is_active ? '#fff' : '#555',
+                              color: user.is_active ? '#fff' : '#555'
                             }}
                           />
                         </TableCell>
-                        <TableCell >
+                        <TableCell>
                           {/* Actions */}
                           <IconButton onClick={() => handleViewOpen(user)} color="info" size="small">
                             <EyeOutlined />
@@ -505,7 +504,9 @@ const UserAccount = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} align="center">No customers found</TableCell>
+                      <TableCell colSpan={6} align="center">
+                        No customers found
+                      </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -526,9 +527,7 @@ const UserAccount = () => {
 
       {/* Add/Edit Customer Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-          {currentUser ? 'Edit Customer' : 'Add Customer'}
-        </DialogTitle>
+        <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>{currentUser ? 'Edit Customer' : 'Add Customer'}</DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           {/* Image Upload Section */}
           <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -570,19 +569,8 @@ const UserAccount = () => {
                 <UserOutlined style={{ fontSize: 50, color: '#bdbdbd' }} />
               </Avatar>
             )}
-            <input
-              type="file"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-            <Button
-              variant="outlined"
-              startIcon={<UploadOutlined />}
-              onClick={handleUploadClick}
-              size="small"
-            >
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageChange} />
+            <Button variant="outlined" startIcon={<UploadOutlined />} onClick={handleUploadClick} size="small">
               Upload Avatar
             </Button>
           </Box>
@@ -598,10 +586,7 @@ const UserAccount = () => {
             InputProps={{
               endAdornment: formData.full_name ? (
                 <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('full_name')}
-                  >
+                  <IconButton size="small" onClick={() => handleClearField('full_name')}>
                     <CloseOutlined style={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
@@ -619,10 +604,7 @@ const UserAccount = () => {
             InputProps={{
               endAdornment: formData.phone ? (
                 <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('phone')}
-                  >
+                  <IconButton size="small" onClick={() => handleClearField('phone')}>
                     <CloseOutlined style={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
@@ -640,10 +622,7 @@ const UserAccount = () => {
             InputProps={{
               endAdornment: formData.email ? (
                 <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('email')}
-                  >
+                  <IconButton size="small" onClick={() => handleClearField('email')}>
                     <CloseOutlined style={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
@@ -655,7 +634,7 @@ const UserAccount = () => {
               margin="dense"
               name="password"
               label="Password"
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               fullWidth
               value={formData.password}
               onChange={handleChange}
@@ -663,18 +642,11 @@ const UserAccount = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     {formData.password && (
-                      <IconButton
-                        size="small"
-                        onClick={() => handleClearField('password')}
-                      >
+                      <IconButton size="small" onClick={() => handleClearField('password')}>
                         <CloseOutlined style={{ fontSize: 16 }} />
                       </IconButton>
                     )}
-                    <IconButton
-                      size="small"
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
+                    <IconButton size="small" onClick={() => setShowPassword(!showPassword)} edge="end">
                       {showPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                     </IconButton>
                   </InputAdornment>
@@ -695,10 +667,7 @@ const UserAccount = () => {
             InputProps={{
               endAdornment: formData.address ? (
                 <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClearField('address')}
-                  >
+                  <IconButton size="small" onClick={() => handleClearField('address')}>
                     <CloseOutlined style={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
@@ -706,20 +675,18 @@ const UserAccount = () => {
             }}
           />
           <FormControlLabel
-            control={
-              <Switch
-                checked={formData.is_active}
-                onChange={handleChange}
-                name="is_active"
-              />
-            }
+            control={<Switch checked={formData.is_active} onChange={handleChange} name="is_active" />}
             label="Active"
             margin="dense"
           />
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-          <Button onClick={handleClose} variant="outlined" color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" color="primary">Save</Button>
+          <Button onClick={handleClose} variant="outlined" color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleSave} variant="contained" color="primary">
+            Save
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -744,10 +711,7 @@ const UserAccount = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {/* Avatar and basic info */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar
-                  src={currentUser.image_url}
-                  sx={{ width: 80, height: 80 }}
-                >
+                <Avatar src={currentUser.image_url} sx={{ width: 80, height: 80 }}>
                   {!currentUser.image_url && <UserOutlined style={{ fontSize: 40 }} />}
                 </Avatar>
                 <Box>
@@ -756,9 +720,9 @@ const UserAccount = () => {
                     Customer
                   </Typography>
                   <Chip
-                    label={currentUser.is_active ? "Active" : "Inactive"}
+                    label={currentUser.is_active ? 'Active' : 'Inactive'}
                     size="small"
-                    color={currentUser.is_active ? "success" : "default"}
+                    color={currentUser.is_active ? 'success' : 'default'}
                     sx={{ mt: 0.5, borderRadius: '16px' }}
                   />
                 </Box>
@@ -773,15 +737,21 @@ const UserAccount = () => {
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Email</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Email
+                    </Typography>
                     <Typography>{currentUser.email}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Phone</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Phone
+                    </Typography>
                     <Typography>{currentUser.phone || 'Not provided'}</Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary">Address</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Address
+                    </Typography>
                     <Typography>{currentUser.address || 'Not provided'}</Typography>
                   </Grid>
                 </Grid>
@@ -796,11 +766,15 @@ const UserAccount = () => {
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Customer ID</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Customer ID
+                    </Typography>
                     <Typography>#{currentUser.customer_id}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Created On</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Created On
+                    </Typography>
                     <Typography>{formatDate(currentUser.created_at)}</Typography>
                   </Grid>
                 </Grid>
@@ -809,12 +783,7 @@ const UserAccount = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-          <Button
-            onClick={handleOpenEditFromView}
-            startIcon={<EditOutlined />}
-            variant="contained"
-            color="primary"
-          >
+          <Button onClick={handleOpenEditFromView} startIcon={<EditOutlined />} variant="contained" color="primary">
             Edit
           </Button>
           <Button onClick={handleViewClose} variant="outlined">

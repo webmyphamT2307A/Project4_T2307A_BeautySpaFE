@@ -1,9 +1,5 @@
 // assets
-import {
-  ClockCircleOutlined,
-  UnorderedListOutlined,
-  CalendarOutlined
-} from '@ant-design/icons';
+import { ClockCircleOutlined, UnorderedListOutlined, CalendarOutlined } from '@ant-design/icons';
 
 // icons
 const icons = {

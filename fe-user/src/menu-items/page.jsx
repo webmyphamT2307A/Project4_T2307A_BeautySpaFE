@@ -33,7 +33,7 @@ const pages = {
           target: true
         }
       ]
-    : [] 
+    : []
 };
 
 export default pages;

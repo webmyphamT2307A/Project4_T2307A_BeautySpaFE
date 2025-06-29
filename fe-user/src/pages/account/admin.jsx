@@ -1,9 +1,34 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Grid, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Select, FormControl,
-  InputLabel, Switch, FormControlLabel, IconButton, TablePagination, Box, InputAdornment, Chip,
-  Avatar, Typography, Divider, Tooltip
+  Grid,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Switch,
+  FormControlLabel,
+  IconButton,
+  TablePagination,
+  Box,
+  InputAdornment,
+  Chip,
+  Avatar,
+  Typography,
+  Divider,
+  Tooltip
 } from '@mui/material';
 import {
   PlusOutlined,
@@ -54,28 +79,27 @@ const AdminAccount = () => {
 
   useEffect(() => {
     fetch(`${ROLE_URL}`)
-      .then(res => res.json())
-      .then(data => setRoles(data.data || []));
+      .then((res) => res.json())
+      .then((data) => setRoles(data.data || []));
     fetch(`${BRANCH_URL}`)
-      .then(res => res.json())
-      .then(data => setBranches(data.data || []));
+      .then((res) => res.json())
+      .then((data) => setBranches(data.data || []));
   }, []);
 
   // Lấy danh sách user từ BE
   useEffect(() => {
     setLoading(true);
     fetch(`${API_URL}/find-all`)
-      .then(res => res.json())
-      .then(data => {
-        const usersData = (data.data || []).map(u => ({
+      .then((res) => res.json())
+      .then((data) => {
+        const usersData = (data.data || []).map((u) => ({
           ...u,
           isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
         }));
 
         // Sort by newest first
-        const sortedUsers = usersData.sort((a, b) =>
-          new Date(b.createdAt || b.created_at || '2023') -
-          new Date(a.createdAt || a.created_at || '2023')
+        const sortedUsers = usersData.sort(
+          (a, b) => new Date(b.createdAt || b.created_at || '2023') - new Date(a.createdAt || a.created_at || '2023')
         );
 
         setUsers(sortedUsers);
@@ -90,22 +114,19 @@ const AdminAccount = () => {
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      results = results.filter(user => user.isActive === Boolean(Number(statusFilter)));
+      results = results.filter((user) => user.isActive === Boolean(Number(statusFilter)));
     }
 
     // Apply role filter
     if (roleFilter !== 'all') {
-      results = results.filter(user =>
-        (user.role?.id === Number(roleFilter)) ||
-        (user.roleId === Number(roleFilter))
-      );
+      results = results.filter((user) => user.role?.id === Number(roleFilter) || user.roleId === Number(roleFilter));
     }
 
     // Apply search filter
     if (searchQuery) {
       const lower = searchQuery.toLowerCase();
       results = results.filter(
-        user =>
+        (user) =>
           user.id?.toString().includes(lower) ||
           user.fullName?.toLowerCase().includes(lower) ||
           user.phone?.toLowerCase().includes(lower) ||
@@ -119,8 +140,8 @@ const AdminAccount = () => {
 
   const handleOpen = (user = null) => {
     if (user) {
-      const selectedRole = roles.find(r => r.id === (user.role?.id || user.roleId));
-      const selectedBranch = branches.find(b => b.id === (user.branch?.id || user.branchId));
+      const selectedRole = roles.find((r) => r.id === (user.role?.id || user.roleId));
+      const selectedBranch = branches.find((b) => b.id === (user.branch?.id || user.branchId));
       setCurrentUser(user);
       setFormData({
         fullName: user.fullName || '',
@@ -174,10 +195,10 @@ const AdminAccount = () => {
     if (name === 'isActive') {
       setFormData({ ...formData, isActive: checked });
     } else if (name === 'role') {
-      const roleObj = roles.find(r => r.id === Number(value));
+      const roleObj = roles.find((r) => r.id === Number(value));
       setFormData({ ...formData, role: roleObj });
     } else if (name === 'branch') {
-      const branchObj = branches.find(b => b.id === Number(value));
+      const branchObj = branches.find((b) => b.id === Number(value));
       setFormData({ ...formData, branch: branchObj });
     } else {
       setFormData({ ...formData, [name]: value });
@@ -228,7 +249,7 @@ const AdminAccount = () => {
           branchId: formData.branch?.id,
           imageUrl: formData.imageUrl,
           isActive: formData.isActive,
-          description: ""
+          description: ''
         })
       });
       if (res.ok) {
@@ -258,16 +279,15 @@ const AdminAccount = () => {
       }
     }
     fetch(`${API_URL}/find-all`)
-      .then(res => res.json())
-      .then(data => {
-        const usersData = (data.data || []).map(u => ({
+      .then((res) => res.json())
+      .then((data) => {
+        const usersData = (data.data || []).map((u) => ({
           ...u,
           isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
         }));
         // Sort by newest first
-        const sortedUsers = usersData.sort((a, b) =>
-          new Date(b.createdAt || b.created_at || '2023') -
-          new Date(a.createdAt || a.created_at || '2023')
+        const sortedUsers = usersData.sort(
+          (a, b) => new Date(b.createdAt || b.created_at || '2023') - new Date(a.createdAt || a.created_at || '2023')
         );
         setUsers(sortedUsers);
         setFilteredUsers(sortedUsers);
@@ -285,15 +305,14 @@ const AdminAccount = () => {
       toast.error('Xóa thất bại!');
     }
     fetch(`${API_URL}/find-all`)
-      .then(res => res.json())
-      .then(data => {
-        const usersData = (data.data || []).map(u => ({
+      .then((res) => res.json())
+      .then((data) => {
+        const usersData = (data.data || []).map((u) => ({
           ...u,
           isActive: u.isActive === true || u.isActive === 1 || u.isActive === 'true'
         }));
-        const sortedUsers = usersData.sort((a, b) =>
-          new Date(b.createdAt || b.created_at || '2023') -
-          new Date(a.createdAt || a.created_at || '2023')
+        const sortedUsers = usersData.sort(
+          (a, b) => new Date(b.createdAt || b.created_at || '2023') - new Date(a.createdAt || a.created_at || '2023')
         );
         setUsers(sortedUsers);
         setFilteredUsers(sortedUsers);
@@ -337,12 +356,12 @@ const AdminAccount = () => {
     if (user.role && user.role.name) return user.role.name;
     // Nếu user có role là object nhưng không có name, thử lấy theo id
     if (user.role && user.role.id && roles.length > 0) {
-      const found = roles.find(r => Number(r.id) === Number(user.role.id));
+      const found = roles.find((r) => Number(r.id) === Number(user.role.id));
       return found ? found.name : 'Unknown Role';
     }
     // Nếu user có roleId, tìm theo roleId
     if (user.roleId && roles.length > 0) {
-      const found = roles.find(r => Number(r.id) === Number(user.roleId));
+      const found = roles.find((r) => Number(r.id) === Number(user.roleId));
       return found ? found.name : 'Unknown Role';
     }
     return 'Unknown Role';
@@ -352,7 +371,7 @@ const AdminAccount = () => {
   const getBranchName = (user) => {
     if (user.branch && user.branch.name) return user.branch.name;
     if (user.branchId && branches.length > 0) {
-      const found = branches.find(b => b.id === user.branchId);
+      const found = branches.find((b) => b.id === user.branchId);
       return found ? found.name : '-';
     }
     return '-';
@@ -396,15 +415,9 @@ const AdminAccount = () => {
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel id="role-filter-label">Role</InputLabel>
-              <Select
-                labelId="role-filter-label"
-                id="role-filter"
-                value={roleFilter}
-                label="Role"
-                onChange={handleRoleFilterChange}
-              >
+              <Select labelId="role-filter-label" id="role-filter" value={roleFilter} label="Role" onChange={handleRoleFilterChange}>
                 <MenuItem value="all">All Roles</MenuItem>
-                {roles.map(role => (
+                {roles.map((role) => (
                   <MenuItem key={role.id} value={role.id}>
                     {role.name}
                   </MenuItem>
@@ -412,12 +425,7 @@ const AdminAccount = () => {
               </Select>
             </FormControl>
           </Box>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<PlusOutlined />}
-            onClick={() => handleOpen()}
-          >
+          <Button variant="contained" color="primary" startIcon={<PlusOutlined />} onClick={() => handleOpen()}>
             Add Admin
           </Button>
         </Grid>
@@ -444,11 +452,7 @@ const AdminAccount = () => {
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar
-                              src={user.imageUrl}
-                              alt={user.fullName}
-                              sx={{ width: 32, height: 32 }}
-                            >
+                            <Avatar src={user.imageUrl} alt={user.fullName} sx={{ width: 32, height: 32 }}>
                               {!user.imageUrl && <UserOutlined />}
                             </Avatar>
                             {user.fullName}
@@ -457,25 +461,19 @@ const AdminAccount = () => {
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                          <Chip
-                            label={getRoleName(user)}
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                            sx={{ borderRadius: '16px' }}
-                          />
+                          <Chip label={getRoleName(user)} size="small" color="primary" variant="outlined" sx={{ borderRadius: '16px' }} />
                         </TableCell>
                         <TableCell>{getBranchName(user)}</TableCell>
                         <TableCell>
                           <Chip
-                            label={user.isActive ? "Active" : "Inactive"}
+                            label={user.isActive ? 'Active' : 'Inactive'}
                             size="small"
-                            color={user.isActive ? "success" : "default"}
+                            color={user.isActive ? 'success' : 'default'}
                             sx={{
                               borderRadius: '16px',
                               fontWeight: 500,
                               fontSize: '0.75rem',
-                              color: user.isActive ? '#fff' : '#555',
+                              color: user.isActive ? '#fff' : '#555'
                             }}
                           />
                         </TableCell>
@@ -500,7 +498,9 @@ const AdminAccount = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={9} align="center">No admins found</TableCell>
+                      <TableCell colSpan={9} align="center">
+                        No admins found
+                      </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -521,19 +521,13 @@ const AdminAccount = () => {
 
       {/* Add/Edit Admin Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-          {currentUser ? 'Edit Admin' : 'Add Admin'}
-        </DialogTitle>
+        <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>{currentUser ? 'Edit Admin' : 'Add Admin'}</DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           {/* Image Upload Section */}
           <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             {imagePreview ? (
               <Box sx={{ position: 'relative', mb: 2 }}>
-                <Avatar
-                  src={imagePreview}
-                  alt="Admin avatar"
-                  sx={{ width: 100, height: 100, borderRadius: '50%' }}
-                />
+                <Avatar src={imagePreview} alt="Admin avatar" sx={{ width: 100, height: 100, borderRadius: '50%' }} />
                 <IconButton
                   size="small"
                   sx={{
@@ -549,25 +543,12 @@ const AdminAccount = () => {
                 </IconButton>
               </Box>
             ) : (
-              <Avatar
-                sx={{ width: 100, height: 100, bgcolor: 'primary.main', mb: 2 }}
-              >
+              <Avatar sx={{ width: 100, height: 100, bgcolor: 'primary.main', mb: 2 }}>
                 <UserOutlined style={{ fontSize: 40 }} />
               </Avatar>
             )}
-            <input
-              type="file"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<UploadOutlined />}
-              onClick={handleUploadClick}
-            >
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageChange} />
+            <Button variant="outlined" color="primary" startIcon={<UploadOutlined />} onClick={handleUploadClick}>
               Upload Avatar
             </Button>
           </Box>
@@ -632,7 +613,7 @@ const AdminAccount = () => {
               margin="dense"
               name="password"
               label="Password"
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               fullWidth
               value={formData.password}
               onChange={handleChange}
@@ -654,13 +635,8 @@ const AdminAccount = () => {
           )}
           <FormControl fullWidth margin="dense">
             <InputLabel>Role</InputLabel>
-            <Select
-              name="role"
-              value={formData.role?.id || ''}
-              label="Role"
-              onChange={handleChange}
-            >
-              {roles.map(role => (
+            <Select name="role" value={formData.role?.id || ''} label="Role" onChange={handleChange}>
+              {roles.map((role) => (
                 <MenuItem key={role.id} value={role.id}>
                   {role.name}
                 </MenuItem>
@@ -669,13 +645,8 @@ const AdminAccount = () => {
           </FormControl>
           <FormControl fullWidth margin="dense">
             <InputLabel>Branch</InputLabel>
-            <Select
-              name="branch"
-              value={formData.branch?.id || ''}
-              label="Branch"
-              onChange={handleChange}
-            >
-              {branches.map(branch => (
+            <Select name="branch" value={formData.branch?.id || ''} label="Branch" onChange={handleChange}>
+              {branches.map((branch) => (
                 <MenuItem key={branch.id} value={branch.id}>
                   {branch.name}
                 </MenuItem>
@@ -704,20 +675,18 @@ const AdminAccount = () => {
             }}
           />
           <FormControlLabel
-            control={
-              <Switch
-                checked={formData.isActive}
-                onChange={handleChange}
-                name="isActive"
-              />
-            }
+            control={<Switch checked={formData.isActive} onChange={handleChange} name="isActive" />}
             label="Active"
             margin="dense"
           />
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-          <Button onClick={handleClose} variant="outlined" color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" color="primary">Save</Button>
+          <Button onClick={handleClose} variant="outlined" color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleSave} variant="contained" color="primary">
+            Save
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -742,10 +711,7 @@ const AdminAccount = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {/* Avatar and basic info */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar
-                  src={currentUser.imageUrl}
-                  sx={{ width: 80, height: 80 }}
-                >
+                <Avatar src={currentUser.imageUrl} sx={{ width: 80, height: 80 }}>
                   {!currentUser.imageUrl && <UserOutlined style={{ fontSize: 40 }} />}
                 </Avatar>
                 <Box>
@@ -754,9 +720,9 @@ const AdminAccount = () => {
                     {getRoleName(currentUser)}
                   </Typography>
                   <Chip
-                    label={currentUser.isActive ? "Active" : "Inactive"}
+                    label={currentUser.isActive ? 'Active' : 'Inactive'}
                     size="small"
-                    color={currentUser.isActive ? "success" : "default"}
+                    color={currentUser.isActive ? 'success' : 'default'}
                     sx={{ mt: 0.5, borderRadius: '16px' }}
                   />
                 </Box>
@@ -771,15 +737,21 @@ const AdminAccount = () => {
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Email</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Email
+                    </Typography>
                     <Typography>{currentUser.email}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Phone</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Phone
+                    </Typography>
                     <Typography>{currentUser.phone || 'Not provided'}</Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary">Address</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Address
+                    </Typography>
                     <Typography>{currentUser.address || 'Not provided'}</Typography>
                   </Grid>
                 </Grid>
@@ -794,19 +766,27 @@ const AdminAccount = () => {
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Branch</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Branch
+                    </Typography>
                     <Typography>{getBranchName(currentUser)}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Role</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Role
+                    </Typography>
                     <Typography>{getRoleName(currentUser)}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">User ID</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      User ID
+                    </Typography>
                     <Typography>#{currentUser.id}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">Created On</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Created On
+                    </Typography>
                     <Typography>{formatDate(currentUser.createdAt || currentUser.created_at)}</Typography>
                   </Grid>
                 </Grid>
@@ -815,12 +795,7 @@ const AdminAccount = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-          <Button
-            onClick={handleOpenEditFromView}
-            startIcon={<EditOutlined />}
-            variant="contained"
-            color="primary"
-          >
+          <Button onClick={handleOpenEditFromView} startIcon={<EditOutlined />} variant="contained" color="primary">
             Edit
           </Button>
           <Button onClick={handleViewClose} variant="outlined">

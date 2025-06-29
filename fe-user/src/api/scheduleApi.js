@@ -6,7 +6,7 @@ const API_BASE_URL = 'http://localhost:8080/api/v1/users-schedules';
 const getAuthHeaders = () => {
   const token = Cookies.get('staff_token');
   return {
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json'
   };
 };
@@ -15,8 +15,8 @@ const getAuthHeaders = () => {
 export const getSchedules = async (filters = {}) => {
   try {
     const params = new URLSearchParams();
-    
-    Object.keys(filters).forEach(key => {
+
+    Object.keys(filters).forEach((key) => {
       if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
         params.append(key, filters[key]);
       }
@@ -42,8 +42,8 @@ export const getSchedules = async (filters = {}) => {
 export const getSchedulesByUserId = async (userId, filters = {}) => {
   try {
     const params = new URLSearchParams();
-    
-    Object.keys(filters).forEach(key => {
+
+    Object.keys(filters).forEach((key) => {
       if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
         params.append(key, filters[key]);
       }
@@ -184,20 +184,20 @@ export const checkOut = async (scheduleId) => {
 // Helper functions for status and formatting
 export const getStatusLabel = (status) => {
   const statusMap = {
-    'pending': 'Chờ xử lý',
-    'confirmed': 'Đã xác nhận', 
-    'completed': 'Hoàn thành',
-    'cancelled': 'Đã hủy'
+    pending: 'Chờ xử lý',
+    confirmed: 'Đã xác nhận',
+    completed: 'Hoàn thành',
+    cancelled: 'Đã hủy'
   };
   return statusMap[status] || status || 'N/A';
 };
 
 export const getStatusColor = (status) => {
   const colorMap = {
-    'pending': 'warning',
-    'confirmed': 'primary',
-    'completed': 'success', 
-    'cancelled': 'error'
+    pending: 'warning',
+    confirmed: 'primary',
+    completed: 'success',
+    cancelled: 'error'
   };
   return colorMap[status] || 'default';
 };
@@ -240,4 +240,4 @@ export default {
   getStatusColor,
   formatWorkDate,
   formatTime
-}; 
+};

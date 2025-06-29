@@ -21,13 +21,7 @@ import {
   Tooltip
 } from '@mui/material';
 import MainCard from 'components/MainCard';
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SearchOutlined,
-  CloseOutlined
-} from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:8080/api/v1/roles';
@@ -47,8 +41,8 @@ const RoleManager = () => {
   // Load roles from backend
   useEffect(() => {
     fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
           setRoles(data.data);
         } else {
@@ -99,12 +93,10 @@ const RoleManager = () => {
       fetch(`${API_URL}/update?roleId=${currentRole.id}&newRoleName=${formData.name}`, {
         method: 'PUT'
       })
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.status === 'SUCCESS') {
-            setRoles(roles.map(role =>
-              role.id === currentRole.id ? { ...role, name: formData.name } : role
-            ));
+            setRoles(roles.map((role) => (role.id === currentRole.id ? { ...role, name: formData.name } : role)));
             toast.success('Cập nhật role thành công');
           } else {
             toast.error('Cập nhật thất bại');
@@ -120,14 +112,14 @@ const RoleManager = () => {
       fetch(`${API_URL}/create?roleName=${formData.name}`, {
         method: 'GET'
       })
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.status === 'SUCCESS') {
             toast.success('Tạo mới role thành công');
             // Reload roles
             fetch(API_URL)
-              .then(res => res.json())
-              .then(data => {
+              .then((res) => res.json())
+              .then((data) => {
                 if (data.status === 'SUCCESS') {
                   setRoles(data.data);
                 }
@@ -149,10 +141,10 @@ const RoleManager = () => {
       fetch(`${API_URL}/delete?roleId=${roleId}`, {
         method: 'PUT'
       })
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.status === 'SUCCESS') {
-            setRoles(roles.filter(role => role.id !== roleId));
+            setRoles(roles.filter((role) => role.id !== roleId));
             toast.success('Xóa role thành công');
           } else {
             toast.error('Xóa thất bại');
@@ -163,20 +155,17 @@ const RoleManager = () => {
   };
 
   // Filter roles based on search query
-  const filteredRoles = roles.filter(role =>
-    role.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredRoles = roles.filter((role) => role.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <MainCard title="Role Management" secondary={
-      <Button
-        variant="contained"
-        startIcon={<PlusOutlined />}
-        onClick={() => handleOpen()}
-      >
-        Add Role
-      </Button>
-    }>
+    <MainCard
+      title="Role Management"
+      secondary={
+        <Button variant="contained" startIcon={<PlusOutlined />} onClick={() => handleOpen()}>
+          Add Role
+        </Button>
+      }
+    >
       <Box sx={{ mb: 3 }}>
         <TextField
           fullWidth
@@ -192,10 +181,7 @@ const RoleManager = () => {
             ),
             endAdornment: searchQuery ? (
               <InputAdornment position="end">
-                <IconButton
-                  size="small"
-                  onClick={() => setSearchQuery('')}
-                >
+                <IconButton size="small" onClick={() => setSearchQuery('')}>
                   <CloseOutlined style={{ fontSize: 16 }} />
                 </IconButton>
               </InputAdornment>
@@ -223,26 +209,24 @@ const RoleManager = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredRoles
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((role, index) => (
-                <TableRow key={role.id}>
-                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                  <TableCell>{role.name}</TableCell>
-                  <TableCell align="center">
-                    <Tooltip title="Edit">
-                      <IconButton size="small" color="primary" onClick={() => handleOpen(role)}>
-                        <EditOutlined />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton size="small" color="error" onClick={() => handleDelete(role.id)}>
-                        <DeleteOutlined />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
+            {filteredRoles.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((role, index) => (
+              <TableRow key={role.id}>
+                <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                <TableCell>{role.name}</TableCell>
+                <TableCell align="center">
+                  <Tooltip title="Edit">
+                    <IconButton size="small" color="primary" onClick={() => handleOpen(role)}>
+                      <EditOutlined />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton size="small" color="error" onClick={() => handleDelete(role.id)}>
+                      <DeleteOutlined />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
@@ -259,9 +243,7 @@ const RoleManager = () => {
 
       {/* Add/Edit Role Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {currentRole ? 'Edit Role' : 'Add Role'}
-        </DialogTitle>
+        <DialogTitle>{currentRole ? 'Edit Role' : 'Add Role'}</DialogTitle>
         <DialogContent>
           <TextField
             margin="dense"
@@ -275,8 +257,12 @@ const RoleManager = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} variant="outlined" color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" color="primary">Save</Button>
+          <Button onClick={handleClose} variant="outlined" color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleSave} variant="contained" color="primary">
+            Save
+          </Button>
         </DialogActions>
       </Dialog>
     </MainCard>

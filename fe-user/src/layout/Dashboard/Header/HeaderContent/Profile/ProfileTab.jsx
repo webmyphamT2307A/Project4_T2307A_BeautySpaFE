@@ -22,13 +22,13 @@ export default function ProfileTab() {
   const handleLogout = async () => {
     try {
       await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
-    } catch (e) { }
-   
+    } catch (e) {}
+
     Cookies.remove('admin_token', { path: '/admin' });
     Cookies.remove('admin_role', { path: '/admin' });
     Cookies.remove('staff_token', { path: '/staff' });
     Cookies.remove('staff_role', { path: '/staff' });
-   
+
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     navigate('/login');
@@ -64,7 +64,7 @@ export default function ProfileTab() {
       <ListItemButton onClick={handleLogout}>
         <ListItemIcon>
           <LogoutOutlined />
-        </ListItemIcon >
+        </ListItemIcon>
         <ListItemText primary="Logout" />
       </ListItemButton>
     </List>

@@ -27,7 +27,7 @@ export default function HeaderContent() {
     <>
       {!downLG && <Search />}
       {downLG && <Box sx={{ width: '100%', ml: 1 }} />}
-      
+
       {/* Reload Button */}
       <Tooltip title="Tải lại trang">
         <IconButton

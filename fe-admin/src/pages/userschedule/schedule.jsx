@@ -70,6 +70,17 @@ const statusOptions = [
 // ];
 
 const UserScheduleManager = () => {
+  // Config for date format - you can change this to test different formats
+  const DATE_FORMAT_CONFIG = {
+    // Try different formats if current one doesn't work:
+    // 'YYYY-MM-DD' (ISO format - most common)
+    // 'DD/MM/YYYY' (European format)
+    // 'MM/DD/YYYY' (US format)
+    // 'DD-MM-YYYY' (European with dashes)
+    // 'YYYY/MM/DD' (Asian format)
+    format: 'YYYY-MM-DD' // Default: ISO format - change this if needed
+  };
+
   const [schedules, setSchedules] = useState([]);
   const [users, setUsers] = useState([]);
   const [timeslots, setTimeslots] = useState([]);
@@ -98,16 +109,83 @@ const UserScheduleManager = () => {
     checkOutTime: ''
   });
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterByUserId, setFilterByUserId] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterMonth, setFilterMonth] = useState('');
-  const [filterYear, setFilterYear] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  // Load saved filters from localStorage
+  const loadSavedFilters = () => {
+    try {
+      const saved = localStorage.getItem('scheduleFilters');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading saved filters:', error);
+    }
+    return {
+      searchQuery: '',
+      filterByUserId: '',
+      filterStatus: '',
+      filterMonth: '',
+      filterYear: '',
+      startDate: '',
+      endDate: '',
+      rowsPerPage: 10
+    };
+  };
+
+  const savedFilters = loadSavedFilters();
+  
+  const [searchQuery, setSearchQuery] = useState(savedFilters.searchQuery);
+  const [filterByUserId, setFilterByUserId] = useState(savedFilters.filterByUserId);
+  const [filterStatus, setFilterStatus] = useState(savedFilters.filterStatus);
+  const [filterMonth, setFilterMonth] = useState(savedFilters.filterMonth);
+  const [filterYear, setFilterYear] = useState(savedFilters.filterYear);
+  const [startDate, setStartDate] = useState(savedFilters.startDate);
+  const [endDate, setEndDate] = useState(savedFilters.endDate);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(savedFilters.rowsPerPage);
   const [loading, setLoading] = useState(false);
+
+  // Save filters to localStorage
+  const saveFilters = (filters) => {
+    try {
+      localStorage.setItem('scheduleFilters', JSON.stringify(filters));
+    } catch (error) {
+      console.error('Error saving filters:', error);
+    }
+  };
+
+  // Improved sorting function
+  const sortSchedulesByDate = (data) => {
+    return data.sort((a, b) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const dateA = new Date(a.workDate);
+      const dateB = new Date(b.workDate);
+      dateA.setHours(0, 0, 0, 0);
+      dateB.setHours(0, 0, 0, 0);
+      
+      // Hôm nay (0 ngày chênh lệch) lên đầu
+      if (dateA.getTime() === today.getTime() && dateB.getTime() !== today.getTime()) return -1;
+      if (dateB.getTime() === today.getTime() && dateA.getTime() !== today.getTime()) return 1;
+      if (dateA.getTime() === today.getTime() && dateB.getTime() === today.getTime()) return 0;
+      
+      // Cả hai đều trong tương lai
+      if (dateA > today && dateB > today) {
+        return dateA - dateB; // Gần nhất trước
+      }
+      
+      // Cả hai đều trong quá khứ  
+      if (dateA < today && dateB < today) {
+        return dateB - dateA; // Gần nhất trước
+      }
+      
+      // Một tương lai, một quá khứ -> tương lai trước
+      if (dateA > today && dateB < today) return -1;
+      if (dateA < today && dateB > today) return 1;
+      
+      return 0;
+    });
+  };
 
   // Fallback for old format or unmatched strings
   const formatShift = (shiftType, startTime, endTime) => {
@@ -252,32 +330,98 @@ const UserScheduleManager = () => {
       });
   }, []);
 
-  const fetchSchedules = () => {
+  // Format date for API (ensure consistent format)
+  const formatDateForAPI = (dateString) => {
+    if (!dateString) return dateString;
+    
+    // Date picker returns dates in YYYY-MM-DD format
+    // Parse the date string to avoid timezone issues
+    const dateParts = dateString.split('-');
+    if (dateParts.length !== 3) {
+      console.warn('Invalid date format:', dateString);
+      return dateString;
+    }
+    
+    const year = dateParts[0];
+    const month = dateParts[1];
+    const day = dateParts[2];
+    
+    // Generate different formats
+    const formats = {
+      'YYYY-MM-DD': dateString, // Already in this format from date picker
+      'DD/MM/YYYY': `${day}/${month}/${year}`,
+      'MM/DD/YYYY': `${month}/${day}/${year}`,
+      'DD-MM-YYYY': `${day}-${month}-${year}`,
+      'YYYY/MM/DD': `${year}/${month}/${day}`
+    };
+    
+    const selectedFormat = formats[DATE_FORMAT_CONFIG.format];
+    
+    console.log('Date formatting:', {
+      input: dateString,
+      selectedFormat: DATE_FORMAT_CONFIG.format,
+      output: selectedFormat,
+      allFormats: formats
+    });
+    
+    return selectedFormat;
+  };
+
+  const fetchSchedulesWithFilters = (customFilters = null) => {
+    // Use provided filters or current state
+    const filters = customFilters || {
+      filterByUserId,
+      filterStatus,
+      filterMonth,
+      filterYear,
+      startDate,
+      endDate
+    };
+
     let url = SCHEDULE_API_URL;
     const params = new URLSearchParams();
 
-    if (filterByUserId) params.append('userId', filterByUserId);
-    if (filterStatus) params.append('status', filterStatus);
-    if (filterMonth) params.append('month', filterMonth);
-    if (filterYear) params.append('year', filterYear);
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
+    // Debug log để kiểm tra các tham số
+    console.log('Fetching schedules with filters:', filters);
+
+    if (filters.filterByUserId) params.append('userId', filters.filterByUserId);
+    if (filters.filterStatus) params.append('status', filters.filterStatus);
+    if (filters.filterMonth) params.append('month', filters.filterMonth);
+    if (filters.filterYear) params.append('year', filters.filterYear);
+    
+    // Format dates before sending to API
+    if (filters.startDate) {
+      const formattedStartDate = formatDateForAPI(filters.startDate);
+      params.append('startDate', formattedStartDate);
+      console.log('Formatted startDate:', formattedStartDate);
+    }
+    if (filters.endDate) {
+      const formattedEndDate = formatDateForAPI(filters.endDate);
+      params.append('endDate', formattedEndDate);
+      console.log('Formatted endDate:', formattedEndDate);
+    }
 
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
 
+    console.log('Final API URL:', url); // Debug log
+
     setLoading(true);
     fetch(url)
-      .then(res => res.json())
-      .then(response => {
+      .then((res) => res.json())
+      .then((response) => {
+        console.log('API Response:', response); // Debug log
         if (response.status === 'SUCCESS' && Array.isArray(response.data)) {
-          setSchedules(response.data);
+          // Sử dụng function sort tối ưu
+          const sortedData = sortSchedulesByDate(response.data);
+          setSchedules(sortedData);
         } else {
           setSchedules([]);
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Error fetching schedules:', error);
         setSchedules([]);
         toast.error('Error loading schedules from server.');
       })
@@ -286,62 +430,138 @@ const UserScheduleManager = () => {
       });
   };
 
+  const fetchSchedules = () => {
+    fetchSchedulesWithFilters(); // Use current state
+  };
+
   useEffect(() => {
     fetchSchedules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterByUserId, filterStatus, filterMonth, filterYear, startDate, endDate]);
+
+  // Initial load when component mounts
+  useEffect(() => {
+    console.log('Component mounted, initial filters:', {
+      filterByUserId,
+      filterStatus,
+      filterMonth,
+      filterYear,
+      startDate,
+      endDate
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    const newRowsPerPage = parseInt(event.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
     setPage(0);
+    
+    // Save to localStorage
+    saveFilters({
+      searchQuery,
+      filterByUserId,
+      filterStatus,
+      filterMonth,
+      filterYear,
+      startDate,
+      endDate,
+      rowsPerPage: newRowsPerPage
+    });
   };
 
   const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
+    const newSearchQuery = event.target.value;
+    setSearchQuery(newSearchQuery);
     setPage(0);
+    
+    // Save to localStorage
+    saveFilters({
+      searchQuery: newSearchQuery,
+      filterByUserId,
+      filterStatus,
+      filterMonth,
+      filterYear,
+      startDate,
+      endDate,
+      rowsPerPage
+    });
   };
 
   const handleFilterChange = (filterType, value) => {
+    let newFilters = {
+      searchQuery,
+      filterByUserId,
+      filterStatus,
+      filterMonth,
+      filterYear,
+      startDate,
+      endDate,
+      rowsPerPage
+    };
+
     switch (filterType) {
       case 'userId':
         setFilterByUserId(value);
+        newFilters.filterByUserId = value;
         break;
       case 'status':
         setFilterStatus(value);
+        newFilters.filterStatus = value;
         break;
       case 'month':
         setFilterMonth(value);
         setStartDate('');
         setEndDate('');
+        newFilters.filterMonth = value;
+        newFilters.startDate = '';
+        newFilters.endDate = '';
         break;
       case 'year':
         setFilterYear(value);
         setStartDate('');
         setEndDate('');
+        newFilters.filterYear = value;
+        newFilters.startDate = '';
+        newFilters.endDate = '';
         break;
       case 'startDate':
         if (endDate && value > endDate) {
           setEndDate('');
+          newFilters.endDate = '';
         }
         setStartDate(value);
         setFilterMonth('');
         setFilterYear('');
+        newFilters.startDate = value;
+        newFilters.filterMonth = '';
+        newFilters.filterYear = '';
         break;
       case 'endDate':
         if (startDate && value < startDate) {
           setStartDate('');
+          newFilters.startDate = '';
         }
         setEndDate(value);
         setFilterMonth('');
         setFilterYear('');
+        newFilters.endDate = value;
+        newFilters.filterMonth = '';
+        newFilters.filterYear = '';
         break;
       default:
         break;
     }
+    
     setPage(0);
+    saveFilters(newFilters);
+    
+    // Immediately fetch schedules with the new filter values
+    fetchSchedulesWithFilters(newFilters);
   };
 
   const clearFilters = () => {
@@ -352,6 +572,19 @@ const UserScheduleManager = () => {
     setStartDate('');
     setEndDate('');
     setSearchQuery('');
+    
+    // Clear from localStorage
+    const clearedFilters = {
+      searchQuery: '',
+      filterByUserId: '',
+      filterStatus: '',
+      filterMonth: '',
+      filterYear: '',
+      startDate: '',
+      endDate: '',
+      rowsPerPage
+    };
+    saveFilters(clearedFilters);
   };
 
   const handleOpenDialog = (schedule = null) => {
@@ -623,7 +856,19 @@ const UserScheduleManager = () => {
                 ),
                 endAdornment: searchQuery ? (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearchQuery('')}>
+                    <IconButton size="small" onClick={() => {
+                      setSearchQuery('');
+                      saveFilters({
+                        searchQuery: '',
+                        filterByUserId,
+                        filterStatus,
+                        filterMonth,
+                        filterYear,
+                        startDate,
+                        endDate,
+                        rowsPerPage
+                      });
+                    }}>
                       <CloseOutlined style={{ fontSize: 16 }} />
                     </IconButton>
                   </InputAdornment>
@@ -1038,7 +1283,7 @@ const UserScheduleManager = () => {
           </Grid>
 
           {/* Preview of formatted shift */}
-          {formData.shift && (
+          {/* {formData.shift && (
             <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
               <Typography variant="body2" color="primary">
                 <ClockCircleOutlined style={{ marginRight: 8 }} />
@@ -1048,7 +1293,7 @@ const UserScheduleManager = () => {
                 Ca làm việc sẽ được lưu với định dạng này
               </Typography>
             </Box>
-          )}
+          )} */}
 
           {/* Check-in/Check-out Times */}
           <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>

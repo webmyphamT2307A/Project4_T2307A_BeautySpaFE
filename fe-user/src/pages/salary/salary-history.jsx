@@ -155,7 +155,7 @@ export default function SalaryHistory() {
   const getPaymentStatusChip = (paymentDate) => {
     const today = new Date();
     const payment = new Date(paymentDate);
-    
+
     if (payment <= today) {
       return <Chip label="Đã thanh toán" color="success" size="small" />;
     } else {
@@ -167,7 +167,9 @@ export default function SalaryHistory() {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', flexDirection: 'column', gap: 2 }}>
         <CircularProgress size={60} />
-        <Typography variant="h6" color="primary">Đang tải dữ liệu...</Typography>
+        <Typography variant="h6" color="primary">
+          Đang tải dữ liệu...
+        </Typography>
       </Box>
     );
   }
@@ -175,32 +177,35 @@ export default function SalaryHistory() {
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Paper elevation={0} sx={{ 
-        mb: 3, 
-        p: 3, 
-        borderRadius: 3, 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-        color: 'white' 
-      }}>
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 3,
+          p: 3,
+          borderRadius: 3,
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white'
+        }}
+      >
         <Stack direction="row" alignItems="center" spacing={2}>
-          <Box sx={{
-            bgcolor: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: '12px',
-            width: 60,
-            height: 60,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+          <Box
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '12px',
+              width: 60,
+              height: 60,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             <MoneyCollectOutlined style={{ fontSize: '32px' }} />
           </Box>
           <Box>
             <Typography variant="h4" fontWeight={700}>
               Lịch sử thu nhập
             </Typography>
-            <Typography sx={{ opacity: 0.9, fontWeight: 500 }}>
-              Xem chi tiết thu nhập và lương thưởng của bạn
-            </Typography>
+            <Typography sx={{ opacity: 0.9, fontWeight: 500 }}>Xem chi tiết thu nhập và lương thưởng của bạn</Typography>
           </Box>
         </Stack>
       </Paper>
@@ -214,12 +219,20 @@ export default function SalaryHistory() {
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">Họ và tên:</Typography>
-                <Typography variant="body1" fontWeight={600}>{userData.fullName}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Họ và tên:
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {userData.fullName}
+                </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">Email:</Typography>
-                <Typography variant="body1" fontWeight={600}>{userData.email}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Email:
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {userData.email}
+                </Typography>
               </Grid>
             </Grid>
           </CardContent>
@@ -236,13 +249,11 @@ export default function SalaryHistory() {
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
                 <InputLabel>Năm</InputLabel>
-                <Select
-                  value={selectedYear}
-                  label="Năm"
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                >
-                  {yearOptions.map(year => (
-                    <MenuItem key={year} value={year}>{year}</MenuItem>
+                <Select value={selectedYear} label="Năm" onChange={(e) => setSelectedYear(e.target.value)}>
+                  {yearOptions.map((year) => (
+                    <MenuItem key={year} value={year}>
+                      {year}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -250,33 +261,22 @@ export default function SalaryHistory() {
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
                 <InputLabel>Tháng</InputLabel>
-                <Select
-                  value={selectedMonth}
-                  label="Tháng"
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                >
+                <Select value={selectedMonth} label="Tháng" onChange={(e) => setSelectedMonth(e.target.value)}>
                   <MenuItem value="">Tất cả</MenuItem>
-                  {monthOptions.map(month => (
-                    <MenuItem key={month.value} value={month.value}>{month.label}</MenuItem>
+                  {monthOptions.map((month) => (
+                    <MenuItem key={month.value} value={month.value}>
+                      {month.label}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={4}>
               <Stack direction="row" spacing={1}>
-                <Button
-                  variant="contained"
-                  startIcon={<SearchOutlined />}
-                  onClick={handleSearch}
-                  sx={{ borderRadius: 2 }}
-                >
+                <Button variant="contained" startIcon={<SearchOutlined />} onClick={handleSearch} sx={{ borderRadius: 2 }}>
                   Tìm kiếm
                 </Button>
-                <Button
-                  variant="outlined"
-                  onClick={handleReset}
-                  sx={{ borderRadius: 2 }}
-                >
+                <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: 2 }}>
                   Đặt lại
                 </Button>
               </Stack>
@@ -298,7 +298,7 @@ export default function SalaryHistory() {
           <Typography variant="h6" gutterBottom color="primary" fontWeight={600} sx={{ mb: 2 }}>
             Danh sách thu nhập
           </Typography>
-          
+
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
               <CircularProgress />
@@ -353,13 +353,9 @@ export default function SalaryHistory() {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2">
-                          {formatDate(salary.paymentDate)}
-                        </Typography>
+                        <Typography variant="body2">{formatDate(salary.paymentDate)}</Typography>
                       </TableCell>
-                      <TableCell>
-                        {getPaymentStatusChip(salary.paymentDate)}
-                      </TableCell>
+                      <TableCell>{getPaymentStatusChip(salary.paymentDate)}</TableCell>
                       <TableCell>
                         {salary.notes ? (
                           <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 150 }}>
@@ -377,21 +373,24 @@ export default function SalaryHistory() {
               </Table>
             </TableContainer>
           ) : (
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              p: 6,
-              bgcolor: '#f8f9fa',
-              borderRadius: 2,
-              border: '1px dashed #e0e0e0'
-            }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                p: 6,
+                bgcolor: '#f8f9fa',
+                borderRadius: 2,
+                border: '1px dashed #e0e0e0'
+              }}
+            >
               <FileTextOutlined style={{ fontSize: '64px', color: '#90caf9', marginBottom: '16px' }} />
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 Chưa có dữ liệu lương
               </Typography>
               <Typography variant="body2" color="text.secondary" textAlign="center">
-                Hiện tại chưa có bản ghi lương nào cho kỳ này.<br/>
+                Hiện tại chưa có bản ghi lương nào cho kỳ này.
+                <br />
                 Vui lòng liên hệ phòng nhân sự để biết thêm chi tiết.
               </Typography>
             </Box>

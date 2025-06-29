@@ -23,13 +23,11 @@ export default function Login() {
     const adminRole = Cookies.get('admin_role');
     const staffToken = Cookies.get('staff_token');
     const staffRole = Cookies.get('staff_role');
-    
 
     if (adminToken && adminRole === 'ROLE_ADMIN') {
       console.log('Admin token and role found in cookies:', adminToken, adminRole);
       navigate('/admin');
     } else if (staffToken && staffRole === 'ROLE_STAFF') {
-      
       console.log('Staff token and role found in cookies:', staffToken, staffRole);
       navigate('/staff');
     } else {
@@ -44,7 +42,7 @@ export default function Login() {
       const res = await fetch('http://localhost:8080/api/v1/userDetail/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password })
       });
 
       if (!res.ok) {
@@ -68,11 +66,7 @@ export default function Login() {
           Cookies.set('admin_token', token, { path: '/admin', sameSite: 'Strict', expires: 7 });
           Cookies.set('admin_role', roleName, { path: '/admin', sameSite: 'Strict', expires: 7 });
           window.location.href = 'http://localhost:3003';
-        } else if (
-          roleName === 'ROLE_STAFF' ||
-          roleName === 'ROLE_MANAGER' ||
-          roleName === 'ROLE_MANAGE'
-        ) {
+        } else if (roleName === 'ROLE_STAFF' || roleName === 'ROLE_MANAGER' || roleName === 'ROLE_MANAGE') {
           Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 });
@@ -108,20 +102,8 @@ export default function Login() {
           <form onSubmit={handleSubmit}>
             <Stack spacing={2}>
               {error && <Alert severity="error">{error}</Alert>}
-              <TextField
-                label="Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <TextField
-                label="Mật khẩu"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <TextField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <TextField label="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
               <Button type="submit" variant="contained" color="primary">
                 Đăng nhập
               </Button>

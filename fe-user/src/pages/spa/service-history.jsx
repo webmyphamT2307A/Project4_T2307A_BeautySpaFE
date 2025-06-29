@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react';
 import {
-  Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, TablePagination,
-  Box, InputAdornment, Tooltip
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  IconButton,
+  TablePagination,
+  Box,
+  InputAdornment,
+  Tooltip
 } from '@mui/material';
-import {
-  SearchOutlined,
-  CloseOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  PlusOutlined
-} from '@ant-design/icons';
+import { SearchOutlined, CloseOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
 import { ToastContainer } from 'react-toastify';
@@ -42,8 +51,8 @@ const ServiceHistory = () => {
   useEffect(() => {
     setLoading(true);
     fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
           setServiceHistories(data.data);
           setFilteredHistories(data.data);
@@ -66,7 +75,7 @@ const ServiceHistory = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       results = results.filter(
-        history =>
+        (history) =>
           history.userId.toString().includes(query) ||
           history.customerId.toString().includes(query) ||
           history.serviceId.toString().includes(query)
@@ -136,16 +145,14 @@ const ServiceHistory = () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
     })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.status === 'SUCCESS') {
           toast.success(currentHistory ? 'Cập nhật thành công' : 'Thêm mới thành công');
           if (currentHistory) {
-            setServiceHistories(prev =>
-              prev.map(item => (item.id === currentHistory.id ? data.data : item))
-            );
+            setServiceHistories((prev) => prev.map((item) => (item.id === currentHistory.id ? data.data : item)));
           } else {
-            setServiceHistories(prev => [...prev, data.data]);
+            setServiceHistories((prev) => [...prev, data.data]);
           }
           setDialogOpen(false);
         } else {
@@ -158,11 +165,11 @@ const ServiceHistory = () => {
   const handleDelete = (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa lịch sử dịch vụ này?')) {
       fetch(`${API_URL}/${id}`, { method: 'DELETE' })
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.status === 'SUCCESS') {
             toast.success('Xóa thành công');
-            setServiceHistories(prev => prev.filter(item => item.id !== id));
+            setServiceHistories((prev) => prev.filter((item) => item.id !== id));
           } else {
             toast.error('Xóa thất bại');
           }
@@ -179,9 +186,9 @@ const ServiceHistory = () => {
   const processHistoryData = (data) => {
     const appointmentsData = Array.isArray(data) ? data : [data];
     console.log('🔍 Processing data, total items:', appointmentsData.length);
-    
+
     // ✅ CẢI TIẾN: Lọc những record có dữ liệu hợp lệ
-    const filteredData = appointmentsData.filter(app => {
+    const filteredData = appointmentsData.filter((app) => {
       console.log(`📋 Item ${app.id || app.appointmentId}:`, {
         serviceName: app.serviceName,
         servicePrice: app.servicePrice,
@@ -195,15 +202,15 @@ const ServiceHistory = () => {
       if (app.status?.toLowerCase().trim() === 'cancelled') {
         return true;
       }
-      
+
       // Loại bỏ những record không hợp lệ
       const hasValidId = app.id || app.appointmentId;
       const hasValidPrice = app.servicePrice !== null && app.servicePrice !== undefined && app.servicePrice > 0;
       const hasValidName = app.serviceName && app.serviceName.toLowerCase() !== 'n/a' && app.serviceName.trim() !== '';
       const hasValidUserName = app.userName && app.userName.toLowerCase() !== 'n/a' && app.userName.trim() !== '';
-      
+
       const isValid = hasValidId && hasValidPrice && hasValidName && hasValidUserName;
-      
+
       console.log(`🔍 Validation for ${app.id || app.appointmentId}:`, {
         hasValidId,
         hasValidPrice,
@@ -211,37 +218,36 @@ const ServiceHistory = () => {
         hasValidUserName,
         isValid
       });
-      
+
       return isValid;
     });
 
     console.log('🎯 After filtering, remaining items:', filteredData.length);
-    
+
     // ✅ DEBUG: Log tất cả dữ liệu trước khi tính tổng
     const total = filteredData.reduce((sum, app) => sum + app.servicePrice, 0);
     setCalculatedTotal(total);
-    
-    return filteredData.map(app => ({
+
+    return filteredData.map((app) => ({
       ...app,
       id: app.id || app.appointmentId,
-      appointmentId: app.appointmentId || app.id,
+      appointmentId: app.appointmentId || app.id
     }));
   };
-  
+
   const fetchHistoryByCustomerId = async (customerId) => {
     // ... existing code ...
   };
 
   return (
-    <MainCard title="Quản lý lịch sử dịch vụ" secondary={
-      <Button
-        variant="contained"
-        startIcon={<PlusOutlined />}
-        onClick={() => handleOpenDialog()}
-      >
-        Thêm lịch sử
-      </Button>
-    }>
+    <MainCard
+      title="Quản lý lịch sử dịch vụ"
+      secondary={
+        <Button variant="contained" startIcon={<PlusOutlined />} onClick={() => handleOpenDialog()}>
+          Thêm lịch sử
+        </Button>
+      }
+    >
       <Box sx={{ mb: 3 }}>
         <TextField
           fullWidth
@@ -281,7 +287,7 @@ const ServiceHistory = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredHistories.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(history => (
+            {filteredHistories.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((history) => (
               <TableRow key={history.id}>
                 <TableCell>{history.id}</TableCell>
                 <TableCell>{history.userId}</TableCell>
@@ -321,14 +327,7 @@ const ServiceHistory = () => {
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>{currentHistory ? 'Chỉnh sửa lịch sử' : 'Thêm lịch sử'}</DialogTitle>
         <DialogContent>
-          <TextField
-            margin="dense"
-            name="userId"
-            label="User ID"
-            fullWidth
-            value={formData.userId}
-            onChange={handleFormChange}
-          />
+          <TextField margin="dense" name="userId" label="User ID" fullWidth value={formData.userId} onChange={handleFormChange} />
           <TextField
             margin="dense"
             name="customerId"
@@ -345,14 +344,7 @@ const ServiceHistory = () => {
             value={formData.appointmentId}
             onChange={handleFormChange}
           />
-          <TextField
-            margin="dense"
-            name="serviceId"
-            label="Service ID"
-            fullWidth
-            value={formData.serviceId}
-            onChange={handleFormChange}
-          />
+          <TextField margin="dense" name="serviceId" label="Service ID" fullWidth value={formData.serviceId} onChange={handleFormChange} />
           <TextField
             margin="dense"
             name="dateUsed"
@@ -375,7 +367,9 @@ const ServiceHistory = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} color="inherit">Cancel</Button>
+          <Button onClick={handleCloseDialog} color="inherit">
+            Cancel
+          </Button>
           <Button onClick={handleSave} variant="contained" color="primary">
             {currentHistory ? 'Update' : 'Save'}
           </Button>

@@ -13,7 +13,7 @@ import salary from './salary';
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [dashboard, pages, attendance, salary, spa,review]
+  items: [dashboard, pages, attendance, salary, spa, review]
 };
 
 export default menuItems;

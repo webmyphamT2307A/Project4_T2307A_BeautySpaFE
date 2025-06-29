@@ -315,7 +315,7 @@ const Header = () => {
                             <div className="col-lg-8">
                                 <div className="d-flex flex-wrap">
                                     <a href="#" className="me-4"><i className="fas fa-map-marker-alt me-2" />Tìm Địa Điểm</a>
-                                    <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />+3668888940</a>
+                                    <a href="#" className="me-4"><i className="fas fa-phone-alt me-2" />(+84) 3668888940</a>
                                     <a href="#"><i className="fas fa-envelope me-2" />info@sparlex.com</a>
                                 </div>
                             </div>
