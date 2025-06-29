@@ -105,7 +105,7 @@ const ServiceDetailPage = () => {
     // Hàm fetch danh sách review
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/v1/reviews/item/service/${id}?sort=createdAt,desc`);
+        const response = await fetch(`http://localhost:8080/api/v1/reviews/item/service/${id}`);
         const result = await response.json();
         if (result.status === 'SUCCESS' && result.data) {
           setReviews(result.data);
