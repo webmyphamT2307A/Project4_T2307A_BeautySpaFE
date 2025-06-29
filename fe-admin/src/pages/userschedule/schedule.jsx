@@ -578,12 +578,27 @@ const UserScheduleManager = () => {
     );
   };
 
-  const filteredSchedules = schedules.filter(schedule =>
-    (schedule.userName && schedule.userName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (schedule.shift && schedule.shift.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (schedule.status && schedule.status.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (schedule.roleName && schedule.roleName.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredSchedules = schedules.filter(schedule => {
+    // Filter by date range on the client-side to ensure correctness
+    let dateInRange = true;
+    if (startDate && schedule.workDate < startDate) {
+      dateInRange = false;
+    }
+    if (endDate && schedule.workDate > endDate) {
+      dateInRange = false;
+    }
+  
+    // Original search filter logic
+    const searchMatch = (
+      (schedule.userName && schedule.userName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (schedule.shift && schedule.shift.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (schedule.status && schedule.status.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (schedule.roleName && schedule.roleName.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  
+    // Return true only if both conditions are met
+    return dateInRange && searchMatch;
+  });
 
   // Generate year options (from 2 years ago to current year)
   const currentYear = new Date().getFullYear();
