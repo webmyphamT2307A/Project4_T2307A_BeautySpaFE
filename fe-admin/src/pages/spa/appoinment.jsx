@@ -1000,10 +1000,10 @@ const AppointmentManagement = () => {
   };
   const getStatusChipProps = (status) => {
     switch (status) {
-      case 'pending': return { label: 'Chờ xác nhận', color: 'warning', icon: <ClockCircleOutlined /> };
-      case 'confirmed': return { label: 'Đã xác nhận', color: 'info', icon: <CheckOutlined /> };
-      case 'completed': return { label: 'Hoàn thành', color: 'success', icon: <CheckOutlined /> };
-      case 'cancelled': return { label: 'Đã hủy', color: 'error', icon: <CloseOutlined /> };
+      case 'pending': return { label: 'Pending', color: 'warning', icon: <ClockCircleOutlined /> };
+      case 'confirmed': return { label: 'Confirmed', color: 'info', icon: <CheckOutlined /> };
+      case 'completed': return { label: 'Completed', color: 'success', icon: <CheckOutlined /> };
+      case 'cancelled': return { label: 'Cancelled', color: 'error', icon: <CloseOutlined /> };
       default: return { label: status, color: 'default', icon: <ClockCircleOutlined /> };
     }
   };
@@ -1188,18 +1188,18 @@ const AppointmentManagement = () => {
                           <Chip icon={statusProps.icon} label={statusProps.label} size="small" color={statusProps.color} sx={{ borderRadius: '16px', fontWeight: 500, fontSize: '0.75rem' }} />
                         </TableCell>
                         <TableCell sx={{ textAlign: 'center' }}>
-                          <Tooltip title="Xem Chi Tiết">
+                          <Tooltip title="View Details">
                             <IconButton onClick={() => handleViewOpen(appointment)} color="info" size="small"><EyeOutlined /></IconButton>
                           </Tooltip>
                           
                           {appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
                             <>
-                              <Tooltip title="Cập Nhật Trạng Thái">
+                              <Tooltip title="Update Status">
                                 <IconButton onClick={() => handleStatusDialogOpen(appointment)} color="primary" size="small">
                                   <EditOutlined />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Chỉnh Sửa Chi Tiết / Phân Công Nhân Viên">
+                              <Tooltip title="Edit Details / Assign Staff">
                                 <IconButton onClick={() => handleOpenEditDetailDialog(appointment)} color="secondary" size="small">
                                   <FormOutlined />
                                 </IconButton>
@@ -1248,7 +1248,7 @@ const AppointmentManagement = () => {
       {/* View Appointment Details Dialog */}
       <Dialog open={viewOpen} onClose={handleViewClose} maxWidth="md" fullWidth>
         <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-          Chi Tiết Lịch Hẹn
+          Appointment Details
           <IconButton aria-label="close" onClick={handleViewClose} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseOutlined /></IconButton>
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
@@ -1256,7 +1256,7 @@ const AppointmentManagement = () => {
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" gutterBottom>Thông Tin Khách Hàng</Typography>
+                  <Typography variant="h6" gutterBottom>Customer Information</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                     <ImageAvatar src={currentAppointment.customer?.image} alt={currentAppointment.customer?.name} sx={{ width: 64, height: 64 }} />
                     <Box>
@@ -1267,51 +1267,51 @@ const AppointmentManagement = () => {
                   </Box>
                 </Box>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" gutterBottom>Chi Tiết Lịch Hẹn</Typography>
+                  <Typography variant="h6" gutterBottom>Appointment Details</Typography>
                   <Grid container spacing={2}>
-                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Ngày</Typography><Typography variant="body2" sx={{ fontWeight: 500 }}>{formatDate(currentAppointment.appointmentDate)}</Typography></Grid>
-                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Thời Gian</Typography><Typography variant="body2" sx={{ fontWeight: 500 }}>{formatTime(currentAppointment.appointmentDate)} - {formatTime(currentAppointment.endTime)}</Typography></Grid>
+                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Date</Typography><Typography variant="body2" sx={{ fontWeight: 500 }}>{formatDate(currentAppointment.appointmentDate)}</Typography></Grid>
+                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Time</Typography><Typography variant="body2" sx={{ fontWeight: 500 }}>{formatTime(currentAppointment.appointmentDate)} - {formatTime(currentAppointment.endTime)}</Typography></Grid>
 
-                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Trạng Thái</Typography><Box sx={{ mt: 0.5 }}><Chip {...getStatusChipProps(currentAppointment.status)} size="small" /></Box></Grid>
+                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Status</Typography><Box sx={{ mt: 0.5 }}><Chip {...getStatusChipProps(currentAppointment.status)} size="small" /></Box></Grid>
                     <Grid item xs={12}>
-                      <Typography variant="caption" color="textSecondary">Nhân Viên Được Phân Công</Typography>
+                      <Typography variant="caption" color="textSecondary">Staff Assigned</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                         <ImageAvatar src={currentAppointment.staff?.image} alt={currentAppointment.staff?.name} sx={{ width: 24, height: 24 }} />
                         <Box>
-                          <Typography variant="body2">{currentAppointment.staff?.name || 'Chưa phân công'}</Typography>
+                          <Typography variant="body2">{currentAppointment.staff?.name || 'Unassigned'}</Typography>
                           {currentAppointment.staff?.email && (<Typography variant="caption" color="textSecondary">{currentAppointment.staff.email}</Typography>)}
                         </Box>
                       </Box>
                     </Grid>
-                    {currentAppointment.notes && (<Grid item xs={12}><Typography variant="caption" color="textSecondary">Ghi Chú</Typography><Typography variant="body2">{currentAppointment.notes}</Typography></Grid>)}
+                    {currentAppointment.notes && (<Grid item xs={12}><Typography variant="caption" color="textSecondary">Notes</Typography><Typography variant="body2">{currentAppointment.notes}</Typography></Grid>)}
                   </Grid>
                 </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" gutterBottom>Thông Tin Dịch Vụ</Typography>
+                  <Typography variant="h6" gutterBottom>Service Information</Typography>
                   <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{currentAppointment.service.name}</Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}><Typography variant="body2">Giá:</Typography><Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>{formatCurrency(currentAppointment.price)}</Typography></Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography variant="body2">Thời Lượng:</Typography><Typography variant="body2">{currentAppointment.service.duration} phút</Typography></Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}><Typography variant="body2">Price:</Typography><Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>{formatCurrency(currentAppointment.price)}</Typography></Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography variant="body2">Duration:</Typography><Typography variant="body2">{currentAppointment.service.duration} phút</Typography></Box>
                   </Paper>
                 </Box>
                 <Box>
-                  <Typography variant="h6" gutterBottom>Thông Tin Đặt Lịch</Typography>
+                  <Typography variant="h6" gutterBottom>Booking Information</Typography>
                   <Grid container spacing={2}>
-                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Mã Đặt Lịch</Typography><Typography variant="body2">#{currentAppointment.id}</Typography></Grid>
-                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Ngày Tạo</Typography><Typography variant="body2">{formatDate(currentAppointment.createdAt)}</Typography></Grid>
+                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Booking ID</Typography><Typography variant="body2">#{currentAppointment.id}</Typography></Grid>
+                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Created On</Typography><Typography variant="body2">{formatDate(currentAppointment.createdAt)}</Typography></Grid>
                     <Grid item xs={12}>
                       <Divider sx={{ my: 1 }} />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
                         
                         {currentAppointment.status !== 'completed' && currentAppointment.status !== 'cancelled' && (
                           <>
-                            <Tooltip title="Cập Nhật Trạng Thái">
-                              <Button variant="outlined" color="primary" onClick={() => handleStatusDialogOpen(currentAppointment)}>Cập Nhật Trạng Thái</Button>
+                            <Tooltip title="Update Status">
+                              <Button variant="outlined" color="primary" onClick={() => handleStatusDialogOpen(currentAppointment)}>Update Status</Button>
                             </Tooltip>
-                            <Tooltip title="Chỉnh Sửa Chi Tiết / Phân Công Nhân Viên">
-                              <Button variant="contained" color="secondary" onClick={() => { handleViewClose(); handleOpenEditDetailDialog(currentAppointment); }}>Chỉnh Sửa Chi Tiết</Button>
+                            <Tooltip title="Edit Details / Assign Staff">
+                              <Button variant="contained" color="secondary" onClick={() => { handleViewClose(); handleOpenEditDetailDialog(currentAppointment); }}>Edit Details</Button>
                             </Tooltip>
                           </>
                         )}
@@ -1345,56 +1345,56 @@ const AppointmentManagement = () => {
 
       {/* Update Status Dialog */}
       <Dialog open={statusDialogOpen} onClose={handleStatusDialogClose} maxWidth="xs" fullWidth>
-        <DialogTitle>Cập Nhật Trạng Thái Lịch Hẹn</DialogTitle>
+        <DialogTitle>Update Appointment Status</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>Thay đổi trạng thái cho lịch hẹn #{currentAppointment?.id}</Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>Change the status for appointment #{currentAppointment?.id}</Typography>
           <FormControl fullWidth>
-            <InputLabel>Trạng Thái</InputLabel>
-            <Select value={newStatus} label="Trạng Thái" onChange={(e) => setNewStatus(e.target.value)}>
-              <MenuItem value="pending"><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Chip size="small" label="Chờ xác nhận" color="warning" sx={{ minWidth: 80 }} /><Typography variant="body2">Đang chờ xác nhận</Typography></Box></MenuItem>
-              <MenuItem value="confirmed"><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Chip size="small" label="Đã xác nhận" color="info" sx={{ minWidth: 80 }} /><Typography variant="body2">Lịch hẹn đã được xác nhận</Typography></Box></MenuItem>
-              <MenuItem value="completed"><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Chip size="small" label="Hoàn thành" color="success" sx={{ minWidth: 80 }} /><Typography variant="body2">Dịch vụ đã được thực hiện</Typography></Box></MenuItem>
-              <MenuItem value="cancelled"><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Chip size="small" label="Đã hủy" color="error" sx={{ minWidth: 80 }} /><Typography variant="body2">Lịch hẹn đã bị hủy</Typography></Box></MenuItem>
+            <InputLabel>Status</InputLabel>
+            <Select value={newStatus} label="Status" onChange={(e) => setNewStatus(e.target.value)}>
+              <MenuItem value="pending"><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Chip size="small" label="Pending" color="warning" sx={{ minWidth: 80 }} /><Typography variant="body2">Waiting for confirmation</Typography></Box></MenuItem>
+              <MenuItem value="confirmed"><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Chip size="small" label="Confirmed" color="info" sx={{ minWidth: 80 }} /><Typography variant="body2">Appointment is confirmed</Typography></Box></MenuItem>
+              <MenuItem value="completed"><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Chip size="small" label="Completed" color="success" sx={{ minWidth: 80 }} /><Typography variant="body2">Service has been provided</Typography></Box></MenuItem>
+              <MenuItem value="cancelled"><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Chip size="small" label="Cancelled" color="error" sx={{ minWidth: 80 }} /><Typography variant="body2">Appointment was cancelled</Typography></Box></MenuItem>
             </Select>
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleStatusDialogClose} color="inherit">Hủy</Button>
-          <Button onClick={handleStatusChange} variant="contained" color="primary" disabled={loading}>{loading ? 'Đang cập nhật...' : 'Cập Nhật Trạng Thái'}</Button>
+          <Button onClick={handleStatusDialogClose} color="inherit">Cancel</Button>
+          <Button onClick={handleStatusChange} variant="contained" color="primary" disabled={loading}>{loading ? 'Updating...' : 'Update Status'}</Button>
         </DialogActions>
       </Dialog>
 
       {/* Edit Appointment Details Dialog (bao gồm gán nhân viên) */}
       <Dialog open={editDetailDialogOpen} onClose={handleCloseEditDetailDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Chỉnh Sửa Chi Tiết Lịch Hẹn #{appointmentToEditDetails?.id}</DialogTitle>
+        <DialogTitle>Edit Appointment Details #{appointmentToEditDetails?.id}</DialogTitle>
         <DialogContent>
           {appointmentToEditDetails && (
             <Grid container spacing={2} sx={{ pt: 1 }}>
               <Grid item xs={12}>
                 <Typography variant="body1" gutterBottom>
-                  Khách hàng: <strong>{appointmentToEditDetails.customer?.name}</strong>
+                  Customer: <strong>{appointmentToEditDetails.customer?.name}</strong>
                 </Typography>
                 <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Dịch vụ: {appointmentToEditDetails.service?.name} vào {formatDate(appointmentToEditDetails.appointmentDate)} lúc {formatTime(appointmentToEditDetails.appointmentDate)}
+                  Service: {appointmentToEditDetails.service?.name} on {formatDate(appointmentToEditDetails.appointmentDate)} at {formatTime(appointmentToEditDetails.appointmentDate)}
                 </Typography>
                 
               </Grid>
               <Grid item xs={12}>
                 <FormControl fullWidth margin="normal">
-                  <InputLabel id="staff-select-label-edit">Phân Công Nhân Viên</InputLabel>
+                  <InputLabel id="staff-select-label-edit">Assign Staff</InputLabel>
                   <Select
                     labelId="staff-select-label-edit"
                     value={selectedStaffId === null ? '' : selectedStaffId}
-                    label="Phân Công Nhân Viên"
+                    label="Assign Staff"
                     onChange={handleSelectedStaffChange}
                   >
                     <MenuItem value="">
-                      <em>-- Hủy Phân Công Nhân Viên --</em>
+                      <em>-- Unassign Staff --</em>
                     </MenuItem>
                     {getAvailableStaff().length === 0 ? (
                       <MenuItem disabled>
                         <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
-                          Không có nhân viên nào có kỹ năng phù hợp với dịch vụ này
+                          No staff available with matching skills for this service
                         </Typography>
                       </MenuItem>
                     ) : (
@@ -1428,7 +1428,7 @@ const AppointmentManagement = () => {
                             <Box sx={{ display: 'flex', gap: 1 }}>
                               {staff.isBusy && (
                                 <Chip
-                                  label="Bận"
+                                  label="Busy"
                                   size="small"
                                   color="error"
                                   sx={{ fontSize: '0.7rem', height: '20px' }}
@@ -1436,7 +1436,7 @@ const AppointmentManagement = () => {
                               )}
                               {staff.isDebugMode && (
                                 <Chip
-                                  label="Không Khớp Kỹ Năng"
+                                  label="No Skill Match"
                                   size="small"
                                   color="warning"
                                   sx={{ fontSize: '0.6rem', height: '18px' }}
@@ -1464,7 +1464,7 @@ const AppointmentManagement = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Ghi Chú"
+                  label="Notes"
                   multiline
                   rows={3}
                   defaultValue={appointmentToEditDetails.notes}
@@ -1480,7 +1480,7 @@ const AppointmentManagement = () => {
         </DialogContent>
         <DialogActions sx={{ p: 2, gap: 1 }}>
           <Button onClick={handleCloseEditDetailDialog} color="inherit">
-            Hủy
+            Cancel
           </Button>
           <Button 
             onClick={handleStaffAssignment} 
@@ -1488,7 +1488,7 @@ const AppointmentManagement = () => {
             color="secondary" 
             disabled={loading}
           >
-            {loading ? 'Đang phân công...' : 'Chỉ Phân Công Nhân Viên'}
+            {loading ? 'Assigning...' : 'Assign Staff Only'}
           </Button>
           <Button 
             onClick={handleSaveAppointmentDetails} 
@@ -1496,7 +1496,7 @@ const AppointmentManagement = () => {
             color="primary" 
             disabled={loading}
           >
-            {loading ? 'Đang lưu...' : 'Lưu Tất Cả Thay Đổi'}
+            {loading ? 'Saving...' : 'Save All Changes'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1504,7 +1504,7 @@ const AppointmentManagement = () => {
       {/* Email Confirmation Dialog */}
       <Dialog open={emailConfirmationOpen} onClose={handleCloseEmailConfirmation} maxWidth="md" fullWidth>
         <DialogTitle>
-          Gửi Email Xác Nhận
+          Send Confirmation Email
           <IconButton aria-label="close" onClick={handleCloseEmailConfirmation} sx={{ position: 'absolute', right: 8, top: 8 }}>
             <CloseOutlined />
           </IconButton>
@@ -1516,18 +1516,18 @@ const AppointmentManagement = () => {
                 <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, mb: 2 }}>
                   <Typography variant="h6" gutterBottom>
                     <MailOutlined style={{ marginRight: 8, color: '#1976d2' }} />
-                    Xem Trước Email
+                    Email Preview
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    Email này sẽ được gửi để xác nhận chi tiết lịch hẹn.
+                    This email will be sent to confirm the appointment details.
                   </Typography>
                 </Box>
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" color="textSecondary">Đến:</Typography>
+                <Typography variant="subtitle2" color="textSecondary">To:</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {appointmentToSendEmail.customer?.email || 'Không có email'}
+                  {appointmentToSendEmail.customer?.email || 'No email available'}
                 </Typography>
               </Grid>
 
@@ -1540,37 +1540,37 @@ const AppointmentManagement = () => {
 
               <Grid item xs={12}>
                 <Divider sx={{ my: 1 }} />
-                <Typography variant="h6" gutterBottom>Chi Tiết Lịch Hẹn</Typography>
+                <Typography variant="h6" gutterBottom>Appointment Details</Typography>
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" color="textSecondary">Dịch vụ:</Typography>
+                <Typography variant="subtitle2" color="textSecondary">Service:</Typography>
                 <Typography variant="body1">{appointmentToSendEmail.service?.name}</Typography>
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" color="textSecondary">Giá:</Typography>
+                <Typography variant="subtitle2" color="textSecondary">Price:</Typography>
                 <Typography variant="body1" color="primary" sx={{ fontWeight: 600 }}>
                   {formatCurrency(appointmentToSendEmail.price)}
                 </Typography>
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" color="textSecondary">Ngày:</Typography>
+                <Typography variant="subtitle2" color="textSecondary">Date:</Typography>
                 <Typography variant="body1">{formatDate(appointmentToSendEmail.appointmentDate)}</Typography>
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" color="textSecondary">Thời gian:</Typography>
+                <Typography variant="subtitle2" color="textSecondary">Time:</Typography>
                 <Typography variant="body1">
                   {formatTime(appointmentToSendEmail.appointmentDate)} - {formatTime(appointmentToSendEmail.endTime)}
                 </Typography>
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" color="textSecondary">Nhân viên:</Typography>
+                <Typography variant="subtitle2" color="textSecondary">Staff:</Typography>
                 <Typography variant="body1">
-                  {appointmentToSendEmail.staff?.name || 'Sẽ được phân công nhân viên'}
+                  {appointmentToSendEmail.staff?.name || 'Staff will be assigned'}
                 </Typography>
               </Grid>
 
@@ -1580,7 +1580,7 @@ const AppointmentManagement = () => {
 
               {appointmentToSendEmail.notes && (
                 <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="textSecondary">Ghi chú:</Typography>
+                  <Typography variant="subtitle2" color="textSecondary">Notes:</Typography>
                   <Typography variant="body1">{appointmentToSendEmail.notes}</Typography>
                 </Grid>
               )}
@@ -1588,8 +1588,8 @@ const AppointmentManagement = () => {
               <Grid item xs={12}>
                 <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
                   <Typography variant="body2" color="primary">
-                    📧 Khách hàng sẽ nhận được email chuyên nghiệp với tất cả chi tiết lịch hẹn,
-                    hướng dẫn xác nhận và thông tin liên hệ.
+                    📧 The customer will receive a professional email with all appointment details,
+                    confirmation instructions, and contact information.
                   </Typography>
                 </Box>
               </Grid>
@@ -1598,7 +1598,7 @@ const AppointmentManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEmailConfirmation} color="inherit">
-            Hủy
+            Cancel
           </Button>
           <Button
             onClick={handleSendConfirmationEmail}
@@ -1607,7 +1607,7 @@ const AppointmentManagement = () => {
             disabled={emailSending || !appointmentToSendEmail?.customer?.email}
             startIcon={emailSending ? null : <MailOutlined />}
           >
-            {emailSending ? 'Đang gửi...' : 'Gửi Email Xác Nhận'}
+            {emailSending ? 'Sending...' : 'Send Confirmation Email'}
           </Button>
         </DialogActions>
       </Dialog>

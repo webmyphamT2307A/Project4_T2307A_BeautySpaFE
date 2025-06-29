@@ -19,6 +19,7 @@ const SalaryHistory = Loadable(lazy(() => import('pages/salary/salary-history'))
 
 const UserAccount = Loadable(lazy(() => import('pages/account/user')));
 const AdminAccount = Loadable(lazy(() => import('pages/account/admin')));
+const ProfilePage = Loadable(lazy(() => import('pages/account/profile')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -71,7 +72,8 @@ const MainRoutes = {
           path: 'account',
           children: [
             { path: 'user', element: <UserAccount /> },
-            { path: 'admin', element: <AdminAccount /> }
+            { path: 'admin', element: <AdminAccount /> },
+            { path: 'profile', element: <ProfilePage /> }
           ]
         }
       ]

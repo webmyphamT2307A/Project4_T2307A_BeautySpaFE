@@ -44,7 +44,7 @@ export default function HeaderContent() {
         </IconButton>
       </Tooltip>
 
-      <Notification />
+      {/* <Notification /> */}
       {!downLG && <Profile />}
       {downLG && <MobileSection />}
     </>

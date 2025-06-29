@@ -36,33 +36,33 @@ export default function ProfileTab() {
 
   return (
     <List component="nav" sx={{ p: 0, '& .MuiListItemIcon-root': { minWidth: 32 } }}>
-      <ListItemButton>
+      <ListItemButton onClick={() => navigate('/profile')}>
         <ListItemIcon>
           <EditOutlined />
         </ListItemIcon>
         <ListItemText primary="Chỉnh Sửa Hồ Sơ" />
       </ListItemButton>
       
-      <ListItemButton>
+      {/* <ListItemButton onClick={() => navigate('/profile')}>
         <ListItemIcon>
           <UserOutlined />
         </ListItemIcon>
         <ListItemText primary="Xem Hồ Sơ" />
-      </ListItemButton>
+      </ListItemButton> */}
 
-      <ListItemButton>
+      {/* <ListItemButton>
         <ListItemIcon>
           <ProfileOutlined />
         </ListItemIcon>
         <ListItemText primary="Hồ Sơ Xã Hội" />
-      </ListItemButton>
+      </ListItemButton> */}
       
-      <ListItemButton>
+      {/* <ListItemButton>
         <ListItemIcon>
           <WalletOutlined />
         </ListItemIcon>
         <ListItemText primary="Thanh Toán" />
-      </ListItemButton>
+      </ListItemButton> */}
       
       <ListItemButton onClick={handleLogout}>
         <ListItemIcon>
