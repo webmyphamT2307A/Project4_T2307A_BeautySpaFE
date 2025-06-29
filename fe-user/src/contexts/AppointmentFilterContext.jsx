@@ -9,11 +9,7 @@ const AppointmentFilterContext = createContext();
 export const AppointmentFilterProvider = ({ children }) => {
   const [filter, setFilter] = useState(null);
 
-  return (
-    <AppointmentFilterContext.Provider value={{ filter, setFilter }}>
-      {children}
-    </AppointmentFilterContext.Provider>
-  );
+  return <AppointmentFilterContext.Provider value={{ filter, setFilter }}>{children}</AppointmentFilterContext.Provider>;
 };
 
 // 3. Tạo một custom hook để dễ dàng sử dụng context trong các component khác
@@ -21,4 +17,4 @@ export const AppointmentFilterProvider = ({ children }) => {
 // chúng ta chỉ cần gọi useAppointmentFilter().
 export const useAppointmentFilter = () => {
   return useContext(AppointmentFilterContext);
-}; 
+};

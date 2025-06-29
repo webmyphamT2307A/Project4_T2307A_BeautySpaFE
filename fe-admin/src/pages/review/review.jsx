@@ -8,6 +8,7 @@ import { DeleteOutlined, ReadFilled } from '@ant-design/icons'; // <<< THAY Đ�
 import { useNavigate } from 'react-router-dom';
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
 
 const API_BASE_URL = 'http://localhost:8080/api/v1';
 
@@ -34,6 +35,7 @@ const ReviewList = () => {
     const [staffFilter, setStaffFilter] = useState('all');
     const [staffList, setStaffList] = useState([]);
     const [page, setPage] = useState(0);
+    const [totalElement, setTotalElement] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     // State để quản lý modal phản hồi
@@ -93,7 +95,8 @@ const ReviewList = () => {
         console.log('🚀 Bắt đầu quá trình fetch reviews...');
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${API_BASE_URL}/reviews/findAll`, {
+            const ratingParam = ratingFilter !== 'all' ? `&rating=${ratingFilter}` : '';
+            const res = await fetch(`${API_BASE_URL}/reviews/reviews?page=${page}&size=${rowsPerPage}${ratingParam}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -108,10 +111,10 @@ const ReviewList = () => {
             const data = await res.json();
             console.log('✅ Dữ liệu thô nhận được từ /reviews/findAll:', data);
 
-            if (data.status === 'SUCCESS' && Array.isArray(data.data)) {
-                const reviewsData = data.data;
+            if (Array.isArray(data.content)) {
+                const reviewsData = data.content;
                 console.log(`🔍 Tìm thấy ${reviewsData.length} review(s). Bắt đầu lấy chi tiết...`);
-
+                setTotalElement(data.totalElements || 0);
                 const reviewsWithDetails = await Promise.all(
                     reviewsData.map(async (review) => {
                         // Kiểm tra review và review.id trước khi fetch
@@ -155,7 +158,7 @@ const ReviewList = () => {
         setLoading(false);
     };
 
-    useEffect(() => { fetchReviews(); }, []);
+    useEffect(() => { fetchReviews(); }, [page, rowsPerPage]);
 
     // Lấy danh sách nhân viên để lọc
     useEffect(() => {
@@ -228,10 +231,23 @@ const ReviewList = () => {
 
     // Xóa review (soft-delete)
     const handleDelete = async (id) => {
-        if (!confirm('Bạn có chắc chắn muốn thay đổi trạng thái đánh giá này?')) {
-      toast.info('Đã hủy thay đổi trạng thái.');
-      return;
-    }
+        const result = await Swal.fire({
+            title: 'Bạn có chắc chắn?',
+            text: 'Thao tác này sẽ thay đổi trạng thái đánh giá!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Đồng ý',
+            cancelButtonText: 'Hủy',
+            reverseButtons: true
+        });
+
+        if (!result.isConfirmed) {
+            toast.info('Đã hủy thay đổi trạng thái.');
+            return;
+        }
+
         setLoading(true);
         const token = localStorage.getItem('token');
         try {
@@ -243,11 +259,13 @@ const ReviewList = () => {
             });
             const data = await res.json();
             if (data.status === 'SUCCESS') {
-                toast.success('Review status changed!');
+                toast.success('Đã thay đổi trạng thái đánh giá!');
                 fetchReviews();
-            } else toast.error(data.message || 'Failed');
+            } else {
+                toast.error(data.message || 'Thất bại');
+            }
         } catch {
-            toast.error('Error');
+            toast.error('Đã xảy ra lỗi khi xóa');
         }
         setLoading(false);
     };
@@ -267,6 +285,7 @@ const ReviewList = () => {
         return statusMatch && ratingMatch && typeMatch && staffMatch;
     });
 
+
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
@@ -275,88 +294,31 @@ const ReviewList = () => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
+    useEffect(() => {
+        fetchReviews();
+    }, [page, rowsPerPage, ratingFilter]);
 
-    const paginatedReviews = filteredReviews.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     return (
-        <MainCard >
-            <Box mb={2}>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={3}>
-                        <FormControl size="small" fullWidth>
-                            <InputLabel>Trạng Thái</InputLabel>
-                            <Select
-                                value={statusFilter}
-                                label="Trạng Thái"
-                                onChange={e => setStatusFilter(e.target.value)}
-                            >
-                                <MenuItem value="all">Tất Cả Trạng Thái</MenuItem>
-                                <MenuItem value="active">Hoạt Động</MenuItem>
-                                <MenuItem value="inactive">Không Hoạt Động</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
+        <MainCard title="Tất Cả Đánh Giá">
+            <Box mb={2} display="flex" justifyContent="flex-start">
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                    <InputLabel>Đánh giá</InputLabel>
+                    <Select
+                      value={ratingFilter}
+                      label="Rating"
+                      onChange={e => setRatingFilter(e.target.value)}
+                    >
+                        <MenuItem value="all">Tất cả</MenuItem>
+                        <MenuItem value={5}>5 ⭐</MenuItem>
+                        <MenuItem value={4}>4 ⭐</MenuItem>
+                        <MenuItem value={3}>3 ⭐</MenuItem>
+                        <MenuItem value={2}>2 ⭐</MenuItem>
+                        <MenuItem value={1}>1 ⭐</MenuItem>
+                    </Select>
+                </FormControl>
 
-                    <Grid item xs={12} sm={3}>
-                        <FormControl size="small" fullWidth>
-                            <InputLabel>Đánh Giá</InputLabel>
-                            <Select
-                                value={ratingFilter}
-                                label="Đánh Giá"
-                                onChange={e => setRatingFilter(e.target.value)}
-                            >
-                                <MenuItem value="all">Tất Cả Sao</MenuItem>
-                                <MenuItem value={5}>5 Sao</MenuItem>
-                                <MenuItem value={4}>4 Sao</MenuItem>
-                                <MenuItem value={3}>3 Sao</MenuItem>
-                                <MenuItem value={2}>2 Sao</MenuItem>
-                                <MenuItem value={1}>1 Sao</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
-
-                    <Grid item xs={12} sm={3}>
-                        <FormControl size="small" fullWidth>
-                            <InputLabel>Loại Đánh Giá</InputLabel>
-                            <Select
-                                value={typeFilter}
-                                label="Loại Đánh Giá"
-                                onChange={e => {
-                                    setTypeFilter(e.target.value);
-                                    if (e.target.value !== 'staff') {
-                                        setStaffFilter('all'); // Reset bộ lọc nhân viên nếu không phải loại staff
-                                    }
-                                }}
-                            >
-                                <MenuItem value="all">Tất Cả Loại</MenuItem>
-                                <MenuItem value="service">Dịch Vụ</MenuItem>
-                                <MenuItem value="staff">Nhân Viên</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
-
-                    {typeFilter === 'staff' && (
-                        <Grid item xs={12} sm={3}>
-                            <FormControl size="small" fullWidth>
-                                <InputLabel>Lọc Theo Nhân Viên</InputLabel>
-                                <Select
-                                    value={staffFilter}
-                                    label="Lọc Theo Nhân Viên"
-                                    onChange={e => setStaffFilter(e.target.value)}
-                                >
-                                    <MenuItem value="all">Tất Cả Nhân Viên</MenuItem>
-                                    {staffList.map(staff => (
-                                        <MenuItem key={staff.id} value={staff.id}>
-                                            {staff.fullName || `Nhân viên #${staff.id}`}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                    )}
-                </Grid>
             </Box>
-            {loading && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
             <TableContainer sx={{ maxHeight: 800 }}>
                 <Table>
                     <TableHead>
@@ -372,7 +334,10 @@ const ReviewList = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {paginatedReviews.map((r) => (
+                        {loading &&
+                          <TableCell colSpan={8}><Box sx={{ display: 'flex', justifyContent: 'center', my: 2, top: "calc(50% - 20px)", left: "calc(50% - 20px)", zIndex:'100000' }}><CircularProgress /></Box></TableCell>}
+
+                        {!loading && reviews.map((r) => (
                             <TableRow key={r.id}>
                                 <TableCell>{r.id}</TableCell>
                                 <TableCell>{r.authorName || 'N/A'}</TableCell>
@@ -474,7 +439,7 @@ const ReviewList = () => {
                                 </TableCell>
                             </TableRow>
                         ))}
-                        {filteredReviews.length === 0 && !loading && <TableRow><TableCell colSpan={9} align="center">Không tìm thấy đánh giá nào.</TableCell></TableRow>}
+                        {reviews.length === 0 && !loading && <TableRow><TableCell colSpan={9} align="center">Không tìm thấy đánh giá nào.</TableCell></TableRow>}
                     </TableBody>
                 </Table>
             </TableContainer>
@@ -482,7 +447,7 @@ const ReviewList = () => {
             <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"
-                count={filteredReviews.length}
+                count={totalElement}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={handleChangePage}

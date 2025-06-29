@@ -1,18 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Paper, Typography, Grid, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Alert,
-  CircularProgress, FormControl, InputLabel, Select, MenuItem, TextField, Avatar,
-  IconButton, Tooltip, Stack, Card, CardContent
+  Box,
+  Paper,
+  Typography,
+  Grid,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  Alert,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  Avatar,
+  IconButton,
+  Tooltip,
+  Stack,
+  Card,
+  CardContent
 } from '@mui/material';
 import { DateCalendar, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format, isToday, isSameDay } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
-  CalendarOutlined, ClockCircleOutlined, UserOutlined, CheckCircleOutlined,
-  CloseCircleOutlined, EditOutlined, DeleteOutlined, PlusOutlined,
-  CheckOutlined, LoginOutlined, LogoutOutlined, ReloadOutlined
+  CalendarOutlined,
+  ClockCircleOutlined,
+  UserOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  CheckOutlined,
+  LoginOutlined,
+  LogoutOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import MainCard from 'components/MainCard';
 import { toast } from 'react-toastify';
@@ -51,7 +85,7 @@ const WorkSchedulePage = () => {
     const token = Cookies.get('staff_token');
     const userIdFromCookie = Cookies.get('staff_userId');
     const role = Cookies.get('staff_role');
-    
+
     if (token && userIdFromCookie) {
       setUserId(userIdFromCookie);
       setUserRole(role);
@@ -61,7 +95,7 @@ const WorkSchedulePage = () => {
   // Fetch schedules
   const fetchSchedules = async () => {
     if (!userId) return;
-    
+
     setLoading(true);
     try {
       const token = Cookies.get('staff_token');
@@ -70,14 +104,14 @@ const WorkSchedulePage = () => {
         month: filterMonth,
         year: filterYear
       });
-      
+
       if (statusFilter) {
         params.append('status', statusFilter);
       }
 
       const response = await fetch(`${API_BASE_URL}?${params}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -107,7 +141,7 @@ const WorkSchedulePage = () => {
       const response = await fetch(`${API_BASE_URL}/check-in/${scheduleId}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -131,7 +165,7 @@ const WorkSchedulePage = () => {
       const response = await fetch(`${API_BASE_URL}/check-out/${scheduleId}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -150,19 +184,17 @@ const WorkSchedulePage = () => {
 
   // Get schedules for selected date
   const getSchedulesForDate = (date) => {
-    return schedules.filter(schedule => 
-      isSameDay(new Date(schedule.workDate), date)
-    );
+    return schedules.filter((schedule) => isSameDay(new Date(schedule.workDate), date));
   };
 
   // Get status chip
   const getStatusChip = (status, schedule) => {
     const today = new Date();
     const workDate = new Date(schedule.workDate);
-    
+
     let color = 'default';
     let label = status;
-    
+
     switch (status) {
       case 'pending':
         color = 'warning';
@@ -183,7 +215,7 @@ const WorkSchedulePage = () => {
       default:
         label = status || 'N/A';
     }
-    
+
     return <Chip label={label} color={color} size="small" sx={{ fontWeight: 600 }} />;
   };
 
@@ -204,24 +236,26 @@ const WorkSchedulePage = () => {
   const renderDay = (day, selectedDays, pickersDayProps) => {
     const daySchedules = getSchedulesForDate(day);
     const hasSchedule = daySchedules.length > 0;
-    const hasCompletedSchedule = daySchedules.some(s => s.status === 'completed');
-    
+    const hasCompletedSchedule = daySchedules.some((s) => s.status === 'completed');
+
     return (
       <Box
         {...pickersDayProps}
         sx={{
           position: 'relative',
-          '&::after': hasSchedule ? {
-            content: '""',
-            position: 'absolute',
-            bottom: 2,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            backgroundColor: hasCompletedSchedule ? '#4caf50' : '#2196f3'
-          } : {}
+          '&::after': hasSchedule
+            ? {
+                content: '""',
+                position: 'absolute',
+                bottom: 2,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                backgroundColor: hasCompletedSchedule ? '#4caf50' : '#2196f3'
+              }
+            : {}
         }}
       />
     );
@@ -239,11 +273,7 @@ const WorkSchedulePage = () => {
               <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
                 <FormControl size="small" sx={{ minWidth: 120 }}>
                   <InputLabel>Tháng</InputLabel>
-                  <Select
-                    value={filterMonth}
-                    label="Tháng"
-                    onChange={(e) => setFilterMonth(e.target.value)}
-                  >
+                  <Select value={filterMonth} label="Tháng" onChange={(e) => setFilterMonth(e.target.value)}>
                     {Array.from({ length: 12 }, (_, i) => (
                       <MenuItem key={i + 1} value={i + 1}>
                         Tháng {i + 1}
@@ -251,14 +281,10 @@ const WorkSchedulePage = () => {
                     ))}
                   </Select>
                 </FormControl>
-                
+
                 <FormControl size="small" sx={{ minWidth: 120 }}>
                   <InputLabel>Năm</InputLabel>
-                  <Select
-                    value={filterYear}
-                    label="Năm"
-                    onChange={(e) => setFilterYear(e.target.value)}
-                  >
+                  <Select value={filterYear} label="Năm" onChange={(e) => setFilterYear(e.target.value)}>
                     {Array.from({ length: 5 }, (_, i) => {
                       const year = new Date().getFullYear() - 2 + i;
                       return (
@@ -269,14 +295,10 @@ const WorkSchedulePage = () => {
                     })}
                   </Select>
                 </FormControl>
-                
+
                 <FormControl size="small" sx={{ minWidth: 150 }}>
                   <InputLabel>Trạng thái</InputLabel>
-                  <Select
-                    value={statusFilter}
-                    label="Trạng thái"
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
+                  <Select value={statusFilter} label="Trạng thái" onChange={(e) => setStatusFilter(e.target.value)}>
                     <MenuItem value="">Tất cả</MenuItem>
                     <MenuItem value="pending">Chờ xử lý</MenuItem>
                     <MenuItem value="confirmed">Đã xác nhận</MenuItem>
@@ -315,7 +337,7 @@ const WorkSchedulePage = () => {
                 Lịch làm việc tháng {filterMonth}/{filterYear}
               </Typography>
             </Stack>
-            
+
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={vi}>
               <DateCalendar
                 value={selectedDate}
@@ -341,7 +363,7 @@ const WorkSchedulePage = () => {
                 Lịch ngày {format(selectedDate, 'dd/MM/yyyy', { locale: vi })}
               </Typography>
             </Stack>
-            
+
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                 <CircularProgress />
@@ -367,35 +389,24 @@ const WorkSchedulePage = () => {
                           {schedule.checkInTime && schedule.checkOutTime
                             ? `${schedule.checkInTime} - ${schedule.checkOutTime}`
                             : schedule.checkInTime
-                            ? `Bắt đầu: ${schedule.checkInTime}`
-                            : 'Chưa vào ca'
-                          }
+                              ? `Bắt đầu: ${schedule.checkInTime}`
+                              : 'Chưa vào ca'}
                         </Typography>
-                        <Box sx={{ mt: 1 }}>
-                          {getStatusChip(schedule.status, schedule)}
-                        </Box>
+                        <Box sx={{ mt: 1 }}>{getStatusChip(schedule.status, schedule)}</Box>
                       </Box>
-                      
+
                       <Stack direction="row" spacing={1}>
                         {canCheckIn(schedule) && (
                           <Tooltip title="Vào ca">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handleCheckIn(schedule.id)}
-                            >
+                            <IconButton size="small" color="primary" onClick={() => handleCheckIn(schedule.id)}>
                               <LoginOutlined />
                             </IconButton>
                           </Tooltip>
                         )}
-                        
+
                         {canCheckOut(schedule) && (
                           <Tooltip title="Kết thúc ca">
-                            <IconButton
-                              size="small"
-                              color="success"
-                              onClick={() => handleCheckOut(schedule.id)}
-                            >
+                            <IconButton size="small" color="success" onClick={() => handleCheckOut(schedule.id)}>
                               <LogoutOutlined />
                             </IconButton>
                           </Tooltip>
@@ -406,15 +417,17 @@ const WorkSchedulePage = () => {
                 ))}
               </Stack>
             ) : (
-              <Box sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                p: 4,
-                bgcolor: '#f8f9fa',
-                borderRadius: 2,
-                border: '1px dashed #e0e0e0'
-              }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  p: 4,
+                  bgcolor: '#f8f9fa',
+                  borderRadius: 2,
+                  border: '1px dashed #e0e0e0'
+                }}
+              >
                 <CalendarOutlined style={{ fontSize: '48px', color: '#90caf9', marginBottom: '16px' }} />
                 <Typography variant="h6" color="text.secondary" gutterBottom>
                   Không có lịch làm việc
@@ -434,7 +447,7 @@ const WorkSchedulePage = () => {
               <Typography variant="h6" fontWeight={700} color="#2962ff" sx={{ mb: 3 }}>
                 Danh sách lịch làm việc
               </Typography>
-              
+
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                   <CircularProgress />
@@ -449,7 +462,7 @@ const WorkSchedulePage = () => {
                         <TableCell sx={{ fontWeight: 600 }}>Giờ vào ca</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Giờ tan ca</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 600 }}>Thao tác</TableCell>
+                        {/* <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Hành động</TableCell> */}
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -459,25 +472,17 @@ const WorkSchedulePage = () => {
                             <Typography variant="body2" fontWeight={600}>
                               {format(new Date(schedule.workDate), 'dd/MM/yyyy', { locale: vi })}
                             </Typography>
-                            {isToday(new Date(schedule.workDate)) && (
-                              <Chip label="Hôm nay" size="small" color="primary" sx={{ mt: 0.5 }} />
-                            )}
+                            {isToday(new Date(schedule.workDate)) && <Chip label="Hôm nay" size="small" color="primary" sx={{ mt: 0.5 }} />}
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" fontWeight={500}>
                               {schedule.shift}
                             </Typography>
                           </TableCell>
-                          <TableCell>
-                            {schedule.checkInTime || '-'}
-                          </TableCell>
-                          <TableCell>
-                            {schedule.checkOutTime || '-'}
-                          </TableCell>
-                          <TableCell>
-                            {getStatusChip(schedule.status, schedule)}
-                          </TableCell>
-                          <TableCell align="center">
+                          <TableCell>{schedule.checkInTime || '-'}</TableCell>
+                          <TableCell>{schedule.checkOutTime || '-'}</TableCell>
+                          <TableCell>{getStatusChip(schedule.status, schedule)}</TableCell>
+                          {/* <TableCell align="center">
                             <Stack direction="row" spacing={1} justifyContent="center">
                               {canCheckIn(schedule) && (
                                 <Tooltip title="Vào ca">
@@ -507,28 +512,31 @@ const WorkSchedulePage = () => {
                                 </Tooltip>
                               )}
                             </Stack>
-                          </TableCell>
+                          </TableCell> */}
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </TableContainer>
               ) : (
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  p: 6,
-                  bgcolor: '#f8f9fa',
-                  borderRadius: 2,
-                  border: '1px dashed #e0e0e0'
-                }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    p: 6,
+                    bgcolor: '#f8f9fa',
+                    borderRadius: 2,
+                    border: '1px dashed #e0e0e0'
+                  }}
+                >
                   <CalendarOutlined style={{ fontSize: '64px', color: '#90caf9', marginBottom: '16px' }} />
                   <Typography variant="h6" color="text.secondary" gutterBottom>
                     Chưa có lịch làm việc
                   </Typography>
                   <Typography variant="body2" color="text.secondary" textAlign="center">
-                    Hiện tại chưa có lịch làm việc nào được giao.<br />
+                    Hiện tại chưa có lịch làm việc nào được giao.
+                    <br />
                     Vui lòng liên hệ quản lý để được sắp xếp lịch làm việc.
                   </Typography>
                 </Box>
@@ -541,4 +549,4 @@ const WorkSchedulePage = () => {
   );
 };
 
-export default WorkSchedulePage; 
+export default WorkSchedulePage;

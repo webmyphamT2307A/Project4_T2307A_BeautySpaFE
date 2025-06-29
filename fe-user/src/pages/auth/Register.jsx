@@ -41,7 +41,7 @@ export default function Register() {
           phone,
           address,
           branchId: branchId ? Number(branchId) : null
-        }),
+        })
       });
       const data = await res.json();
       if (data.status === 'SUCCESS') {
@@ -101,44 +101,12 @@ export default function Register() {
             <Stack spacing={2}>
               {error && <Alert severity="error">{error}</Alert>}
               {success && <Alert severity="success">{success}</Alert>}
-              <TextField
-                label="Họ tên"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-                required
-              />
-              <TextField
-                label="Email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
-              <TextField
-                label="Mật khẩu"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
-              <TextField
-                label="Số điện thoại"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                required
-              />
-              <TextField
-                label="Địa chỉ"
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-                required
-              />
-              <TextField
-                label="Mã chi nhánh"
-                value={branchId}
-                onChange={e => setBranchId(e.target.value)}
-                required
-              />
+              <TextField label="Họ tên" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+              <TextField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <TextField label="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <TextField label="Số điện thoại" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+              <TextField label="Địa chỉ" value={address} onChange={(e) => setAddress(e.target.value)} required />
+              <TextField label="Mã chi nhánh" value={branchId} onChange={(e) => setBranchId(e.target.value)} required />
               <Button type="submit" variant="contained" color="primary">
                 Đăng ký
               </Button>

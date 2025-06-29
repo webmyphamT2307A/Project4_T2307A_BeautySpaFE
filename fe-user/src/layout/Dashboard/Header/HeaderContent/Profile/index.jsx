@@ -63,50 +63,50 @@ export default function Profile() {
   };
 
   useEffect(() => {
-  // Ưu tiên lấy token và role từ cookie
-  let token = Cookies.get('admin_token') || Cookies.get('staff_token') || Cookies.get('manager_token');
-  let role = Cookies.get('admin_role') || Cookies.get('staff_role') || Cookies.get('manager_role');
+    // Ưu tiên lấy token và role từ cookie
+    let token = Cookies.get('admin_token') || Cookies.get('staff_token') || Cookies.get('manager_token');
+    let role = Cookies.get('admin_role') || Cookies.get('staff_role') || Cookies.get('manager_role');
 
-  // Nếu không có trong cookie thì lấy từ localStorage
-  if (!token || !role) {
-    const user = JSON.parse(localStorage.getItem('user'));
-    token = localStorage.getItem('token');
-    role = user?.role?.name ? `ROLE_${user.role.name.toUpperCase()}` : null;
-  }
-
-  const fetchUserData = async (token, role) => {
-    try {
-      const res = await fetch('http://localhost:8080/api/v1/userDetail/me', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error(`API returned status ${res.status}`);
-      }
-
-      const data = await res.json();
-      if (data.status === 'SUCCESS') {
-        setUserName(data.data.fullName || role);
-        setUserAvatar(data.data.imageUrl || avatar1);
-        setRoleName(data.data.role?.name  || 'Chưa xác định vai trò');
-      } else {
-        console.error(`Failed to fetch ${role} user data:`, data.message);
-      }
-    } catch (err) {
-      console.error(`Error fetching ${role} user data:`, err.message);
+    // Nếu không có trong cookie thì lấy từ localStorage
+    if (!token || !role) {
+      const user = JSON.parse(localStorage.getItem('user'));
+      token = localStorage.getItem('token');
+      role = user?.role?.name ? `ROLE_${user.role.name.toUpperCase()}` : null;
     }
-  };
 
-  if (token && role) {
-    console.log('Token and role found:', token, role);
-    fetchUserData(token, role);
-  } else {
-    console.error('No valid token or role found in Cookies or localStorage');
-  }
-}, []);
+    const fetchUserData = async (token, role) => {
+      try {
+        const res = await fetch('http://localhost:8080/api/v1/userDetail/me', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error(`API returned status ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.status === 'SUCCESS') {
+          setUserName(data.data.fullName || role);
+          setUserAvatar(data.data.imageUrl || avatar1);
+          setRoleName(data.data.role?.name || 'Chưa xác định vai trò');
+        } else {
+          console.error(`Failed to fetch ${role} user data:`, data.message);
+        }
+      } catch (err) {
+        console.error(`Error fetching ${role} user data:`, err.message);
+      }
+    };
+
+    if (token && role) {
+      console.log('Token and role found:', token, role);
+      fetchUserData(token, role);
+    } else {
+      console.error('No valid token or role found in Cookies or localStorage');
+    }
+  }, []);
 
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
@@ -121,24 +121,24 @@ export default function Profile() {
     setValue(newValue);
   };
 
-const handleLogout = async () => {
-  try {
-    await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
-  } catch (e) {
-    console.error('Logout failed:', e);
-  }
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:8080/api/v1/userDetail/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) {
+      console.error('Logout failed:', e);
+    }
 
-  Cookies.remove('admin_token', { path: '/admin' });
-  Cookies.remove('admin_role', { path: '/admin' });
-  Cookies.remove('staff_token', { path: '/staff' });
-  Cookies.remove('staff_role', { path: '/staff' });
-  Cookies.remove('manager_token', { path: '/manager' });
-  Cookies.remove('manager_role', { path: '/manager' });
+    Cookies.remove('admin_token', { path: '/admin' });
+    Cookies.remove('admin_role', { path: '/admin' });
+    Cookies.remove('staff_token', { path: '/staff' });
+    Cookies.remove('staff_role', { path: '/staff' });
+    Cookies.remove('manager_token', { path: '/manager' });
+    Cookies.remove('manager_role', { path: '/manager' });
 
-  localStorage.removeItem('user');
-  localStorage.removeItem('token');
-  window.location.href = '/staff/login';
-};
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    window.location.href = '/staff/login';
+  };
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <ButtonBase

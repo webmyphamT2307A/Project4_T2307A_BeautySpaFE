@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Typography, Box, Button, Alert, CircularProgress,
-} from '@mui/material';
+import { Typography, Box, Button, Alert, CircularProgress } from '@mui/material';
 
 const AttendancePage = () => {
   const [statusMessage, setStatusMessage] = useState('');
@@ -22,7 +20,7 @@ const AttendancePage = () => {
         }
 
         const response = await fetch(`http://localhost:8080/api/v1/users-schedules/user/${userId}/schedule`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` }
         });
 
         if (!response.ok) {
@@ -32,7 +30,7 @@ const AttendancePage = () => {
 
         const schedules = await response.json();
         const today = new Date().toISOString().split('T')[0];
-        const scheduleForToday = schedules.find(s => s.date === today);
+        const scheduleForToday = schedules.find((s) => s.date === today);
 
         if (scheduleForToday) {
           setTodaysSchedule(scheduleForToday);
@@ -69,15 +67,15 @@ const AttendancePage = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       });
 
       const json = await response.json();
 
       if (response.ok && json.status === 'SUCCESS') {
         setStatusMessage(`✅ Check-in thành công lúc: ${json.data.checkInTime}`);
-        setTodaysSchedule(prev => ({ ...prev, status: 'confirmed', checkInTime: json.data.checkInTime }));
+        setTodaysSchedule((prev) => ({ ...prev, status: 'confirmed', checkInTime: json.data.checkInTime }));
       } else {
         throw new Error(json.message || 'Check-in thất bại.');
       }
@@ -103,15 +101,15 @@ const AttendancePage = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       });
 
       const json = await response.json();
 
       if (response.ok && json.status === 'SUCCESS') {
         setStatusMessage(`✅ Check-out thành công lúc: ${json.data.checkOutTime}`);
-        setTodaysSchedule(prev => ({ ...prev, status: 'completed', checkOutTime: json.data.checkOutTime }));
+        setTodaysSchedule((prev) => ({ ...prev, status: 'completed', checkOutTime: json.data.checkOutTime }));
       } else {
         throw new Error(json.message || 'Check-out thất bại.');
       }
@@ -124,7 +122,9 @@ const AttendancePage = () => {
 
   return (
     <Box sx={{ p: 3, maxWidth: 800, mx: 'auto', mt: 5 }}>
-      <Typography variant="h4" gutterBottom>Điểm danh hôm nay</Typography>
+      <Typography variant="h4" gutterBottom>
+        Điểm danh hôm nay
+      </Typography>
 
       {scheduleLoading ? (
         <CircularProgress />
@@ -134,29 +134,18 @@ const AttendancePage = () => {
             Vui lòng nhấn nút bên dưới để điểm danh bắt đầu hoặc kết thúc ca làm việc của bạn.
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleCheckIn}
-              disabled={loading || !todaysSchedule}
-            >
+            <Button variant="contained" color="primary" onClick={handleCheckIn} disabled={loading || !todaysSchedule}>
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Vào ca'}
             </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleCheckOut}
-              disabled={loading || !todaysSchedule}
-            >
+            <Button variant="contained" color="secondary" onClick={handleCheckOut} disabled={loading || !todaysSchedule}>
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Kết thúc ca'}
             </Button>
           </Box>
         </>
       )}
 
-
       {statusMessage && (
-        <Alert severity={statusMessage.startsWith('✅') ? 'success' : (statusMessage.startsWith('❌') ? 'error' : 'info')} sx={{ mt: 3 }}>
+        <Alert severity={statusMessage.startsWith('✅') ? 'success' : statusMessage.startsWith('❌') ? 'error' : 'info'} sx={{ mt: 3 }}>
           {statusMessage}
         </Alert>
       )}

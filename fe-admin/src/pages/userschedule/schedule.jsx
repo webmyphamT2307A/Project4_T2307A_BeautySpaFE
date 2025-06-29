@@ -1038,7 +1038,7 @@ const UserScheduleManager = () => {
           </Grid>
 
           {/* Preview of formatted shift */}
-          {formData.shift && (
+          {/* {formData.shift && (
             <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
               <Typography variant="body2" color="primary">
                 <ClockCircleOutlined style={{ marginRight: 8 }} />
@@ -1048,7 +1048,7 @@ const UserScheduleManager = () => {
                 Ca làm việc sẽ được lưu với định dạng này
               </Typography>
             </Box>
-          )}
+          )} */}
 
           {/* Check-in/Check-out Times */}
           <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>

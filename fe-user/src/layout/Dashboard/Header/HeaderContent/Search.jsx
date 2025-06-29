@@ -47,7 +47,7 @@ export default function Search() {
           onChange={(event, newValue) => {
             if (newValue && newValue.url) {
               navigate(newValue.url);
-              setValue(null); 
+              setValue(null);
             }
           }}
           inputValue={inputValue}

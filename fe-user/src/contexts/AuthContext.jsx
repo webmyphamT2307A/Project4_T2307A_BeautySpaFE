@@ -87,19 +87,18 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (isAuthenticated) {
       const events = ['mousemove', 'keydown', 'scroll', 'click'];
-      
+
       const listener = () => resetIdleTimer();
 
-      events.forEach(event => window.addEventListener(event, listener));
+      events.forEach((event) => window.addEventListener(event, listener));
       resetIdleTimer(); // Bắt đầu bộ đếm
 
       return () => {
         clearTimeout(idleTimer);
-        events.forEach(event => window.removeEventListener(event, listener));
+        events.forEach((event) => window.removeEventListener(event, listener));
       };
     }
   }, [isAuthenticated, resetIdleTimer]);
-
 
   const value = {
     user,
@@ -114,4 +113,4 @@ export const AuthProvider = ({ children }) => {
 
 AuthProvider.propTypes = {
   children: PropTypes.node.isRequired
-}; 
+};

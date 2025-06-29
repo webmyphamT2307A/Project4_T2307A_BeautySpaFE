@@ -288,17 +288,17 @@ const Appointment = () => {
                 timeSlotId: formData.timeSlotId
             }
         })
-        .then(res => {
-            const slotData = res.data.data;
-            if (slotData && slotData.totalSlots !== undefined && slotData.bookedSlots !== undefined) {
-                const booked = Math.max(0, slotData.bookedSlots);
-                const total = Math.max(booked, slotData.totalSlots);
-                setSlotInfo({ availableSlot: booked, totalSlot: total });
-            } else {
-                setSlotInfo(null);
-            }
-        })
-        .catch(() => setSlotInfo(null));
+            .then(res => {
+                const slotData = res.data.data;
+                if (slotData && slotData.totalSlots !== undefined && slotData.bookedSlots !== undefined) {
+                    const booked = Math.max(0, slotData.bookedSlots);
+                    const total = Math.max(booked, slotData.totalSlots);
+                    setSlotInfo({ availableSlot: booked, totalSlot: total });
+                } else {
+                    setSlotInfo(null);
+                }
+            })
+            .catch(() => setSlotInfo(null));
     }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
 
     // Check staff availability
@@ -466,7 +466,7 @@ const Appointment = () => {
                     return;
                 }
             }
-            
+
             // Re-format date to dd/MM/yyyy for backend submission
             let formattedDate = formData.appointmentDate;
             if (formattedDate && formattedDate.includes('-')) {
@@ -549,6 +549,23 @@ const Appointment = () => {
                 setIsSubmittingAppointment(false);
             }, 1000);
         }
+    };
+    
+    // Check if time slot is valid
+    const isTimeSlotValid = (slot, selectedDate) => {
+        if (!selectedDate) return false;
+
+        const now = new Date();
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const [hours, minutes] = slot.startTime.split(':').map(Number);
+
+        const slotDateTime = new Date(year, month - 1, day, hours, minutes);
+
+        // Thêm buffer 30 phút (có thể điều chỉnh)
+        const bufferTime = 30; // minutes
+        const currentTimePlusBuffer = new Date(now.getTime() + bufferTime * 60000);
+
+        return slotDateTime > currentTimePlusBuffer;
     };
 
     // --- THAY ĐỔI: CẢI THIỆN LOGIC LỌC VÀ SẮP XẾP NHÂN VIÊN ---
@@ -849,23 +866,40 @@ const Appointment = () => {
                     >
                         <option value="" style={{ color: 'black' }}>Chọn khung giờ</option>
                         {timeSlots.map(slot => {
-                            const slotDateTimeStr = `${formData.appointmentDate}T${slot.endTime}:00`;
-                            const slotEnd = new Date(slotDateTimeStr);
-                            const now = new Date();
-                            const isPast = formData.appointmentDate && slot.endTime ? slotEnd < now : false;
+                            const isValid = isTimeSlotValid(slot, formData.appointmentDate);
+                            const today = new Date().toISOString().split('T')[0];
+                            const isPastDate = formData.appointmentDate < today;
+
+                            // Thêm thông báo trạng thái
+                            let statusText = '';
+                            if (isPastDate) {
+                                statusText = '(Ngày đã qua)';
+                            } else if (!isValid && formData.appointmentDate === today) {
+                                statusText = '(Đã quá giờ)';
+                            }
 
                             return (
                                 <option
                                     key={slot.slotId}
                                     value={slot.slotId}
-                                    disabled={isPast}
-                                    style={{ color: isPast ? '#aaa' : 'black', backgroundColor: 'white' }}
+                                    disabled={!isValid || isPastDate}
+                                    style={{
+                                        color: !isValid || isPastDate ? '#aaa' : 'black',
+                                        backgroundColor: 'white'
+                                    }}
                                 >
-                                    {slot.startTime} - {slot.endTime} {isPast ? '(Đã qua)' : ''}
+                                    {slot.startTime} - {slot.endTime} {statusText}
                                 </option>
                             );
                         })}
                     </select>
+
+                    {formData.appointmentDate === new Date().toISOString().split('T')[0] && (
+                        <small className="text-warning mt-1 d-block">
+                            <i className="fas fa-info-circle me-1"></i>
+                            Chỉ có thể đặt lịch trước tối thiểu 30 phút so với thời gian hiện tại
+                        </small>
+                    )}
                 </div>
 
                 {formData.appointmentDate && formData.timeSlotId && formData.serviceId && (
@@ -874,81 +908,81 @@ const Appointment = () => {
                         <div className=" alert alert-info bg-transparent border-white text-white rounded-3 shadow-sm">
                             <div className={`${loading ? 'background-blur' : ''}`}>
                                 <div className="d-flex align-items-center justify-content-between flex-wrap">
-                                <div className="d-flex flex-column gap-2">
-                                    <div className="d-flex align-items-center">
-                                        <i className="fas fa-user-friends me-2"></i>
-                                        <strong>Nhân viên sẵn sàng phục vụ:</strong>
-                                        <span className={`badge ms-2 px-2 py-1 rounded-pill ${countStaffAvaiable > 2 ? 'bg-success' :
-                                            countStaffAvaiable > 0 ? 'bg-warning text-dark' :
-                                                'bg-danger'
-                                            }`} style={{ fontSize: '0.8rem' }}>
-                                            <i className="fas fa-users me-1"></i>
-                                            {countStaffAvaiable} người
-                                        </span>
+                                    <div className="d-flex flex-column gap-2">
+                                        <div className="d-flex align-items-center">
+                                            <i className="fas fa-user-friends me-2"></i>
+                                            <strong>Nhân viên sẵn sàng phục vụ:</strong>
+                                            <span className={`badge ms-2 px-2 py-1 rounded-pill ${countStaffAvaiable > 2 ? 'bg-success' :
+                                                countStaffAvaiable > 0 ? 'bg-warning text-dark' :
+                                                    'bg-danger'
+                                                }`} style={{ fontSize: '0.8rem' }}>
+                                                <i className="fas fa-users me-1"></i>
+                                                {countStaffAvaiable} người
+                                            </span>
+                                        </div>
+
+                                        {slotInfo && (
+                                            <div className="d-flex align-items-center">
+                                                <i className="fas fa-bookmark me-2"></i>
+                                                <span className="me-2">Đã đặt:</span>
+                                                <span
+                                                    className={`badge px-2 py-1 rounded-pill ${slotInfo.availableSlot === slotInfo.totalSlot ? 'bg-danger' :
+                                                        slotInfo.availableSlot > slotInfo.totalSlot / 2 ? 'bg-warning text-dark' :
+                                                            'bg-success'
+                                                        }`} style={{ fontSize: '0.8rem' }}>
+                                                    <i className="fas fa-calendar-check me-1"></i>
+                                                    {slotInfo.availableSlot} / {slotInfo.totalSlot} chỗ
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {slotInfo && (
-                                        <div className="d-flex align-items-center">
-                                            <i className="fas fa-bookmark me-2"></i>
-                                            <span className="me-2">Đã đặt:</span>
-                                            <span
-                                                className={`badge px-2 py-1 rounded-pill ${slotInfo.availableSlot === slotInfo.totalSlot ? 'bg-danger' :
-                                                    slotInfo.availableSlot > slotInfo.totalSlot / 2 ? 'bg-warning text-dark' :
-                                                        'bg-success'
-                                                }`} style={{fontSize: '0.8rem'}}>
-                                                <i className="fas fa-calendar-check me-1"></i>
-                                                {slotInfo.availableSlot} / {slotInfo.totalSlot} chỗ
-                                            </span>
+                                    {countStaffAvaiable > 0 && (
+                                        <div className="d-flex flex-column align-items-end gap-1">
+                                            <small className="text-white-50 mb-1">Tình trạng sẵn sàng</small>
+                                            <div className="progress rounded-pill" style={{ width: '180px', height: '10px' }}>
+                                                <div
+                                                    className={`progress-bar progress-bar-striped progress-bar-animated ${countStaffAvaiable === 0 ? 'bg-danger' :
+                                                        countStaffAvaiable <= 2 ? 'bg-warning' :
+                                                            'bg-success'
+                                                        }`}
+                                                    style={{
+                                                        width: `${Math.min((countStaffAvaiable / 5) * 100, 100)}%`,
+                                                        borderRadius: '10px'
+                                                    }}
+                                                    role="progressbar"
+                                                    aria-valuenow={countStaffAvaiable}
+                                                    aria-valuemin="0"
+                                                    aria-valuemax="5"
+                                                />
+                                            </div>
+                                            <small className="text-white-50" style={{ fontSize: '0.7rem' }}>
+                                                {countStaffAvaiable === 0 ? 'Chưa có nhân viên' :
+                                                    countStaffAvaiable <= 2 ? 'Ít nhân viên' :
+                                                        'Đủ nhân viên'}
+                                            </small>
                                         </div>
                                     )}
                                 </div>
 
-                                {countStaffAvaiable > 0 && (
-                                    <div className="d-flex flex-column align-items-end gap-1">
-                                        <small className="text-white-50 mb-1">Tình trạng sẵn sàng</small>
-                                        <div className="progress rounded-pill" style={{width: '180px', height: '10px'}}>
-                                            <div
-                                                className={`progress-bar progress-bar-striped progress-bar-animated ${countStaffAvaiable === 0 ? 'bg-danger' :
-                                                    countStaffAvaiable <= 2 ? 'bg-warning' :
-                                                        'bg-success'
-                                                }`}
-                                                style={{
-                                                    width: `${Math.min((countStaffAvaiable / 5) * 100, 100)}%`,
-                                                    borderRadius: '10px'
-                                                }}
-                                                role="progressbar"
-                                                aria-valuenow={countStaffAvaiable}
-                                                aria-valuemin="0"
-                                                aria-valuemax="5"
-                                            />
-                                        </div>
-                                        <small className="text-white-50" style={{fontSize: '0.7rem'}}>
-                                            {countStaffAvaiable === 0 ? 'Chưa có nhân viên' :
-                                                countStaffAvaiable <= 2 ? 'Ít nhân viên' :
-                                                    'Đủ nhân viên'}
+                                {/* Thêm thông báo rõ ràng thân thiện với người dùng */}
+                                <div className="mt-3 pt-2 border-top border-white" style={{ borderOpacity: '0.3' }}>
+                                    <div className="d-flex align-items-center text-white-50">
+                                        <i className="fas fa-info-circle me-2"></i>
+                                        <small>
+                                            {staffList.length === 0 ?
+                                                'Hiện tại chưa có nhân viên nào có lịch làm việc vào thời gian này. Vui lòng chọn thời gian khác.' :
+                                                slotInfo?.availableSlot === slotInfo?.totalSlot ?
+                                                    'Thời gian này đã kín lịch. Vui lòng chọn khung giờ khác.' :
+                                                    slotInfo?.availableSlot === slotInfo?.totalSlot - 1 ?
+                                                        'Chỉ còn 1 chỗ trống cuối cùng! Hãy nhanh tay đặt lịch.' :
+                                                        slotInfo?.availableSlot < slotInfo?.totalSlot ?
+                                                            `Còn ${slotInfo.totalSlot - slotInfo.availableSlot} chỗ trống. Bạn có thể đặt lịch ngay!` :
+                                                            'Nhân viên đã sẵn sàng phục vụ bạn!'
+                                            }
                                         </small>
                                     </div>
-                                )}
-                            </div>
-
-                                {/* Thêm thông báo rõ ràng thân thiện với người dùng */}
-                                <div className="mt-3 pt-2 border-top border-white" style={{borderOpacity: '0.3'}}>
-                                <div className="d-flex align-items-center text-white-50">
-                                    <i className="fas fa-info-circle me-2"></i>
-                                    <small>
-                                        {staffList.length === 0 ?
-                                            'Hiện tại chưa có nhân viên nào có lịch làm việc vào thời gian này. Vui lòng chọn thời gian khác.' :
-                                            slotInfo?.availableSlot === slotInfo?.totalSlot ?
-                                                'Thời gian này đã kín lịch. Vui lòng chọn khung giờ khác.' :
-                                                slotInfo?.availableSlot === slotInfo?.totalSlot - 1 ?
-                                                    'Chỉ còn 1 chỗ trống cuối cùng! Hãy nhanh tay đặt lịch.' :
-                                                    slotInfo?.availableSlot < slotInfo?.totalSlot ?
-                                                        `Còn ${slotInfo.totalSlot - slotInfo.availableSlot} chỗ trống. Bạn có thể đặt lịch ngay!` :
-                                                        'Nhân viên đã sẵn sàng phục vụ bạn!'
-                                        }
-                                    </small>
                                 </div>
-                            </div>
                             </div>
                         </div>
                     </div>
@@ -1128,7 +1162,11 @@ const Appointment = () => {
 
                                             <p className="text-white-50 mb-1" style={{
                                                 fontSize: '0.75rem',
-                                                minHeight: '18px'
+                                                minHeight: '18px',
+                                                maxHeight: '38px',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
                                             }}>
                                                 {staff.skillsText || 'Chuyên viên Spa'}
                                             </p>
@@ -1148,8 +1186,8 @@ const Appointment = () => {
                                                 <Link
                                                     to={`/staff-review/${staff.id}`}
                                                     className="btn btn-sm btn-warning w-100"
-                                                    style={{ 
-                                                        fontSize: '0.75rem', 
+                                                    style={{
+                                                        fontSize: '0.75rem',
                                                         padding: '6px 12px',
                                                         textDecoration: 'none',
                                                         fontWeight: '600',
@@ -1205,7 +1243,7 @@ const Appointment = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 
     const renderCustomerInfo = () => {
@@ -1362,7 +1400,7 @@ const Appointment = () => {
         const selectedService = services.find(s => String(s.id) === formData.serviceId);
         const selectedTimeSlot = timeSlots.find(ts => String(ts.slotId) === formData.timeSlotId);
         const selectedStaff = staffList.find(s => s.id === selectedStaffId);
-    
+
         return (
             <div className="step-content">
                 <div className="text-center mb-4">
@@ -1376,7 +1414,7 @@ const Appointment = () => {
                         fontSize: '1rem'
                     }}>Vui lòng kiểm tra kỹ thông tin trước khi xác nhận</p>
                 </div>
-  
+
                 {/* Summary Card */}
                 <div className="confirmation-summary mb-4 p-4 rounded-3" style={{
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
@@ -1411,7 +1449,7 @@ const Appointment = () => {
                                 </p>
                             </div>
                         </div>
-    
+
                         {/* Nhân Viên */}
                         <div className="col-12 col-md-6">
                             <div className="border-start border-3 ps-3" style={{ borderColor: '#FDB5B9' }}>
@@ -1446,7 +1484,7 @@ const Appointment = () => {
                         </div>
                     </div>
                 </div>
-    
+
                 {/* Appointment Details */}
                 <div className="appointment-details mb-4 p-4 rounded-3" style={{
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
@@ -1457,7 +1495,7 @@ const Appointment = () => {
                         <i className="fas fa-info-circle me-2 text-primary"></i>
                         Chi Tiết Cuộc Hẹn
                     </h5>
-    
+
                     <div className="row g-3">
                         {/* Ngày & Giờ */}
                         <div className="col-12 col-md-6">
@@ -1493,7 +1531,7 @@ const Appointment = () => {
                                 </p>
                             </div>
                         </div>
-    
+
                         {/* Khách Hàng */}
                         <div className="col-12 col-md-6">
                             <div className="border-start border-warning border-3 ps-3">
@@ -1521,7 +1559,7 @@ const Appointment = () => {
                             </div>
                         </div>
                     </div>
-    
+
                     {/* Notes */}
                     {formData.notes && (
                         <div className="mt-3">
@@ -1547,7 +1585,7 @@ const Appointment = () => {
                                     {formData.notes}
                                 </div>
                             </div>
-    
+
                             {/* Custom scrollbar styling */}
                             <style jsx>{`
                                 .mt-3 div:last-child::-webkit-scrollbar {
@@ -1571,7 +1609,7 @@ const Appointment = () => {
                         </div>
                     )}
                 </div>
-    
+
                 {/* Total Cost */}
                 <div className="total-cost p-4 rounded-3" style={{
                     background: 'linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(40, 167, 69, 0.1) 100%)',
@@ -1605,7 +1643,7 @@ const Appointment = () => {
                         </div>
                     </div>
                 </div>
-    
+
                 {/* Warning Notice */}
                 <div className="alert alert-warning bg-transparent border-warning text-warning mt-4">
                     <div className="d-flex align-items-start">

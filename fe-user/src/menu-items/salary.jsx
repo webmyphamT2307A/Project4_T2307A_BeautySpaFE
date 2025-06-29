@@ -19,4 +19,4 @@ const salary = {
   ]
 };
 
-export default salary; 
+export default salary;

@@ -32,26 +32,26 @@ export default function SettingTab() {
   return (
     <List component="nav" sx={{ p: 0, '& .MuiListItemIcon-root': { minWidth: 32 } }}>
       <Link underline="none" sx={{ color: 'inherit' }} target="_blank" href="https://codedthemes.support-hub.io/">
-        <ListItemButton selected={selectedIndex === 0} onClick={(event) => handleListItemClick(event, 0)}>
+        {/* <ListItemButton selected={selectedIndex === 0} onClick={(event) => handleListItemClick(event, 0)}>
           <ListItemIcon>
             <QuestionCircleOutlined />
           </ListItemIcon>
           <ListItemText primary="Hỗ Trợ" />
-        </ListItemButton>
+        </ListItemButton> */}
       </Link>
-      <ListItemButton selected={selectedIndex === 1} onClick={(event) => handleListItemClick(event, 1)}>
+      {/* <ListItemButton selected={selectedIndex === 1} onClick={(event) => handleListItemClick(event, 1)}>
         <ListItemIcon>
           <UserOutlined />
         </ListItemIcon>
         <ListItemText primary="Cài Đặt Tài Khoản" />
-      </ListItemButton>
-      <ListItemButton selected={selectedIndex === 2} onClick={(event) => handleListItemClick(event, 2)}>
+      </ListItemButton> */}
+      {/* <ListItemButton selected={selectedIndex === 2} onClick={(event) => handleListItemClick(event, 2)}>
         <ListItemIcon>
           <LockOutlined />
         </ListItemIcon>
         <ListItemText primary="Trung Tâm Bảo Mật" />
-      </ListItemButton>
-      <Link underline="none" style={{ color: 'inherit' }} target="_blank" href="https://codedthemes.support-hub.io/">
+      </ListItemButton> */}
+      <Link underline="none" style={{ color: 'inherit' }} href="/admin/feedback/feedback">
         <ListItemButton selected={selectedIndex === 3} onClick={(event) => handleListItemClick(event, 3)}>
           <ListItemIcon>
             <CommentOutlined />

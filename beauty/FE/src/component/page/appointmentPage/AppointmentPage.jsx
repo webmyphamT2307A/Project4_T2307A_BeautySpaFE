@@ -104,6 +104,23 @@ const AppointmentPage = () => {
         }
     }, [formData.appointmentDate, formData.serviceId, formData.timeSlotId]);
 
+    // Validate time slot
+    const isTimeSlotValid = (slot, selectedDate) => {
+        if (!selectedDate) return false;
+
+        const now = new Date();
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const [hours, minutes] = slot.startTime.split(':').map(Number);
+
+        const slotDateTime = new Date(year, month - 1, day, hours, minutes);
+
+        // Thêm buffer 30 phút (có thể điều chỉnh)
+        const bufferTime = 30; // minutes
+        const currentTimePlusBuffer = new Date(now.getTime() + bufferTime * 60000);
+
+        return slotDateTime > currentTimePlusBuffer;
+    };
+
     // Check staff availability
     useEffect(() => {
         const checkAllStaffAvailability = async () => {
@@ -160,7 +177,7 @@ const AppointmentPage = () => {
     // Validation functions
     const validateField = (name, value) => {
         let error = '';
-        
+
         switch (name) {
             case 'fullName':
                 if (!value.trim()) {
@@ -184,12 +201,12 @@ const AppointmentPage = () => {
             default:
                 break;
         }
-        
+
         setValidationErrors(prev => ({
             ...prev,
             [name]: error
         }));
-        
+
         return error === '';
     };
 
@@ -316,7 +333,7 @@ const AppointmentPage = () => {
                     return bIsAvailable - aIsAvailable;
                 });
             }
-            
+
             return filtered;
         } catch (error) {
             // console.error('Error in filteredStaffList:', error);
@@ -334,11 +351,11 @@ const AppointmentPage = () => {
         ));
     };
 
-    return(
+    return (
         <div>
-            <Header/>
+            <Header />
             <ToastContainer />
-            
+
             {/* Header Start */}
             <div className="container-fluid bg-breadcrumb py-5">
                 <div className="container text-center py-5">
@@ -347,20 +364,20 @@ const AppointmentPage = () => {
                         <li className="breadcrumb-item"><a href="/">Home</a></li>
                         <li className="breadcrumb-item"><a href="#">Pages</a></li>
                         <li className="breadcrumb-item active text-white">Appointment</li>
-                    </ol>    
+                    </ol>
                 </div>
             </div>
             {/* Header End */}
 
             {/* Appointment Form */}
-            <div className="container-fluid appointment py-5" style={{background: 'var(--bs-primary)'}}>
+            <div className="container-fluid appointment py-5" style={{ background: 'var(--bs-primary)' }}>
                 <div className="container py-5">
                     <div className="row g-5 justify-content-center">
                         <div className="col-lg-10 col-12">
                             <div className="appointment-form p-4 position-relative overflow-hidden" style={{ minHeight: '600px' }}>
                                 <p className="fs-4 text-uppercase text-primary">Get In Touch</p>
                                 <h1 className="display-5 display-lg-4 mb-3 text-white">Get Appointment</h1>
-                                
+
                                 <form onSubmit={handleSubmit}>
                                     <div className="row gy-2 gx-2 gx-lg-3">
                                         {/* Customer Info */}
@@ -378,7 +395,7 @@ const AppointmentPage = () => {
                                                 <small className="text-danger mt-1 d-block">{validationErrors.fullName}</small>
                                             )}
                                         </div>
-                                        
+
                                         <div className="col-12 col-lg-6">
                                             <input
                                                 type="text"
@@ -438,23 +455,39 @@ const AppointmentPage = () => {
                                             >
                                                 <option value="" style={{ color: 'black' }}>Chọn khung giờ</option>
                                                 {timeSlots.map(slot => {
-                                                    const slotDateTimeStr = `${formData.appointmentDate}T${slot.endTime}:00`;
-                                                    const slotEnd = new Date(slotDateTimeStr);
-                                                    const now = new Date();
-                                                    const isPast = formData.appointmentDate && slot.endTime ? slotEnd < now : false;
+                                                    const isValid = isTimeSlotValid(slot, formData.appointmentDate);
+                                                    const today = new Date().toISOString().split('T')[0];
+                                                    const isPastDate = formData.appointmentDate < today;
+
+                                                    // Thêm thông báo trạng thái
+                                                    let statusText = '';
+                                                    if (isPastDate) {
+                                                        statusText = '(Ngày đã qua)';
+                                                    } else if (!isValid && formData.appointmentDate === today) {
+                                                        statusText = '(Đã quá giờ)';
+                                                    }
 
                                                     return (
                                                         <option
                                                             key={slot.slotId}
                                                             value={slot.slotId}
-                                                            disabled={isPast}
-                                                            style={{ color: isPast ? '#aaa' : 'black', backgroundColor: 'white' }}
+                                                            disabled={!isValid || isPastDate}
+                                                            style={{
+                                                                color: !isValid || isPastDate ? '#aaa' : 'black',
+                                                                backgroundColor: 'white'
+                                                            }}
                                                         >
-                                                            {slot.startTime} - {slot.endTime} {isPast ? '(Đã qua)' : ''}
+                                                            {slot.startTime} - {slot.endTime} {statusText}
                                                         </option>
                                                     );
                                                 })}
                                             </select>
+                                            {formData.appointmentDate === new Date().toISOString().split('T')[0] && (
+                                                <small className="text-warning mt-1 d-block">
+                                                    <i className="fas fa-info-circle me-1"></i>
+                                                    Chỉ có thể đặt lịch trước tối thiểu 30 phút so với thời gian hiện tại
+                                                </small>
+                                            )}
                                         </div>
 
                                         {/* Available Slot Info */}
@@ -508,7 +541,7 @@ const AppointmentPage = () => {
                                                             }}
                                                         />
                                                     </div>
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         className="btn btn-outline-light btn-sm"
                                                         style={{ fontSize: '0.75rem', height: '35px', padding: '5px 15px' }}
@@ -518,7 +551,7 @@ const AppointmentPage = () => {
                                                     </button>
                                                 </div>
                                             </div>
-                                            
+
                                             {isCheckingAvailabilities && (
                                                 <div className="text-center py-2">
                                                     <small className="text-info">
@@ -548,14 +581,13 @@ const AppointmentPage = () => {
                                                             return (
                                                                 <div key={staff.id} className="col-12 col-sm-6 col-md-4 col-lg-3">
                                                                     <div
-                                                                        className={`employee-card h-100 p-3 border rounded-3 position-relative ${
-                                                                            isSelected ? 'border-primary selected-card' : 
+                                                                        className={`employee-card h-100 p-3 border rounded-3 position-relative ${isSelected ? 'border-primary selected-card' :
                                                                             isBusy ? 'border-danger busy-card' : 'border-light'
-                                                                        }`}
+                                                                            }`}
                                                                         style={{
-                                                                            backgroundColor: isBusy ? 'rgba(220, 53, 69, 0.1)' : 
-                                                                                           isSelected ? 'rgba(13, 110, 253, 0.1)' : 
-                                                                                           'rgba(255,255,255,0.05)',
+                                                                            backgroundColor: isBusy ? 'rgba(220, 53, 69, 0.1)' :
+                                                                                isSelected ? 'rgba(13, 110, 253, 0.1)' :
+                                                                                    'rgba(255,255,255,0.05)',
                                                                             cursor: isBusy ? 'not-allowed' : 'pointer',
                                                                             transition: 'all 0.3s ease-in-out',
                                                                             opacity: isBusy ? 0.6 : 1,
@@ -593,11 +625,11 @@ const AppointmentPage = () => {
                                                                                     borderWidth: '2px !important'
                                                                                 }}
                                                                             />
-                                                                            
+
                                                                             <h6 className="text-white mb-1" style={{ fontSize: '0.95rem', fontWeight: '600', minHeight: '22px' }}>
                                                                                 {staff.fullName}
                                                                             </h6>
-                                                                            
+
                                                                             <p className="text-white-50 mb-1" style={{ fontSize: '0.75rem', minHeight: '18px' }}>
                                                                                 {staff.skillsText || 'Spa Specialist'}
                                                                             </p>
@@ -615,10 +647,9 @@ const AppointmentPage = () => {
                                                                             {/* Select Button */}
                                                                             <button
                                                                                 type="button"
-                                                                                className={`btn btn-sm w-100 ${
-                                                                                    isBusy ? 'btn-outline-danger' : 
+                                                                                className={`btn btn-sm w-100 ${isBusy ? 'btn-outline-danger' :
                                                                                     isSelected ? 'btn-primary' : 'btn-outline-light'
-                                                                                }`}
+                                                                                    }`}
                                                                                 style={{ fontSize: '0.75rem', padding: '6px 12px' }}
                                                                                 disabled={isBusy}
                                                                             >
@@ -639,7 +670,7 @@ const AppointmentPage = () => {
                                                 )}
                                             </div>
                                         </div>
-                                        
+
                                         {/* Notes */}
                                         <div className="col-12">
                                             <div className="position-relative">
@@ -774,7 +805,7 @@ const AppointmentPage = () => {
                 }
             `}</style>
 
-            <Footer/>
+            <Footer />
         </div>
     )
 }

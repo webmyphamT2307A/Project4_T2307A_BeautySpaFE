@@ -10,7 +10,7 @@ const ServicePage = () => {
   const [servicesData, setServicesData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  
+
   // Search functionality states
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredServices, setFilteredServices] = useState([]);
@@ -29,29 +29,28 @@ const ServicePage = () => {
     const value = e.target.value;
     setSearchTerm(value);
     setSelectedSuggestionIndex(-1);
-    
+
     // Trim và loại bỏ khoảng trắng thừa, kiểm tra độ dài tối thiểu
     const trimmedValue = value.trim().replace(/\s+/g, ' ');
-    
+
     if (trimmedValue && trimmedValue.length >= 2) {
       // Tách từ khóa và tìm kiếm theo từng từ
       const keywords = trimmedValue.toLowerCase().split(' ').filter(keyword => keyword.length > 0);
-      
+
       const filtered = servicesData.filter(service => {
         const serviceName = service.name.toLowerCase();
         const serviceDesc = service.description.toLowerCase();
-        
+
         // Tìm kiếm chính xác: phải chứa ít nhất 1 từ khóa hoàn chỉnh
         return keywords.some(keyword => {
           // Tránh các ký tự đặc biệt gây nhiễu
           if (keyword.length < 2 || /^[^a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ0-9]+$/.test(keyword)) {
             return false;
           }
-          
           return serviceName.includes(keyword) || serviceDesc.includes(keyword);
         });
       });
-      
+
       setFilteredServices(filtered);
       setShowSuggestions(true);
     } else {
@@ -78,7 +77,7 @@ const ServicePage = () => {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedSuggestionIndex(prev => 
+        setSelectedSuggestionIndex(prev =>
           prev < filteredServices.length - 1 ? prev + 1 : prev
         );
         break;
@@ -149,7 +148,7 @@ const ServicePage = () => {
           <div className="mx-auto text-center mb-5" style={{ maxWidth: 800 }}>
             <p className="fs-4 text-uppercase text-center text-primary">Dịch Vụ Của Chúng Tôi</p>
             <h1 className="display-3">Dịch Vụ Spa &amp; Làm Đẹp</h1>
-            
+
             {/* Search Box */}
             <div className="position-relative mx-auto mt-4" style={{ maxWidth: 500 }}>
               <div className="search-container" style={{ position: 'relative' }}>
@@ -167,6 +166,13 @@ const ServicePage = () => {
                     transition: 'all 0.3s ease',
                     fontSize: '1rem',
                     padding: '12px 50px 12px 20px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.border = '2px solid rgb(255, 156, 191)';
+                    
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.border = '2px solid #e9ecef';
                   }}
                 />
                 <button
@@ -189,13 +195,13 @@ const ServicePage = () => {
                 >
                   <i className="fas fa-search"></i>
                 </button>
-                
+
                 {/* Search Suggestions Dropdown */}
                 {showSuggestions && filteredServices.length > 0 && (
-                  <div 
+                  <div
                     className="position-absolute w-100 bg-white border rounded shadow-lg"
-                    style={{ 
-                      top: '100%', 
+                    style={{
+                      top: '100%',
                       zIndex: 1000,
                       maxHeight: '300px',
                       overflowY: 'auto',
@@ -205,9 +211,8 @@ const ServicePage = () => {
                     {filteredServices.slice(0, 8).map((service, index) => (
                       <div
                         key={service.id}
-                        className={`p-3 border-bottom cursor-pointer search-suggestion ${
-                          index === selectedSuggestionIndex ? 'bg-light' : ''
-                        }`}
+                        className={`p-3 border-bottom cursor-pointer search-suggestion ${index === selectedSuggestionIndex ? 'bg-light' : ''
+                          }`}
                         onClick={() => handleSuggestionClick(service.id)}
                         style={{
                           cursor: 'pointer',
@@ -242,8 +247,8 @@ const ServicePage = () => {
                               {service.name}
                             </div>
                             <div className="text-muted small" style={{ fontSize: '0.8rem' }}>
-                              {service.description.length > 50 
-                                ? service.description.substring(0, 50) + '...' 
+                              {service.description.length > 50
+                                ? service.description.substring(0, 50) + '...'
                                 : service.description}
                             </div>
                           </div>
@@ -253,7 +258,7 @@ const ServicePage = () => {
                         </div>
                       </div>
                     ))}
-                    
+
                     {filteredServices.length > 8 && (
                       <div className="p-2 text-center text-muted small">
                         Và {filteredServices.length - 8} kết quả khác...
@@ -261,13 +266,13 @@ const ServicePage = () => {
                     )}
                   </div>
                 )}
-                
+
                 {/* No results message */}
                 {showSuggestions && searchTerm && filteredServices.length === 0 && (
-                  <div 
+                  <div
                     className="position-absolute w-100 bg-white border rounded shadow-lg p-3 text-center text-muted"
-                    style={{ 
-                      top: '100%', 
+                    style={{
+                      top: '100%',
                       zIndex: 1000,
                       marginTop: '5px'
                     }}
@@ -306,7 +311,7 @@ const ServicePage = () => {
                                 }}>
                                   {service.description}
                                 </p>
-                                <DatLichButton 
+                                <DatLichButton
                                   onClick={() => {
                                     navigate('/', { replace: true });
                                     setTimeout(() => {
@@ -320,8 +325,8 @@ const ServicePage = () => {
                               </div>
                             </div>
                             <div className="col-4 d-flex align-items-center justify-content-center">
-                              <div 
-                                className="services-img rounded service-image-clickable" 
+                              <div
+                                className="services-img rounded service-image-clickable"
                                 style={{ width: '180px', height: '180px', overflow: 'hidden' }}
                                 onClick={() => handleImageClick(service.id)}
                                 title="Click để xem chi tiết dịch vụ"
@@ -338,8 +343,8 @@ const ServicePage = () => {
                         ) : (
                           <>
                             <div className="col-4 d-flex align-items-center justify-content-center">
-                              <div 
-                                className="services-img rounded service-image-clickable" 
+                              <div
+                                className="services-img rounded service-image-clickable"
                                 style={{ width: '180px', height: '180px', overflow: 'hidden' }}
                                 onClick={() => handleImageClick(service.id)}
                                 title="Click để xem chi tiết dịch vụ"
@@ -365,7 +370,7 @@ const ServicePage = () => {
                                 }}>
                                   {service.description}
                                 </p>
-                                <DatLichButton 
+                                <DatLichButton
                                   onClick={() => {
                                     navigate('/', { replace: true });
                                     setTimeout(() => {
@@ -625,8 +630,8 @@ const ServicePage = () => {
 
         /* Search input focus effect */
         .form-control:focus {
-          border-color: #007bff !important;
-          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+          border-color:rgb(255, 156, 191) !important;
+          box-shadow: 0 0 0 0.2rem rgba(252, 176, 203, 0.44) !important;
         }
 
         /* Search button hover effect - Keep original position */

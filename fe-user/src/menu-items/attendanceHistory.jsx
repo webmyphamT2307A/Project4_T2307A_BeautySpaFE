@@ -1,7 +1,5 @@
 // assets
-import {
-  UnorderedListOutlined
-} from '@ant-design/icons';
+import { UnorderedListOutlined } from '@ant-design/icons';
 
 // icons
 const icons = {

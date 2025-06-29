@@ -167,6 +167,19 @@ const SalaryManager = () => {
     });
     setOpenCalculateDialog(true);
   };
+  const getDisabledMonthsForUser = (userId, year) => {
+    return salaries
+      .filter(s => s.userId === Number(userId) && s.year === Number(year))
+      .map(s => s.month);
+  };
+
+  const getDisabledYearsForUser = (userId) => {
+    return [...new Set(salaries.filter(s => s.userId === Number(userId)).map(s => s.year))];
+  };
+  const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i); // ví dụ 2023–2027
+
 
   const handleCloseCalculateDialog = () => setOpenCalculateDialog(false);
 
@@ -256,22 +269,37 @@ const SalaryManager = () => {
   };
 
   const handleDeleteSalary = (salaryId) => {
-    if (confirm('Bạn có chắc chắn muốn vô hiệu hóa bản ghi lương này?')) {
-      setLoading(true);
-      fetch(`${SALARY_API_URL}/${salaryId}`, { method: 'DELETE' })
-        .then(res => res.json())
-        .then(response => {
-          if (response.status === 'SUCCESS') {
-            toast.success(response.message || "Vô hiệu hóa bản ghi lương thành công.");
-            fetchSalaries();
-          } else {
-            toast.error(response.message || "Vô hiệu hóa bản ghi lương thất bại.");
-          }
-        })
-        .catch(() => toast.error("Lỗi khi vô hiệu hóa bản ghi lương."))
-        .finally(() => setLoading(false));
-    }
+    Swal.fire({
+      title: 'Bạn có chắc chắn?',
+      text: 'Bản ghi lương này sẽ bị vô hiệu hóa!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Vô hiệu hóa',
+      cancelButtonText: 'Hủy',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setLoading(true);
+        fetch(`${SALARY_API_URL}/${salaryId}`, { method: 'DELETE' })
+          .then(res => res.json())
+          .then(response => {
+            if (response.status === 'SUCCESS') {
+              toast.success(response.message || "Vô hiệu hóa bản ghi lương thành công.");
+              fetchSalaries();
+            } else {
+              toast.error(response.message || "Vô hiệu hóa bản ghi lương thất bại.");
+            }
+          })
+          .catch(() => toast.error("Lỗi khi vô hiệu hóa bản ghi lương."))
+          .finally(() => setLoading(false));
+      } else {
+        toast.info('Đã hủy thao tác.');
+      }
+    });
   };
+
 
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
@@ -412,8 +440,54 @@ const SalaryManager = () => {
               {users.map(user => <MenuItem key={user.id} value={user.id}>{user.fullName || user.username}</MenuItem>)}
             </Select>
           </FormControl>
-          <TextField margin="dense" name="month" label="Tháng (1-12)" type="number" fullWidth value={calculateFormData.month} onChange={handleCalculateFormChange} required />
-          <TextField margin="dense" name="year" label="Năm (YYYY)" type="number" fullWidth value={calculateFormData.year} onChange={handleCalculateFormChange} required />
+          {/* --- Select năm --- */}
+          <FormControl fullWidth margin="dense" required>
+            <InputLabel>Năm</InputLabel>
+            <Select
+              name="year"
+              value={calculateFormData.year}
+              onChange={handleCalculateFormChange}
+              label="Năm"
+            >
+              {yearOptions.map((year) => (
+                <MenuItem
+                  key={year}
+                  value={year}
+                  disabled={
+                    calculateFormData.userId &&
+                    getDisabledYearsForUser(calculateFormData.userId).includes(year) &&
+                    getDisabledMonthsForUser(calculateFormData.userId, year).length === 12
+                  }
+                >
+                  {year}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* --- Select tháng --- */}
+          <FormControl fullWidth margin="dense" required>
+            <InputLabel>Tháng</InputLabel>
+            <Select
+              name="month"
+              value={calculateFormData.month}
+              onChange={handleCalculateFormChange}
+              label="Tháng"
+            >
+              {allMonths.map((month) => (
+                <MenuItem
+                  key={month}
+                  value={month}
+                  disabled={
+                    calculateFormData.userId &&
+                    getDisabledMonthsForUser(calculateFormData.userId, calculateFormData.year).includes(month)
+                  }
+                >
+                  {month}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField margin="dense" name="manualBonus" label="Thưởng / Hoa hồng thủ công" type="number" fullWidth value={calculateFormData.manualBonus} onChange={handleCalculateFormChange} helperText="Khoản thưởng hoặc hoa hồng bổ sung." />
           <TextField margin="dense" name="manualDeductions" label="Các khoản khấu trừ thủ công khác" type="number" fullWidth value={calculateFormData.manualDeductions} onChange={handleCalculateFormChange} helperText="Các khoản khấu trừ không được tính tự động (ví dụ: tạm ứng)." />
           <TextField margin="dense" name="notesForCalculation" label="Ghi chú tính lương" type="text" fullWidth multiline rows={2} value={calculateFormData.notesForCalculation} onChange={handleCalculateFormChange} />
@@ -436,7 +510,6 @@ const SalaryManager = () => {
             <TextField margin="dense" name="baseSalary" label="Lương Cơ Bản (Thực tế)" type="number" fullWidth value={editFormData.baseSalary} onChange={handleEditFormChange} />
             <TextField margin="dense" name="bonus" label="Thưởng / Hoa hồng" type="number" fullWidth value={editFormData.bonus} onChange={handleEditFormChange} />
             <TextField margin="dense" name="deductions" label="Tổng khấu trừ" type="number" fullWidth value={editFormData.deductions} onChange={handleEditFormChange} />
-            <TextField margin="dense" name="totalSalary" label="Lương thực nhận" type="number" fullWidth value={editFormData.totalSalary} onChange={handleEditFormChange} InputProps={{ readOnly: true }} helperText="Thường được hệ thống tính toán lại." />
             <TextField margin="dense" name="paymentDate" label="Ngày thanh toán" type="date" fullWidth value={editFormData.paymentDate} onChange={handleEditFormChange} InputLabelProps={{ shrink: true }}/>
             <TextField margin="dense" name="notes" label="Ghi chú" type="text" fullWidth multiline rows={2} value={editFormData.notes} onChange={handleEditFormChange} />
             <FormControlLabel
