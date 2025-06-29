@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import sessionManager from '../../utils/sessionManager';
 import SessionTimer from './SessionTimer';
+import {toast} from "react-toastify";
 
 const Header = () => {
     // Khởi tạo hook useNavigate và useLocation
@@ -211,7 +212,8 @@ const Header = () => {
                 let token = responseData.data.token;
 
                 if (!token || token.split('.').length !== 3) {
-                    alert('Token không hợp lệ từ server!');
+                    toast.error('Token không hợp lệ từ server!');
+
                     return;
                 }
                 token = token.trim();
@@ -248,7 +250,7 @@ const Header = () => {
             }
         } catch (error) {
             console.error('Error logging in:', error);
-            alert('Email hoặc mật khẩu không chính xác!');
+            toast.error('Email hoặc mật khẩu không chính xác!');
         }
     };
 
