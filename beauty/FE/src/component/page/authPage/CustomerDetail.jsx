@@ -203,20 +203,20 @@ const CustomerDetail = () => {
             <Header />
             <style jsx>{`
                 .profile-container {
-                    background: url('/assets/img/user-bg.jpg') no-repeat center center fixed;
+                    // background: url('/assets/img/user-bg.jpg') no-repeat center center fixed;
+                    background: linear-gradient(135deg, rgba(253, 181, 183, 0.24), rgba(254, 176, 181, 0.26));
                     min-height: 100vh;
                     padding: 2rem 0;
-                    // backdrop-filter: blur(5px);
+                    backdrop-filter: blur(5px);
                 }
                 
                 .profile-breadcrumb {
-                    // background: rgba(253, 181, 185, 0.1);
-                    // backdrop-filter: blur(10px);
+                    background: rgba(253, 181, 185, 0.1);
+                    backdrop-filter: blur(10px);
                     border-radius: 15px;
                     padding: 1.5rem;
                     margin-bottom: 2rem;
                 }
-                
                 .profile-card {
                     padding: 2.7rem 1rem !important;
                     background: white;
