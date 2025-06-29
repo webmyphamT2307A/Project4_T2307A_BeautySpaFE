@@ -845,23 +845,24 @@ const Appointment = () => {
                         onChange={handleInputChange}
                         className="form-select py-2 border-white bg-transparent text-white-option"
                         disabled={!formData.serviceId || !formData.appointmentDate}
-                        style={{ height: '45px' }}
+                        style={{height: '45px'}}
                     >
-                        <option value="" style={{ color: 'black' }}>Chọn khung giờ</option>
+                        <option value="" style={{color: 'black'}}>Chọn khung giờ</option>
                         {timeSlots.map(slot => {
                             const slotDateTimeStr = `${formData.appointmentDate}T${slot.endTime}:00`;
                             const slotEnd = new Date(slotDateTimeStr);
                             const now = new Date();
-                            const isPast = formData.appointmentDate && slot.endTime ? slotEnd < now : false;
+                            const isToday = formData.appointmentDate === format(now, 'yyyy-MM-dd');
+                            const isPast = isToday && slotEnd <= now;
 
                             return (
                                 <option
                                     key={slot.slotId}
                                     value={slot.slotId}
                                     disabled={isPast}
-                                    style={{ color: isPast ? '#aaa' : 'black', backgroundColor: 'white' }}
+                                    style={{color: isPast ? 'gray' : 'black'}}
                                 >
-                                    {slot.startTime} - {slot.endTime} {isPast ? '(Đã qua)' : ''}
+                                    {slot.startTime} - {slot.endTime}
                                 </option>
                             );
                         })}
