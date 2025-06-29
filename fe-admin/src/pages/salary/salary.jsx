@@ -146,14 +146,20 @@ const SalaryManager = () => {
 
   const handleCalculateFormChange = (event) => {
     const { name, value } = event.target;
-    const rawValue = unformatCurrency(value);
-    if (!/^\d*$/.test(rawValue)) return; // chỉ cho nhập số
 
-    setCalculateFormData(prev => ({
-      ...prev,
-      [name]: rawValue
-    }));
+    // Các trường tiền cần format và chỉ cho nhập số
+    const moneyFields = ['manualBonus', 'manualDeductions'];
+    if (moneyFields.includes(name)) {
+      const rawValue = unformatCurrency(value);
+      if (!/^\d*$/.test(rawValue)) return; // chỉ chấp nhận số
+      setCalculateFormData(prev => ({ ...prev, [name]: rawValue }));
+      return;
+    }
+
+    // Các trường khác gán trực tiếp
+    setCalculateFormData(prev => ({ ...prev, [name]: value }));
   };
+
 
   const formatCurrency = (value) => {
     if (!value) return '';
