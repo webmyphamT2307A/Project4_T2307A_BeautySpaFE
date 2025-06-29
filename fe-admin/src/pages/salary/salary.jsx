@@ -314,17 +314,20 @@ const SalaryManager = () => {
   );
 
   return (
-    <MainCard  secondary={
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<CalculatorOutlined />}
-        onClick={handleOpenCalculateDialog}
-        sx={{ borderRadius: '8px' }}
-      >
-        Tính Lương
-      </Button>
-    }>
+    <MainCard 
+      title="Quản Lý Lương" 
+      secondary={
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<CalculatorOutlined />}
+          onClick={handleOpenCalculateDialog}
+          sx={{ borderRadius: '8px', ml: 2 }}
+        >
+          Tính Lương
+        </Button>
+      }
+    >
       <Box sx={{ mb: 2 }}>
         <Grid container spacing={2} alignItems="flex-end">
           <Grid item xs={12} sm={3}>
