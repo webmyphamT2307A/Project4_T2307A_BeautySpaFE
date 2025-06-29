@@ -222,6 +222,7 @@ const StaffReviewPage = () => {
     };
 
     const renderStars = (rating, interactive = false, onStarClick = null) => {
+        const roundedRating = Math.round(rating || 0); // làm tròn 2.9 -> 3
         return [1, 2, 3, 4, 5].map((star) => (
             <span
                 key={star}
@@ -229,15 +230,16 @@ const StaffReviewPage = () => {
                 style={{
                     fontSize: interactive ? '2rem' : '1.2rem',
                     cursor: interactive ? 'pointer' : 'default',
-                    color: star <= rating ? '#ffc107' : '#e4e5e9',
+                    color: star <= roundedRating ? '#ffc107' : '#e4e5e9',
                     marginRight: '2px',
                     userSelect: 'none'
                 }}
             >
-                ★
-            </span>
+            ★
+        </span>
         ));
     };
+
 
     const formatDate = (dateString) => {
         try {

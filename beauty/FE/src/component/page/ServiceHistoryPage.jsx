@@ -94,7 +94,7 @@ const StarRating = ({ rating, setRating, disabled = false }) => (
         {[1, 2, 3, 4, 5].map((star) => (
             <i
                 key={star}
-                className={`fas fa-star ${star <= rating ? 'text-warning' : 'text-light'}`}
+                className={`fas fa-star ${star <= rating ? 'text-warning' : 'star-light'}`}
                 style={{
                     cursor: disabled ? 'default' : 'pointer',
                     fontSize: '1.75rem',
@@ -820,8 +820,7 @@ const ServiceHistoryPage = () => {
             <table className="table table-hover mb-0">
                 <thead style={{ backgroundColor: '#f8f9fa' }}>
                     <tr>
-                        <th scope="col" className="py-3 border-0" style={{ fontSize: '0.9rem', fontWeight: '600', color: '#495057' }}>
-                            <i className="fas fa-hashtag me-2"></i>STT
+                        <th scope="col" className="py-3 border-0" style={{ fontSize: '0.9rem', fontWeight: '600', color: '#495057' }}>STT
                         </th>
                         <th scope="col" className="py-3 border-0" style={{ fontSize: '0.9rem', fontWeight: '600', color: '#495057' }}>
                             <i className="fas fa-spa me-2"></i>Dịch Vụ
@@ -852,7 +851,7 @@ const ServiceHistoryPage = () => {
                         const isCancellable = canCancelAppointment(item);
                         const isCompleted = statusInfo.text === 'Đã hoàn thành';
                         // Giả sử có trường isReviewed từ backend để biết đã đánh giá hay chưa
-                        const isReviewed = item.isReviewed === true;
+                        const isReviewed = item.isFeedBack === true;
 
                         return (
                             <tr key={item.id} style={{ borderLeft: `4px solid ${index % 2 === 0 ? '#007bff' : '#28a745'}` }}>

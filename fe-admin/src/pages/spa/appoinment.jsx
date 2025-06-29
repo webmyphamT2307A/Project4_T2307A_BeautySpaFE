@@ -990,13 +990,22 @@ const AppointmentManagement = () => {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }); // Mặc định là dd/mm/yyyy ở vi-VN
   };
+
 
   const formatTime = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return date.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
   const getStatusChipProps = (status) => {
     switch (status) {
@@ -1188,7 +1197,7 @@ const AppointmentManagement = () => {
                           <Chip icon={statusProps.icon} label={statusProps.label} size="small" color={statusProps.color} sx={{ borderRadius: '16px', fontWeight: 500, fontSize: '0.75rem' }} />
                         </TableCell>
                         <TableCell sx={{ textAlign: 'center' }}>
-                          <Tooltip title="View Details">
+                          <Tooltip title="Xem chi tiết">
                             <IconButton onClick={() => handleViewOpen(appointment)} color="info" size="small"><EyeOutlined /></IconButton>
                           </Tooltip>
                           
@@ -1248,7 +1257,7 @@ const AppointmentManagement = () => {
       {/* View Appointment Details Dialog */}
       <Dialog open={viewOpen} onClose={handleViewClose} maxWidth="md" fullWidth>
         <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
-          Appointment Details
+          Chi tiết lịch hẹn
           <IconButton aria-label="close" onClick={handleViewClose} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseOutlined /></IconButton>
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
@@ -1256,7 +1265,7 @@ const AppointmentManagement = () => {
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" gutterBottom>Customer Information</Typography>
+                  <Typography variant="h6" gutterBottom>Thông tin khách hàng</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                     <ImageAvatar src={currentAppointment.customer?.image} alt={currentAppointment.customer?.name} sx={{ width: 64, height: 64 }} />
                     <Box>
@@ -1267,14 +1276,14 @@ const AppointmentManagement = () => {
                   </Box>
                 </Box>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" gutterBottom>Appointment Details</Typography>
+                  <Typography variant="h6" gutterBottom>Chi tiết lịch hẹn</Typography>
                   <Grid container spacing={2}>
-                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Date</Typography><Typography variant="body2" sx={{ fontWeight: 500 }}>{formatDate(currentAppointment.appointmentDate)}</Typography></Grid>
-                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Time</Typography><Typography variant="body2" sx={{ fontWeight: 500 }}>{formatTime(currentAppointment.appointmentDate)} - {formatTime(currentAppointment.endTime)}</Typography></Grid>
+                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Ngày</Typography><Typography variant="body2" sx={{ fontWeight: 500 }}>{formatDate(currentAppointment.appointmentDate)}</Typography></Grid>
+                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Giờ</Typography><Typography variant="body2" sx={{ fontWeight: 500 }}>{formatTime(currentAppointment.appointmentDate)} - {formatTime(currentAppointment.endTime)}</Typography></Grid>
 
-                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Status</Typography><Box sx={{ mt: 0.5 }}><Chip {...getStatusChipProps(currentAppointment.status)} size="small" /></Box></Grid>
+                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Trạng thái</Typography><Box sx={{ mt: 0.5 }}><Chip {...getStatusChipProps(currentAppointment.status)} size="small" /></Box></Grid>
                     <Grid item xs={12}>
-                      <Typography variant="caption" color="textSecondary">Staff Assigned</Typography>
+                      <Typography variant="caption" color="textSecondary">Nhân viên phụ trách</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                         <ImageAvatar src={currentAppointment.staff?.image} alt={currentAppointment.staff?.name} sx={{ width: 24, height: 24 }} />
                         <Box>
@@ -1283,35 +1292,35 @@ const AppointmentManagement = () => {
                         </Box>
                       </Box>
                     </Grid>
-                    {currentAppointment.notes && (<Grid item xs={12}><Typography variant="caption" color="textSecondary">Notes</Typography><Typography variant="body2">{currentAppointment.notes}</Typography></Grid>)}
+                    {currentAppointment.notes && (<Grid item xs={12}><Typography variant="caption" color="textSecondary">Ghi chú</Typography><Typography variant="body2">{currentAppointment.notes}</Typography></Grid>)}
                   </Grid>
                 </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" gutterBottom>Service Information</Typography>
+                  <Typography variant="h6" gutterBottom>Thông tin dịch vụ</Typography>
                   <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{currentAppointment.service.name}</Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}><Typography variant="body2">Price:</Typography><Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>{formatCurrency(currentAppointment.price)}</Typography></Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography variant="body2">Duration:</Typography><Typography variant="body2">{currentAppointment.service.duration} phút</Typography></Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}><Typography variant="body2">Giá:</Typography><Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>{formatCurrency(currentAppointment.price)}</Typography></Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography variant="body2">Thời lượng:</Typography><Typography variant="body2">{currentAppointment.service.duration} phút</Typography></Box>
                   </Paper>
                 </Box>
                 <Box>
-                  <Typography variant="h6" gutterBottom>Booking Information</Typography>
+                  <Typography variant="h6" gutterBottom>Thông tin đặt lịch</Typography>
                   <Grid container spacing={2}>
-                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Booking ID</Typography><Typography variant="body2">#{currentAppointment.id}</Typography></Grid>
-                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Created On</Typography><Typography variant="body2">{formatDate(currentAppointment.createdAt)}</Typography></Grid>
+                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Mã đặt lịch</Typography><Typography variant="body2">#{currentAppointment.id}</Typography></Grid>
+                    <Grid item xs={6}><Typography variant="caption" color="textSecondary">Ngày tạo</Typography><Typography variant="body2">{formatDate(currentAppointment.createdAt)}</Typography></Grid>
                     <Grid item xs={12}>
                       <Divider sx={{ my: 1 }} />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
                         
                         {currentAppointment.status !== 'completed' && currentAppointment.status !== 'cancelled' && (
                           <>
-                            <Tooltip title="Update Status">
-                              <Button variant="outlined" color="primary" onClick={() => handleStatusDialogOpen(currentAppointment)}>Update Status</Button>
+                            <Tooltip title="Cập nhật trạng thái">
+                              <Button variant="outlined" color="primary" onClick={() => handleStatusDialogOpen(currentAppointment)}>Cập nhật trạng thái</Button>
                             </Tooltip>
-                            <Tooltip title="Edit Details / Assign Staff">
-                              <Button variant="contained" color="secondary" onClick={() => { handleViewClose(); handleOpenEditDetailDialog(currentAppointment); }}>Edit Details</Button>
+                            <Tooltip title="Chỉnh sửa thông tin/gán nhân viên phụ trách">
+                              <Button variant="contained" color="secondary" onClick={() => { handleViewClose(); handleOpenEditDetailDialog(currentAppointment); }}>Chỉnh sửa</Button>
                             </Tooltip>
                           </>
                         )}

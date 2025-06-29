@@ -25,4 +25,14 @@
 
 .dat-lich-btn.btn.btn-primary:focus {
   box-shadow: 0 0 0 0.2rem rgba(253, 181, 185, 0.5) !important;
-} 
+}
+
+.lb-image {
+  max-width: 80vw !important;
+  max-height: 80vh !important;
+  object-fit: contain;
+}
+.lb-outerContainer {
+  max-width: 80vw !important;
+  max-height: 80vh !important;
+}

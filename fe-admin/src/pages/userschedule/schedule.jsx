@@ -41,6 +41,7 @@ import {
   CheckCircleOutlined
 } from '@ant-design/icons';
 import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
 
 const API_BASE_URL = 'http://localhost:8080/api/v1';
 const SCHEDULE_API_URL = `${API_BASE_URL}/users-schedules`;
@@ -514,22 +515,38 @@ const UserScheduleManager = () => {
   };
 
   const handleDeleteSchedule = (scheduleId) => {
-    toast.warning('Đang xóa lịch trình...', { autoClose: 1000 });
-    fetch(`${SCHEDULE_API_URL}/${scheduleId}`, {
-      method: 'PUT',
-    })
-      .then(res => res.json())
-      .then(response => {
-        if (response.status === 'SUCCESS') {
-          fetchSchedules();
-          toast.success(response.message || 'Đã xóa lịch trình thành công.');
-        } else {
-          toast.error(response.message || 'Xóa lịch trình thất bại.');
-        }
-      })
-      .catch(() => toast.error('Lỗi khi xóa lịch trình.'));
-  };
+    Swal.fire({
+      title: 'Bạn có chắc chắn?',
+      text: 'Lịch trình này sẽ bị vô hiệu hóa!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        toast.warning('Đang xóa lịch trình...', { autoClose: 1000 });
 
+        fetch(`${SCHEDULE_API_URL}/${scheduleId}`, {
+          method: 'PUT',
+        })
+          .then(res => res.json())
+          .then(response => {
+            if (response.status === 'SUCCESS') {
+              fetchSchedules();
+              toast.success(response.message || 'Đã xóa lịch trình thành công.');
+            } else {
+              toast.error(response.message || 'Xóa lịch trình thất bại.');
+            }
+          })
+          .catch(() => toast.error('Lỗi khi xóa lịch trình.'));
+      } else {
+        toast.info('Đã hủy thao tác.');
+      }
+    });
+  };
   const handleCheckIn = (scheduleId) => {
     toast.info('Đang thực hiện check-in...', { autoClose: 1000 });
     fetch(`${SCHEDULE_API_URL}/check-in/${scheduleId}`, {
@@ -767,7 +784,7 @@ const UserScheduleManager = () => {
                 <TableCell sx={{ py: 2 }}>Giờ Ra</TableCell>
                 <TableCell sx={{ py: 2 }}>Trạng Thái</TableCell>
                 <TableCell sx={{ py: 2 }}>Hoạt Động</TableCell>
-                <TableCell align="center" sx={{ pr: 3, py: 2 }}>Thao Tác</TableCell>
+                <TableCell align="center" sx={{ pr: 3, py: 2, textAlign:'left' }}>Thao Tác</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -814,7 +831,11 @@ const UserScheduleManager = () => {
                       </TableCell>
                       <TableCell sx={{ py: 1.5 }}>
                         <Typography variant="body2">
-                          {new Date(schedule.workDate).toLocaleDateString('vi-VN')}
+                          {new Date(schedule.workDate).toLocaleDateString('vi-VN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit'
+                          })}
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ py: 1.5 }}>
@@ -862,30 +883,6 @@ const UserScheduleManager = () => {
                               <EditOutlined />
                             </IconButton>
                           </Tooltip>
-
-                          {!schedule.checkInTime && (
-                            <Tooltip title="Check In">
-                              <IconButton
-                                size="small"
-                                color="success"
-                                onClick={() => handleCheckIn(schedule.id)}
-                              >
-                                <ClockCircleOutlined />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-
-                          {schedule.checkInTime && !schedule.checkOutTime && (
-                            <Tooltip title="Check Out">
-                              <IconButton
-                                size="small"
-                                color="warning"
-                                onClick={() => handleCheckOut(schedule.id)}
-                              >
-                                <CheckCircleOutlined />
-                              </IconButton>
-                            </Tooltip>
-                          )}
 
                           <Tooltip title="Xóa (Vô hiệu hóa)">
                             <IconButton size="small" color="error" onClick={() => handleDeleteSchedule(schedule.id)}>
@@ -1066,11 +1063,13 @@ const UserScheduleManager = () => {
           )} */}
 
           {/* Check-in/Check-out Times */}
-          <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
-            Giờ Vào & Giờ Ra (Tùy Chọn)
-          </Typography>
+          {currentSchedule &&
+            <>
+              <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
+                Giờ Vào & Giờ Ra (Tùy Chọn)
+              </Typography>
 
-          <Grid container spacing={2}>
+              <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <TextField
                 margin="dense"
@@ -1097,6 +1096,8 @@ const UserScheduleManager = () => {
               />
             </Grid>
           </Grid>
+            </>
+          }
 
           {/* Preview check-in/check-out times */}
           {(timeForm.checkInTime || timeForm.checkOutTime) && (
