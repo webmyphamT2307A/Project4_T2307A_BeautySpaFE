@@ -332,7 +332,6 @@ const ProfilePage = () => {
         fullName: formData.fullName.trim(),
         phone: formData.phone.trim(),
         email: formData.email.trim(),
-        password: profile.password, // Keep existing password
         imageUrl: formData.imageUrl,
         address: formData.address.trim(),
         roleId: profile.role?.id || profile.roleId,
