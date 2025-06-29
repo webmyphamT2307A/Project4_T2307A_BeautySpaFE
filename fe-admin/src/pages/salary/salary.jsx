@@ -357,6 +357,7 @@ const SalaryManager = () => {
 
 
   return (
+
     <MainCard title="Quản Lý Tiền Lương"  secondary={
       <Button
         variant="contained"
@@ -367,7 +368,7 @@ const SalaryManager = () => {
       >
         Tính Lương
       </Button>
-    }>
+
       <Box sx={{ mb: 2 }}>
         <Grid container spacing={2} alignItems="flex-end">
           <Grid item xs={12} sm={3}>
