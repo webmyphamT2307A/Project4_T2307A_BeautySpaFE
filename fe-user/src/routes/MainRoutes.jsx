@@ -24,11 +24,11 @@ const ProfilePage = Loadable(lazy(() => import('pages/account/profile')));
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
-  path: '/',
+  path: '/staff',
   element: <PrivateRoute />,
   children: [
     {
-      path: '/',
+      path: '/staff',
       element: <MainLayout />,
       children: [
         {
