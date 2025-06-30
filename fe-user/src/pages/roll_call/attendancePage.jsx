@@ -29,8 +29,11 @@ const AttendancePage = () => {
         }
 
         const schedules = await response.json();
-        const today = new Date().toISOString().split('T')[0];
-        const scheduleForToday = schedules.find((s) => s.date === today);
+        const today = new Date().toLocaleDateString('en-CA', {
+          timeZone: 'Asia/Ho_Chi_Minh'
+        });
+        console.log("today:", today);
+        const scheduleForToday = schedules.find((s) => s.date === today && s.status !== 'completed');
 
         if (scheduleForToday) {
           setTodaysSchedule(scheduleForToday);
