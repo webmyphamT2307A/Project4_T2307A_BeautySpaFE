@@ -30,8 +30,9 @@ export default function ProfileTab() {
 
     Cookies.remove('admin_token', { path: '/admin' });
     Cookies.remove('admin_role', { path: '/admin' });
-    Cookies.remove('staff_token', { path: '/staff' });
-    Cookies.remove('staff_role', { path: '/staff' });
+    Cookies.remove('staff_token', { path: '/' });
+    Cookies.remove('staff_role', { path: '/' });
+    Cookies.remove('staff_userId', { path: '/' });
 
     localStorage.removeItem('user');
     localStorage.removeItem('token');
