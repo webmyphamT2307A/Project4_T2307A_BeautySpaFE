@@ -438,15 +438,19 @@ const UserScheduleManager = () => {
     // For new schedules, prevent setting schedule for a past date.
     // For existing schedules, prevent moving them to a past date (but allow saving changes on the same past date).
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const parts = formData.workDate.split('-').map(Number);
-    const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    today.setHours(0, 0, 0, 0); // Set to midnight to compare dates only
+
+    // More robust date parsing to avoid timezone issues. 'YYYY-MM-DD' is treated as UTC by new Date(string).
+    // By splitting and creating, we use local timezone.
+    const [year, month, day] = formData.workDate.split('-').map(Number);
+    const selectedDate = new Date(year, month - 1, day);
 
     const isEditing = !!currentSchedule;
+    // Ensure original date is also parsed consistently
     const originalDateStr = isEditing ? new Date(currentSchedule.workDate).toISOString().split('T')[0] : null;
 
-    if (selectedDate <= today && formData.workDate !== originalDateStr) {
-      toast.error("Không thể tạo hoặc dời lịch trình vào hôm nay hoặc một ngày trong quá khứ.");
+    if (selectedDate < today && formData.workDate !== originalDateStr) {
+      toast.error("Không thể tạo hoặc dời lịch trình vào một ngày trong quá khứ.");
       return;
     }
 

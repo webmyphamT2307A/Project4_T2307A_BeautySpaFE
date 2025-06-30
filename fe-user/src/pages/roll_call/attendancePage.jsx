@@ -12,9 +12,8 @@ const AttendancePage = () => {
     const fetchTodaysSchedule = async () => {
       setScheduleLoading(true);
       try {
-        const token = localStorage.getItem('token');
-        const user = JSON.parse(localStorage.getItem('user'));
-        const userId = user?.id;
+        const token = Cookies.get('staff_token');
+        const userId = Cookies.get('staff_userId');
 
         if (!token || !userId) {
           throw new Error('Người dùng chưa đăng nhập hoặc không tìm thấy thông tin.');
@@ -66,7 +65,7 @@ const AttendancePage = () => {
     setStatusMessage('');
 
     try {
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('staff_token');
       const response = await fetch(`http://localhost:8080/api/v1/users-schedules/check-in/${todaysSchedule.id}`, {
         method: 'PUT',
         headers: {
@@ -100,7 +99,7 @@ const AttendancePage = () => {
     setStatusMessage('');
 
     try {
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('staff_token');
       const response = await fetch(`http://localhost:8080/api/v1/users-schedules/check-out/${todaysSchedule.id}`, {
         method: 'PUT',
         headers: {
