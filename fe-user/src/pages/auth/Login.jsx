@@ -70,7 +70,7 @@ export default function Login() {
           Cookies.set('staff_token', token, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_role', roleName, { path: '/staff', sameSite: 'Strict', expires: 7 });
           Cookies.set('staff_userId', user.id, { path: '/staff', sameSite: 'Strict', expires: 7 });
-          window.location.href = 'http://localhost:3002';
+          window.location.href = 'http://localhost:3002/staff';
         } else {
           Cookies.remove('admin_token', { path: '/admin' });
           Cookies.remove('admin_role', { path: '/admin' });
