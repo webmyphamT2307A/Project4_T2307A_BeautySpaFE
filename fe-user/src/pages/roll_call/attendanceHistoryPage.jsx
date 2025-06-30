@@ -2,8 +2,29 @@ import React, { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import {
   Typography, Box, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, CircularProgress, Alert, TextField, MenuItem, Pagination,
+  TableHead, TableRow, CircularProgress, Alert, TextField, MenuItem, Pagination, Chip,
 } from '@mui/material';
+
+const StatusChip = ({ status }) => {
+  let color = 'default';
+  let label = status;
+
+  if (status === 'confirmed') {
+    color = 'info';
+    label = 'Đã vào ca';
+  } else if (status === 'completed') {
+    color = 'success';
+    label = 'Đã hoàn thành';
+  } else if (status === 'pending') {
+    color = 'warning';
+    label = 'Chưa bắt đầu';
+  } else if (status === 'absent') {
+    color = 'error';
+    label = 'Vắng mặt';
+  }
+
+  return <Chip label={label || 'Không xác định'} color={color} size="small" />;
+};
 
 const AttendanceHistoryPage = () => {
   const [records, setRecords] = useState([]);
@@ -35,7 +56,7 @@ const AttendanceHistoryPage = () => {
           throw new Error('User ID không hợp lệ. Vui lòng đăng nhập lại.');
         }
 
-        const res = await fetch(`http://localhost:8080/api/v1/admin/attendance/history?userId=${userId}`, {
+        const res = await fetch(`http://localhost:8080/api/v1/users-schedules/user/${userId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -52,8 +73,10 @@ const AttendanceHistoryPage = () => {
 
         const json = await res.json();
         if (json.status === 'SUCCESS') {
-          setRecords(json.data);
-          setFilteredRecords(json.data);
+          // Lọc để chỉ hiển thị những bản ghi đã được check-in
+          const attendedRecords = json.data.filter(record => record.checkInTime !== null);
+          setRecords(attendedRecords);
+          setFilteredRecords(attendedRecords);
         } else {
           throw new Error(json.message || 'Không lấy được dữ liệu');
         }
@@ -72,8 +95,7 @@ const AttendanceHistoryPage = () => {
     let result = [...records];
 
     if (dateFilter) {
-      // The `date` field from API is already in YYYY-MM-DD format
-      result = result.filter(r => r.date.startsWith(dateFilter));
+      result = result.filter(r => r.workDate.startsWith(dateFilter));
     }
 
     if (statusFilter) {
@@ -111,9 +133,8 @@ const AttendanceHistoryPage = () => {
           sx={{ flex: 1, minWidth: 200 }}
         >
           <MenuItem value="">Tất cả</MenuItem>
-          <MenuItem value="on_time">Đúng giờ</MenuItem>
-          <MenuItem value="late">Trễ</MenuItem>
-          <MenuItem value="absent">Vắng</MenuItem>
+          <MenuItem value="confirmed">Đã vào ca</MenuItem>
+          <MenuItem value="completed">Đã hoàn thành</MenuItem>
         </TextField>
       </Box>
 
@@ -141,11 +162,11 @@ const AttendanceHistoryPage = () => {
                 ) : (
                   paginatedData.map((r) => (
                     <TableRow key={r.id}>
-                      <TableCell>{r.date}</TableCell>
-                      <TableCell>{r.session}</TableCell>
-                      <TableCell>{new Date(r.checkInTime).toLocaleString()}</TableCell>
-                      <TableCell>{r.checkOutTime ? new Date(r.checkOutTime).toLocaleString() : '---'}</TableCell>
-                      <TableCell>{r.status}</TableCell>
+                      <TableCell>{r.workDate}</TableCell>
+                      <TableCell>{r.shift}</TableCell>
+                      <TableCell>{r.checkInTime || '---'}</TableCell>
+                      <TableCell>{r.checkOutTime || '---'}</TableCell>
+                      <TableCell><StatusChip status={r.status} /></TableCell>
                     </TableRow>
                   ))
                 )}
